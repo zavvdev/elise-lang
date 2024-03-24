@@ -20,17 +20,17 @@ Takes input data from lexer and builds an Abstract Syntax Tree data structure or
 
 ```
 @mul (
-    @add (1 2) 
-    @div (10, 2))
+    @add (1 2)
+    @div (10 2))
 
-@let (x: i64 @mul(2 2)
+@let (x: int @mul(2 2)
     @if (@>= (x 20)
         @show (x)
         @show ("x is less than 20")))
  
-@fn (my-fn [a b x] -> i64 
+@fn (my-fn [a b x] -> int 
     @add (a b x))
 
-@let (res: i64 @my-fn ()
+@let (res: int @my-fn ()
     @show (res))
 ```

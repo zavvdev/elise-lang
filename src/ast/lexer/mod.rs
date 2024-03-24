@@ -1,30 +1,12 @@
+use self::models::{token::Token, Lexer};
+
 pub mod config;
 pub mod models;
 
-use self::models::Token;
-
-struct Lexer<'a> {
-    input: &'a str,
-    char_pos: usize,
-}
-
-impl<'a> Lexer<'a> {
-    fn new(input: &'a str) -> Self {
-        Self {
-            input,
-            char_pos: 0,
-        }
-    }
-
-    fn next_token(&self) -> Option<Token> {
-        None
-    }
-}
-
 pub fn tokenize(input: &str) -> Vec<Token> {
-    let mut tokens: Vec<Token> = Vec::new(); 
-    let lexer = Lexer::new(&input);
-            
+    let mut tokens: Vec<Token> = Vec::new();
+    let mut lexer = Lexer::new(&input);
+
     while let Some(token) = lexer.next_token() {
         tokens.push(token);
     }
@@ -36,27 +18,43 @@ pub fn tokenize(input: &str) -> Vec<Token> {
 
 #[cfg(test)]
 mod tests {
-    use self::models::{TokenKind, TokenSpan};
+    use self::config::TokenKind;
+    use self::models::token_span::TokenSpan;
 
     use super::*;
 
     #[test]
-    fn test_tokenize_numbers() {
-        let input = "-99, -2.45, -1, 0, 1, 2.45, 99";
+    fn test_tokenize_int() {
+        assert_eq!(
+            tokenize("-99"),
+            vec![Token {
+                kind: TokenKind::Int(-99),
+                span: TokenSpan::new(0, 3, "-99".to_string()),
+            }]
+        );
 
-        let expected = vec![
-            Token {
-                kind: TokenKind::Number(-99 as f64),
-                span: TokenSpan::new(0, 3),
-            },
-            Token {
-                kind: TokenKind::Number(-2.45),
-                span: TokenSpan::new(5, 10),
-            },
-        ];
+        assert_eq!(
+            tokenize("-1"),
+            vec![Token {
+                kind: TokenKind::Int(-1),
+                span: TokenSpan::new(0, 2, "-1".to_string()),
+            }]
+        );
 
-        let result = tokenize(input);
+        assert_eq!(
+            tokenize("0"),
+            vec![Token {
+                kind: TokenKind::Int(0),
+                span: TokenSpan::new(0, 1, "0".to_string()),
+            }]
+        );
 
-        assert_eq!(result, expected);
+        assert_eq!(
+            tokenize("99"),
+            vec![Token {
+                kind: TokenKind::Int(99),
+                span: TokenSpan::new(0, 2, "0".to_string()),
+            }]
+        );
     }
 }

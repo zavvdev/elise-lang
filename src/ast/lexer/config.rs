@@ -1,3 +1,12 @@
-// const RE_NUMBER: &str = r"-?[0-9]\d*(\.\d+)?";
+#[derive(Debug, PartialEq)]
+pub enum TokenKind {
+    Unknown,
 
-//  [+-]?([0-9]*[.])?[0-9]+    
+    // Data Types
+    Int(i64),
+    Float(f64),
+    
+    // Functions
+    Add,
+}
+
