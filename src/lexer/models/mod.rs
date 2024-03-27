@@ -23,7 +23,7 @@ impl Lexer {
     /**
      *
      * Create a new Lexer instance based on raw user input.
-     * User input should be processed before analisys by `prepare_input` method
+     * User input should be processed before analysis by `prepare_input` method
      *
      */
     pub fn new(input: &str) -> Self {
