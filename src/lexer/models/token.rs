@@ -8,8 +8,20 @@ pub enum TokenKind {
     Int(Integer),
     Float(Float),
 
+    // Punctuation
+    Minus,
+    LeftParen,
+    RightParen,
+    LeftSqrBr,
+    RightSqrBr,
+    Colon,
+
     // Functions
     Add,
+
+    // Other
+    Whitespace,
+    ReturnType,
 }
 
 #[derive(Debug, PartialEq)]

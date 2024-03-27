@@ -1,5 +1,6 @@
 pub mod message;
 pub mod models;
+pub mod config;
 
 use self::models::{token::Token, Lexer};
 
@@ -14,7 +15,11 @@ pub fn tokenize(input: &str) -> Vec<Token> {
     tokens
 }
 
-// ======== Tests ========
+// ==========================
+
+//           Tests
+
+// ==========================
 
 #[cfg(test)]
 mod tests {
@@ -29,7 +34,7 @@ mod tests {
 
     use super::*;
 
-    // ======== Number ========
+    // ======== Numbers ========
 
     #[test]
     fn test_tokenize_int() {

@@ -2,11 +2,17 @@ pub mod number;
 pub mod token;
 
 use self::{
-    number::{Float, FloatPrecision, Integer, Number, ParsedNumber},
+    number::{Float, FloatPrecision, Integer, Number, ParsedNumber, FLOAT_SEPARATOR},
     token::{Token, TokenKind, TokenSpan},
 };
 
-use super::message;
+use super::{
+    config::{
+        P_COLON, P_LEFT_PAREN, P_LEFT_SQR_BR, P_MINUS, P_RIGHT_PAREN, P_RIGHT_SQR_BR, RETURN_TYPE,
+        WHITESPACE,
+    },
+    message,
+};
 
 pub struct Lexer {
     input: String,
@@ -14,6 +20,12 @@ pub struct Lexer {
 }
 
 impl Lexer {
+    /**
+     *
+     * Create a new Lexer instance based on raw user input.
+     * User input should be processed before analisys by `prepare_input` method
+     *
+     */
     pub fn new(input: &str) -> Self {
         Self {
             input: Self::prepare_input(input),
@@ -21,6 +33,17 @@ impl Lexer {
         }
     }
 
+    // ==========================
+
+    //          Defaults
+
+    // ==========================
+
+    /**
+     *
+     * Analyze current character and return a Token instance
+     *
+     */
     pub fn next_token(&mut self) -> Option<Token> {
         if self.char_pos > self.input.len() {
             return None;
@@ -36,12 +59,17 @@ impl Lexer {
                 let number = self.consume_number();
                 let parsed_number = Self::parse_number(number);
 
-                match parsed_number {
-                    ParsedNumber::Int(int) => token_kind = TokenKind::Int(int),
-                    ParsedNumber::Float(float) => token_kind = TokenKind::Float(float),
-                }
+                token_kind = match parsed_number {
+                    ParsedNumber::Int(int) => TokenKind::Int(int),
+                    ParsedNumber::Float(float) => TokenKind::Float(float),
+                };
+            } else if Self::is_whitespace(&char) {
+                token_kind = TokenKind::Whitespace;
+                self.consume();
             } else {
-                self.consume(); // TODO: Should be removed
+                if let Some(punctuation_token_kind) = self.consume_punctuation() {
+                    token_kind = punctuation_token_kind
+                }
             }
 
             let end = self.char_pos;
@@ -60,16 +88,34 @@ impl Lexer {
         })
     }
 
-    // TODO: Benchmark it and find faster solution if possible
+    /**
+     *
+     * Should be used for processing raw user input during Lexer instance construction.
+     * Should remove multiple Unicode whitespace characters
+     *
+     * TODO: Benchmark it and find faster solution if possible
+     *
+     */
     fn prepare_input(input: &str) -> String {
         let entries: Vec<&str> = input.split_whitespace().collect();
-        entries.join(" ")
+        entries.join(&WHITESPACE.to_string())
     }
 
+    /**
+     *
+     * Should be used when current character is required withoud consuming
+     *
+     */
     fn get_current_char(&self) -> Option<char> {
         self.input.chars().nth(self.char_pos)
     }
 
+    /**
+     *
+     * Should be used when current character has been identified as valid TokenKind
+     * and you are ready to analyze next character
+     *
+     */
     fn consume(&mut self) -> Option<char> {
         if self.char_pos >= self.input.len() {
             return None;
@@ -81,20 +127,63 @@ impl Lexer {
 
         current_char
     }
+    
+    /**
+    *
+    * Should be used for lexemes that consists of 2 characters
+    *
+    */
+    fn lex_potential_pair(
+        &mut self,
+        expected: char,
+        expected_token_kind: TokenKind,
+        fallback_token_kind: TokenKind,
+    ) -> TokenKind {
+        if let Some(next) = self.get_current_char() {
+            if next == expected {
+                self.consume();
+                expected_token_kind
+            } else {
+                fallback_token_kind
+            }
+        } else {
+            fallback_token_kind
+        }
+    }
 
-    // ======== Numbers ========
+    // ==========================
 
+    //          Numbers
+
+    // ==========================
+
+    /**
+    *
+    * Identify Base 10 numeric character
+    *
+    */
     fn is_number(char: &char) -> bool {
         char.is_digit(10)
     }
 
+    /**
+    *
+    * Should be used for parsing `Number` instance as `Float` with its precision
+    *
+    * TODO: find a better way of converting to float
+    *
+    */
     fn parse_float(number: Number) -> Float {
-        // TODO: find a better way of converting to float
         format!("{}.{}", number.int, number.precision)
             .parse::<Float>()
             .unwrap()
     }
-
+    
+    /**
+    *
+    * Should be used for parsing to `Integer` only. Precision is not included
+    *
+    */
     fn parse_number(number: Number) -> ParsedNumber {
         if number.precision == 0 {
             ParsedNumber::Int(number.int)
@@ -103,6 +192,11 @@ impl Lexer {
         }
     }
 
+    /**
+    *
+    * Analysing numeric sequence as `Integer` or `Float`
+    *
+    */
     fn consume_number(&mut self) -> Number {
         let mut int: Integer = 0;
         let mut precision: FloatPrecision = 0;
@@ -127,7 +221,7 @@ impl Lexer {
                     .expect(message::M_FLOAT_OVERFLOW);
 
                 self.consume();
-            } else if c == '.' {
+            } else if c == FLOAT_SEPARATOR {
                 is_int = false;
                 self.consume();
             } else {
@@ -136,5 +230,49 @@ impl Lexer {
         }
 
         Number { int, precision }
+    }
+
+    // ==========================
+
+    //       Punctuations
+
+    // ==========================
+
+    /**
+    *
+    * Analyse all possible punctuations from `config.rs` prefixed by `P_*`
+    *
+    */
+    fn consume_punctuation(&mut self) -> Option<TokenKind> {
+        let char = self.consume().unwrap();
+
+        match char {
+            P_MINUS => Some(self.lex_potential_pair(
+                RETURN_TYPE.1,
+                TokenKind::ReturnType,
+                TokenKind::Minus,
+            )),
+            P_LEFT_PAREN => Some(TokenKind::LeftParen),
+            P_RIGHT_PAREN => Some(TokenKind::RightParen),
+            P_LEFT_SQR_BR => Some(TokenKind::LeftSqrBr),
+            P_RIGHT_SQR_BR => Some(TokenKind::RightSqrBr),
+            P_COLON => Some(TokenKind::Colon),
+            _ => None,
+        }
+    }
+
+    // ==========================
+
+    //           Other
+
+    // ==========================
+
+    /**
+     *
+     * Checks if given character is a Unicode whitespace
+     *
+     */
+    fn is_whitespace(c: &char) -> bool {
+        c.is_whitespace()
     }
 }

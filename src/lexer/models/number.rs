@@ -2,6 +2,8 @@ pub type Integer = i64;
 pub type Float = f64;
 pub type FloatPrecision = u64;
 
+pub const FLOAT_SEPARATOR: char = '.';
+
 pub enum ParsedNumber {
     Int(Integer),
     Float(Float),
