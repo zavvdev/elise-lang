@@ -1,13 +1,12 @@
 pub mod number;
 pub mod token;
-pub mod token_span;
-
-use crate::ast::lexer::{config::TokenKind, models::token_span::TokenSpan};
 
 use self::{
-    number::{Number, ParsedNumber},
-    token::Token,
+    number::{Float, FloatPrecision, Integer, Number, ParsedNumber},
+    token::{Token, TokenKind, TokenSpan},
 };
+
+use super::message;
 
 pub struct Lexer {
     input: String,
@@ -83,18 +82,16 @@ impl Lexer {
         current_char
     }
 
-    // Numbers
-
-    // TODO: Move to trait
+    // ======== Numbers ========
 
     fn is_number(char: &char) -> bool {
         char.is_digit(10)
     }
 
-    fn parse_float(number: Number) -> f64 {
+    fn parse_float(number: Number) -> Float {
         // TODO: find a better way of converting to float
         format!("{}.{}", number.int, number.precision)
-            .parse::<f64>()
+            .parse::<Float>()
             .unwrap()
     }
 
@@ -107,24 +104,32 @@ impl Lexer {
     }
 
     fn consume_number(&mut self) -> Number {
-        let mut int: i64 = 0;
-        let mut precision: u64 = 0;
+        let mut int: Integer = 0;
+        let mut precision: FloatPrecision = 0;
         let mut is_int = true;
 
         while let Some(c) = self.get_current_char() {
             let is_digit = c.is_digit(10);
 
             if is_digit && is_int {
+                int = int.checked_mul(10).expect(message::M_INT_OVERFLOW);
+
+                int = int
+                    .checked_add(c.to_digit(10).unwrap() as Integer)
+                    .expect(message::M_INT_OVERFLOW);
+
                 self.consume();
-                // TODO: Track numver overflow
-                int = int * 10 + c.to_digit(10).unwrap() as i64;
             } else if is_digit && !is_int {
+                precision = precision.checked_mul(10).expect(message::M_FLOAT_OVERFLOW);
+
+                precision = precision
+                    .checked_add(c.to_digit(10).unwrap() as FloatPrecision)
+                    .expect(message::M_FLOAT_OVERFLOW);
+
                 self.consume();
-                // TODO: Track numver overflow
-                precision = precision * 10 + c.to_digit(10).unwrap() as u64;
             } else if c == '.' {
-                self.consume();
                 is_int = false;
+                self.consume();
             } else {
                 break;
             }

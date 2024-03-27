@@ -1,9 +1,9 @@
-use ast::lexer::tokenize;
+pub mod lexer;
 
-pub mod ast;
+use lexer::tokenize;
 
 fn main() {
-    let tokens = tokenize("33.3213");
-
+    let tokens = tokenize("33");
+        
     println!("{:#?}", tokens);
 }
