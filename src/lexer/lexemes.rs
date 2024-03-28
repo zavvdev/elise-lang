@@ -1,0 +1,9 @@
+pub const L_MINUS: char = '-';
+pub const L_LEFT_PAREN: char = '(';
+pub const L_RIGHT_PAREN: char = ')';
+pub const L_LEFT_SQR_BR: char = '[';
+pub const L_RIGHT_SQR_BR: char = ']';
+pub const L_COLON: char = ':';
+pub const L_COMMA: char = ',';
+pub const L_WHITESPACE: char = ' ';
+pub const L_RETURN_TYPE: (char, char) = (L_MINUS, '>');

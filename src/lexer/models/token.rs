@@ -15,6 +15,7 @@ pub enum TokenKind {
     LeftSqrBr,
     RightSqrBr,
     Colon,
+    Comma,
 
     // Functions
     Add,
@@ -28,15 +29,15 @@ pub enum TokenKind {
 pub struct TokenSpan {
     pub start: usize,
     pub end: usize,
-    pub literal: String,
+    pub lexeme: String,
 }
 
 impl TokenSpan {
-    pub fn new(start: usize, end: usize, literal: String) -> Self {
+    pub fn new(start: usize, end: usize, lexeme: String) -> Self {
         TokenSpan {
             start,
             end,
-            literal,
+            lexeme,
         }
     }
 }

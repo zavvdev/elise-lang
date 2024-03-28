@@ -6,13 +6,7 @@ use self::{
     token::{Token, TokenKind, TokenSpan},
 };
 
-use super::{
-    config::{
-        P_COLON, P_LEFT_PAREN, P_LEFT_SQR_BR, P_MINUS, P_RIGHT_PAREN, P_RIGHT_SQR_BR, RETURN_TYPE,
-        WHITESPACE,
-    },
-    message,
-};
+use super::{lexemes, messages};
 
 pub struct Lexer {
     input: String,
@@ -54,7 +48,7 @@ impl Lexer {
         current_char.map(|char| {
             let start = self.char_pos;
             let mut token_kind = TokenKind::Unknown;
-
+    
             if Self::is_number(&char) {
                 let number = self.consume_number();
                 let parsed_number = Self::parse_number(number);
@@ -73,13 +67,13 @@ impl Lexer {
             }
 
             let end = self.char_pos;
-            let literal = self.input[start..end].to_string();
+            let lexeme = self.input[start..end].to_string();
 
-            let token_span = TokenSpan {
-                start,
-                end,
-                literal,
-            };
+            if token_kind == TokenKind::Unknown {
+                panic!("{} \"{}\"", messages::M_UNEXPECTED_TOKEN, &lexeme);
+            }
+
+            let token_span = TokenSpan { start, end, lexeme };
 
             Token {
                 kind: token_kind,
@@ -98,7 +92,7 @@ impl Lexer {
      */
     fn prepare_input(input: &str) -> String {
         let entries: Vec<&str> = input.split_whitespace().collect();
-        entries.join(&WHITESPACE.to_string())
+        entries.join(&lexemes::L_WHITESPACE.to_string())
     }
 
     /**
@@ -127,12 +121,12 @@ impl Lexer {
 
         current_char
     }
-    
+
     /**
-    *
-    * Should be used for lexemes that consists of 2 characters
-    *
-    */
+     *
+     * Should be used for lexemes that consists of 2 characters
+     *
+     */
     fn lex_potential_pair(
         &mut self,
         expected: char,
@@ -158,32 +152,32 @@ impl Lexer {
     // ==========================
 
     /**
-    *
-    * Identify Base 10 numeric character
-    *
-    */
+     *
+     * Identify Base 10 numeric character
+     *
+     */
     fn is_number(char: &char) -> bool {
         char.is_digit(10)
     }
 
     /**
-    *
-    * Should be used for parsing `Number` instance as `Float` with its precision
-    *
-    * TODO: find a better way of converting to float
-    *
-    */
+     *
+     * Should be used for parsing `Number` instance as `Float` with its precision
+     *
+     * TODO: find a better way of converting to float
+     *
+     */
     fn parse_float(number: Number) -> Float {
         format!("{}.{}", number.int, number.precision)
             .parse::<Float>()
             .unwrap()
     }
-    
+
     /**
-    *
-    * Should be used for parsing to `Integer` only. Precision is not included
-    *
-    */
+     *
+     * Should be used for parsing to `Integer` only. Precision is not included
+     *
+     */
     fn parse_number(number: Number) -> ParsedNumber {
         if number.precision == 0 {
             ParsedNumber::Int(number.int)
@@ -193,10 +187,10 @@ impl Lexer {
     }
 
     /**
-    *
-    * Analysing numeric sequence as `Integer` or `Float`
-    *
-    */
+     *
+     * Analysing numeric sequence as `Integer` or `Float`
+     *
+     */
     fn consume_number(&mut self) -> Number {
         let mut int: Integer = 0;
         let mut precision: FloatPrecision = 0;
@@ -206,19 +200,19 @@ impl Lexer {
             let is_digit = c.is_digit(10);
 
             if is_digit && is_int {
-                int = int.checked_mul(10).expect(message::M_INT_OVERFLOW);
+                int = int.checked_mul(10).expect(messages::M_INT_OVERFLOW);
 
                 int = int
                     .checked_add(c.to_digit(10).unwrap() as Integer)
-                    .expect(message::M_INT_OVERFLOW);
+                    .expect(messages::M_INT_OVERFLOW);
 
                 self.consume();
             } else if is_digit && !is_int {
-                precision = precision.checked_mul(10).expect(message::M_FLOAT_OVERFLOW);
+                precision = precision.checked_mul(10).expect(messages::M_FLOAT_OVERFLOW);
 
                 precision = precision
                     .checked_add(c.to_digit(10).unwrap() as FloatPrecision)
-                    .expect(message::M_FLOAT_OVERFLOW);
+                    .expect(messages::M_FLOAT_OVERFLOW);
 
                 self.consume();
             } else if c == FLOAT_SEPARATOR {
@@ -239,24 +233,25 @@ impl Lexer {
     // ==========================
 
     /**
-    *
-    * Analyse all possible punctuations from `config.rs` prefixed by `P_*`
-    *
-    */
+     *
+     * Analyse all possible punctuations from `config.rs` prefixed by `P_*`
+     *
+     */
     fn consume_punctuation(&mut self) -> Option<TokenKind> {
         let char = self.consume().unwrap();
 
         match char {
-            P_MINUS => Some(self.lex_potential_pair(
-                RETURN_TYPE.1,
+            lexemes::L_MINUS => Some(self.lex_potential_pair(
+                lexemes::L_RETURN_TYPE.1,
                 TokenKind::ReturnType,
                 TokenKind::Minus,
             )),
-            P_LEFT_PAREN => Some(TokenKind::LeftParen),
-            P_RIGHT_PAREN => Some(TokenKind::RightParen),
-            P_LEFT_SQR_BR => Some(TokenKind::LeftSqrBr),
-            P_RIGHT_SQR_BR => Some(TokenKind::RightSqrBr),
-            P_COLON => Some(TokenKind::Colon),
+            lexemes::L_LEFT_PAREN => Some(TokenKind::LeftParen),
+            lexemes::L_RIGHT_PAREN => Some(TokenKind::RightParen),
+            lexemes::L_LEFT_SQR_BR => Some(TokenKind::LeftSqrBr),
+            lexemes::L_RIGHT_SQR_BR => Some(TokenKind::RightSqrBr),
+            lexemes::L_COLON => Some(TokenKind::Colon),
+            lexemes::L_COMMA => Some(TokenKind::Comma),
             _ => None,
         }
     }

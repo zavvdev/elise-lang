@@ -1,6 +1,6 @@
-pub mod message;
+pub mod lexemes;
+pub mod messages;
 pub mod models;
-pub mod config;
 
 use self::models::{token::Token, Lexer};
 
@@ -15,11 +15,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
     tokens
 }
 
-// ==========================
-
-//           Tests
-
-// ==========================
+// ======== Tests ========
 
 #[cfg(test)]
 mod tests {
@@ -34,7 +30,11 @@ mod tests {
 
     use super::*;
 
-    // ======== Numbers ========
+    // ==========================
+
+    //          Numbers
+
+    // ==========================
 
     #[test]
     fn test_tokenize_int() {
@@ -87,5 +87,148 @@ mod tests {
         let overflowed = Float::MAX + 0.1;
         #[deny(arithmetic_overflow)]
         tokenize(&format!("1.{}", overflowed));
+    }
+
+    // ==========================
+
+    //         Whitespace
+
+    // ==========================
+
+    #[test]
+    fn test_tokenize_whitespace() {
+        assert_eq!(
+            tokenize("1 2"),
+            vec![
+                Token {
+                    kind: TokenKind::Int(1),
+                    span: TokenSpan::new(0, 1, "1".to_string()),
+                },
+                Token {
+                    kind: TokenKind::Whitespace,
+                    span: TokenSpan::new(1, 2, lexemes::L_WHITESPACE.to_string()),
+                },
+                Token {
+                    kind: TokenKind::Int(2),
+                    span: TokenSpan::new(2, 3, "2".to_string()),
+                }
+            ]
+        )
+    }
+
+    // ==========================
+
+    //        Punctuation
+
+    // ==========================
+
+    #[test]
+    fn test_tokenize_minus() {
+        assert_eq!(
+            tokenize("-"),
+            vec![Token {
+                kind: TokenKind::Minus,
+                span: TokenSpan::new(0, 1, lexemes::L_MINUS.to_string())
+            }]
+        )
+    }
+
+    #[test]
+    fn test_tokenize_left_paren() {
+        assert_eq!(
+            tokenize("("),
+            vec![Token {
+                kind: TokenKind::LeftParen,
+                span: TokenSpan::new(0, 1, lexemes::L_LEFT_PAREN.to_string())
+            }]
+        )
+    }
+
+    #[test]
+    fn test_tokenize_right_paren() {
+        assert_eq!(
+            tokenize(")"),
+            vec![Token {
+                kind: TokenKind::RightParen,
+                span: TokenSpan::new(0, 1, lexemes::L_RIGHT_PAREN.to_string())
+            }]
+        )
+    }
+
+    #[test]
+    fn test_tokenize_left_sqr_br() {
+        assert_eq!(
+            tokenize("["),
+            vec![Token {
+                kind: TokenKind::LeftSqrBr,
+                span: TokenSpan::new(0, 1, lexemes::L_LEFT_SQR_BR.to_string())
+            }]
+        )
+    }
+
+    #[test]
+    fn test_tokenize_right_sqr_br() {
+        assert_eq!(
+            tokenize("]"),
+            vec![Token {
+                kind: TokenKind::RightSqrBr,
+                span: TokenSpan::new(0, 1, lexemes::L_RIGHT_SQR_BR.to_string())
+            }]
+        )
+    }
+
+    #[test]
+    fn test_tokenize_colon() {
+        assert_eq!(
+            tokenize(":"),
+            vec![Token {
+                kind: TokenKind::Colon,
+                span: TokenSpan::new(0, 1, lexemes::L_COLON.to_string())
+            }]
+        )
+    }
+
+    #[test]
+    fn test_tokenize_comma() {
+        assert_eq!(
+            tokenize(","),
+            vec![Token {
+                kind: TokenKind::Comma,
+                span: TokenSpan::new(0, 1, lexemes::L_COMMA.to_string())
+            }]
+        )
+    }
+
+    // ==========================
+
+    //          Other
+
+    // ==========================
+
+    #[test]
+    fn test_tokenize_return_type() {
+        assert_eq!(
+            tokenize("->"),
+            vec![Token {
+                kind: TokenKind::ReturnType,
+                span: TokenSpan::new(
+                    0,
+                    2,
+                    format!("{}{}", lexemes::L_RETURN_TYPE.0, lexemes::L_RETURN_TYPE.1)
+                )
+            }]
+        )
+    }
+
+    // ==========================
+
+    //      Unexpected Token
+
+    // ==========================
+
+    #[test]
+    #[should_panic(expected = "Unexpected token \"~\"")]
+    fn test_tokenize_unknown() {
+        tokenize("~");
     }
 }
