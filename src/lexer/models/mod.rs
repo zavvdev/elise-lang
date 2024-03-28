@@ -234,7 +234,7 @@ impl Lexer {
 
     /**
      *
-     * Analyse all possible punctuations from `config.rs` prefixed by `P_*`
+     * Analyse all possible punctuations
      *
      */
     fn consume_punctuation(&mut self) -> Option<TokenKind> {
