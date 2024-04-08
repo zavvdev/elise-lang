@@ -17,8 +17,11 @@ pub enum TokenKind {
     Colon,
     Comma,
 
-    // Functions
-    Add,
+    // Known functions
+    FnAdd,
+    FnSub,
+    FnMul,
+    FnDiv,
 
     // Other
     Whitespace,

@@ -8,6 +8,11 @@ use self::{
 
 use super::{lexemes, messages};
 
+/**
+ *
+ * Accepts an input as a string with custom formattings and char position to start with.
+ *
+ */
 pub struct Lexer {
     input: String,
     char_pos: usize,
@@ -17,12 +22,12 @@ impl Lexer {
     /**
      *
      * Create a new Lexer instance based on raw user input.
-     * User input should be processed before analysis by `prepare_input` method
+     * User input should be processed before analysis by `preprocess` method
      *
      */
     pub fn new(input: &str) -> Self {
         Self {
-            input: Self::prepare_input(input),
+            input: Self::preprocess(input),
             char_pos: 0,
         }
     }
@@ -35,7 +40,7 @@ impl Lexer {
 
     /**
      *
-     * Analyze current character and return a Token instance
+     * Analyze current character/character seq and return a Token instance
      *
      */
     pub fn next_token(&mut self) -> Option<Token> {
@@ -48,7 +53,10 @@ impl Lexer {
         current_char.map(|char| {
             let start = self.char_pos;
             let mut token_kind = TokenKind::Unknown;
-    
+
+            // ===============
+            // Number
+            // ===============
             if Self::is_number(&char) {
                 let number = self.consume_number();
                 let parsed_number = Self::parse_number(number);
@@ -57,14 +65,34 @@ impl Lexer {
                     ParsedNumber::Int(int) => TokenKind::Int(int),
                     ParsedNumber::Float(float) => TokenKind::Float(float),
                 };
+
+            // ===============
+            // Whitespace
+            // ===============
             } else if Self::is_whitespace(&char) {
                 token_kind = TokenKind::Whitespace;
                 self.consume();
+
+            // ===============
+            // Functions
+            // ===============
+            } else if Self::is_fn_start(&char) {
+                self.consume();
+                let fn_name = self.consume_known_fn_name();
+                token_kind = Self::distinguish_known_fn(&fn_name);
+
+            // ===============
+            // Punctuations
+            // ===============
             } else {
                 if let Some(punctuation_token_kind) = self.consume_punctuation() {
                     token_kind = punctuation_token_kind
                 }
             }
+
+            // ===============
+            // Construct Token
+            // ===============
 
             let end = self.char_pos;
             let lexeme = self.input[start..end].to_string();
@@ -90,7 +118,7 @@ impl Lexer {
      * TODO: Benchmark it and find faster solution if possible
      *
      */
-    fn prepare_input(input: &str) -> String {
+    fn preprocess(input: &str) -> String {
         let entries: Vec<&str> = input.split_whitespace().collect();
         entries.join(&lexemes::L_WHITESPACE.to_string())
     }
@@ -106,8 +134,8 @@ impl Lexer {
 
     /**
      *
-     * Should be used when current character has been identified as valid TokenKind
-     * and you are ready to analyze next character
+     * Should be used when current character is required but with
+     * addition move to the next character
      *
      */
     fn consume(&mut self) -> Option<char> {
@@ -175,7 +203,7 @@ impl Lexer {
 
     /**
      *
-     * Should be used for parsing to `Integer` only. Precision is not included
+     * Should be used for parsing to either `Integer` or `Float` based on available precision
      *
      */
     fn parse_number(number: Number) -> ParsedNumber {
@@ -269,5 +297,65 @@ impl Lexer {
      */
     fn is_whitespace(c: &char) -> bool {
         c.is_whitespace()
+    }
+
+    // ==========================
+
+    //        Known functions
+
+    // ==========================
+
+    /**
+     *
+     * Determine the start of the custom or known function
+     *
+     */
+    fn is_fn_start(c: &char) -> bool {
+        *c == lexemes::L_FN
+    }
+
+    /**
+     *
+     * Consume only known function names
+     *
+     */
+    fn consume_known_fn_name(&mut self) -> String {
+        let mut result = String::new();
+
+        while let Some(c) = self.get_current_char() {
+            if c == lexemes::L_LEFT_PAREN {
+                break;
+            }
+
+            result.push(c);
+            self.consume();
+        }
+
+        result
+    }
+
+    /**
+     *
+     * Match known function lexeme
+     *
+     */
+    fn distinguish_known_fn(fn_name: &str) -> TokenKind {
+        if fn_name == lexemes::L_FN_ADD.1 {
+            return TokenKind::FnAdd;
+        }
+
+        if fn_name == lexemes::L_FN_SUB.1 {
+            return TokenKind::FnSub;
+        }
+
+        if fn_name == lexemes::L_FN_MUL.1 {
+            return TokenKind::FnMul;
+        }
+
+        if fn_name == lexemes::L_FN_DIV.1 {
+            return TokenKind::FnDiv;
+        }
+
+        TokenKind::Unknown
     }
 }

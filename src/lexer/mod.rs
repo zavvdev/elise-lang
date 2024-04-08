@@ -21,9 +21,12 @@ pub fn tokenize(input: &str) -> Vec<Token> {
 mod tests {
     use std::num::Wrapping;
 
-    use tests::models::{
-        number::Integer,
-        token::{TokenKind, TokenSpan},
+    use tests::{
+        lexemes::fn_lexeme_to_string,
+        models::{
+            number::Integer,
+            token::{TokenKind, TokenSpan},
+        },
     };
 
     use self::models::number::Float;
@@ -230,5 +233,55 @@ mod tests {
     #[should_panic(expected = "Unexpected token \"~\"")]
     fn test_tokenize_unknown() {
         tokenize("~");
+    }
+
+    // ==========================
+
+    //         Known functions
+
+    // ==========================
+
+    #[test]
+    fn test_fn_add() {
+        assert_eq!(
+            tokenize("@add"),
+            vec![Token {
+                kind: TokenKind::FnAdd,
+                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD))
+            }]
+        )
+    }
+
+    #[test]
+    fn test_fn_sub() {
+        assert_eq!(
+            tokenize("@sub"),
+            vec![Token {
+                kind: TokenKind::FnSub,
+                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_SUB))
+            }]
+        )
+    }
+
+    #[test]
+    fn test_fn_mul() {
+        assert_eq!(
+            tokenize("@mul"),
+            vec![Token {
+                kind: TokenKind::FnMul,
+                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_MUL))
+            }]
+        )
+    }
+
+    #[test]
+    fn test_fn_div() {
+        assert_eq!(
+            tokenize("@div"),
+            vec![Token {
+                kind: TokenKind::FnDiv,
+                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_DIV))
+            }]
+        )
     }
 }
