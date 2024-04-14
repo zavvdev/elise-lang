@@ -1,22 +1,22 @@
-pub type Integer = i64;
-pub type Float = f64;
+use crate::types;
+
 pub type FloatPrecision = u64;
 
 pub const FLOAT_SEPARATOR: char = '.';
 
 pub enum ParsedNumber {
-    Int(Integer),
-    Float(Float),
+    Int(types::Integer),
+    Float(types::Float),
 }
 
 #[derive(Debug)]
 pub struct Number {
-    pub int: Integer,
+    pub int: types::Integer,
     pub precision: FloatPrecision,
 }
 
 impl Number {
-    pub fn new(int: Integer, precision: FloatPrecision) -> Self {
+    pub fn new(int: types::Integer, precision: FloatPrecision) -> Self {
         Self { int, precision }
     }
 }

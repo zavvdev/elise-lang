@@ -1,12 +1,12 @@
-use super::number::{Float, Integer};
+use crate::types;
 
 #[derive(Debug, PartialEq)]
 pub enum TokenKind {
     Unknown,
 
     // Data Types
-    Int(Integer),
-    Float(Float),
+    Int(types::Integer),
+    Float(types::Float),
 
     // Punctuation
     Minus,
@@ -37,11 +37,7 @@ pub struct TokenSpan {
 
 impl TokenSpan {
     pub fn new(start: usize, end: usize, lexeme: String) -> Self {
-        TokenSpan {
-            start,
-            end,
-            lexeme,
-        }
+        TokenSpan { start, end, lexeme }
     }
 }
 

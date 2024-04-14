@@ -9,8 +9,8 @@
     @if (@>= (x 20)
         @show (x)
         @show ("x is less than 20")))
- 
-@fn (my-fn [a b x] -> int 
+
+@fn (my-fn [a b x] -> int
     @add (a b x))
 
 @let (res: int @my-fn ()
@@ -36,6 +36,38 @@ A lexical analyzer generally does nothing with combinations of tokens, a task le
 ## Parser
 
 Takes input data from lexer and builds an Abstract Syntax Tree data structure or other hierarchical structure, giving a structural representation of the input while checking for correct syntax.
+
+```
+[
+    {
+        kind: KnownFunction,
+        value: FnAdd,
+        branches: [
+            {
+                kind: KnownFunction,
+                value: FnMul,
+                branches: [
+                    {
+                        kind: RawValue,
+                        value: Integer(2),
+                        branches: [],
+                    },
+                    {
+                        kind: RawValue,
+                        value: Integer(3),
+                        branches: [],
+                    },
+                ],
+            },
+            {
+                kind: RawValue,
+                value: Integer(4),
+                branches: [],
+            },
+        ],
+    },
+]
+```
 
 ## Semantic Analyser
 

@@ -1,12 +1,14 @@
 pub mod number;
 pub mod token;
 
+use crate::{messages, types};
+
 use self::{
-    number::{Float, FloatPrecision, Integer, Number, ParsedNumber, FLOAT_SEPARATOR},
+    number::{FloatPrecision, Number, ParsedNumber, FLOAT_SEPARATOR},
     token::{Token, TokenKind, TokenSpan},
 };
 
-use super::{lexemes, messages};
+use super::lexemes;
 
 /**
  *
@@ -98,7 +100,7 @@ impl Lexer {
             let lexeme = self.input[start..end].to_string();
 
             if token_kind == TokenKind::Unknown {
-                panic!("{} \"{}\"", messages::M_UNEXPECTED_TOKEN, &lexeme);
+                panic!("{}", messages::m_unexpected_token(&lexeme));
             }
 
             let token_span = TokenSpan { start, end, lexeme };
@@ -195,9 +197,9 @@ impl Lexer {
      * TODO: find a better way of converting to float
      *
      */
-    fn parse_float(number: Number) -> Float {
+    fn parse_float(number: Number) -> types::Float {
         format!("{}.{}", number.int, number.precision)
-            .parse::<Float>()
+            .parse::<types::Float>()
             .unwrap()
     }
 
@@ -220,7 +222,7 @@ impl Lexer {
      *
      */
     fn consume_number(&mut self) -> Number {
-        let mut int: Integer = 0;
+        let mut int: types::Integer = 0;
         let mut precision: FloatPrecision = 0;
         let mut is_int = true;
 
@@ -228,19 +230,19 @@ impl Lexer {
             let is_digit = c.is_digit(10);
 
             if is_digit && is_int {
-                int = int.checked_mul(10).expect(messages::M_INT_OVERFLOW);
+                int = int.checked_mul(10).expect(&messages::m_int_overflow());
 
                 int = int
-                    .checked_add(c.to_digit(10).unwrap() as Integer)
-                    .expect(messages::M_INT_OVERFLOW);
+                    .checked_add(c.to_digit(10).unwrap() as types::Integer)
+                    .expect(&messages::m_int_overflow());
 
                 self.consume();
             } else if is_digit && !is_int {
-                precision = precision.checked_mul(10).expect(messages::M_FLOAT_OVERFLOW);
+                precision = precision.checked_mul(10).expect(&messages::m_float_overflow());
 
                 precision = precision
                     .checked_add(c.to_digit(10).unwrap() as FloatPrecision)
-                    .expect(messages::M_FLOAT_OVERFLOW);
+                    .expect(&messages::m_float_overflow());
 
                 self.consume();
             } else if c == FLOAT_SEPARATOR {

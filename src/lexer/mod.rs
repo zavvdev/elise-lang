@@ -1,5 +1,4 @@
 pub mod lexemes;
-pub mod messages;
 pub mod models;
 
 use self::models::{token::Token, Lexer};
@@ -23,15 +22,11 @@ mod tests {
 
     use tests::{
         lexemes::fn_lexeme_to_string,
-        models::{
-            number::Integer,
-            token::{TokenKind, TokenSpan},
-        },
+        models::token::{TokenKind, TokenSpan},
     };
 
-    use self::models::number::Float;
-
     use super::*;
+    use crate::types;
 
     // ==========================
 
@@ -61,7 +56,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Integer overflow")]
     fn test_tokenize_int_overflow() {
-        tokenize(&format!("{}", Wrapping(Integer::MAX) + Wrapping(1)));
+        tokenize(&format!("{}", Wrapping(types::Integer::MAX) + Wrapping(1)));
     }
 
     #[test]
@@ -87,7 +82,7 @@ mod tests {
     #[should_panic(expected = "Float overflow")]
     fn test_tokenize_float_overflow() {
         #[allow(arithmetic_overflow)]
-        let overflowed = Float::MAX + 0.1;
+        let overflowed = types::Float::MAX + 0.1;
         #[deny(arithmetic_overflow)]
         tokenize(&format!("1.{}", overflowed));
     }
