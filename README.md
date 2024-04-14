@@ -1,5 +1,24 @@
 # elise-lang
 
+```
+@mul (
+    @add (1 2)
+    @div (10 2))
+
+@let (x: int @mul(2 2)
+    @if (@>= (x 20)
+        @show (x)
+        @show ("x is less than 20")))
+ 
+@fn (my-fn [a b x] -> int 
+    @add (a b x))
+
+@let (res: int @my-fn ()
+    @show (res))
+```
+
+Source Code -> Lexical Analysis (Lexer) -> Syntax Analysis (Parser) -> Semantic Analysis (SA) -> Execution (Interpreter/Compiler) -> Program output
+
 ### Lexer
 
 Converts text into meaningful lexical tokens belonging to categories defined by a "lexer" program.
@@ -18,19 +37,6 @@ A lexical analyzer generally does nothing with combinations of tokens, a task le
 
 Takes input data from lexer and builds an Abstract Syntax Tree data structure or other hierarchical structure, giving a structural representation of the input while checking for correct syntax.
 
-```
-@mul (
-    @add (1 2)
-    @div (10 2))
+## Semantic Analyser
 
-@let (x: int @mul(2 2)
-    @if (@>= (x 20)
-        @show (x)
-        @show ("x is less than 20")))
- 
-@fn (my-fn [a b x] -> int 
-    @add (a b x))
-
-@let (res: int @my-fn ()
-    @show (res))
-```
+Semantic Analysis it's a process to help us determine whether a program makes sense, and that it has meaning, according to a language definition. For example, the variables that are used in source code are defined, the function is in some scope etc.
