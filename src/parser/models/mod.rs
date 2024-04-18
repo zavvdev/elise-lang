@@ -2,10 +2,7 @@ pub mod ast;
 
 use self::ast::{AstNode, AstNodeKind};
 use crate::{
-    lexer::{
-        lexemes,
-        models::token::{Token, TokenKind},
-    },
+    lexer::models::token::{Token, TokenKind},
     messages, types,
 };
 
@@ -121,10 +118,7 @@ impl Parser {
         let next = self.get_next_token();
 
         if next.is_none() {
-            panic!(
-                "{}",
-                messages::m_unexpected_token(&lexemes::L_MINUS.to_string())
-            );
+            self.panic_at_current_token();
         }
 
         let next = next.unwrap();
@@ -146,11 +140,16 @@ impl Parser {
 
     // ==========================
 
+    /**
+     *
+     * Can be used for consuming any function arguments
+     *
+     */
     fn consume_fn_arguments(&mut self) -> Vec<Box<AstNode>> {
         let mut arguments: Vec<Box<AstNode>> = Vec::new();
 
         while let Some(node) = self.next_node() {
-            if let AstNodeKind::_EndOfFn = node.kind {
+            if node.kind == AstNodeKind::_EndOfFn {
                 self.consume();
                 return arguments;
             }
@@ -167,6 +166,11 @@ impl Parser {
         arguments
     }
 
+    /**
+     *
+     * Should be used for consuming known functions only
+     *
+     */
     fn consume_known_fn(&mut self, known_fn_node_kind: AstNodeKind) -> Option<AstNode> {
         let next = self.get_next_token();
 
@@ -176,29 +180,18 @@ impl Parser {
 
         let next = next.unwrap();
 
+        if next.kind == TokenKind::Whitespace {
+            self.consume();
+            return self.consume_known_fn(known_fn_node_kind);
+        }
+
         if next.kind == TokenKind::LeftParen {
             self.skip_tokens(1);
+
             return Some(AstNode::new(
                 known_fn_node_kind,
                 self.consume_fn_arguments(),
             ));
-        } else if next.kind == TokenKind::Whitespace {
-            self.consume();
-            let next = self.get_next_token();
-
-            if next.is_none() {
-                self.panic_at_current_token();
-            }
-
-            if next.unwrap().kind == TokenKind::LeftParen {
-                self.skip_tokens(1);
-                return Some(AstNode::new(
-                    known_fn_node_kind,
-                    self.consume_fn_arguments(),
-                ));
-            } else {
-                self.panic_at_current_token();
-            }
         } else {
             self.panic_at_current_token();
         }
