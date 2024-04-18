@@ -238,7 +238,9 @@ impl Lexer {
 
                 self.consume();
             } else if is_digit && !is_int {
-                precision = precision.checked_mul(10).expect(&messages::m_float_overflow());
+                precision = precision
+                    .checked_mul(10)
+                    .expect(&messages::m_float_overflow());
 
                 precision = precision
                     .checked_add(c.to_digit(10).unwrap() as FloatPrecision)
@@ -325,7 +327,7 @@ impl Lexer {
         let mut result = String::new();
 
         while let Some(c) = self.get_current_char() {
-            if c == lexemes::L_LEFT_PAREN {
+            if c == lexemes::L_LEFT_PAREN || c == lexemes::L_WHITESPACE {
                 break;
             }
 

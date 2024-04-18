@@ -17,6 +17,7 @@ use crate::{
 pub struct Parser {
     tokens: Vec<Token>,
     token_pos: usize,
+    context_fn_count: usize,
 }
 
 impl Parser {
@@ -24,6 +25,7 @@ impl Parser {
         Self {
             tokens,
             token_pos: 0,
+            context_fn_count: 0,
         }
     }
 
@@ -44,6 +46,10 @@ impl Parser {
             TokenKind::Int(x) => self.consume_int(x),
             TokenKind::Float(x) => self.consume_float(x),
             TokenKind::Minus => self.consume_negative_number(),
+            TokenKind::FnAdd => self.consume_fn(TokenKind::FnAdd),
+            TokenKind::RightParen => Some(AstNode::new(TokenKind::RightParen, vec![])),
+            TokenKind::Whitespace => Some(AstNode::new(TokenKind::Whitespace, vec![])),
+            TokenKind::Comma => Some(AstNode::new(TokenKind::Comma, vec![])),
             _ => None,
         }
     }
@@ -82,6 +88,10 @@ impl Parser {
         current_token
     }
 
+    fn get_next_token(&self) -> Option<&Token> {
+        self.tokens.get(self.token_pos + 1)
+    }
+
     // ==========================
 
     //          Numbers
@@ -99,7 +109,7 @@ impl Parser {
     }
 
     fn consume_negative_number(&mut self) -> Option<AstNode> {
-        let next = self.tokens.get(self.token_pos + 1);
+        let next = self.get_next_token();
 
         if next.is_none() {
             panic!(
@@ -117,7 +127,90 @@ impl Parser {
             self.skip_tokens(1);
             return Some(AstNode::new(TokenKind::Float(x * -1.0), vec![]));
         } else {
-            panic!("{}", messages::m_parse_error_unexpected_token(&next.span.lexeme));
+            panic!(
+                "{}",
+                messages::m_parse_error_unexpected_token(&next.span.lexeme)
+            );
+        }
+    }
+
+    // ==========================
+
+    //      Known functions
+
+    // ==========================
+
+    fn consume_fn_arguments(&mut self) -> Vec<Box<AstNode>> {
+        let mut arguments: Vec<Box<AstNode>> = Vec::new();
+
+        while let Some(node) = self.next_node() {
+            if let TokenKind::RightParen = node.token_kind {
+                if self.context_fn_count > 0 {
+                    self.context_fn_count -= 1;
+                    self.consume();
+                    return arguments;
+                } else {
+                    panic!(
+                        "{}",
+                        messages::m_parse_error_unexpected_token(
+                            &lexemes::L_RIGHT_PAREN.to_string()
+                        )
+                    );
+                }
+            }
+
+            if node.token_kind == TokenKind::Whitespace || node.token_kind == TokenKind::Comma {
+                self.consume();
+                continue;
+            }
+
+            arguments.push(Box::new(node));
+        }
+
+        arguments
+    }
+
+    fn consume_fn(&mut self, token_kind: TokenKind) -> Option<AstNode> {
+        self.context_fn_count += 1;
+        let next = self.get_next_token();
+
+        if next.is_none() {
+            panic!(
+                "{}",
+                messages::m_parse_error_unexpected_token(&format!("{:?}", token_kind))
+            );
+        }
+
+        let next = next.unwrap();
+
+        if next.kind == TokenKind::LeftParen {
+            self.skip_tokens(1);
+            return Some(AstNode::new(token_kind, self.consume_fn_arguments()));
+        } else if next.kind == TokenKind::Whitespace {
+            self.consume();
+            let next = self.get_next_token();
+
+            if next.is_none() {
+                panic!(
+                    "{}",
+                    messages::m_parse_error_unexpected_token(&format!("{:?}", token_kind))
+                );
+            }
+
+            if next.unwrap().kind == TokenKind::LeftParen {
+                self.skip_tokens(1);
+                return Some(AstNode::new(token_kind, self.consume_fn_arguments()));
+            } else {
+                panic!(
+                    "{}",
+                    messages::m_parse_error_unexpected_token(&format!("{:?}", token_kind))
+                );
+            }
+        } else {
+            panic!(
+                "{}",
+                messages::m_parse_error_unexpected_token(&format!("{:?}", token_kind))
+            );
         }
     }
 }
