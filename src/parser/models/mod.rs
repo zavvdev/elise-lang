@@ -1,6 +1,6 @@
 pub mod ast;
 
-use self::ast::AstNode;
+use self::ast::{AstNode, AstNodeKind};
 use crate::{
     lexer::{
         lexemes,
@@ -17,7 +17,6 @@ use crate::{
 pub struct Parser {
     tokens: Vec<Token>,
     token_pos: usize,
-    context_fn_count: usize,
 }
 
 impl Parser {
@@ -25,7 +24,6 @@ impl Parser {
         Self {
             tokens,
             token_pos: 0,
-            context_fn_count: 0,
         }
     }
 
@@ -40,16 +38,16 @@ impl Parser {
             return None;
         }
 
-        let current_token = self.tokens.get(self.token_pos)?;
+        let current_token = self.get_current_token()?;
 
         match current_token.kind {
             TokenKind::Int(x) => self.consume_int(x),
             TokenKind::Float(x) => self.consume_float(x),
             TokenKind::Minus => self.consume_negative_number(),
-            TokenKind::FnAdd => self.consume_fn(TokenKind::FnAdd),
-            TokenKind::RightParen => Some(AstNode::new(TokenKind::RightParen, vec![])),
-            TokenKind::Whitespace => Some(AstNode::new(TokenKind::Whitespace, vec![])),
-            TokenKind::Comma => Some(AstNode::new(TokenKind::Comma, vec![])),
+            TokenKind::FnAdd => self.consume_known_fn(AstNodeKind::FnAdd),
+            TokenKind::RightParen => Some(AstNode::new(AstNodeKind::_EndOfFn, vec![])),
+            TokenKind::Whitespace => Some(AstNode::new(AstNodeKind::_Separator, vec![])),
+            TokenKind::Comma => Some(AstNode::new(AstNodeKind::_ArgumentSeparator, vec![])),
             _ => None,
         }
     }
@@ -88,8 +86,19 @@ impl Parser {
         current_token
     }
 
+    fn get_current_token(&self) -> Option<&Token> {
+        self.tokens.get(self.token_pos)
+    }
+
     fn get_next_token(&self) -> Option<&Token> {
         self.tokens.get(self.token_pos + 1)
+    }
+
+    fn panic_at_current_token(&self) -> ! {
+        panic!(
+            "{}",
+            messages::m_unexpected_token(&format!("{:?}", self.get_current_token()))
+        );
     }
 
     // ==========================
@@ -98,14 +107,14 @@ impl Parser {
 
     // ==========================
 
-    fn consume_int(&mut self, int: types::Integer) -> Option<AstNode> {
+    fn consume_int(&mut self, x: types::Integer) -> Option<AstNode> {
         self.consume();
-        Some(AstNode::new(TokenKind::Int(int), vec![]))
+        Some(AstNode::new(ast::AstNodeKind::Int(x), vec![]))
     }
 
-    fn consume_float(&mut self, float: types::Float) -> Option<AstNode> {
+    fn consume_float(&mut self, x: types::Float) -> Option<AstNode> {
         self.consume();
-        Some(AstNode::new(TokenKind::Float(float), vec![]))
+        Some(AstNode::new(AstNodeKind::Float(x), vec![]))
     }
 
     fn consume_negative_number(&mut self) -> Option<AstNode> {
@@ -114,7 +123,7 @@ impl Parser {
         if next.is_none() {
             panic!(
                 "{}",
-                messages::m_parse_error_unexpected_token(&lexemes::L_MINUS.to_string())
+                messages::m_unexpected_token(&lexemes::L_MINUS.to_string())
             );
         }
 
@@ -122,15 +131,12 @@ impl Parser {
 
         if let TokenKind::Int(x) = next.kind {
             self.skip_tokens(1);
-            return Some(AstNode::new(TokenKind::Int(x * -1), vec![]));
+            return Some(AstNode::new(AstNodeKind::Int(x * -1), vec![]));
         } else if let TokenKind::Float(x) = next.kind {
             self.skip_tokens(1);
-            return Some(AstNode::new(TokenKind::Float(x * -1.0), vec![]));
+            return Some(AstNode::new(AstNodeKind::Float(x * -1.0), vec![]));
         } else {
-            panic!(
-                "{}",
-                messages::m_parse_error_unexpected_token(&next.span.lexeme)
-            );
+            panic!("{}", messages::m_unexpected_token(&next.span.lexeme));
         }
     }
 
@@ -144,22 +150,13 @@ impl Parser {
         let mut arguments: Vec<Box<AstNode>> = Vec::new();
 
         while let Some(node) = self.next_node() {
-            if let TokenKind::RightParen = node.token_kind {
-                if self.context_fn_count > 0 {
-                    self.context_fn_count -= 1;
-                    self.consume();
-                    return arguments;
-                } else {
-                    panic!(
-                        "{}",
-                        messages::m_parse_error_unexpected_token(
-                            &lexemes::L_RIGHT_PAREN.to_string()
-                        )
-                    );
-                }
+            if let AstNodeKind::_EndOfFn = node.kind {
+                self.consume();
+                return arguments;
             }
 
-            if node.token_kind == TokenKind::Whitespace || node.token_kind == TokenKind::Comma {
+            if node.kind == AstNodeKind::_Separator || node.kind == AstNodeKind::_ArgumentSeparator
+            {
                 self.consume();
                 continue;
             }
@@ -170,47 +167,40 @@ impl Parser {
         arguments
     }
 
-    fn consume_fn(&mut self, token_kind: TokenKind) -> Option<AstNode> {
-        self.context_fn_count += 1;
+    fn consume_known_fn(&mut self, known_fn_node_kind: AstNodeKind) -> Option<AstNode> {
         let next = self.get_next_token();
 
         if next.is_none() {
-            panic!(
-                "{}",
-                messages::m_parse_error_unexpected_token(&format!("{:?}", token_kind))
-            );
+            self.panic_at_current_token();
         }
 
         let next = next.unwrap();
 
         if next.kind == TokenKind::LeftParen {
             self.skip_tokens(1);
-            return Some(AstNode::new(token_kind, self.consume_fn_arguments()));
+            return Some(AstNode::new(
+                known_fn_node_kind,
+                self.consume_fn_arguments(),
+            ));
         } else if next.kind == TokenKind::Whitespace {
             self.consume();
             let next = self.get_next_token();
 
             if next.is_none() {
-                panic!(
-                    "{}",
-                    messages::m_parse_error_unexpected_token(&format!("{:?}", token_kind))
-                );
+                self.panic_at_current_token();
             }
 
             if next.unwrap().kind == TokenKind::LeftParen {
                 self.skip_tokens(1);
-                return Some(AstNode::new(token_kind, self.consume_fn_arguments()));
+                return Some(AstNode::new(
+                    known_fn_node_kind,
+                    self.consume_fn_arguments(),
+                ));
             } else {
-                panic!(
-                    "{}",
-                    messages::m_parse_error_unexpected_token(&format!("{:?}", token_kind))
-                );
+                self.panic_at_current_token();
             }
         } else {
-            panic!(
-                "{}",
-                messages::m_parse_error_unexpected_token(&format!("{:?}", token_kind))
-            );
+            self.panic_at_current_token();
         }
     }
 }

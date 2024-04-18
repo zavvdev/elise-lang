@@ -71,4 +71,4 @@ Takes input data from lexer and builds an Abstract Syntax Tree data structure or
 
 ## Semantic Analyser
 
-Semantic Analysis it's a process to help us determine whether a program makes sense, and that it has meaning, according to a language definition. For example, the variables that are used in source code are defined, the function is in some scope etc.
+Semantic Analysis it's a process to help us determine whether a program makes sense, and that it has meaning, according to a language definition. For example, the variables that are used in source code are defined, the function is in some scope or uses correct arguments etc.

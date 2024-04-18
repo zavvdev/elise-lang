@@ -18,6 +18,8 @@ pub fn parse(tokens: Vec<Token>) -> Vec<AstNode> {
 
 #[cfg(test)]
 mod tests {
+    use tests::models::ast::AstNodeKind;
+
     use crate::lexer::{
         lexemes::{self, fn_lexeme_to_string},
         models::token::{TokenKind, TokenSpan},
@@ -39,8 +41,8 @@ mod tests {
                 span: TokenSpan::new(0, 2, "42".to_string())
             }]),
             vec![AstNode {
-                token_kind: TokenKind::Int(42),
-                branches: vec![],
+                kind: AstNodeKind::Int(42),
+                args: vec![],
             }]
         );
     }
@@ -59,8 +61,8 @@ mod tests {
                 }
             ]),
             vec![AstNode {
-                token_kind: TokenKind::Int(-2),
-                branches: vec![],
+                kind: AstNodeKind::Int(-2),
+                args: vec![],
             }]
         );
     }
@@ -73,8 +75,8 @@ mod tests {
                 span: TokenSpan::new(0, 3, "4.2".to_string())
             }]),
             vec![AstNode {
-                token_kind: TokenKind::Float(4.2),
-                branches: vec![],
+                kind: AstNodeKind::Float(4.2),
+                args: vec![],
             }]
         );
     }
@@ -93,8 +95,8 @@ mod tests {
                 }
             ]),
             vec![AstNode {
-                token_kind: TokenKind::Float(-5.6),
-                branches: vec![],
+                kind: AstNodeKind::Float(-5.6),
+                args: vec![],
             }]
         );
     }
@@ -106,7 +108,7 @@ mod tests {
     // ==========================
 
     #[test]
-    #[should_panic(expected = "Parse error. Unexpected token \"-\"")]
+    #[should_panic(expected = "Unexpected token \"-\"")]
     fn test_unexpected_token_trailing_minus() {
         parse(vec![Token {
             kind: TokenKind::Minus,
@@ -115,7 +117,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Parse error. Unexpected token \"@add\"")]
+    #[should_panic(expected = "Unexpected token \"@add\"")]
     fn test_unexpected_token_minus() {
         parse(vec![
             Token {
