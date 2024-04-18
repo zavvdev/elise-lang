@@ -138,7 +138,7 @@ mod tests {
     // ==========================
 
     #[test]
-    #[should_panic(expected = "Unexpected token")]
+    #[should_panic(expected = "Unexpected end of input")]
     fn test_known_function_unclosed_paren() {
         parse(vec![
             Token {
@@ -157,7 +157,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Unexpected token")]
+    #[should_panic(expected = "Unexpected end of input")]
     fn test_known_function_unclosed_paren_no_args() {
         parse(vec![
             Token {
@@ -172,7 +172,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Unexpected token")]
+    #[should_panic(expected = "Unexpected end of input")]
     fn test_known_function_unclosed_paren_nested() {
         parse(vec![
             Token {

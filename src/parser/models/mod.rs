@@ -14,6 +14,8 @@ use crate::{
 pub struct Parser {
     tokens: Vec<Token>,
     token_pos: usize,
+    fn_start_count: usize,
+    fn_end_count: usize,
 }
 
 impl Parser {
@@ -21,6 +23,8 @@ impl Parser {
         Self {
             tokens,
             token_pos: 0,
+            fn_start_count: 0,
+            fn_end_count: 0,
         }
     }
 
@@ -31,6 +35,10 @@ impl Parser {
     // ==========================
 
     pub fn next_node(&mut self) -> Option<AstNode> {
+        if self.fn_start_count != self.fn_end_count && self.get_current_token().is_none() {
+            panic!("{}", messages::m_unexpected_end_of_input());
+        }
+
         if self.token_pos > self.tokens.len() {
             return None;
         }
@@ -98,6 +106,24 @@ impl Parser {
         );
     }
 
+    /**
+     *
+     * Should be used for counting function start
+     *
+     */
+    fn capture_fn(&mut self) {
+        self.fn_start_count += 1;
+    }
+
+    /**
+     *
+     * Should be used for counting function end
+     *
+     */
+    fn end_fn(&mut self) {
+        self.fn_end_count += 1;
+    }
+
     // ==========================
 
     //          Numbers
@@ -151,6 +177,7 @@ impl Parser {
         while let Some(node) = self.next_node() {
             if node.kind == AstNodeKind::_EndOfFn {
                 self.consume();
+                self.end_fn();
                 return arguments;
             }
 
@@ -187,6 +214,7 @@ impl Parser {
 
         if next.kind == TokenKind::LeftParen {
             self.skip_tokens(1);
+            self.capture_fn();
 
             return Some(AstNode::new(
                 known_fn_node_kind,
