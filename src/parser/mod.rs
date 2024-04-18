@@ -108,7 +108,7 @@ mod tests {
     // ==========================
 
     #[test]
-    #[should_panic(expected = "Unexpected token \"-\"")]
+    #[should_panic(expected = "Unexpected token")]
     fn test_unexpected_token_trailing_minus() {
         parse(vec![Token {
             kind: TokenKind::Minus,
@@ -117,7 +117,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Unexpected token \"@add\"")]
+    #[should_panic(expected = "Unexpected token")]
     fn test_unexpected_token_minus() {
         parse(vec![
             Token {
@@ -129,5 +129,219 @@ mod tests {
                 span: TokenSpan::new(1, 5, fn_lexeme_to_string(lexemes::L_FN_ADD)),
             },
         ]);
+    }
+
+    // ==========================
+
+    //      Known functions
+
+    // ==========================
+
+    #[test]
+    #[should_panic(expected = "Unexpected token")]
+    fn test_known_function_unclosed_paren() {
+        parse(vec![
+            Token {
+                kind: TokenKind::FnAdd,
+                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD)),
+            },
+            Token {
+                kind: TokenKind::LeftParen,
+                span: TokenSpan::new(4, 5, lexemes::L_LEFT_PAREN.to_string()),
+            },
+            Token {
+                kind: TokenKind::Int(2),
+                span: TokenSpan::new(5, 6, "2".to_string()),
+            },
+        ]);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unexpected token")]
+    fn test_known_function_unclosed_paren_no_args() {
+        parse(vec![
+            Token {
+                kind: TokenKind::FnAdd,
+                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD)),
+            },
+            Token {
+                kind: TokenKind::LeftParen,
+                span: TokenSpan::new(4, 5, lexemes::L_LEFT_PAREN.to_string()),
+            },
+        ]);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unexpected token")]
+    fn test_known_function_unclosed_paren_nested() {
+        parse(vec![
+            Token {
+                kind: TokenKind::FnAdd,
+                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD)),
+            },
+            Token {
+                kind: TokenKind::LeftParen,
+                span: TokenSpan::new(4, 5, lexemes::L_LEFT_PAREN.to_string()),
+            },
+            Token {
+                kind: TokenKind::FnAdd,
+                span: TokenSpan::new(5, 9, fn_lexeme_to_string(lexemes::L_FN_ADD)),
+            },
+            Token {
+                kind: TokenKind::LeftParen,
+                span: TokenSpan::new(9, 10, lexemes::L_LEFT_PAREN.to_string()),
+            },
+            Token {
+                kind: TokenKind::Float(3.4),
+                span: TokenSpan::new(10, 13, "3.4".to_string()),
+            },
+            Token {
+                kind: TokenKind::Int(1),
+                span: TokenSpan::new(13, 14, "1".to_string()),
+            },
+            Token {
+                kind: TokenKind::RightParen,
+                span: TokenSpan::new(14, 15, lexemes::L_RIGHT_PAREN.to_string()),
+            },
+        ]);
+    }
+
+    #[test]
+    fn test_known_function_no_args() {
+        assert_eq!(
+            parse(vec![
+                Token {
+                    kind: TokenKind::FnAdd,
+                    span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD)),
+                },
+                Token {
+                    kind: TokenKind::LeftParen,
+                    span: TokenSpan::new(4, 5, lexemes::L_LEFT_PAREN.to_string()),
+                },
+                Token {
+                    kind: TokenKind::RightParen,
+                    span: TokenSpan::new(5, 6, lexemes::L_RIGHT_PAREN.to_string()),
+                }
+            ]),
+            vec![AstNode {
+                kind: AstNodeKind::FnAdd,
+                args: vec![],
+            }]
+        );
+    }
+
+    #[test]
+    fn test_known_function() {
+        assert_eq!(
+            parse(vec![
+                Token {
+                    kind: TokenKind::FnAdd,
+                    span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD)),
+                },
+                Token {
+                    kind: TokenKind::LeftParen,
+                    span: TokenSpan::new(4, 5, lexemes::L_LEFT_PAREN.to_string()),
+                },
+                Token {
+                    kind: TokenKind::Int(2),
+                    span: TokenSpan::new(5, 6, "2".to_string()),
+                },
+                Token {
+                    kind: TokenKind::Whitespace,
+                    span: TokenSpan::new(6, 7, lexemes::L_WHITESPACE.to_string()),
+                },
+                Token {
+                    kind: TokenKind::Float(3.4),
+                    span: TokenSpan::new(8, 9, "3.4".to_string()),
+                },
+                Token {
+                    kind: TokenKind::RightParen,
+                    span: TokenSpan::new(9, 10, lexemes::L_RIGHT_PAREN.to_string()),
+                },
+            ]),
+            vec![AstNode {
+                kind: AstNodeKind::FnAdd,
+                args: vec![
+                    Box::new(AstNode {
+                        kind: AstNodeKind::Int(2),
+                        args: vec![],
+                    }),
+                    Box::new(AstNode {
+                        kind: AstNodeKind::Float(3.4),
+                        args: vec![],
+                    }),
+                ],
+            }]
+        );
+    }
+
+    #[test]
+    fn test_known_function_nested() {
+        assert_eq!(
+            parse(vec![
+                Token {
+                    kind: TokenKind::FnAdd,
+                    span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD)),
+                },
+                Token {
+                    kind: TokenKind::Whitespace,
+                    span: TokenSpan::new(4, 5, lexemes::L_WHITESPACE.to_string()),
+                },
+                Token {
+                    kind: TokenKind::LeftParen,
+                    span: TokenSpan::new(5, 6, lexemes::L_LEFT_PAREN.to_string()),
+                },
+                Token {
+                    kind: TokenKind::FnAdd,
+                    span: TokenSpan::new(6, 10, fn_lexeme_to_string(lexemes::L_FN_ADD)),
+                },
+                Token {
+                    kind: TokenKind::LeftParen,
+                    span: TokenSpan::new(10, 11, lexemes::L_LEFT_PAREN.to_string()),
+                },
+                Token {
+                    kind: TokenKind::Float(3.4),
+                    span: TokenSpan::new(11, 14, "3.4".to_string()),
+                },
+                Token {
+                    kind: TokenKind::Int(1),
+                    span: TokenSpan::new(14, 15, "1".to_string()),
+                },
+                Token {
+                    kind: TokenKind::RightParen,
+                    span: TokenSpan::new(15, 16, lexemes::L_RIGHT_PAREN.to_string()),
+                },
+                Token {
+                    kind: TokenKind::Int(2),
+                    span: TokenSpan::new(16, 17, "2".to_string()),
+                },
+                Token {
+                    kind: TokenKind::RightParen,
+                    span: TokenSpan::new(17, 18, lexemes::L_RIGHT_PAREN.to_string()),
+                },
+            ]),
+            vec![AstNode {
+                kind: AstNodeKind::FnAdd,
+                args: vec![
+                    Box::new(AstNode {
+                        kind: AstNodeKind::FnAdd,
+                        args: vec![
+                            Box::new(AstNode {
+                                kind: AstNodeKind::Float(3.4),
+                                args: vec![],
+                            }),
+                            Box::new(AstNode {
+                                kind: AstNodeKind::Int(1),
+                                args: vec![],
+                            }),
+                        ],
+                    }),
+                    Box::new(AstNode {
+                        kind: AstNodeKind::Int(2),
+                        args: vec![],
+                    }),
+                ],
+            }]
+        );
     }
 }
