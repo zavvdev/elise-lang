@@ -6,13 +6,16 @@ pub mod types;
 use lexer::tokenize;
 use parser::parse;
 
+// TODO:
+// [] Remove Whitespace tokens
+
 fn main() {
     let tokens = tokenize(
         "
         @add(
             @sub(4 2)
             @mul(2 2)
-            @div(4 2))        
+            @div(4 2)) 
     ",
     );
     let parser_ast = parse(tokens);
