@@ -1,6 +1,6 @@
 pub mod ast;
 
-use self::ast::{AstNode, AstNodeKind};
+use self::ast::{Expr, ExprKind};
 use crate::{
     lexer::models::token::{Token, TokenKind},
     messages, types,
@@ -34,7 +34,7 @@ impl Parser {
 
     // ==========================
 
-    pub fn next_node(&mut self) -> Option<AstNode> {
+    pub fn next_expr(&mut self) -> Option<Expr> {
         if self.fn_start_count != self.fn_end_count && self.get_current_token().is_none() {
             panic!("{}", messages::m_unexpected_end_of_input());
         }
@@ -49,13 +49,13 @@ impl Parser {
             TokenKind::Int(x) => self.consume_int(x),
             TokenKind::Float(x) => self.consume_float(x),
             TokenKind::Minus => self.consume_negative_number(),
-            TokenKind::FnAdd => self.consume_known_fn(AstNodeKind::FnAdd),
-            TokenKind::FnSub => self.consume_known_fn(AstNodeKind::FnSub),
-            TokenKind::FnMul => self.consume_known_fn(AstNodeKind::FnMul),
-            TokenKind::FnDiv => self.consume_known_fn(AstNodeKind::FnDiv),
-            TokenKind::RightParen => Some(AstNode::new(AstNodeKind::_EndOfFn, vec![])),
-            TokenKind::Whitespace => Some(AstNode::new(AstNodeKind::_Separator, vec![])),
-            TokenKind::Comma => Some(AstNode::new(AstNodeKind::_ArgumentSeparator, vec![])),
+            TokenKind::FnAdd => self.consume_known_fn(ExprKind::FnAdd),
+            TokenKind::FnSub => self.consume_known_fn(ExprKind::FnSub),
+            TokenKind::FnMul => self.consume_known_fn(ExprKind::FnMul),
+            TokenKind::FnDiv => self.consume_known_fn(ExprKind::FnDiv),
+            TokenKind::RightParen => Some(Expr::new(ExprKind::_EndOfFn, vec![])),
+            TokenKind::Whitespace => Some(Expr::new(ExprKind::_Separator, vec![])),
+            TokenKind::Comma => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
             _ => None,
         }
     }
@@ -133,17 +133,17 @@ impl Parser {
 
     // ==========================
 
-    fn consume_int(&mut self, x: types::Integer) -> Option<AstNode> {
+    fn consume_int(&mut self, x: types::Integer) -> Option<Expr> {
         self.consume();
-        Some(AstNode::new(ast::AstNodeKind::Int(x), vec![]))
+        Some(Expr::new(ast::ExprKind::Int(x), vec![]))
     }
 
-    fn consume_float(&mut self, x: types::Float) -> Option<AstNode> {
+    fn consume_float(&mut self, x: types::Float) -> Option<Expr> {
         self.consume();
-        Some(AstNode::new(AstNodeKind::Float(x), vec![]))
+        Some(Expr::new(ExprKind::Float(x), vec![]))
     }
 
-    fn consume_negative_number(&mut self) -> Option<AstNode> {
+    fn consume_negative_number(&mut self) -> Option<Expr> {
         let next = self.get_next_token();
 
         if next.is_none() {
@@ -154,10 +154,10 @@ impl Parser {
 
         if let TokenKind::Int(x) = next.kind {
             self.skip_tokens(1);
-            return Some(AstNode::new(AstNodeKind::Int(x * -1), vec![]));
+            return Some(Expr::new(ExprKind::Int(x * -1), vec![]));
         } else if let TokenKind::Float(x) = next.kind {
             self.skip_tokens(1);
-            return Some(AstNode::new(AstNodeKind::Float(x * -1.0), vec![]));
+            return Some(Expr::new(ExprKind::Float(x * -1.0), vec![]));
         } else {
             panic!("{}", messages::m_unexpected_token(&next.span.lexeme));
         }
@@ -174,23 +174,23 @@ impl Parser {
      * Can be used for consuming any function arguments
      *
      */
-    fn consume_fn_arguments(&mut self) -> Vec<Box<AstNode>> {
-        let mut arguments: Vec<Box<AstNode>> = Vec::new();
+    fn consume_fn_arguments(&mut self) -> Vec<Box<Expr>> {
+        let mut arguments: Vec<Box<Expr>> = Vec::new();
 
-        while let Some(node) = self.next_node() {
-            if node.kind == AstNodeKind::_EndOfFn {
+        while let Some(expr) = self.next_expr() {
+            if expr.kind == ExprKind::_EndOfFn {
                 self.consume();
                 self.end_fn();
                 return arguments;
             }
 
-            if node.kind == AstNodeKind::_Separator || node.kind == AstNodeKind::_ArgumentSeparator
+            if expr.kind == ExprKind::_Separator || expr.kind == ExprKind::_ArgumentSeparator
             {
                 self.consume();
                 continue;
             }
 
-            arguments.push(Box::new(node));
+            arguments.push(Box::new(expr));
         }
 
         arguments
@@ -201,7 +201,7 @@ impl Parser {
      * Should be used for consuming known functions only
      *
      */
-    fn consume_known_fn(&mut self, known_fn_node_kind: AstNodeKind) -> Option<AstNode> {
+    fn consume_known_fn(&mut self, known_fn_expr_kind: ExprKind) -> Option<Expr> {
         let next = self.get_next_token();
 
         if next.is_none() {
@@ -212,15 +212,15 @@ impl Parser {
 
         if next.kind == TokenKind::Whitespace {
             self.consume();
-            return self.consume_known_fn(known_fn_node_kind);
+            return self.consume_known_fn(known_fn_expr_kind);
         }
 
         if next.kind == TokenKind::LeftParen {
             self.skip_tokens(1);
             self.capture_fn();
 
-            return Some(AstNode::new(
-                known_fn_node_kind,
+            return Some(Expr::new(
+                known_fn_expr_kind,
                 self.consume_fn_arguments(),
             ));
         } else {

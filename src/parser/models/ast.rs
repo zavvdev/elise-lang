@@ -1,11 +1,14 @@
 use crate::types;
 
 #[derive(Debug, PartialEq)]
-pub enum AstNodeKind {
+pub enum ExprKind {
+    // For internal use
+    // TODO: Remove if possible
     _EndOfFn,
     _Separator,
     _ArgumentSeparator,
 
+    // Public
     Int(types::Integer),
     Float(types::Float),
     FnAdd,
@@ -15,13 +18,13 @@ pub enum AstNodeKind {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct AstNode {
-    pub kind: AstNodeKind,
-    pub args: Vec<Box<AstNode>>,
+pub struct Expr {
+    pub kind: ExprKind,
+    pub children: Vec<Box<Expr>>,
 }
 
-impl AstNode {
-    pub fn new(kind: AstNodeKind, args: Vec<Box<AstNode>>) -> Self {
-        Self { kind, args }
+impl Expr {
+    pub fn new(kind: ExprKind, children: Vec<Box<Expr>>) -> Self {
+        Self { kind, children }
     }
 }

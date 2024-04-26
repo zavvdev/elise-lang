@@ -1,24 +1,24 @@
 pub mod models;
 
-use self::models::{ast::AstNode, Parser};
+use self::models::{ast::Expr, Parser};
 use crate::lexer::models::token::Token;
 
-pub fn parse(tokens: Vec<Token>) -> Vec<AstNode> {
+pub fn parse(tokens: Vec<Token>) -> Vec<Expr> {
     let mut parser = Parser::new(tokens);
-    let mut nodes: Vec<AstNode> = Vec::new();
+    let mut expressions: Vec<Expr> = Vec::new();
 
-    while let Some(node) = parser.next_node() {
-        nodes.push(node);
+    while let Some(expr) = parser.next_expr() {
+        expressions.push(expr);
     }
 
-    nodes
+    expressions
 }
 
 // ======== Tests ========
 
 #[cfg(test)]
 mod tests {
-    use tests::models::ast::AstNodeKind;
+    use tests::models::ast::ExprKind;
 
     use crate::lexer::{
         lexemes::{self, fn_lexeme_to_string},
@@ -40,9 +40,9 @@ mod tests {
                 kind: TokenKind::Int(42),
                 span: TokenSpan::new(0, 2, "42".to_string())
             }]),
-            vec![AstNode {
-                kind: AstNodeKind::Int(42),
-                args: vec![],
+            vec![Expr {
+                kind: ExprKind::Int(42),
+                children: vec![],
             }]
         );
     }
@@ -60,9 +60,9 @@ mod tests {
                     span: TokenSpan::new(1, 2, "2".to_string())
                 }
             ]),
-            vec![AstNode {
-                kind: AstNodeKind::Int(-2),
-                args: vec![],
+            vec![Expr {
+                kind: ExprKind::Int(-2),
+                children: vec![],
             }]
         );
     }
@@ -74,9 +74,9 @@ mod tests {
                 kind: TokenKind::Float(4.2),
                 span: TokenSpan::new(0, 3, "4.2".to_string())
             }]),
-            vec![AstNode {
-                kind: AstNodeKind::Float(4.2),
-                args: vec![],
+            vec![Expr {
+                kind: ExprKind::Float(4.2),
+                children: vec![],
             }]
         );
     }
@@ -94,9 +94,9 @@ mod tests {
                     span: TokenSpan::new(1, 4, "5.6".to_string())
                 }
             ]),
-            vec![AstNode {
-                kind: AstNodeKind::Float(-5.6),
-                args: vec![],
+            vec![Expr {
+                kind: ExprKind::Float(-5.6),
+                children: vec![],
             }]
         );
     }
@@ -158,7 +158,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "Unexpected end of input")]
-    fn test_known_function_unclosed_paren_no_args() {
+    fn test_known_function_unclosed_paren_no_children() {
         parse(vec![
             Token {
                 kind: TokenKind::FnAdd,
@@ -207,7 +207,7 @@ mod tests {
     }
 
     #[test]
-    fn test_known_function_no_args() {
+    fn test_known_function_no_children() {
         assert_eq!(
             parse(vec![
                 Token {
@@ -223,9 +223,9 @@ mod tests {
                     span: TokenSpan::new(5, 6, lexemes::L_RIGHT_PAREN.to_string()),
                 }
             ]),
-            vec![AstNode {
-                kind: AstNodeKind::FnAdd,
-                args: vec![],
+            vec![Expr {
+                kind: ExprKind::FnAdd,
+                children: vec![],
             }]
         );
     }
@@ -259,16 +259,16 @@ mod tests {
                     span: TokenSpan::new(9, 10, lexemes::L_RIGHT_PAREN.to_string()),
                 },
             ]),
-            vec![AstNode {
-                kind: AstNodeKind::FnAdd,
-                args: vec![
-                    Box::new(AstNode {
-                        kind: AstNodeKind::Int(2),
-                        args: vec![],
+            vec![Expr {
+                kind: ExprKind::FnAdd,
+                children: vec![
+                    Box::new(Expr {
+                        kind: ExprKind::Int(2),
+                        children: vec![],
                     }),
-                    Box::new(AstNode {
-                        kind: AstNodeKind::Float(3.4),
-                        args: vec![],
+                    Box::new(Expr {
+                        kind: ExprKind::Float(3.4),
+                        children: vec![],
                     }),
                 ],
             }]
@@ -320,25 +320,25 @@ mod tests {
                     span: TokenSpan::new(17, 18, lexemes::L_RIGHT_PAREN.to_string()),
                 },
             ]),
-            vec![AstNode {
-                kind: AstNodeKind::FnAdd,
-                args: vec![
-                    Box::new(AstNode {
-                        kind: AstNodeKind::FnAdd,
-                        args: vec![
-                            Box::new(AstNode {
-                                kind: AstNodeKind::Float(3.4),
-                                args: vec![],
+            vec![Expr {
+                kind: ExprKind::FnAdd,
+                children: vec![
+                    Box::new(Expr {
+                        kind: ExprKind::FnAdd,
+                        children: vec![
+                            Box::new(Expr {
+                                kind: ExprKind::Float(3.4),
+                                children: vec![],
                             }),
-                            Box::new(AstNode {
-                                kind: AstNodeKind::Int(1),
-                                args: vec![],
+                            Box::new(Expr {
+                                kind: ExprKind::Int(1),
+                                children: vec![],
                             }),
                         ],
                     }),
-                    Box::new(AstNode {
-                        kind: AstNodeKind::Int(2),
-                        args: vec![],
+                    Box::new(Expr {
+                        kind: ExprKind::Int(2),
+                        children: vec![],
                     }),
                 ],
             }]
