@@ -5,7 +5,6 @@ pub enum ExprKind {
     // For internal use
     // TODO: Remove if possible
     _EndOfFn,
-    _Separator,
     _ArgumentSeparator,
 
     // Public

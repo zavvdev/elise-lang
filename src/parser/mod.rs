@@ -247,10 +247,6 @@ mod tests {
                     span: TokenSpan::new(5, 6, "2".to_string()),
                 },
                 Token {
-                    kind: TokenKind::Whitespace,
-                    span: TokenSpan::new(6, 7, lexemes::L_WHITESPACE.to_string()),
-                },
-                Token {
                     kind: TokenKind::Float(3.4),
                     span: TokenSpan::new(8, 9, "3.4".to_string()),
                 },
@@ -282,10 +278,6 @@ mod tests {
                 Token {
                     kind: TokenKind::FnAdd,
                     span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD)),
-                },
-                Token {
-                    kind: TokenKind::Whitespace,
-                    span: TokenSpan::new(4, 5, lexemes::L_WHITESPACE.to_string()),
                 },
                 Token {
                     kind: TokenKind::LeftParen,

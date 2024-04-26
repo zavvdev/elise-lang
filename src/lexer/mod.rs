@@ -1,13 +1,19 @@
 pub mod lexemes;
 pub mod models;
 
-use self::models::{token::Token, Lexer};
+use self::models::{
+    token::{Token, TokenKind},
+    Lexer,
+};
 
 pub fn tokenize(input: &str) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
     let mut lexer = Lexer::new(&input);
 
     while let Some(token) = lexer.next_token() {
+        if token.kind == TokenKind::Whitespace {
+            continue;
+        }
         tokens.push(token);
     }
 
@@ -85,33 +91,6 @@ mod tests {
         let overflowed = types::Float::MAX + 0.1;
         #[deny(arithmetic_overflow)]
         tokenize(&format!("1.{}", overflowed));
-    }
-
-    // ==========================
-
-    //         Whitespace
-
-    // ==========================
-
-    #[test]
-    fn test_tokenize_whitespace() {
-        assert_eq!(
-            tokenize("1 2"),
-            vec![
-                Token {
-                    kind: TokenKind::Int(1),
-                    span: TokenSpan::new(0, 1, "1".to_string()),
-                },
-                Token {
-                    kind: TokenKind::Whitespace,
-                    span: TokenSpan::new(1, 2, lexemes::L_WHITESPACE.to_string()),
-                },
-                Token {
-                    kind: TokenKind::Int(2),
-                    span: TokenSpan::new(2, 3, "2".to_string()),
-                }
-            ]
-        )
     }
 
     // ==========================

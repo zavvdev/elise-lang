@@ -54,7 +54,6 @@ impl Parser {
             TokenKind::FnMul => self.consume_known_fn(ExprKind::FnMul),
             TokenKind::FnDiv => self.consume_known_fn(ExprKind::FnDiv),
             TokenKind::RightParen => Some(Expr::new(ExprKind::_EndOfFn, vec![])),
-            TokenKind::Whitespace => Some(Expr::new(ExprKind::_Separator, vec![])),
             TokenKind::Comma => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
             _ => None,
         }
@@ -184,8 +183,7 @@ impl Parser {
                 return arguments;
             }
 
-            if expr.kind == ExprKind::_Separator || expr.kind == ExprKind::_ArgumentSeparator
-            {
+            if expr.kind == ExprKind::_ArgumentSeparator {
                 self.consume();
                 continue;
             }
@@ -210,19 +208,11 @@ impl Parser {
 
         let next = next.unwrap();
 
-        if next.kind == TokenKind::Whitespace {
-            self.consume();
-            return self.consume_known_fn(known_fn_expr_kind);
-        }
-
         if next.kind == TokenKind::LeftParen {
             self.skip_tokens(1);
             self.capture_fn();
 
-            return Some(Expr::new(
-                known_fn_expr_kind,
-                self.consume_fn_arguments(),
-            ));
+            return Some(Expr::new(known_fn_expr_kind, self.consume_fn_arguments()));
         } else {
             self.panic_at_current_token();
         }
