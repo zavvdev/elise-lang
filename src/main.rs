@@ -9,10 +9,11 @@ use parser::parse;
 fn main() {
     let tokens = tokenize(
         "
-        @add(
-            @sub(4 2)
-            @mul(2 2)
-            @div(4 2)) 
+        @print(
+            @add(
+                @sub(4 2)
+                @mul(2 2)
+                @div(4 2))) 
     ",
     );
     

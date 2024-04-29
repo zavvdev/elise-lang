@@ -14,6 +14,7 @@ pub enum ExprKind {
     FnSub,
     FnMul,
     FnDiv,
+    FnPrint,
 }
 
 #[derive(Debug, PartialEq)]

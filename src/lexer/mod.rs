@@ -258,4 +258,15 @@ mod tests {
             }]
         )
     }
+
+    #[test]
+    fn test_fn_print() {
+        assert_eq!(
+            tokenize("@print"),
+            vec![Token {
+                kind: TokenKind::FnPrint,
+                span: TokenSpan::new(0, 6, fn_lexeme_to_string(lexemes::L_FN_PRINT))
+            }]
+        )
+    }
 }

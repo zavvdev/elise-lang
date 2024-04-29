@@ -360,6 +360,10 @@ impl Lexer {
             return TokenKind::FnDiv;
         }
 
+        if fn_name == lexemes::L_FN_PRINT.1 {
+            return TokenKind::FnPrint;
+        }
+
         TokenKind::Unknown
     }
 }
