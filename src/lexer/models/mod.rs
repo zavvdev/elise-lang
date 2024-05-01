@@ -1,7 +1,7 @@
 pub mod number;
 pub mod token;
 
-use crate::{messages, types};
+use crate::{lexer::messages, types};
 
 use self::{
     number::{FloatPrecision, Number, ParsedNumber, FLOAT_SEPARATOR},
@@ -100,7 +100,7 @@ impl Lexer {
             let lexeme = self.input[start..end].to_string();
 
             if token_kind == TokenKind::Unknown {
-                panic!("{}", messages::m_unexpected_token(&lexeme));
+                panic!("{}", messages::unknown_lexeme(&lexeme));
             }
 
             let token_span = TokenSpan { start, end, lexeme };
@@ -230,21 +230,21 @@ impl Lexer {
             let is_digit = c.is_digit(10);
 
             if is_digit && is_int {
-                int = int.checked_mul(10).expect(&messages::m_int_overflow());
+                int = int.checked_mul(10).expect(&messages::int_overflow());
 
                 int = int
                     .checked_add(c.to_digit(10).unwrap() as types::Integer)
-                    .expect(&messages::m_int_overflow());
+                    .expect(&messages::int_overflow());
 
                 self.consume();
             } else if is_digit && !is_int {
                 precision = precision
                     .checked_mul(10)
-                    .expect(&messages::m_float_overflow());
+                    .expect(&messages::float_overflow());
 
                 precision = precision
                     .checked_add(c.to_digit(10).unwrap() as FloatPrecision)
-                    .expect(&messages::m_float_overflow());
+                    .expect(&messages::float_overflow());
 
                 self.consume();
             } else if c == FLOAT_SEPARATOR {

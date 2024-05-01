@@ -3,7 +3,8 @@ pub mod ast;
 use self::ast::{Expr, ExprKind};
 use crate::{
     lexer::models::token::{Token, TokenKind},
-    messages, types,
+    parser::messages,
+    types,
 };
 
 /**
@@ -36,7 +37,7 @@ impl Parser {
 
     pub fn next_expr(&mut self) -> Option<Expr> {
         if self.fn_start_count != self.fn_end_count && self.get_current_token().is_none() {
-            panic!("{}", messages::m_unexpected_end_of_input());
+            panic!("{}", messages::unexpected_end_of_input());
         }
 
         if self.token_pos > self.tokens.len() {
@@ -106,7 +107,7 @@ impl Parser {
     fn panic_at_current_token(&self) -> ! {
         panic!(
             "{}",
-            messages::m_unexpected_token(&format!("{:?}", self.get_current_token()))
+            messages::unexpected_token(&format!("{:?}", self.get_current_token()))
         );
     }
 
@@ -160,7 +161,7 @@ impl Parser {
             self.skip_tokens(1);
             return Some(Expr::new(ExprKind::Float(x * -1.0), vec![]));
         } else {
-            panic!("{}", messages::m_unexpected_token(&next.span.lexeme));
+            panic!("{}", messages::unexpected_token(&next.span.lexeme));
         }
     }
 

@@ -1,4 +1,5 @@
 pub mod models;
+pub mod messages;
 
 use self::models::{ast::Expr, Parser};
 use crate::lexer::models::token::Token;

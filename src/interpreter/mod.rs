@@ -1,5 +1,6 @@
 pub mod evaluator;
 pub mod models;
+pub mod messages;
 
 use self::evaluator::eval;
 use crate::parser::models::ast::Expr;

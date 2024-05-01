@@ -1,4 +1,5 @@
 pub mod lexemes;
+pub mod messages;
 pub mod models;
 
 use self::models::{
@@ -204,7 +205,7 @@ mod tests {
     // ==========================
 
     #[test]
-    #[should_panic(expected = "Unexpected token \"~\"")]
+    #[should_panic(expected = "Lexing error. Unknown lexeme \"~\"")]
     fn test_tokenize_unknown() {
         tokenize("~");
     }

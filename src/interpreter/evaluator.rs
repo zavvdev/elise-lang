@@ -1,5 +1,5 @@
 use crate::{
-    messages,
+    interpreter::messages,
     parser::models::ast::{Expr, ExprKind},
 };
 
@@ -11,7 +11,10 @@ pub fn eval(expr: &Expr) -> EvalResult {
         ExprKind::Float(x) => EvalResult::Float(x),
         ExprKind::FnPrint => eval_fn_print(expr, false),
         ExprKind::FnPrintLn => eval_fn_print(expr, true),
-        _ => panic!("{}", messages::m_unknown_expression()),
+        _ => panic!(
+            "{}",
+            messages::unknown_expression(&format!("{:?}", expr.kind))
+        ),
     }
 }
 
@@ -44,7 +47,7 @@ pub fn eval_for_fn_print(expr: &Expr) -> PrintEvalResult {
             EvalResult::Float(x) => {
                 result.push(x.to_string());
             }
-            x => panic!("{}", messages::m_unexpected_token(&format!("{:?}", x))),
+            x => panic!("{}", messages::invalid_expression(&format!("{:?}", x))),
         }
     }
 
