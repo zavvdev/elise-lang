@@ -364,6 +364,10 @@ impl Lexer {
             return TokenKind::FnPrint;
         }
 
+        if fn_name == lexemes::L_FN_PRINTLN.1 {
+            return TokenKind::FnPrintLn;
+        }
+
         TokenKind::Unknown
     }
 }

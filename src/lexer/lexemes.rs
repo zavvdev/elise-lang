@@ -18,6 +18,7 @@ pub const L_FN_SUB: (char, &str) = (L_FN, "sub");
 pub const L_FN_MUL: (char, &str) = (L_FN, "mul");
 pub const L_FN_DIV: (char, &str) = (L_FN, "div");
 pub const L_FN_PRINT: (char, &str) = (L_FN, "print");
+pub const L_FN_PRINTLN: (char, &str) = (L_FN, "println");
 
 pub fn fn_lexeme_to_string(lexeme: (char, &str)) -> String {
     format!("{}{}", lexeme.0, lexeme.1)

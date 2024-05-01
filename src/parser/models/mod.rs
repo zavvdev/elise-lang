@@ -54,6 +54,7 @@ impl Parser {
             TokenKind::FnMul => self.consume_known_fn(ExprKind::FnMul),
             TokenKind::FnDiv => self.consume_known_fn(ExprKind::FnDiv),
             TokenKind::FnPrint => self.consume_known_fn(ExprKind::FnPrint),
+            TokenKind::FnPrintLn => self.consume_known_fn(ExprKind::FnPrintLn),
             TokenKind::RightParen => Some(Expr::new(ExprKind::_EndOfFn, vec![])),
             TokenKind::Comma => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
             _ => None,

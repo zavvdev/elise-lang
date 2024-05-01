@@ -23,6 +23,7 @@ pub enum TokenKind {
     FnMul,
     FnDiv,
     FnPrint,
+    FnPrintLn,
 
     // Other
     Whitespace,

@@ -13,3 +13,7 @@ pub fn m_unexpected_token(x: &str) -> String {
 pub fn m_unexpected_end_of_input() -> String {
     format!("Unexpected end of input")
 }
+
+pub fn m_unknown_expression() -> String {
+    format!("Unknown expression")
+}
