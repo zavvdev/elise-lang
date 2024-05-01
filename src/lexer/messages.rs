@@ -7,5 +7,5 @@ pub fn float_overflow() -> String {
 }
 
 pub fn unknown_lexeme(x: &str) -> String {
-    format!("Lexing error. Unknown lexeme \"{}\"", x)
+    format!("Lexing error. Unknown lexeme \"{}\".", x)
 }
