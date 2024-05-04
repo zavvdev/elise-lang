@@ -47,8 +47,7 @@ impl Parser {
         let current_token = self.get_current_token()?;
 
         match current_token.kind {
-            TokenKind::Int(x) => self.consume_int(x),
-            TokenKind::Float(x) => self.consume_float(x),
+            TokenKind::Number(x) => self.consume_number(x),
             TokenKind::Minus => self.consume_negative_number(),
             TokenKind::FnAdd => self.consume_known_fn(ExprKind::FnAdd),
             TokenKind::FnSub => self.consume_known_fn(ExprKind::FnSub),
@@ -135,14 +134,9 @@ impl Parser {
 
     // ==========================
 
-    fn consume_int(&mut self, x: types::Integer) -> Option<Expr> {
+    fn consume_number(&mut self, x: types::Number) -> Option<Expr> {
         self.consume();
-        Some(Expr::new(ast::ExprKind::Int(x), vec![]))
-    }
-
-    fn consume_float(&mut self, x: types::Float) -> Option<Expr> {
-        self.consume();
-        Some(Expr::new(ExprKind::Float(x), vec![]))
+        Some(Expr::new(ExprKind::Number(x), vec![]))
     }
 
     fn consume_negative_number(&mut self) -> Option<Expr> {
@@ -154,12 +148,9 @@ impl Parser {
 
         let next = next.unwrap();
 
-        if let TokenKind::Int(x) = next.kind {
+        if let TokenKind::Number(x) = next.kind {
             self.skip_tokens(1);
-            return Some(Expr::new(ExprKind::Int(x * -1), vec![]));
-        } else if let TokenKind::Float(x) = next.kind {
-            self.skip_tokens(1);
-            return Some(Expr::new(ExprKind::Float(x * -1.0), vec![]));
+            return Some(Expr::new(ExprKind::Number(x * -1.0), vec![]));
         } else {
             panic!("{}", messages::unexpected_token(&next.span.lexeme));
         }

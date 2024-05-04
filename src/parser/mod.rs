@@ -1,5 +1,5 @@
-pub mod models;
 pub mod messages;
+pub mod models;
 
 use self::models::{ast::Expr, Parser};
 use crate::lexer::models::token::Token;
@@ -21,9 +21,12 @@ pub fn parse(tokens: Vec<Token>) -> Vec<Expr> {
 mod tests {
     use tests::models::ast::ExprKind;
 
-    use crate::lexer::{
-        lexemes::{self, fn_lexeme_to_string},
-        models::token::{TokenKind, TokenSpan},
+    use crate::{
+        lexer::{
+            lexemes::{self, fn_lexeme_to_string},
+            models::token::{TokenKind, TokenSpan},
+        },
+        types,
     };
 
     use super::*;
@@ -38,11 +41,11 @@ mod tests {
     fn test_parse_int() {
         assert_eq!(
             parse(vec![Token {
-                kind: TokenKind::Int(42),
+                kind: TokenKind::Number(42 as types::Number),
                 span: TokenSpan::new(0, 2, "42".to_string())
             }]),
             vec![Expr {
-                kind: ExprKind::Int(42),
+                kind: ExprKind::Number(42 as types::Number),
                 children: vec![],
             }]
         );
@@ -57,12 +60,12 @@ mod tests {
                     span: TokenSpan::new(0, 1, lexemes::L_MINUS.to_string())
                 },
                 Token {
-                    kind: TokenKind::Int(2),
+                    kind: TokenKind::Number(2 as types::Number),
                     span: TokenSpan::new(1, 2, "2".to_string())
                 }
             ]),
             vec![Expr {
-                kind: ExprKind::Int(-2),
+                kind: ExprKind::Number(-2 as types::Number),
                 children: vec![],
             }]
         );
@@ -72,11 +75,11 @@ mod tests {
     fn test_parse_float() {
         assert_eq!(
             parse(vec![Token {
-                kind: TokenKind::Float(4.2),
+                kind: TokenKind::Number(4.2),
                 span: TokenSpan::new(0, 3, "4.2".to_string())
             }]),
             vec![Expr {
-                kind: ExprKind::Float(4.2),
+                kind: ExprKind::Number(4.2),
                 children: vec![],
             }]
         );
@@ -91,12 +94,12 @@ mod tests {
                     span: TokenSpan::new(0, 1, lexemes::L_MINUS.to_string())
                 },
                 Token {
-                    kind: TokenKind::Float(5.6),
+                    kind: TokenKind::Number(5.6),
                     span: TokenSpan::new(1, 4, "5.6".to_string())
                 }
             ]),
             vec![Expr {
-                kind: ExprKind::Float(-5.6),
+                kind: ExprKind::Number(-5.6),
                 children: vec![],
             }]
         );
@@ -151,7 +154,7 @@ mod tests {
                 span: TokenSpan::new(4, 5, lexemes::L_LEFT_PAREN.to_string()),
             },
             Token {
-                kind: TokenKind::Int(2),
+                kind: TokenKind::Number(2 as types::Number),
                 span: TokenSpan::new(5, 6, "2".to_string()),
             },
         ]);
@@ -193,11 +196,11 @@ mod tests {
                 span: TokenSpan::new(9, 10, lexemes::L_LEFT_PAREN.to_string()),
             },
             Token {
-                kind: TokenKind::Float(3.4),
+                kind: TokenKind::Number(3.4),
                 span: TokenSpan::new(10, 13, "3.4".to_string()),
             },
             Token {
-                kind: TokenKind::Int(1),
+                kind: TokenKind::Number(1 as types::Number),
                 span: TokenSpan::new(13, 14, "1".to_string()),
             },
             Token {
@@ -244,11 +247,11 @@ mod tests {
                     span: TokenSpan::new(4, 5, lexemes::L_LEFT_PAREN.to_string()),
                 },
                 Token {
-                    kind: TokenKind::Int(2),
+                    kind: TokenKind::Number(2 as types::Number),
                     span: TokenSpan::new(5, 6, "2".to_string()),
                 },
                 Token {
-                    kind: TokenKind::Float(3.4),
+                    kind: TokenKind::Number(3.4),
                     span: TokenSpan::new(8, 9, "3.4".to_string()),
                 },
                 Token {
@@ -260,11 +263,11 @@ mod tests {
                 kind: ExprKind::FnAdd,
                 children: vec![
                     Box::new(Expr {
-                        kind: ExprKind::Int(2),
+                        kind: ExprKind::Number(2 as types::Number),
                         children: vec![],
                     }),
                     Box::new(Expr {
-                        kind: ExprKind::Float(3.4),
+                        kind: ExprKind::Number(3.4),
                         children: vec![],
                     }),
                 ],
@@ -293,11 +296,11 @@ mod tests {
                     span: TokenSpan::new(10, 11, lexemes::L_LEFT_PAREN.to_string()),
                 },
                 Token {
-                    kind: TokenKind::Float(3.4),
+                    kind: TokenKind::Number(3.4),
                     span: TokenSpan::new(11, 14, "3.4".to_string()),
                 },
                 Token {
-                    kind: TokenKind::Int(1),
+                    kind: TokenKind::Number(1 as types::Number),
                     span: TokenSpan::new(14, 15, "1".to_string()),
                 },
                 Token {
@@ -305,7 +308,7 @@ mod tests {
                     span: TokenSpan::new(15, 16, lexemes::L_RIGHT_PAREN.to_string()),
                 },
                 Token {
-                    kind: TokenKind::Int(2),
+                    kind: TokenKind::Number(2 as types::Number),
                     span: TokenSpan::new(16, 17, "2".to_string()),
                 },
                 Token {
@@ -320,17 +323,17 @@ mod tests {
                         kind: ExprKind::FnAdd,
                         children: vec![
                             Box::new(Expr {
-                                kind: ExprKind::Float(3.4),
+                                kind: ExprKind::Number(3.4),
                                 children: vec![],
                             }),
                             Box::new(Expr {
-                                kind: ExprKind::Int(1),
+                                kind: ExprKind::Number(1 as types::Number),
                                 children: vec![],
                             }),
                         ],
                     }),
                     Box::new(Expr {
-                        kind: ExprKind::Int(2),
+                        kind: ExprKind::Number(2 as types::Number),
                         children: vec![],
                     }),
                 ],
@@ -351,7 +354,7 @@ mod tests {
                     span: TokenSpan::new(6, 7, lexemes::L_LEFT_PAREN.to_string()),
                 },
                 Token {
-                    kind: TokenKind::Int(2),
+                    kind: TokenKind::Number(2 as types::Number),
                     span: TokenSpan::new(7, 8, "2".to_string()),
                 },
                 Token {
@@ -362,7 +365,7 @@ mod tests {
             vec![Expr {
                 kind: ExprKind::FnPrint,
                 children: vec![Box::new(Expr {
-                    kind: ExprKind::Int(2),
+                    kind: ExprKind::Number(2 as types::Number),
                     children: vec![],
                 }),],
             }]

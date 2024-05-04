@@ -21,6 +21,7 @@ mod tests {
             models::EvalResult,
         },
         parser::models::ast::{Expr, ExprKind},
+        types,
     };
 
     // ==========================
@@ -34,8 +35,8 @@ mod tests {
         let expr = Expr::new(
             ExprKind::FnPrint,
             vec![
-                Box::new(Expr::new(ExprKind::Int(1), vec![])),
-                Box::new(Expr::new(ExprKind::Float(1.4), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1.4), vec![])),
             ],
         );
 
@@ -58,7 +59,10 @@ mod tests {
             ExprKind::FnPrint,
             vec![Box::new(Expr::new(
                 ExprKind::FnPrint,
-                vec![Box::new(Expr::new(ExprKind::Int(1), vec![]))],
+                vec![Box::new(Expr::new(
+                    ExprKind::Number(1 as types::Number),
+                    vec![],
+                ))],
             ))],
         );
         eval_for_fn_print(&expr);
@@ -75,12 +79,12 @@ mod tests {
         let expr = Expr::new(
             ExprKind::FnAdd,
             vec![
-                Box::new(Expr::new(ExprKind::Int(1), vec![])),
-                Box::new(Expr::new(ExprKind::Int(2), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Int(3));
+        assert_eq!(eval(&expr), EvalResult::Number(3 as types::Number));
     }
 
     #[test]
@@ -88,12 +92,12 @@ mod tests {
         let expr = Expr::new(
             ExprKind::FnAdd,
             vec![
-                Box::new(Expr::new(ExprKind::Float(1.1), vec![])),
-                Box::new(Expr::new(ExprKind::Float(2.4), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1.1), vec![])),
+                Box::new(Expr::new(ExprKind::Number(2.4), vec![])),
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Float(3.5));
+        assert_eq!(eval(&expr), EvalResult::Number(3.5));
     }
 
     #[test]
@@ -101,11 +105,11 @@ mod tests {
         let expr = Expr::new(
             ExprKind::FnAdd,
             vec![
-                Box::new(Expr::new(ExprKind::Int(1), vec![])),
-                Box::new(Expr::new(ExprKind::Float(2.4), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(2.4), vec![])),
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Float(3.4));
+        assert_eq!(eval(&expr), EvalResult::Number(3.4));
     }
 }

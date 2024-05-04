@@ -1,22 +1,20 @@
-use crate::types;
-
-pub type FloatPrecision = u64;
-
 pub const FLOAT_SEPARATOR: char = '.';
 
-pub enum ParsedNumber {
-    Int(types::Integer),
-    Float(types::Float),
-}
+pub type BaseNumber = i64;
 
 #[derive(Debug)]
-pub struct Number {
-    pub int: types::Integer,
-    pub precision: FloatPrecision,
+pub struct ConsumedNumber {
+    pub int: BaseNumber,
+    pub precision: BaseNumber,
+    pub is_int: bool,
 }
 
-impl Number {
-    pub fn new(int: types::Integer, precision: FloatPrecision) -> Self {
-        Self { int, precision }
+impl ConsumedNumber {
+    pub fn new(int: BaseNumber, precision: BaseNumber, is_int: bool) -> Self {
+        Self {
+            int,
+            precision,
+            is_int,
+        }
     }
 }

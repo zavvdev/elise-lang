@@ -32,6 +32,8 @@ mod tests {
         models::token::{TokenKind, TokenSpan},
     };
 
+    use self::models::number::BaseNumber;
+
     use super::*;
     use crate::types;
 
@@ -46,7 +48,7 @@ mod tests {
         assert_eq!(
             tokenize("0"),
             vec![Token {
-                kind: TokenKind::Int(0),
+                kind: TokenKind::Number(0 as types::Number),
                 span: TokenSpan::new(0, 1, "0".to_string()),
             }]
         );
@@ -54,16 +56,16 @@ mod tests {
         assert_eq!(
             tokenize("99"),
             vec![Token {
-                kind: TokenKind::Int(99),
+                kind: TokenKind::Number(99 as types::Number),
                 span: TokenSpan::new(0, 2, "99".to_string()),
             }]
         );
     }
 
     #[test]
-    #[should_panic(expected = "Integer overflow")]
+    #[should_panic(expected = "Number overflow")]
     fn test_tokenize_int_overflow() {
-        tokenize(&format!("{}", Wrapping(types::Integer::MAX) + Wrapping(1)));
+        tokenize(&format!("{}", Wrapping(BaseNumber::MAX) + Wrapping(1)));
     }
 
     #[test]
@@ -71,7 +73,7 @@ mod tests {
         assert_eq!(
             tokenize("0.5"),
             vec![Token {
-                kind: TokenKind::Float(0.5),
+                kind: TokenKind::Number(0.5),
                 span: TokenSpan::new(0, 3, "0.5".to_string()),
             }]
         );
@@ -79,17 +81,17 @@ mod tests {
         assert_eq!(
             tokenize("99.9999"),
             vec![Token {
-                kind: TokenKind::Float(99.9999),
+                kind: TokenKind::Number(99.9999),
                 span: TokenSpan::new(0, 7, "99.9999".to_string()),
             }]
         )
     }
 
     #[test]
-    #[should_panic(expected = "Float overflow")]
+    #[should_panic(expected = "Number overflow")]
     fn test_tokenize_float_overflow() {
         #[allow(arithmetic_overflow)]
-        let overflowed = types::Float::MAX + 0.1;
+        let overflowed = types::Number::MAX + 0.1;
         #[deny(arithmetic_overflow)]
         tokenize(&format!("1.{}", overflowed));
     }

@@ -5,8 +5,7 @@ pub enum TokenKind {
     Unknown,
 
     // Data Types
-    Int(types::Integer),
-    Float(types::Float),
+    Number(types::Number),
 
     // Punctuation
     Minus,

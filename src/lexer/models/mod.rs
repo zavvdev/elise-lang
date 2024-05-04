@@ -4,7 +4,7 @@ pub mod token;
 use crate::{lexer::messages, types};
 
 use self::{
-    number::{FloatPrecision, Number, ParsedNumber, FLOAT_SEPARATOR},
+    number::{BaseNumber, ConsumedNumber, FLOAT_SEPARATOR},
     token::{Token, TokenKind, TokenSpan},
 };
 
@@ -61,12 +61,7 @@ impl Lexer {
             // ===============
             if Self::is_number(&char) {
                 let number = self.consume_number();
-                let parsed_number = Self::parse_number(number);
-
-                token_kind = match parsed_number {
-                    ParsedNumber::Int(int) => TokenKind::Int(int),
-                    ParsedNumber::Float(float) => TokenKind::Float(float),
-                };
+                token_kind = self.construct_number_token(number);
 
             // ===============
             // Whitespace
@@ -192,59 +187,33 @@ impl Lexer {
 
     /**
      *
-     * Should be used for parsing `Number` instance as `Float` with its precision
-     *
-     * TODO: find a better way of converting to float
+     * Analysing numeric sequence as `Number`
      *
      */
-    fn parse_float(number: Number) -> types::Float {
-        format!("{}.{}", number.int, number.precision)
-            .parse::<types::Float>()
-            .unwrap()
-    }
-
-    /**
-     *
-     * Should be used for parsing to either `Integer` or `Float` based on available precision
-     *
-     */
-    fn parse_number(number: Number) -> ParsedNumber {
-        if number.precision == 0 {
-            ParsedNumber::Int(number.int)
-        } else {
-            ParsedNumber::Float(Self::parse_float(number))
-        }
-    }
-
-    /**
-     *
-     * Analysing numeric sequence as `Integer` or `Float`
-     *
-     */
-    fn consume_number(&mut self) -> Number {
-        let mut int: types::Integer = 0;
-        let mut precision: FloatPrecision = 0;
+    fn consume_number(&mut self) -> ConsumedNumber {
+        let mut int: BaseNumber = 0;
+        let mut precision: BaseNumber = 0;
         let mut is_int = true;
 
         while let Some(c) = self.get_current_char() {
             let is_digit = c.is_digit(10);
 
             if is_digit && is_int {
-                int = int.checked_mul(10).expect(&messages::int_overflow());
+                int = int.checked_mul(10).expect(&messages::number_overflow());
 
                 int = int
-                    .checked_add(c.to_digit(10).unwrap() as types::Integer)
-                    .expect(&messages::int_overflow());
+                    .checked_add(c.to_digit(10).unwrap() as BaseNumber)
+                    .expect(&messages::number_overflow());
 
                 self.consume();
             } else if is_digit && !is_int {
                 precision = precision
                     .checked_mul(10)
-                    .expect(&messages::float_overflow());
+                    .expect(&messages::number_overflow());
 
                 precision = precision
-                    .checked_add(c.to_digit(10).unwrap() as FloatPrecision)
-                    .expect(&messages::float_overflow());
+                    .checked_add(c.to_digit(10).unwrap() as BaseNumber)
+                    .expect(&messages::number_overflow());
 
                 self.consume();
             } else if c == FLOAT_SEPARATOR {
@@ -255,7 +224,23 @@ impl Lexer {
             }
         }
 
-        Number { int, precision }
+        ConsumedNumber {
+            int,
+            precision,
+            is_int,
+        }
+    }
+
+    fn construct_number_token(&self, number: ConsumedNumber) -> TokenKind {
+        if number.is_int {
+            TokenKind::Number(number.int as types::Number)
+        } else {
+            TokenKind::Number(
+                format!("{}{}{}", number.int, FLOAT_SEPARATOR, number.precision)
+                    .parse::<types::Number>()
+                    .unwrap(),
+            )
+        }
     }
 
     // ==========================

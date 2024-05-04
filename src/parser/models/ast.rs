@@ -8,8 +8,7 @@ pub enum ExprKind {
     _ArgumentSeparator,
 
     // Public
-    Int(types::Integer),
-    Float(types::Float),
+    Number(types::Number),
     FnAdd,
     FnSub,
     FnMul,

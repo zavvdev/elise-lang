@@ -8,8 +8,7 @@ use super::models::EvalResult;
 
 pub fn eval(expr: &Expr) -> EvalResult {
     match expr.kind {
-        ExprKind::Int(x) => EvalResult::Int(x),
-        ExprKind::Float(x) => EvalResult::Float(x),
+        ExprKind::Number(x) => EvalResult::Number(x),
         ExprKind::FnPrint => eval_fn_print(expr, false),
         ExprKind::FnPrintLn => eval_fn_print(expr, true),
         ExprKind::FnAdd => eval_fn_add(expr),
@@ -43,10 +42,7 @@ pub fn eval_for_fn_print(expr: &Expr) -> PrintEvalResult {
         let child_res = eval(child);
 
         match child_res {
-            EvalResult::Int(x) => {
-                result.push(x.to_string());
-            }
-            EvalResult::Float(x) => {
+            EvalResult::Number(x) => {
                 result.push(x.to_string());
             }
             x => panic!("{}", messages::invalid_expression(&format!("{:?}", x))),
@@ -79,30 +75,21 @@ fn eval_fn_print(expr: &Expr, new_line: bool) -> EvalResult {
 
 fn eval_fn_add(expr: &Expr) -> EvalResult {
     if expr.children.len() == 0 {
-        return EvalResult::Int(0);
+        return EvalResult::Number(0 as types::Number);
     }
 
-    let mut result: types::Float = 0.0;
-    let mut is_float = false;
+    let mut result: types::Number = 0.0;
 
     for child in expr.children.iter() {
         let child_res = eval(child);
 
         match child_res {
-            EvalResult::Int(x) => {
-                result = result + x as types::Float;
-            }
-            EvalResult::Float(x) => {
+            EvalResult::Number(x) => {
                 result += x;
-                is_float = true;
             }
-            x => panic!("{}", messages::invalid_expression(&format!("{:?}", x))),
+            _ => panic!("{}", messages::add_fn_invalid_arg()),
         }
     }
 
-    if is_float {
-        return EvalResult::Float(result);
-    } else {
-        return EvalResult::Int(result as types::Integer);
-    }
+    EvalResult::Number(result)
 }
