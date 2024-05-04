@@ -1,6 +1,6 @@
 use crate::types;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum EvalResult {
     Nil,
     Int(types::Integer),

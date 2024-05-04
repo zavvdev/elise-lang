@@ -1,6 +1,7 @@
 use crate::{
     interpreter::messages,
     parser::models::ast::{Expr, ExprKind},
+    types,
 };
 
 use super::models::EvalResult;
@@ -11,6 +12,7 @@ pub fn eval(expr: &Expr) -> EvalResult {
         ExprKind::Float(x) => EvalResult::Float(x),
         ExprKind::FnPrint => eval_fn_print(expr, false),
         ExprKind::FnPrintLn => eval_fn_print(expr, true),
+        ExprKind::FnAdd => eval_fn_add(expr),
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
@@ -66,5 +68,41 @@ fn eval_fn_print(expr: &Expr, new_line: bool) -> EvalResult {
 
             return EvalResult::Nil;
         }
+    }
+}
+
+// ==========================
+
+//          Add Fn
+
+// ==========================
+
+fn eval_fn_add(expr: &Expr) -> EvalResult {
+    if expr.children.len() == 0 {
+        return EvalResult::Int(0);
+    }
+
+    let mut result: types::Float = 0.0;
+    let mut is_float = false;
+
+    for child in expr.children.iter() {
+        let child_res = eval(child);
+
+        match child_res {
+            EvalResult::Int(x) => {
+                result = result + x as types::Float;
+            }
+            EvalResult::Float(x) => {
+                result += x;
+                is_float = true;
+            }
+            x => panic!("{}", messages::invalid_expression(&format!("{:?}", x))),
+        }
+    }
+
+    if is_float {
+        return EvalResult::Float(result);
+    } else {
+        return EvalResult::Int(result as types::Integer);
     }
 }
