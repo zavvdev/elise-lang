@@ -112,4 +112,25 @@ mod tests {
 
         assert_eq!(eval(&expr), EvalResult::Number(3.4));
     }
+
+    #[test]
+    fn test_eval_fn_add_empty() {
+        let expr = Expr::new(ExprKind::FnAdd, vec![]);
+        assert_eq!(eval(&expr), EvalResult::Number(0 as types::Number));
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Interpretation error. Invalid arguments for function \"add\". Expected numbers."
+    )]
+    fn test_eval_fn_add_invalid() {
+        let expr = Expr::new(
+            ExprKind::FnAdd,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::FnPrint, vec![])),
+            ],
+        );
+        eval(&expr);
+    }
 }
