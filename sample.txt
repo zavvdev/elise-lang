@@ -1,1 +1,1 @@
-@println(@sub(1, -1.4))
+@println(@mul(2 2))

@@ -180,6 +180,19 @@ mod tests {
     }
 
     #[test]
+    fn test_eval_fn_sub_one() {
+        let expr = Expr::new(
+            ExprKind::FnSub,
+            vec![Box::new(Expr::new(
+                ExprKind::Number(1 as types::Number),
+                vec![],
+            ))],
+        );
+
+        assert_eq!(eval(&expr), EvalResult::Number(-1 as types::Number));
+    }
+
+    #[test]
     #[should_panic(
         expected = "Interpretation error. Invalid number of arguments (0) for function \"sub\"."
     )]
@@ -194,6 +207,87 @@ mod tests {
     fn test_eval_fn_sub_invalid() {
         let expr = Expr::new(
             ExprKind::FnSub,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::FnPrint, vec![])),
+            ],
+        );
+        eval(&expr);
+    }
+
+    // ==========================
+
+    //          Mul Fn
+
+    // ==========================
+
+    #[test]
+    fn test_eval_fn_mul_int() {
+        let expr = Expr::new(
+            ExprKind::FnMul,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(3 as types::Number), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr), EvalResult::Number(6 as types::Number));
+    }
+
+    #[test]
+    fn test_eval_fn_mul_float() {
+        let expr = Expr::new(
+            ExprKind::FnMul,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2.5), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1.1), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr), EvalResult::Number(2.75));
+    }
+
+    #[test]
+    fn test_eval_fn_mul() {
+        let expr = Expr::new(
+            ExprKind::FnMul,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(-1.4), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr), EvalResult::Number(-2.8));
+    }
+
+    #[test]
+    fn test_eval_fn_mul_one() {
+        let expr = Expr::new(
+            ExprKind::FnMul,
+            vec![Box::new(Expr::new(
+                ExprKind::Number(3 as types::Number),
+                vec![],
+            ))],
+        );
+
+        assert_eq!(eval(&expr), EvalResult::Number(3 as types::Number));
+    }
+
+    #[test]
+    fn test_eval_fn_mul_empty() {
+        assert_eq!(
+            eval(&Expr::new(ExprKind::FnMul, vec![],)),
+            EvalResult::Number(1 as types::Number)
+        );
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Interpretation error. Invalid arguments for function \"mul\". Expected numbers."
+    )]
+    fn test_eval_fn_mul_invalid() {
+        let expr = Expr::new(
+            ExprKind::FnMul,
             vec![
                 Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
                 Box::new(Expr::new(ExprKind::FnPrint, vec![])),

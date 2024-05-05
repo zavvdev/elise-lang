@@ -14,6 +14,7 @@ pub fn eval(expr: &Expr) -> EvalResult {
         ExprKind::FnPrintLn => eval_fn_print(expr, true),
         ExprKind::FnAdd => eval_fn_add(expr),
         ExprKind::FnSub => eval_fn_sub(expr),
+        ExprKind::FnMul => eval_fn_mul(expr),
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
@@ -123,6 +124,33 @@ fn eval_fn_sub(expr: &Expr) -> EvalResult {
                 }
             }
             _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_SUB.1)),
+        }
+    }
+
+    EvalResult::Number(result)
+}
+
+// ==========================
+
+//          Mul Fn
+
+// ==========================
+
+fn eval_fn_mul(expr: &Expr) -> EvalResult {
+    if expr.children.len() == 0 {
+        return EvalResult::Number(1 as types::Number);
+    }
+
+    let mut result = 1 as types::Number;
+
+    for child in expr.children.iter() {
+        let child_res = eval(child);
+
+        match child_res {
+            EvalResult::Number(x) => {
+                result *= x;
+            }
+            _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_MUL.1)),
         }
     }
 
