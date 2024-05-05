@@ -19,3 +19,7 @@ pub fn fn_no_args(fn_name: &str) -> String {
         fn_name
     )
 }
+
+pub fn division_by_zero() -> String {
+    format!("Interpretation error. Division by zero.")
+}

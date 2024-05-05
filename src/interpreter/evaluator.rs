@@ -15,6 +15,7 @@ pub fn eval(expr: &Expr) -> EvalResult {
         ExprKind::FnAdd => eval_fn_add(expr),
         ExprKind::FnSub => eval_fn_sub(expr),
         ExprKind::FnMul => eval_fn_mul(expr),
+        ExprKind::FnDiv => eval_fn_div(expr),
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
@@ -151,6 +152,43 @@ fn eval_fn_mul(expr: &Expr) -> EvalResult {
                 result *= x;
             }
             _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_MUL.1)),
+        }
+    }
+
+    EvalResult::Number(result)
+}
+
+// ==========================
+
+//          Div Fn
+
+// ==========================
+
+fn eval_fn_div(expr: &Expr) -> EvalResult {
+    if expr.children.len() == 0 {
+        panic!("{}", messages::fn_no_args(lexemes::L_FN_DIV.1));
+    }
+
+    let mut result = 1 as types::Number;
+
+    for (i, child) in expr.children.iter().enumerate() {
+        let child_res = eval(child);
+
+        match child_res {
+            EvalResult::Number(x) => {
+                if (i != 0 || expr.children.len() == 1) && x == 0.0 {
+                    panic!("{}", messages::division_by_zero());
+                }
+
+                if expr.children.len() == 1 {
+                    result = 1.0 / x;
+                } else if i == 0 {
+                    result = x;
+                } else {
+                    result /= x;
+                }
+            }
+            _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_DIV.1)),
         }
     }
 

@@ -295,4 +295,111 @@ mod tests {
         );
         eval(&expr);
     }
+
+    // ==========================
+
+    //          Div Fn
+
+    // ==========================
+
+    #[test]
+    fn test_eval_fn_div_int() {
+        let expr = Expr::new(
+            ExprKind::FnDiv,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(4 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr), EvalResult::Number(2 as types::Number));
+    }
+
+    #[test]
+    fn test_eval_fn_div_float() {
+        let expr = Expr::new(
+            ExprKind::FnDiv,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(5.5), vec![])),
+                Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr), EvalResult::Number(2.5));
+    }
+
+    #[test]
+    fn test_eval_fn_div() {
+        let expr = Expr::new(
+            ExprKind::FnDiv,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(-1.6), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr), EvalResult::Number(-1.25));
+    }
+
+    #[test]
+    fn test_eval_fn_div_one() {
+        let expr = Expr::new(
+            ExprKind::FnDiv,
+            vec![Box::new(Expr::new(
+                ExprKind::Number(2 as types::Number),
+                vec![],
+            ))],
+        );
+
+        assert_eq!(eval(&expr), EvalResult::Number(0.5));
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Interpretation error. Invalid number of arguments (0) for function \"div\"."
+    )]
+    fn test_eval_fn_div_empty() {
+        eval(&Expr::new(ExprKind::FnDiv, vec![]));
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Interpretation error. Invalid arguments for function \"div\". Expected numbers."
+    )]
+    fn test_eval_fn_div_invalid() {
+        let expr = Expr::new(
+            ExprKind::FnDiv,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::FnPrint, vec![])),
+            ],
+        );
+        eval(&expr);
+    }
+
+    #[test]
+    #[should_panic(expected = "Interpretation error. Division by zero.")]
+    fn test_eval_fn_div_division_by_zero_single_arg() {
+        let expr = Expr::new(
+            ExprKind::FnDiv,
+            vec![Box::new(Expr::new(
+                ExprKind::Number(0 as types::Number),
+                vec![],
+            ))],
+        );
+        eval(&expr);
+    }
+
+    #[test]
+    #[should_panic(expected = "Interpretation error. Division by zero.")]
+    fn test_eval_fn_div_division_by_zero() {
+        let expr = Expr::new(
+            ExprKind::FnDiv,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2.4), vec![])),
+                Box::new(Expr::new(ExprKind::Number(0 as types::Number), vec![])),
+            ],
+        );
+        eval(&expr);
+    }
 }
