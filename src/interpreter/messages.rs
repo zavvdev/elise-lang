@@ -6,6 +6,16 @@ pub fn unknown_expression(x: &str) -> String {
     format!("Interpretation error. Unknown expression \"{}\".", x)
 }
 
-pub fn add_fn_invalid_arg() -> String {
-    format!("Interpretation error. Invalid arguments for function \"add\". Expected numbers.")
+pub fn fn_expected_num_arg(fn_name: &str) -> String {
+    format!(
+        "Interpretation error. Invalid arguments for function \"{}\". Expected numbers.",
+        fn_name
+    )
+}
+
+pub fn fn_no_args(fn_name: &str) -> String {
+    format!(
+        "Interpretation error. Invalid number of arguments (0) for function \"{}\".",
+        fn_name
+    )
 }

@@ -1,5 +1,6 @@
 use crate::{
     interpreter::messages,
+    lexer::lexemes,
     parser::models::ast::{Expr, ExprKind},
     types,
 };
@@ -12,6 +13,7 @@ pub fn eval(expr: &Expr) -> EvalResult {
         ExprKind::FnPrint => eval_fn_print(expr, false),
         ExprKind::FnPrintLn => eval_fn_print(expr, true),
         ExprKind::FnAdd => eval_fn_add(expr),
+        ExprKind::FnSub => eval_fn_sub(expr),
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
@@ -87,7 +89,40 @@ fn eval_fn_add(expr: &Expr) -> EvalResult {
             EvalResult::Number(x) => {
                 result += x;
             }
-            _ => panic!("{}", messages::add_fn_invalid_arg()),
+            _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_ADD.1)),
+        }
+    }
+
+    EvalResult::Number(result)
+}
+
+// ==========================
+
+//          Sub Fn
+
+// ==========================
+
+fn eval_fn_sub(expr: &Expr) -> EvalResult {
+    if expr.children.len() == 0 {
+        panic!("{}", messages::fn_no_args(lexemes::L_FN_SUB.1));
+    }
+
+    let mut result: types::Number = 0.0;
+
+    for (i, child) in expr.children.iter().enumerate() {
+        let child_res = eval(child);
+
+        match child_res {
+            EvalResult::Number(x) => {
+                if expr.children.len() == 1 {
+                    result = -x;
+                } else if i == 0 {
+                    result = x;
+                } else {
+                    result -= x;
+                }
+            }
+            _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_SUB.1)),
         }
     }
 

@@ -133,4 +133,72 @@ mod tests {
         );
         eval(&expr);
     }
+
+    // ==========================
+
+    //          Sub Fn
+
+    // ==========================
+
+    #[test]
+    fn test_eval_fn_sub_int() {
+        let expr = Expr::new(
+            ExprKind::FnSub,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr), EvalResult::Number(1 as types::Number));
+    }
+
+    #[test]
+    fn test_eval_fn_sub_float() {
+        let expr = Expr::new(
+            ExprKind::FnSub,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2.5), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1.1), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr), EvalResult::Number(1.4));
+    }
+
+    #[test]
+    fn test_eval_fn_sub() {
+        let expr = Expr::new(
+            ExprKind::FnSub,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(-1.4), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr), EvalResult::Number(2.4));
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Interpretation error. Invalid number of arguments (0) for function \"sub\"."
+    )]
+    fn test_eval_fn_sub_empty() {
+        eval(&Expr::new(ExprKind::FnSub, vec![]));
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Interpretation error. Invalid arguments for function \"sub\". Expected numbers."
+    )]
+    fn test_eval_fn_sub_invalid() {
+        let expr = Expr::new(
+            ExprKind::FnSub,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::FnPrint, vec![])),
+            ],
+        );
+        eval(&expr);
+    }
 }
