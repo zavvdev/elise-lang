@@ -1,23 +1,16 @@
-pub mod interpreter;
-pub mod lexer;
-pub mod parser;
-pub mod types;
-
+use std::env;
 use std::fs;
 
-use interpreter::interpret;
-use lexer::tokenize;
-use parser::parse;
+use elise::config::Config;
 
 fn main() {
-    match fs::read_to_string("sample.txt") {
-        Ok(content) => {
-            let tokens = tokenize(&content);
-            let parser_ast = parse(tokens);
-            interpret(&parser_ast);
-        }
+    let args: Vec<String> = env::args().collect();
+    let config = Config::new(&args);
+
+    match fs::read_to_string(&config.filename) {
+        Ok(content) => elise::execute(content),
         Err(e) => {
-            println!("Cannot read sample.txt: {}", e);
+            println!("Cannot read {} file: {}", config.filename, e);
         }
     }
 }
