@@ -353,6 +353,10 @@ impl Lexer {
             return TokenKind::FnPrintLn;
         }
 
+        if fn_name == lexemes::L_FN_LET_BINDING.1 {
+            return TokenKind::FnLetBinding;
+        }
+
         TokenKind::Unknown
     }
 }

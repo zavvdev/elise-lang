@@ -272,4 +272,15 @@ mod tests {
             }]
         )
     }
+
+    #[test]
+    fn test_fn_let_binding() {
+        assert_eq!(
+            tokenize("@let"),
+            vec![Token {
+                kind: TokenKind::FnLetBinding,
+                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_LET_BINDING))
+            }]
+        )
+    }
 }
