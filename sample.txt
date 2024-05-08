@@ -1,6 +1,1 @@
-@println (
-  @mul (
-    @add (1 2)
-    @div (
-      10 
-      @sub (5 3))))
+@println(-42)

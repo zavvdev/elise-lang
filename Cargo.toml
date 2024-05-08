@@ -10,3 +10,7 @@ path = "src/main.rs"
 [lib]
 name = "elise"
 path = "src/lib.rs"
+
+[dependencies]
+assert-panic = "1.0.1"
+regex = "1.10.4"

@@ -13,7 +13,6 @@ pub enum TokenKind {
     RightParen,
     LeftSqrBr,
     RightSqrBr,
-    Colon,
     Comma,
 
     // Known functions
@@ -27,7 +26,7 @@ pub enum TokenKind {
 
     // Other
     Whitespace,
-    ReturnType,
+    Identifier(String),
 }
 
 #[derive(Debug, PartialEq)]

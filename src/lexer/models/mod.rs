@@ -1,6 +1,8 @@
 pub mod number;
 pub mod token;
 
+use regex::Regex;
+
 use crate::{lexer::messages, types};
 
 use self::{
@@ -8,7 +10,7 @@ use self::{
     token::{Token, TokenKind, TokenSpan},
 };
 
-use super::lexemes;
+use super::{config, lexemes};
 
 /**
  *
@@ -40,6 +42,24 @@ impl Lexer {
 
     // ==========================
 
+    pub fn distinguish_token_kind(&mut self, c: &char) -> TokenKind {
+        if Self::is_number(&c) {
+            let number = self.consume_number();
+            self.construct_number_token(number)
+        } else if Self::is_whitespace(&c) {
+            self.consume();
+            TokenKind::Whitespace
+        } else if Self::is_fn_start(&c) {
+            self.consume();
+            let fn_name = self.consume_known_fn_name();
+            Self::distinguish_known_fn(&fn_name)
+        } else if let Some(punctuation_token_kind) = self.consume_punctuation() {
+            punctuation_token_kind
+        } else {
+            self.consume_identifier()
+        }
+    }
+
     /**
      *
      * Analyze current character/character seq and return a Token instance
@@ -54,42 +74,7 @@ impl Lexer {
 
         current_char.map(|char| {
             let start = self.char_pos;
-            let mut token_kind = TokenKind::Unknown;
-
-            // ===============
-            // Number
-            // ===============
-            if Self::is_number(&char) {
-                let number = self.consume_number();
-                token_kind = self.construct_number_token(number);
-
-            // ===============
-            // Whitespace
-            // ===============
-            } else if Self::is_whitespace(&char) {
-                token_kind = TokenKind::Whitespace;
-                self.consume();
-
-            // ===============
-            // Functions
-            // ===============
-            } else if Self::is_fn_start(&char) {
-                self.consume();
-                let fn_name = self.consume_known_fn_name();
-                token_kind = Self::distinguish_known_fn(&fn_name);
-
-            // ===============
-            // Punctuations
-            // ===============
-            } else {
-                if let Some(punctuation_token_kind) = self.consume_punctuation() {
-                    token_kind = punctuation_token_kind
-                }
-            }
-
-            // ===============
-            // Construct Token
-            // ===============
+            let token_kind = self.distinguish_token_kind(&char);
 
             let end = self.char_pos;
             let lexeme = self.input[start..end].to_string();
@@ -147,27 +132,8 @@ impl Lexer {
         current_char
     }
 
-    /**
-     *
-     * Should be used for lexemes that consists of 2 characters
-     *
-     */
-    fn lex_potential_pair(
-        &mut self,
-        expected: char,
-        expected_token_kind: TokenKind,
-        fallback_token_kind: TokenKind,
-    ) -> TokenKind {
-        if let Some(next) = self.get_current_char() {
-            if next == expected {
-                self.consume();
-                expected_token_kind
-            } else {
-                fallback_token_kind
-            }
-        } else {
-            fallback_token_kind
-        }
+    fn is_separator(c: &char) -> bool {
+        *c == lexemes::L_WHITESPACE || *c == lexemes::L_COMMA
     }
 
     // ==========================
@@ -255,21 +221,21 @@ impl Lexer {
      *
      */
     fn consume_punctuation(&mut self) -> Option<TokenKind> {
-        let char = self.consume().unwrap();
+        let char = self.get_current_char()?;
 
-        match char {
-            lexemes::L_MINUS => Some(self.lex_potential_pair(
-                lexemes::L_RETURN_TYPE.1,
-                TokenKind::ReturnType,
-                TokenKind::Minus,
-            )),
+        if let Some(c) = match char {
+            lexemes::L_MINUS => Some(TokenKind::Minus),
             lexemes::L_LEFT_PAREN => Some(TokenKind::LeftParen),
             lexemes::L_RIGHT_PAREN => Some(TokenKind::RightParen),
             lexemes::L_LEFT_SQR_BR => Some(TokenKind::LeftSqrBr),
             lexemes::L_RIGHT_SQR_BR => Some(TokenKind::RightSqrBr),
-            lexemes::L_COLON => Some(TokenKind::Colon),
             lexemes::L_COMMA => Some(TokenKind::Comma),
             _ => None,
+        } {
+            self.consume();
+            Some(c)
+        } else {
+            None
         }
     }
 
@@ -358,5 +324,35 @@ impl Lexer {
         }
 
         TokenKind::Unknown
+    }
+
+    // ==========================
+
+    //         Identifier
+
+    // ==========================
+
+    fn is_identifier_end(c: &char) -> bool {
+        Self::is_separator(c) || *c == lexemes::L_RIGHT_PAREN || *c == lexemes::L_RIGHT_SQR_BR
+    }
+
+    fn consume_identifier(&mut self) -> TokenKind {
+        let re = Regex::new(config::IDENTIFIER_REGEX).unwrap();
+        let mut result = String::new();
+
+        while let Some(c) = self.get_current_char() {
+            if Self::is_identifier_end(&c) {
+                break;
+            }
+
+            result.push(c);
+            self.consume();
+        }
+
+        if !re.is_match(&result) {
+            panic!("{}", messages::invalid_identifier_name(&result));
+        }
+
+        TokenKind::Identifier(result)
     }
 }

@@ -1,3 +1,4 @@
+pub mod config;
 pub mod lexemes;
 pub mod messages;
 pub mod models;
@@ -27,6 +28,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
 mod tests {
     use std::num::Wrapping;
 
+    use assert_panic::assert_panic;
     use tests::{
         lexemes::fn_lexeme_to_string,
         models::token::{TokenKind, TokenSpan},
@@ -158,17 +160,6 @@ mod tests {
     }
 
     #[test]
-    fn test_tokenize_colon() {
-        assert_eq!(
-            tokenize(":"),
-            vec![Token {
-                kind: TokenKind::Colon,
-                span: TokenSpan::new(0, 1, lexemes::L_COLON.to_string())
-            }]
-        )
-    }
-
-    #[test]
     fn test_tokenize_comma() {
         assert_eq!(
             tokenize(","),
@@ -181,40 +172,19 @@ mod tests {
 
     // ==========================
 
-    //          Other
-
-    // ==========================
-
-    #[test]
-    fn test_tokenize_return_type() {
-        assert_eq!(
-            tokenize("->"),
-            vec![Token {
-                kind: TokenKind::ReturnType,
-                span: TokenSpan::new(
-                    0,
-                    2,
-                    format!("{}{}", lexemes::L_RETURN_TYPE.0, lexemes::L_RETURN_TYPE.1)
-                )
-            }]
-        )
-    }
-
-    // ==========================
-
     //      Unexpected Token
 
     // ==========================
 
     #[test]
-    #[should_panic(expected = "Lexing error. Unknown lexeme \"~\"")]
+    #[should_panic(expected = "Lexing error. Unknown lexeme \"@klk\"")]
     fn test_tokenize_unknown() {
-        tokenize("~");
+        tokenize("@klk");
     }
 
     // ==========================
 
-    //         Known functions
+    //      Known functions
 
     // ==========================
 
@@ -282,5 +252,124 @@ mod tests {
                 span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_LET_BINDING))
             }]
         )
+    }
+
+    // ==========================
+
+    //        Identifier
+
+    // ==========================
+
+    #[test]
+    fn test_valid_identifiers() {
+        assert_eq!(
+            tokenize("hello"),
+            vec![Token {
+                kind: TokenKind::Identifier("hello".to_string()),
+                span: TokenSpan::new(0, 5, "hello".to_string())
+            }]
+        );
+
+        assert_eq!(
+            tokenize("HELLO"),
+            vec![Token {
+                kind: TokenKind::Identifier("HELLO".to_string()),
+                span: TokenSpan::new(0, 5, "HELLO".to_string())
+            }]
+        );
+
+        assert_eq!(
+            tokenize("hello123"),
+            vec![Token {
+                kind: TokenKind::Identifier("hello123".to_string()),
+                span: TokenSpan::new(0, 8, "hello123".to_string())
+            }]
+        );
+
+        assert_eq!(
+            tokenize("hello_world"),
+            vec![Token {
+                kind: TokenKind::Identifier("hello_world".to_string()),
+                span: TokenSpan::new(0, 11, "hello_world".to_string())
+            }]
+        );
+
+        assert_eq!(
+            tokenize("hello-world"),
+            vec![Token {
+                kind: TokenKind::Identifier("hello-world".to_string()),
+                span: TokenSpan::new(0, 11, "hello-world".to_string())
+            }]
+        );
+
+        assert_eq!(
+            tokenize("hello?"),
+            vec![Token {
+                kind: TokenKind::Identifier("hello?".to_string()),
+                span: TokenSpan::new(0, 6, "hello?".to_string())
+            }]
+        );
+
+        assert_eq!(
+            tokenize("hello!"),
+            vec![Token {
+                kind: TokenKind::Identifier("hello!".to_string()),
+                span: TokenSpan::new(0, 6, "hello!".to_string())
+            }]
+        );
+
+        assert_eq!(
+            tokenize("hello_world-42"),
+            vec![Token {
+                kind: TokenKind::Identifier("hello_world-42".to_string()),
+                span: TokenSpan::new(0, 14, "hello_world-42".to_string())
+            }]
+        );
+
+        assert_eq!(
+            tokenize("_hello"),
+            vec![Token {
+                kind: TokenKind::Identifier("_hello".to_string()),
+                span: TokenSpan::new(0, 6, "_hello".to_string())
+            }]
+        );
+    }
+
+    #[test]
+    fn test_invalid_identifiers() {
+        let invalid_identifiers = vec![
+            "?hello",
+            "!hello",
+            "hello@world",
+            "hello#world",
+            "hello$world",
+            "hello%world",
+            "hello^world",
+            "hello&world",
+            "hello*world",
+            "hello+world",
+            "hello=world",
+            "hello/world",
+            "hello\\world",
+            "hello\"world",
+            "hello'world",
+            "hello>world",
+            "hello<world",
+            "hello;world",
+            "hello:world",
+        ];
+
+        for invalid_identifier in invalid_identifiers {
+            assert_panic!(
+                {
+                    tokenize(invalid_identifier);
+                },
+                String,
+                format!(
+                    "Lexing error. Invalid identifier name \"{}\".",
+                    invalid_identifier
+                )
+            );
+        }
     }
 }
