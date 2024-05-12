@@ -5,9 +5,9 @@ pub mod models;
 use self::{evaluator::eval, models::Env};
 use crate::parser::models::ast::Expr;
 
-pub fn interpret(exprs: Vec<&Expr>, _env: Env) {
+pub fn interpret(exprs: Vec<&Expr>, env: Env) {
     for expr in exprs {
-        eval(expr);
+        eval(expr, &env);
     }
 }
 
@@ -18,7 +18,7 @@ mod tests {
     use crate::{
         interpreter::{
             evaluator::{eval, eval_for_fn_print, PrintEvalResult},
-            models::EvalResult,
+            models::{Env, EnvRecord, EvalResult},
         },
         parser::models::ast::{Expr, ExprKind},
         types,
@@ -41,7 +41,7 @@ mod tests {
         );
 
         assert_eq!(
-            eval_for_fn_print(&expr),
+            eval_for_fn_print(&expr, &Env::new()),
             PrintEvalResult::Success("1 1.4".to_string())
         );
     }
@@ -49,7 +49,10 @@ mod tests {
     #[test]
     fn test_eval_for_fn_print_empty() {
         let expr = Expr::new(ExprKind::FnPrint, vec![]);
-        assert_eq!(eval_for_fn_print(&expr), PrintEvalResult::Empty);
+        assert_eq!(
+            eval_for_fn_print(&expr, &Env::new()),
+            PrintEvalResult::Empty
+        );
     }
 
     #[test]
@@ -65,7 +68,7 @@ mod tests {
                 ))],
             ))],
         );
-        eval_for_fn_print(&expr);
+        eval_for_fn_print(&expr, &Env::new());
     }
 
     // ==========================
@@ -84,7 +87,10 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(3 as types::Number));
+        assert_eq!(
+            eval(&expr, &Env::new()),
+            EvalResult::Number(3 as types::Number)
+        );
     }
 
     #[test]
@@ -97,7 +103,7 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(3.5));
+        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(3.5));
     }
 
     #[test]
@@ -110,13 +116,16 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(3.4));
+        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(3.4));
     }
 
     #[test]
     fn test_eval_fn_add_empty() {
         let expr = Expr::new(ExprKind::FnAdd, vec![]);
-        assert_eq!(eval(&expr), EvalResult::Number(0 as types::Number));
+        assert_eq!(
+            eval(&expr, &Env::new()),
+            EvalResult::Number(0 as types::Number)
+        );
     }
 
     #[test]
@@ -131,7 +140,7 @@ mod tests {
                 Box::new(Expr::new(ExprKind::FnPrint, vec![])),
             ],
         );
-        eval(&expr);
+        eval(&expr, &Env::new());
     }
 
     // ==========================
@@ -150,7 +159,10 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(1 as types::Number));
+        assert_eq!(
+            eval(&expr, &Env::new()),
+            EvalResult::Number(1 as types::Number)
+        );
     }
 
     #[test]
@@ -163,7 +175,7 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(1.4));
+        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(1.4));
     }
 
     #[test]
@@ -176,7 +188,7 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(2.4));
+        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(2.4));
     }
 
     #[test]
@@ -189,7 +201,10 @@ mod tests {
             ))],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(-1 as types::Number));
+        assert_eq!(
+            eval(&expr, &Env::new()),
+            EvalResult::Number(-1 as types::Number)
+        );
     }
 
     #[test]
@@ -197,7 +212,7 @@ mod tests {
         expected = "Interpretation error. Invalid number of arguments (0) for function \"sub\"."
     )]
     fn test_eval_fn_sub_empty() {
-        eval(&Expr::new(ExprKind::FnSub, vec![]));
+        eval(&Expr::new(ExprKind::FnSub, vec![]), &Env::new());
     }
 
     #[test]
@@ -212,7 +227,7 @@ mod tests {
                 Box::new(Expr::new(ExprKind::FnPrint, vec![])),
             ],
         );
-        eval(&expr);
+        eval(&expr, &Env::new());
     }
 
     // ==========================
@@ -231,7 +246,10 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(6 as types::Number));
+        assert_eq!(
+            eval(&expr, &Env::new()),
+            EvalResult::Number(6 as types::Number)
+        );
     }
 
     #[test]
@@ -244,7 +262,7 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(2.75));
+        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(2.75));
     }
 
     #[test]
@@ -257,7 +275,7 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(-2.8));
+        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(-2.8));
     }
 
     #[test]
@@ -270,13 +288,16 @@ mod tests {
             ))],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(3 as types::Number));
+        assert_eq!(
+            eval(&expr, &Env::new()),
+            EvalResult::Number(3 as types::Number)
+        );
     }
 
     #[test]
     fn test_eval_fn_mul_empty() {
         assert_eq!(
-            eval(&Expr::new(ExprKind::FnMul, vec![],)),
+            eval(&Expr::new(ExprKind::FnMul, vec![]), &Env::new()),
             EvalResult::Number(1 as types::Number)
         );
     }
@@ -293,7 +314,7 @@ mod tests {
                 Box::new(Expr::new(ExprKind::FnPrint, vec![])),
             ],
         );
-        eval(&expr);
+        eval(&expr, &Env::new());
     }
 
     // ==========================
@@ -312,7 +333,10 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(2 as types::Number));
+        assert_eq!(
+            eval(&expr, &Env::new()),
+            EvalResult::Number(2 as types::Number)
+        );
     }
 
     #[test]
@@ -325,7 +349,7 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(2.5));
+        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(2.5));
     }
 
     #[test]
@@ -338,7 +362,7 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(-1.25));
+        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(-1.25));
     }
 
     #[test]
@@ -351,7 +375,7 @@ mod tests {
             ))],
         );
 
-        assert_eq!(eval(&expr), EvalResult::Number(0.5));
+        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(0.5));
     }
 
     #[test]
@@ -359,7 +383,7 @@ mod tests {
         expected = "Interpretation error. Invalid number of arguments (0) for function \"div\"."
     )]
     fn test_eval_fn_div_empty() {
-        eval(&Expr::new(ExprKind::FnDiv, vec![]));
+        eval(&Expr::new(ExprKind::FnDiv, vec![]), &Env::new());
     }
 
     #[test]
@@ -374,7 +398,7 @@ mod tests {
                 Box::new(Expr::new(ExprKind::FnPrint, vec![])),
             ],
         );
-        eval(&expr);
+        eval(&expr, &Env::new());
     }
 
     #[test]
@@ -387,7 +411,7 @@ mod tests {
                 vec![],
             ))],
         );
-        eval(&expr);
+        eval(&expr, &Env::new());
     }
 
     #[test]
@@ -400,6 +424,37 @@ mod tests {
                 Box::new(Expr::new(ExprKind::Number(0 as types::Number), vec![])),
             ],
         );
-        eval(&expr);
+        eval(&expr, &Env::new());
+    }
+
+    // ==========================
+
+    //         Identifier
+
+    // ==========================
+
+    #[test]
+    fn test_eval_identifier() {
+        let mut env = Env::new();
+
+        env.set(
+            "x".to_string(),
+            EnvRecord {
+                value: EvalResult::Number(1.0),
+                mutable: false,
+            },
+        );
+
+        let expr = Expr::new(ExprKind::Identifier("x".to_string()), vec![]);
+
+        assert_eq!(eval(&expr, &env), EvalResult::Number(1.0));
+    }
+
+    #[test]
+    #[should_panic(expected = "Interpretation error. Undefined identifier \"x\".")]
+    fn test_eval_identifier_undefined() {
+        let env = Env::new();
+        let expr = Expr::new(ExprKind::Identifier("x".to_string()), vec![]);
+        eval(&expr, &env);
     }
 }

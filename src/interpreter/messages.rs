@@ -23,3 +23,7 @@ pub fn fn_no_args(fn_name: &str) -> String {
 pub fn division_by_zero() -> String {
     format!("Interpretation error. Division by zero.")
 }
+
+pub fn undefined_identifier(name: &str) -> String {
+    format!("Interpretation error. Undefined identifier \"{}\".", name)
+}

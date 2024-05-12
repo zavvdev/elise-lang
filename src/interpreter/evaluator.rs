@@ -5,17 +5,18 @@ use crate::{
     types,
 };
 
-use super::models::EvalResult;
+use super::models::{Env, EvalResult};
 
-pub fn eval(expr: &Expr) -> EvalResult {
-    match expr.kind {
-        ExprKind::Number(x) => EvalResult::Number(x),
-        ExprKind::FnPrint => eval_fn_print(expr, false),
-        ExprKind::FnPrintLn => eval_fn_print(expr, true),
-        ExprKind::FnAdd => eval_fn_add(expr),
-        ExprKind::FnSub => eval_fn_sub(expr),
-        ExprKind::FnMul => eval_fn_mul(expr),
-        ExprKind::FnDiv => eval_fn_div(expr),
+pub fn eval(expr: &Expr, env: &Env) -> EvalResult {
+    match &expr.kind {
+        ExprKind::Number(x) => EvalResult::Number(*x),
+        ExprKind::FnPrint => eval_fn_print(expr, false, env),
+        ExprKind::FnPrintLn => eval_fn_print(expr, true, env),
+        ExprKind::FnAdd => eval_fn_add(expr, env),
+        ExprKind::FnSub => eval_fn_sub(expr, env),
+        ExprKind::FnMul => eval_fn_mul(expr, env),
+        ExprKind::FnDiv => eval_fn_div(expr, env),
+        ExprKind::Identifier(x) => eval_identifier(x.to_string(), env),
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
@@ -35,7 +36,7 @@ pub enum PrintEvalResult {
     Success(String),
 }
 
-pub fn eval_for_fn_print(expr: &Expr) -> PrintEvalResult {
+pub fn eval_for_fn_print(expr: &Expr, env: &Env) -> PrintEvalResult {
     if expr.children.len() == 0 {
         return PrintEvalResult::Empty;
     }
@@ -43,7 +44,7 @@ pub fn eval_for_fn_print(expr: &Expr) -> PrintEvalResult {
     let mut result: Vec<String> = Vec::new();
 
     for child in expr.children.iter() {
-        let child_res = eval(child);
+        let child_res = eval(child, env);
 
         match child_res {
             EvalResult::Number(x) => {
@@ -56,8 +57,8 @@ pub fn eval_for_fn_print(expr: &Expr) -> PrintEvalResult {
     return PrintEvalResult::Success(result.join(" "));
 }
 
-fn eval_fn_print(expr: &Expr, new_line: bool) -> EvalResult {
-    match eval_for_fn_print(expr) {
+fn eval_fn_print(expr: &Expr, new_line: bool, env: &Env) -> EvalResult {
+    match eval_for_fn_print(expr, env) {
         PrintEvalResult::Empty => EvalResult::Nil,
         PrintEvalResult::Success(result) => {
             if new_line {
@@ -77,7 +78,7 @@ fn eval_fn_print(expr: &Expr, new_line: bool) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_add(expr: &Expr) -> EvalResult {
+fn eval_fn_add(expr: &Expr, env: &Env) -> EvalResult {
     if expr.children.len() == 0 {
         return EvalResult::Number(0 as types::Number);
     }
@@ -85,7 +86,7 @@ fn eval_fn_add(expr: &Expr) -> EvalResult {
     let mut result: types::Number = 0.0;
 
     for child in expr.children.iter() {
-        let child_res = eval(child);
+        let child_res = eval(child, env);
 
         match child_res {
             EvalResult::Number(x) => {
@@ -104,7 +105,7 @@ fn eval_fn_add(expr: &Expr) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_sub(expr: &Expr) -> EvalResult {
+fn eval_fn_sub(expr: &Expr, env: &Env) -> EvalResult {
     if expr.children.len() == 0 {
         panic!("{}", messages::fn_no_args(lexemes::L_FN_SUB.1));
     }
@@ -112,7 +113,7 @@ fn eval_fn_sub(expr: &Expr) -> EvalResult {
     let mut result: types::Number = 0.0;
 
     for (i, child) in expr.children.iter().enumerate() {
-        let child_res = eval(child);
+        let child_res = eval(child, env);
 
         match child_res {
             EvalResult::Number(x) => {
@@ -137,7 +138,7 @@ fn eval_fn_sub(expr: &Expr) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_mul(expr: &Expr) -> EvalResult {
+fn eval_fn_mul(expr: &Expr, env: &Env) -> EvalResult {
     if expr.children.len() == 0 {
         return EvalResult::Number(1 as types::Number);
     }
@@ -145,7 +146,7 @@ fn eval_fn_mul(expr: &Expr) -> EvalResult {
     let mut result = 1 as types::Number;
 
     for child in expr.children.iter() {
-        let child_res = eval(child);
+        let child_res = eval(child, env);
 
         match child_res {
             EvalResult::Number(x) => {
@@ -164,7 +165,7 @@ fn eval_fn_mul(expr: &Expr) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_div(expr: &Expr) -> EvalResult {
+fn eval_fn_div(expr: &Expr, env: &Env) -> EvalResult {
     if expr.children.len() == 0 {
         panic!("{}", messages::fn_no_args(lexemes::L_FN_DIV.1));
     }
@@ -172,7 +173,7 @@ fn eval_fn_div(expr: &Expr) -> EvalResult {
     let mut result = 1 as types::Number;
 
     for (i, child) in expr.children.iter().enumerate() {
-        let child_res = eval(child);
+        let child_res = eval(child, env);
 
         match child_res {
             EvalResult::Number(x) => {
@@ -193,4 +194,19 @@ fn eval_fn_div(expr: &Expr) -> EvalResult {
     }
 
     EvalResult::Number(result)
+}
+
+// ==========================
+
+//        Identifier
+
+// ==========================
+
+fn eval_identifier(name: String, env: &Env) -> EvalResult {
+    match env.get(&name) {
+        Some(x) => {
+            return x.value;
+        }
+        None => panic!("{}", messages::undefined_identifier(&name)),
+    }
 }

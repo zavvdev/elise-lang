@@ -2,15 +2,20 @@ use std::collections::HashMap;
 
 use crate::types;
 
-#[derive(Debug, PartialEq)]
+// Eval Result
+
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum EvalResult {
     Nil,
     Number(types::Number),
 }
 
+// Env
+
+#[derive(Copy, Clone)]
 pub struct EnvRecord {
-    value: EvalResult,
-    mutable: bool,
+    pub value: EvalResult,
+    pub mutable: bool,
 }
 
 pub struct Env {
