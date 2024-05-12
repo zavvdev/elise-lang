@@ -263,6 +263,14 @@ mod tests {
     #[test]
     fn test_valid_identifiers() {
         assert_eq!(
+            tokenize("x"),
+            vec![Token {
+                kind: TokenKind::Identifier("x".to_string()),
+                span: TokenSpan::new(0, 1, "x".to_string())
+            }]
+        );
+
+        assert_eq!(
             tokenize("hello"),
             vec![Token {
                 kind: TokenKind::Identifier("hello".to_string()),
