@@ -506,4 +506,24 @@ mod tests {
             span: TokenSpan::new(0, 1, lexemes::L_LEFT_SQR_BR.to_string()),
         }]);
     }
+
+    // ==========================
+
+    //        Identifier
+
+    // ==========================
+
+    #[test]
+    fn test_identifier() {
+        assert_eq!(
+            parse(vec![Token {
+                kind: TokenKind::Identifier("x".to_string()),
+                span: TokenSpan::new(0, 1, "x".to_string()),
+            }]),
+            vec![Expr {
+                kind: ExprKind::Identifier("x".to_string()),
+                children: vec![],
+            }]
+        );
+    }
 }

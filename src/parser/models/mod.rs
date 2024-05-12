@@ -49,8 +49,9 @@ impl Parser {
 
         let current_token = self.get_current_token()?;
 
-        match current_token.kind {
-            TokenKind::Number(x) => self.consume_number(x),
+        match &current_token.kind {
+            TokenKind::Number(x) => self.consume_number(*x),
+            TokenKind::Identifier(x) => self.consume_identifier(x.to_string()),
             TokenKind::Minus => self.consume_negative_number(),
             TokenKind::FnAdd => self.consume_known_fn(ExprKind::FnAdd),
             TokenKind::FnSub => self.consume_known_fn(ExprKind::FnSub),
@@ -242,4 +243,16 @@ impl Parser {
             self.consume_seq_arguments(ExprKind::_EndOfList),
         ))
     }
+
+    // ==========================
+
+    //         Identifier
+
+    // ==========================
+
+    fn consume_identifier(&mut self, x: String) -> Option<Expr> {
+        self.consume();
+        Some(Expr::new(ExprKind::Identifier(x), vec![]))
+    }
 }
+
