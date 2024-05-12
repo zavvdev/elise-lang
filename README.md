@@ -21,10 +21,10 @@ Example:
 
 ### ToDo
 
-[x] number
-[x] print function
-[x] basic arithmetics
-[x] value binding
-[ ] strings
-[ ] boolean
-[ ] conditions
+- [x] number
+- [x] print function
+- [x] basic arithmetics
+- [x] value binding
+- [ ] strings
+- [ ] boolean
+- [ ] conditions
