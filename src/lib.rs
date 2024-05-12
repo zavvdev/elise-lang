@@ -11,6 +11,5 @@ use parser::parse;
 pub fn execute(content: String) {
     let tokens = tokenize(&content);
     let ast = parse(tokens);
-    println!("{:?}", ast);
-    // interpret(&ast);
+    interpret(&ast);
 }
