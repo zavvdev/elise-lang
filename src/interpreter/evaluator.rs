@@ -51,7 +51,7 @@ pub fn eval_for_fn_print(expr: &Expr, env: &Env) -> PrintEvalResult {
             EvalResult::Number(x) => {
                 result.push(x.to_string());
             }
-            x => panic!("{}", messages::invalid_expression(&format!("{:?}", x))),
+            EvalResult::Nil => result.push(lexemes::L_NIL.to_string()),
         }
     }
 

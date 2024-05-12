@@ -20,6 +20,7 @@ mod tests {
             evaluator::{eval, eval_for_fn_print, PrintEvalResult},
             models::{Env, EnvRecord, EvalResult},
         },
+        lexer::lexemes,
         parser::models::ast::{Expr, ExprKind},
         types,
     };
@@ -56,8 +57,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn test_eval_for_fn_print_invalid() {
+    fn test_eval_for_nil() {
         let expr = Expr::new(
             ExprKind::FnPrint,
             vec![Box::new(Expr::new(
@@ -68,7 +68,10 @@ mod tests {
                 ))],
             ))],
         );
-        eval_for_fn_print(&expr, &Env::new());
+        assert_eq!(
+            eval_for_fn_print(&expr, &Env::new()),
+            PrintEvalResult::Success(lexemes::L_NIL.to_string())
+        );
     }
 
     // ==========================
