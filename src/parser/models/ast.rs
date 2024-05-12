@@ -5,16 +5,21 @@ pub enum ExprKind {
     // For internal use
     // TODO: Remove if possible
     _EndOfFn,
+    _EndOfList,
     _ArgumentSeparator,
 
     // Public
     Number(types::Number),
+    Identifier(String),
+    List,
+
     FnAdd,
     FnSub,
     FnMul,
     FnDiv,
     FnPrint,
     FnPrintLn,
+    FnLetBinding,
 }
 
 #[derive(Debug, PartialEq)]

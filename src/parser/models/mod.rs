@@ -15,8 +15,8 @@ use crate::{
 pub struct Parser {
     tokens: Vec<Token>,
     token_pos: usize,
-    fn_start_count: usize,
-    fn_end_count: usize,
+    seq_start_count: usize,
+    seq_end_count: usize,
 }
 
 impl Parser {
@@ -24,8 +24,8 @@ impl Parser {
         Self {
             tokens,
             token_pos: 0,
-            fn_start_count: 0,
-            fn_end_count: 0,
+            seq_start_count: 0,
+            seq_end_count: 0,
         }
     }
 
@@ -36,8 +36,11 @@ impl Parser {
     // ==========================
 
     pub fn next_expr(&mut self) -> Option<Expr> {
-        if self.fn_start_count != self.fn_end_count && self.get_current_token().is_none() {
+        if self.seq_start_count != self.seq_end_count && self.get_current_token().is_none() {
             panic!("{}", messages::unexpected_end_of_input());
+        } else if self.seq_start_count == self.seq_end_count {
+            self.seq_start_count = 0;
+            self.seq_end_count = 0;
         }
 
         if self.token_pos > self.tokens.len() {
@@ -55,8 +58,11 @@ impl Parser {
             TokenKind::FnDiv => self.consume_known_fn(ExprKind::FnDiv),
             TokenKind::FnPrint => self.consume_known_fn(ExprKind::FnPrint),
             TokenKind::FnPrintLn => self.consume_known_fn(ExprKind::FnPrintLn),
+            TokenKind::FnLetBinding => self.consume_known_fn(ExprKind::FnLetBinding),
             TokenKind::RightParen => Some(Expr::new(ExprKind::_EndOfFn, vec![])),
             TokenKind::Comma => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
+            TokenKind::LeftSqrBr => self.consume_list(),
+            TokenKind::RightSqrBr => Some(Expr::new(ExprKind::_EndOfList, vec![])),
             _ => None,
         }
     }
@@ -112,20 +118,46 @@ impl Parser {
 
     /**
      *
-     * Should be used for counting function start
+     * Should be used for counting start of sequense
      *
      */
-    fn capture_fn(&mut self) {
-        self.fn_start_count += 1;
+    fn capture_seq(&mut self) {
+        self.seq_start_count += 1;
     }
 
     /**
      *
-     * Should be used for counting function end
+     * Should be used for counting end of sequense
      *
      */
-    fn end_fn(&mut self) {
-        self.fn_end_count += 1;
+    fn end_seq(&mut self) {
+        self.seq_end_count += 1;
+    }
+
+    /**
+     *
+     * Can be used for consuming arguemnts of any sequentioan entity like function or list
+     *
+     */
+    fn consume_seq_arguments(&mut self, seq_end_expr: ExprKind) -> Vec<Box<Expr>> {
+        let mut arguments: Vec<Box<Expr>> = Vec::new();
+
+        while let Some(expr) = self.next_expr() {
+            if expr.kind == seq_end_expr {
+                self.consume();
+                self.end_seq();
+                return arguments;
+            }
+
+            if expr.kind == ExprKind::_ArgumentSeparator {
+                self.consume();
+                continue;
+            }
+
+            arguments.push(Box::new(expr));
+        }
+
+        arguments
     }
 
     // ==========================
@@ -164,32 +196,6 @@ impl Parser {
 
     /**
      *
-     * Can be used for consuming any function arguments
-     *
-     */
-    fn consume_fn_arguments(&mut self) -> Vec<Box<Expr>> {
-        let mut arguments: Vec<Box<Expr>> = Vec::new();
-
-        while let Some(expr) = self.next_expr() {
-            if expr.kind == ExprKind::_EndOfFn {
-                self.consume();
-                self.end_fn();
-                return arguments;
-            }
-
-            if expr.kind == ExprKind::_ArgumentSeparator {
-                self.consume();
-                continue;
-            }
-
-            arguments.push(Box::new(expr));
-        }
-
-        arguments
-    }
-
-    /**
-     *
      * Should be used for consuming known functions only
      *
      */
@@ -204,11 +210,36 @@ impl Parser {
 
         if next.kind == TokenKind::LeftParen {
             self.skip_tokens(1);
-            self.capture_fn();
+            self.capture_seq();
 
-            return Some(Expr::new(known_fn_expr_kind, self.consume_fn_arguments()));
+            return Some(Expr::new(
+                known_fn_expr_kind,
+                self.consume_seq_arguments(ExprKind::_EndOfFn),
+            ));
         } else {
             self.panic_at_current_token();
         }
+    }
+
+    // ==========================
+
+    //           List
+
+    // ==========================
+
+    fn consume_list(&mut self) -> Option<Expr> {
+        let next = self.get_next_token();
+
+        if next.is_none() {
+            self.panic_at_current_token();
+        }
+
+        self.consume();
+        self.capture_seq();
+
+        Some(Expr::new(
+            ExprKind::List,
+            self.consume_seq_arguments(ExprKind::_EndOfList),
+        ))
     }
 }
