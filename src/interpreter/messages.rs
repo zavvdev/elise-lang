@@ -27,3 +27,15 @@ pub fn division_by_zero() -> String {
 pub fn undefined_identifier(name: &str) -> String {
     format!("Interpretation error. Undefined identifier \"{}\".", name)
 }
+
+pub fn bind_value_not_found() -> String {
+    format!("Interpretation error. Value for binding not found.")
+}
+
+pub fn non_identifier(x: &str) -> String {
+    format!("Interpretation error. \"{}\" is not an identifier.", x)
+}
+
+pub fn identifier_exists(x: &str) -> String {
+    format!("Interpretation error. Identifier \"{}\" already exists.", x)
+}

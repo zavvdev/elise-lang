@@ -5,7 +5,7 @@ use crate::{
     types,
 };
 
-use super::models::{Env, EvalResult};
+use super::models::{Env, EnvRecord, EvalResult};
 
 pub fn eval(expr: &Expr, env: &Env) -> EvalResult {
     match &expr.kind {
@@ -17,6 +17,7 @@ pub fn eval(expr: &Expr, env: &Env) -> EvalResult {
         ExprKind::FnMul => eval_fn_mul(expr, env),
         ExprKind::FnDiv => eval_fn_div(expr, env),
         ExprKind::Identifier(x) => eval_identifier(x.to_string(), env),
+        ExprKind::FnLetBinding => eval_fn_let_binding(expr, env),
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
@@ -209,4 +210,75 @@ fn eval_identifier(name: String, env: &Env) -> EvalResult {
         }
         None => panic!("{}", messages::undefined_identifier(&name)),
     }
+}
+
+// ==========================
+
+//       Value Binding
+
+// ==========================
+
+fn bind(bindings: Vec<(String, EvalResult)>, env: &mut Env, mutable: bool, allow_rebind: bool) {
+    for (identifier, value) in bindings {
+        if !allow_rebind && env.has(&identifier) {
+            panic!("{}", messages::identifier_exists(&identifier));
+        }
+
+        env.set(identifier, EnvRecord { value, mutable });
+    }
+}
+
+fn unwrap_identifier(expr_kind: &ExprKind) -> String {
+    match expr_kind {
+        ExprKind::Identifier(x) => x.to_string(),
+        x => panic!("{}", messages::non_identifier(&format!("{:?}", x))),
+    }
+}
+
+// ==========================
+
+//       Let Binding Fn
+
+// ==========================
+
+fn collect_bindings(expr: &Box<Expr>, env: &Env) -> Vec<(String, EvalResult)> {
+    let mut bindings = Vec::new();
+
+    for (i, child) in expr.children.iter().enumerate() {
+        if i & 1 == 1 {
+            continue;
+        }
+
+        let identifier = unwrap_identifier(&child.kind);
+        let value = eval(
+            expr.children
+                .get(i + 1)
+                .expect(&messages::bind_value_not_found()),
+            env,
+        );
+
+        bindings.push((identifier, value));
+    }
+
+    bindings
+}
+
+fn eval_fn_let_binding(expr: &Expr, env: &Env) -> EvalResult {
+    if expr.children.len() == 1 {
+        return EvalResult::Nil;
+    }
+
+    let bindings = collect_bindings(expr.children.first().unwrap(), env);
+    let mut child_env = Env::new();
+
+    child_env.attach_parent(env);
+    bind(bindings, &mut child_env, false, false);
+
+    let mut result = EvalResult::Nil;
+
+    for child_expr in expr.children.iter().skip(1) {
+        result = eval(child_expr, &child_env);
+    }
+
+    result
 }
