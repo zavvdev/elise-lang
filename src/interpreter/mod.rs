@@ -2,10 +2,10 @@ pub mod evaluator;
 pub mod messages;
 pub mod models;
 
-use self::evaluator::eval;
+use self::{evaluator::eval, models::Env};
 use crate::parser::models::ast::Expr;
 
-pub fn interpret(exprs: &Vec<Expr>) {
+pub fn interpret(exprs: Vec<&Expr>, _env: Env) {
     for expr in exprs {
         eval(expr);
     }
