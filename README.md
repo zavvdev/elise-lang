@@ -95,6 +95,12 @@ Result: `2`
 
 Performs value binding.
 
+Min number of arguments: _1_
+
+Max number of arguments: _unlimited_
+
+_First argument should always be a list literal ([]) with even number of elements where each non-even is an Identifier_
+
 ```
 @let ([x 2, y 10]
     @println (@add (x y)))

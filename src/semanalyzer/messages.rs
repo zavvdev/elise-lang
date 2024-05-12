@@ -12,6 +12,6 @@ pub fn let_binding_first_arg_even_elements() -> String {
 }
 
 pub fn let_binding_arg_identifiers() -> String {
-    "Semantic Analyzer error. Let binding first argument must have an even number of elements, with identifiers at even indexes"
+    "Semantic Analyzer error. Let binding first argument must have an even number of elements, with identifiers at non-even positions"
         .to_string()
 }
