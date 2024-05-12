@@ -11,8 +11,8 @@ pub enum ExprKind {
     // Public
     Number(types::Number),
     Identifier(String),
+    Nil,
     List,
-
     FnAdd,
     FnSub,
     FnMul,

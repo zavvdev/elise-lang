@@ -18,6 +18,7 @@ pub fn eval(expr: &Expr, env: &Env) -> EvalResult {
         ExprKind::FnDiv => eval_fn_div(expr, env),
         ExprKind::Identifier(x) => eval_identifier(x.to_string(), env),
         ExprKind::FnLetBinding => eval_fn_let_binding(expr, env),
+        ExprKind::Nil => EvalResult::Nil,
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))

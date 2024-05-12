@@ -3,19 +3,14 @@ use crate::types;
 #[derive(Debug, PartialEq)]
 pub enum TokenKind {
     Unknown,
-
-    // Data Types
+    Nil,
     Number(types::Number),
-
-    // Punctuation
     Minus,
     LeftParen,
     RightParen,
     LeftSqrBr,
     RightSqrBr,
     Comma,
-
-    // Known functions
     FnAdd,
     FnSub,
     FnMul,
@@ -23,8 +18,6 @@ pub enum TokenKind {
     FnPrint,
     FnPrintLn,
     FnLetBinding,
-
-    // Other
     Whitespace,
     Identifier(String),
 }

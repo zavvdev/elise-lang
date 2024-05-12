@@ -336,6 +336,14 @@ impl Lexer {
         Self::is_separator(c) || *c == lexemes::L_RIGHT_PAREN || *c == lexemes::L_RIGHT_SQR_BR
     }
 
+    fn distinguish_identifier(&self, identifier: &str) -> TokenKind {
+        if identifier == lexemes::L_NIL {
+            return TokenKind::Nil;
+        }
+
+        TokenKind::Identifier(identifier.to_string())
+    }
+
     fn consume_identifier(&mut self) -> TokenKind {
         let re = Regex::new(config::IDENTIFIER_REGEX).unwrap();
         let mut result = String::new();
@@ -353,6 +361,6 @@ impl Lexer {
             panic!("{}", messages::invalid_identifier_name(&result));
         }
 
-        TokenKind::Identifier(result)
+        self.distinguish_identifier(&result)
     }
 }

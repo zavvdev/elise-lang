@@ -6,7 +6,7 @@
 - [x] print function
 - [x] basic arithmetics
 - [x] value binding
-- [ ] nil
+- [x] nil
 - [ ] strings
 - [ ] boolean
 - [ ] conditions

@@ -38,7 +38,7 @@ impl Parser {
     pub fn next_expr(&mut self) -> Option<Expr> {
         if self.seq_start_count != self.seq_end_count && self.get_current_token().is_none() {
             panic!("{}", messages::unexpected_end_of_input());
-        } else if self.seq_start_count == self.seq_end_count {
+        } else if self.seq_start_count == self.seq_end_count && self.seq_start_count != 0 {
             self.seq_start_count = 0;
             self.seq_end_count = 0;
         }
@@ -51,6 +51,7 @@ impl Parser {
 
         match &current_token.kind {
             TokenKind::Number(x) => self.consume_number(*x),
+            TokenKind::Nil => self.consume_nil(),
             TokenKind::Identifier(x) => self.consume_identifier(x.to_string()),
             TokenKind::Minus => self.consume_negative_number(),
             TokenKind::FnAdd => self.consume_known_fn(ExprKind::FnAdd),
@@ -254,5 +255,15 @@ impl Parser {
         self.consume();
         Some(Expr::new(ExprKind::Identifier(x), vec![]))
     }
-}
 
+    // ==========================
+
+    //           Nil
+
+    // ==========================
+    
+    fn consume_nil(&mut self) -> Option<Expr> {
+        self.consume();
+        Some(Expr::new(ExprKind::Nil, vec![]))
+    }
+}

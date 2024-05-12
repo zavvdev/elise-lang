@@ -526,4 +526,24 @@ mod tests {
             }]
         );
     }
+
+    // ==========================
+
+    //           Nil
+
+    // ==========================
+
+    #[test]
+    fn test_nil() {
+        assert_eq!(
+            parse(vec![Token {
+                kind: TokenKind::Nil,
+                span: TokenSpan::new(0, 3, lexemes::L_NIL.to_string()),
+            }]),
+            vec![Expr {
+                kind: ExprKind::Nil,
+                children: vec![],
+            }]
+        );
+    }
 }

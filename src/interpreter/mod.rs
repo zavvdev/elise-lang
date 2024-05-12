@@ -578,4 +578,18 @@ mod tests {
 
         eval(&expr, &mut env);
     }
+
+    // ==========================
+
+    //           Nil
+
+    // ==========================
+
+    #[test]
+    fn test_nil() {
+        let env = Env::new();
+        let expr = Expr::new(ExprKind::Nil, vec![]);
+
+        assert_eq!(eval(&expr, &env), EvalResult::Nil);
+    }
 }
