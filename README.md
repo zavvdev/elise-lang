@@ -7,8 +7,8 @@
 - [x] basic arithmetics
 - [x] value binding
 - [x] nil
+- [x] boolean
 - [ ] strings
-- [ ] boolean
 - [ ] conditions
 
 ## @print

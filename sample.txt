@@ -6,3 +6,5 @@
 @let ([k 2] @println (k))
 
 @println(@let ([x 1]))
+
+@println(true)

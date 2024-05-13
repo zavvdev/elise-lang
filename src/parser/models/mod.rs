@@ -65,6 +65,7 @@ impl Parser {
             TokenKind::Comma => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
             TokenKind::LeftSqrBr => self.consume_list(),
             TokenKind::RightSqrBr => Some(Expr::new(ExprKind::_EndOfList, vec![])),
+            TokenKind::Boolean(x) => self.consume_boolean(*x),
             _ => None,
         }
     }
@@ -261,9 +262,20 @@ impl Parser {
     //           Nil
 
     // ==========================
-    
+
     fn consume_nil(&mut self) -> Option<Expr> {
         self.consume();
         Some(Expr::new(ExprKind::Nil, vec![]))
+    }
+
+    // ==========================
+
+    //         Boolean
+
+    // ==========================
+
+    fn consume_boolean(&mut self, x: bool) -> Option<Expr> {
+        self.consume();
+        Some(Expr::new(ExprKind::Boolean(x), vec![]))
     }
 }

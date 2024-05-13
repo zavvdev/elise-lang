@@ -19,6 +19,7 @@ pub fn eval(expr: &Expr, env: &Env) -> EvalResult {
         ExprKind::Identifier(x) => eval_identifier(x.to_string(), env),
         ExprKind::FnLetBinding => eval_fn_let_binding(expr, env),
         ExprKind::Nil => EvalResult::Nil,
+        ExprKind::Boolean(x) => EvalResult::Boolean(*x),
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
@@ -53,6 +54,7 @@ pub fn eval_for_fn_print(expr: &Expr, env: &Env) -> PrintEvalResult {
                 result.push(x.to_string());
             }
             EvalResult::Nil => result.push(lexemes::L_NIL.to_string()),
+            EvalResult::Boolean(x) => result.push(x.to_string()),
         }
     }
 

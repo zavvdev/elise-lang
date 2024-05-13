@@ -19,6 +19,8 @@ pub const L_FN_PRINTLN: (char, &str) = (L_FN, "println");
 pub const L_FN_LET_BINDING: (char, &str) = (L_FN, "let");
 
 pub const L_NIL: &str = "nil";
+pub const L_TRUE: &str = "true";
+pub const L_FALSE: &str = "false";
 
 pub fn fn_lexeme_to_string(lexeme: (char, &str)) -> String {
     format!("{}{}", lexeme.0, lexeme.1)

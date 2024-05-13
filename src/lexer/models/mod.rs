@@ -341,6 +341,14 @@ impl Lexer {
             return TokenKind::Nil;
         }
 
+        if identifier == lexemes::L_TRUE {
+            return TokenKind::Boolean(true);
+        }
+
+        if identifier == lexemes::L_FALSE {
+            return TokenKind::Boolean(false);
+        }
+
         TokenKind::Identifier(identifier.to_string())
     }
 

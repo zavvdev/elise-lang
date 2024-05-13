@@ -20,6 +20,7 @@ pub enum ExprKind {
     FnPrint,
     FnPrintLn,
     FnLetBinding,
+    Boolean(bool),
 }
 
 #[derive(Debug, PartialEq)]

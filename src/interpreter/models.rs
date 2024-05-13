@@ -8,6 +8,7 @@ use crate::types;
 pub enum EvalResult {
     Nil,
     Number(types::Number),
+    Boolean(bool),
 }
 
 // Env

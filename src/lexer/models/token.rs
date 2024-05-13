@@ -20,6 +20,7 @@ pub enum TokenKind {
     FnLetBinding,
     Whitespace,
     Identifier(String),
+    Boolean(bool),
 }
 
 #[derive(Debug, PartialEq)]
