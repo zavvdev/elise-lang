@@ -22,6 +22,9 @@ pub const L_NIL: &str = "nil";
 pub const L_TRUE: &str = "true";
 pub const L_FALSE: &str = "false";
 
+pub const L_STRING_LITERAL: char = '"';
+pub const L_STRING_LITERAL_ESCAPE: char = '\\';
+
 pub fn fn_lexeme_to_string(lexeme: (char, &str)) -> String {
     format!("{}{}", lexeme.0, lexeme.1)
 }

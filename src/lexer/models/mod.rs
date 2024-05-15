@@ -53,6 +53,9 @@ impl Lexer {
             self.consume();
             let fn_name = self.consume_known_fn_name();
             Self::distinguish_known_fn(&fn_name)
+        } else if Self::is_string_literal(&c) {
+            self.consume();
+            self.consume_string_literal()
         } else if let Some(punctuation_token_kind) = self.consume_punctuation() {
             punctuation_token_kind
         } else {
@@ -112,6 +115,10 @@ impl Lexer {
      */
     fn get_current_char(&self) -> Option<char> {
         self.input.chars().nth(self.char_pos)
+    }
+
+    fn get_prev_char(&self) -> Option<char> {
+        self.input.chars().nth(self.char_pos - 1)
     }
 
     /**
@@ -370,5 +377,36 @@ impl Lexer {
         }
 
         self.distinguish_identifier(&result)
+    }
+
+    // ==========================
+
+    //          String
+
+    // ==========================
+
+    fn is_string_literal(char: &char) -> bool {
+        *char == lexemes::L_STRING_LITERAL
+    }
+
+    fn is_current_char_escaped(&self) -> bool {
+        self.get_prev_char() == Some(lexemes::L_STRING_LITERAL_ESCAPE)
+    }
+
+    fn consume_string_literal(&mut self) -> TokenKind {
+        let mut result = String::new();
+
+        while let Some(c) = self.get_current_char() {
+            if c == lexemes::L_STRING_LITERAL && !self.is_current_char_escaped() {
+                self.consume();
+                break;
+            }
+
+            result.push(c);
+            self.consume();
+        }
+        
+        // TODO: Add support for escaped characters
+        TokenKind::String(result)
     }
 }

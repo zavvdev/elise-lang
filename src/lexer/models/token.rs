@@ -21,6 +21,7 @@ pub enum TokenKind {
     Whitespace,
     Identifier(String),
     Boolean(bool),
+    String(String),
 }
 
 #[derive(Debug, PartialEq)]

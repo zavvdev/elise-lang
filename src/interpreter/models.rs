@@ -4,16 +4,17 @@ use crate::types;
 
 // Eval Result
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum EvalResult {
     Nil,
     Number(types::Number),
     Boolean(bool),
+    String(String),
 }
 
 // Env
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct EnvRecord {
     pub value: EvalResult,
     pub mutable: bool,

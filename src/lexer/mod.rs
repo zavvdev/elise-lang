@@ -425,4 +425,36 @@ mod tests {
             }]
         )
     }
+
+    // ==========================
+
+    //          String
+
+    // ==========================
+
+    #[test]
+    fn test_string() {
+        assert_eq!(
+            tokenize(r#""hello world""#),
+            vec![Token {
+                kind: TokenKind::String("hello world".to_string()),
+                span: TokenSpan::new(0, 13, r#""hello world""#.to_string())
+            }]
+        )
+    }
+
+    #[test]
+    fn test_string_with_escape() {
+        assert_eq!(
+            tokenize(&r#""hello\"world""#),
+            vec![Token {
+                kind: TokenKind::String(format!(
+                    "hello{}{}world",
+                    lexemes::L_STRING_LITERAL_ESCAPE,
+                    lexemes::L_STRING_LITERAL
+                )),
+                span: TokenSpan::new(0, 14, r#""hello\"world""#.to_string())
+            }]
+        )
+    }
 }

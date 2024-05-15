@@ -20,6 +20,7 @@ pub fn eval(expr: &Expr, env: &Env) -> EvalResult {
         ExprKind::FnLetBinding => eval_fn_let_binding(expr, env),
         ExprKind::Nil => EvalResult::Nil,
         ExprKind::Boolean(x) => EvalResult::Boolean(*x),
+        ExprKind::String(x) => EvalResult::String(x.to_string()),
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
@@ -55,6 +56,7 @@ pub fn eval_for_fn_print(expr: &Expr, env: &Env) -> PrintEvalResult {
             }
             EvalResult::Nil => result.push(lexemes::L_NIL.to_string()),
             EvalResult::Boolean(x) => result.push(x.to_string()),
+            EvalResult::String(x) => result.push(x),
         }
     }
 
@@ -209,7 +211,8 @@ fn eval_fn_div(expr: &Expr, env: &Env) -> EvalResult {
 fn eval_identifier(name: String, env: &Env) -> EvalResult {
     match env.get(&name) {
         Some(x) => {
-            return x.value;
+            // TODO: Get rid of clone
+            return x.value.clone();
         }
         None => panic!("{}", messages::undefined_identifier(&name)),
     }
