@@ -36,3 +36,7 @@ pub fn non_identifier(x: &str) -> String {
 pub fn identifier_exists(x: &str) -> String {
     format!("Interpretation error. Identifier \"{}\" already exists.", x)
 }
+
+pub fn expected_boolean(x: &str) -> String {
+    format!("Interpretation error. Expected boolean, found \"{}\".", x)
+}

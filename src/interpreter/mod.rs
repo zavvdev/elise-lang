@@ -808,14 +808,89 @@ mod tests {
             eval(
                 &Expr::new(
                     ExprKind::FnNot,
-                    vec![Box::new(Expr::new(
-                        ExprKind::Number(0.0),
-                        vec![]
-                    ))],
+                    vec![Box::new(Expr::new(ExprKind::Number(0.0), vec![]))],
                 ),
                 &env
             ),
             EvalResult::Boolean(false)
+        );
+    }
+
+    // ==========================
+
+    //          Equal
+
+    // ==========================
+
+    #[test]
+    fn test_equal() {
+        let env = Env::new();
+
+        assert_eq!(
+            eval(
+                &Expr::new(
+                    ExprKind::FnEq,
+                    vec![
+                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![])),
+                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![]))
+                    ],
+                ),
+                &env
+            ),
+            EvalResult::Boolean(true)
+        );
+
+        assert_eq!(
+            eval(
+                &Expr::new(
+                    ExprKind::FnEq,
+                    vec![
+                        Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
+                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![]))
+                    ],
+                ),
+                &env
+            ),
+            EvalResult::Boolean(false)
+        );
+    }
+
+    // ==========================
+
+    //         Not Equal
+
+    // ==========================
+
+    #[test]
+    fn test_not_equal() {
+        let env = Env::new();
+
+        assert_eq!(
+            eval(
+                &Expr::new(
+                    ExprKind::FnNotEq,
+                    vec![
+                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![])),
+                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![]))
+                    ],
+                ),
+                &env
+            ),
+            EvalResult::Boolean(false)
+        );
+
+        assert_eq!(
+            eval(
+                &Expr::new(
+                    ExprKind::FnNotEq,
+                    vec![
+                        Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
+                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![]))
+                    ],
+                ),
+                &env
+            ),
+            EvalResult::Boolean(true)
         );
     }
 }

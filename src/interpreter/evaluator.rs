@@ -14,26 +14,26 @@ pub fn eval(expr: &Expr, env: &Env) -> EvalResult {
         ExprKind::Number(x) => EvalResult::Number(*x),
         ExprKind::Boolean(x) => EvalResult::Boolean(*x),
         ExprKind::String(x) => EvalResult::String(x.to_string()),
-        
+
         ExprKind::Identifier(x) => eval_identifier(x.to_string(), env),
         ExprKind::FnLetBinding => eval_fn_let_binding(expr, env),
-        
+
         ExprKind::FnPrint => eval_fn_print(expr, false, env),
         ExprKind::FnPrintLn => eval_fn_print(expr, true, env),
-        
+
         ExprKind::FnAdd => eval_fn_add(expr, env),
         ExprKind::FnSub => eval_fn_sub(expr, env),
         ExprKind::FnMul => eval_fn_mul(expr, env),
         ExprKind::FnDiv => eval_fn_div(expr, env),
-        
+
         ExprKind::FnGreatr => eval_number_comparison(expr, env, |x, y| compare!(x, >, y)),
         ExprKind::FnGreatrEq => eval_number_comparison(expr, env, |x, y| compare!(x, >=, y)),
         ExprKind::FnLess => eval_number_comparison(expr, env, |x, y| compare!(x, <, y)),
         ExprKind::FnLessEq => eval_number_comparison(expr, env, |x, y| compare!(x, <=, y)),
         ExprKind::FnNot => eval_fn_not(expr, env),
-        
-        // ExprKind::FnEq => eval_fn_eq(expr, env),
-        // ExprKind::FnNotEq => eval_fn_not_eq(expr, env),
+
+        ExprKind::FnEq => eval_fn_eq(expr, env),
+        ExprKind::FnNotEq => eval_fn_not_eq(expr, env),
         
         _ => panic!(
             "{}",
@@ -356,26 +356,23 @@ fn eval_fn_not(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-// TODO: Implement polymorphic equality
+fn eval_fn_eq(expr: &Expr, env: &Env) -> EvalResult {
+    let mut result = true;
 
-// fn eval_fn_eq(expr: &Expr, env: &Env) -> EvalResult {
-//     let mut result = true;
-//     let mut current: types::Number = 0.0;
-//
-//     for child in expr.children.iter() {
-//         let child_res = eval(child, env);
-//
-//         match child_res {
-//             EvalResult::Number(x) => {
-//                 result = x == current;
-//                 current = x;
-//             }
-//             _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_GREATR.1)),
-//         }
-//     }
-//
-//     EvalResult::Boolean(result)
-// }
+    for (i, child) in expr.children.iter().enumerate() {
+        if i < expr.children.len() - 1 {
+            let child_res = eval(child, env);
+            let next_child_res = eval(expr.children.get(i + 1).unwrap(), env);
+
+            if child_res != next_child_res {
+                result = false;
+                break;
+            }
+        }
+    }
+
+    EvalResult::Boolean(result)
+}
 
 // ==========================
 
@@ -383,23 +380,13 @@ fn eval_fn_not(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-// fn eval_fn_not_eq(expr: &Expr, env: &Env) -> EvalResult {
-//     let mut result = true;
-//     let mut current: types::Number = 0.0;
-//
-//     for child in expr.children.iter() {
-//         let child_res = eval(child, env);
-//
-//         match child_res {
-//             EvalResult::Number(x) => {
-//                 result = x != current;
-//                 current = x;
-//             }
-//             _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_GREATR.1)),
-//         }
-//     }
-//
-//     EvalResult::Boolean(result)
-// }
+fn eval_fn_not_eq(expr: &Expr, env: &Env) -> EvalResult {
+    let res = eval_fn_eq(expr, env);
+
+    match res {
+        EvalResult::Boolean(x) => EvalResult::Boolean(!x),
+        _ => panic!("{}", messages::expected_boolean(&format!("{:?}", res))),
+    }
+}
 
 // TODO: Implement OR and AND logical functions
