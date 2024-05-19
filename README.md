@@ -8,7 +8,7 @@
 - [x] value binding
 - [x] nil
 - [x] boolean
-- [ ] strings
+- [x] strings
 - [ ] conditions
 
 ## @print

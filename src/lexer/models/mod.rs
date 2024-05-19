@@ -1,6 +1,8 @@
 pub mod number;
 pub mod token;
 
+use std::collections::VecDeque;
+
 use regex::Regex;
 
 use crate::{lexer::messages, types};
@@ -393,6 +395,30 @@ impl Lexer {
         self.get_prev_char() == Some(lexemes::L_STRING_LITERAL_ESCAPE)
     }
 
+    fn replace_escape_chars(s: &str) -> Option<String> {
+        let mut queue = String::from(s).chars().collect::<VecDeque<_>>();
+        let mut result = String::new();
+
+        while let Some(c) = queue.pop_front() {
+            if c != '\\' {
+                result.push(c);
+                continue;
+            }
+
+            match queue.pop_front() {
+                Some('n') => result.push('\n'),
+                Some('r') => result.push('\r'),
+                Some('t') => result.push('\t'),
+                Some('\"') => result.push('\"'),
+                Some('\\') => result.push('\\'),
+                Some('0') => result.push('\0'),
+                _ => return None,
+            };
+        }
+
+        Some(result)
+    }
+
     fn consume_string_literal(&mut self) -> TokenKind {
         let mut result = String::new();
 
@@ -405,8 +431,7 @@ impl Lexer {
             result.push(c);
             self.consume();
         }
-        
-        // TODO: Add support for escaped characters
-        TokenKind::String(result)
+
+        TokenKind::String(Self::replace_escape_chars(&result).unwrap())
     }
 }
