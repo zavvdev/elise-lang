@@ -13,6 +13,8 @@ pub enum ExprKind {
     Identifier(String),
     Nil,
     List,
+    Boolean(bool),
+    String(String),
     FnAdd,
     FnSub,
     FnMul,
@@ -20,8 +22,13 @@ pub enum ExprKind {
     FnPrint,
     FnPrintLn,
     FnLetBinding,
-    Boolean(bool),
-    String(String),
+    FnGreatr,
+    FnLess,
+    FnGreatrEq,
+    FnLessEq,
+    FnEq,
+    FnNotEq,
+    FnNot,
 }
 
 #[derive(Debug, PartialEq)]

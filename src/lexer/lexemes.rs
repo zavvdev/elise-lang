@@ -17,6 +17,13 @@ pub const L_FN_DIV: (char, &str) = (L_FN, "div");
 pub const L_FN_PRINT: (char, &str) = (L_FN, "print");
 pub const L_FN_PRINTLN: (char, &str) = (L_FN, "println");
 pub const L_FN_LET_BINDING: (char, &str) = (L_FN, "let");
+pub const L_FN_GREATR: (char, &str) = (L_FN, "greatr");
+pub const L_FN_LESS: (char, &str) = (L_FN, "less");
+pub const L_FN_GREATR_EQ: (char, &str) = (L_FN, "greatr-eq");
+pub const L_FN_LESS_EQ: (char, &str) = (L_FN, "less-eq");
+pub const L_FN_EQ: (char, &str) = (L_FN, "eq");
+pub const L_FN_NOT_EQ: (char, &str) = (L_FN, "not-eq");
+pub const L_FN_NOT: (char, &str) = (L_FN, "not");
 
 pub const L_NIL: &str = "nil";
 pub const L_TRUE: &str = "true";

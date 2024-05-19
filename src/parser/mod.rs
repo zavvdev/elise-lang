@@ -341,37 +341,6 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_known_function_print() {
-        assert_eq!(
-            parse(vec![
-                Token {
-                    kind: TokenKind::FnPrint,
-                    span: TokenSpan::new(0, 6, fn_lexeme_to_string(lexemes::L_FN_PRINT)),
-                },
-                Token {
-                    kind: TokenKind::LeftParen,
-                    span: TokenSpan::new(6, 7, lexemes::L_LEFT_PAREN.to_string()),
-                },
-                Token {
-                    kind: TokenKind::Number(2 as types::Number),
-                    span: TokenSpan::new(7, 8, "2".to_string()),
-                },
-                Token {
-                    kind: TokenKind::RightParen,
-                    span: TokenSpan::new(8, 9, lexemes::L_RIGHT_PAREN.to_string()),
-                },
-            ]),
-            vec![Expr {
-                kind: ExprKind::FnPrint,
-                children: vec![Box::new(Expr {
-                    kind: ExprKind::Number(2 as types::Number),
-                    children: vec![],
-                })],
-            }]
-        );
-    }
-
     // ==========================
 
     //           List

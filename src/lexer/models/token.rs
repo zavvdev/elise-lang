@@ -11,6 +11,10 @@ pub enum TokenKind {
     LeftSqrBr,
     RightSqrBr,
     Comma,
+    Whitespace,
+    Identifier(String),
+    Boolean(bool),
+    String(String),
     FnAdd,
     FnSub,
     FnMul,
@@ -18,10 +22,13 @@ pub enum TokenKind {
     FnPrint,
     FnPrintLn,
     FnLetBinding,
-    Whitespace,
-    Identifier(String),
-    Boolean(bool),
-    String(String),
+    FnGreatr,
+    FnLess,
+    FnGreatrEq,
+    FnLessEq,
+    FnEq,
+    FnNotEq,
+    FnNot,
 }
 
 #[derive(Debug, PartialEq)]

@@ -6,8 +6,33 @@ use crate::{
 pub fn analyze(expr: &Expr) -> &Expr {
     match expr.kind {
         ExprKind::FnLetBinding => analyze_fn_let_binding(expr),
+        ExprKind::FnGreatr => analyze_non_zero_args_fn(expr),
+        ExprKind::FnGreatrEq => analyze_non_zero_args_fn(expr),
+        ExprKind::FnLess => analyze_non_zero_args_fn(expr),
+        ExprKind::FnLessEq => analyze_non_zero_args_fn(expr),
+        ExprKind::FnEq => analyze_non_zero_args_fn(expr),
+        ExprKind::FnNotEq => analyze_non_zero_args_fn(expr),
+        ExprKind::FnNot => analyze_non_zero_args_fn(expr),
         _ => expr,
     }
+}
+
+// ==========================
+
+//      Non Zero Args Fn
+
+// ==========================
+
+fn analyze_non_zero_args_fn(expr: &Expr) -> &Expr {
+    if expr.children.len() == 0 {
+        panic!("{}", messages::zero_args_fn(&format!("{:?}", expr.kind)));
+    }
+
+    for child in expr.children.iter() {
+        analyze(child);
+    }
+
+    expr
 }
 
 // ==========================
@@ -17,12 +42,7 @@ pub fn analyze(expr: &Expr) -> &Expr {
 // ==========================
 
 fn analyze_fn_let_binding(expr: &Expr) -> &Expr {
-    let result = expr;
-
-    if result.children.len() == 0 {
-        panic!("{}", messages::let_binding_min_args());
-    }
-
+    let result = analyze_non_zero_args_fn(expr);
     let first_arg = result.children.first().unwrap();
 
     if first_arg.kind != ExprKind::List {

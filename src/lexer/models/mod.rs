@@ -332,6 +332,34 @@ impl Lexer {
             return TokenKind::FnLetBinding;
         }
 
+        if fn_name == lexemes::L_FN_GREATR.1 {
+            return TokenKind::FnGreatr;
+        }
+
+        if fn_name == lexemes::L_FN_LESS.1 {
+            return TokenKind::FnLess;
+        }
+
+        if fn_name == lexemes::L_FN_GREATR_EQ.1 {
+            return TokenKind::FnGreatrEq;
+        }
+
+        if fn_name == lexemes::L_FN_LESS_EQ.1 {
+            return TokenKind::FnLessEq;
+        }
+
+        if fn_name == lexemes::L_FN_EQ.1 {
+            return TokenKind::FnEq;
+        }
+
+        if fn_name == lexemes::L_FN_NOT_EQ.1 {
+            return TokenKind::FnNotEq;
+        }
+
+        if fn_name == lexemes::L_FN_NOT.1 {
+            return TokenKind::FnNot;
+        }
+
         TokenKind::Unknown
     }
 
