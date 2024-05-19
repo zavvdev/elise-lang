@@ -15,3 +15,7 @@ pub fn let_binding_arg_identifiers() -> String {
 pub fn zero_args_fn(fn_name: &str) -> String {
     format!("Semantic Analyzer error. Invalid amount of arguments (0) for function: {}", fn_name.to_string())
 }
+
+pub fn more_than_one_arg_fn(fn_name: &str) -> String {
+    format!("Semantic Analyzer error. Invalid amount of arguments (> 1) for function: {}", fn_name.to_string())
+}

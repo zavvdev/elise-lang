@@ -1,4 +1,5 @@
 pub mod evaluator;
+pub mod macros;
 pub mod messages;
 pub mod models;
 
@@ -10,8 +11,6 @@ pub fn interpret(exprs: Vec<&Expr>, env: Env) {
         eval(expr, &env);
     }
 }
-
-// ======== Tests ========
 
 #[cfg(test)]
 mod tests {
@@ -212,14 +211,6 @@ mod tests {
 
     #[test]
     #[should_panic(
-        expected = "Interpretation error. Invalid number of arguments (0) for function \"sub\"."
-    )]
-    fn test_eval_fn_sub_empty() {
-        eval(&Expr::new(ExprKind::FnSub, vec![]), &Env::new());
-    }
-
-    #[test]
-    #[should_panic(
         expected = "Interpretation error. Invalid arguments for function \"sub\". Expected numbers."
     )]
     fn test_eval_fn_sub_invalid() {
@@ -379,14 +370,6 @@ mod tests {
         );
 
         assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(0.5));
-    }
-
-    #[test]
-    #[should_panic(
-        expected = "Interpretation error. Invalid number of arguments (0) for function \"div\"."
-    )]
-    fn test_eval_fn_div_empty() {
-        eval(&Expr::new(ExprKind::FnDiv, vec![]), &Env::new());
     }
 
     #[test]
@@ -613,5 +596,226 @@ mod tests {
         let expr = Expr::new(ExprKind::Boolean(false), vec![]);
 
         assert_eq!(eval(&expr, &env), EvalResult::Boolean(false));
+    }
+
+    // ==========================
+
+    //       Greater than
+
+    // ==========================
+
+    #[test]
+    fn test_greater_than() {
+        let env = Env::new();
+        let expr = Expr::new(
+            ExprKind::FnGreatr,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr, &env), EvalResult::Boolean(true));
+    }
+
+    #[test]
+    fn test_greater_than_multiple() {
+        let env = Env::new();
+        let expr = Expr::new(
+            ExprKind::FnGreatr,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr, &env), EvalResult::Boolean(false));
+    }
+
+    // ==========================
+
+    //   Greater than or equal
+
+    // ==========================
+
+    #[test]
+    fn test_greater_or_equal() {
+        let env = Env::new();
+        let expr = Expr::new(
+            ExprKind::FnGreatrEq,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr, &env), EvalResult::Boolean(true));
+    }
+
+    #[test]
+    fn test_greater_eq_multiple() {
+        let env = Env::new();
+        let expr = Expr::new(
+            ExprKind::FnGreatrEq,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr, &env), EvalResult::Boolean(true));
+    }
+
+    // ==========================
+
+    //         Less than
+
+    // ==========================
+
+    #[test]
+    fn test_less_than() {
+        let env = Env::new();
+        let expr = Expr::new(
+            ExprKind::FnLess,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr, &env), EvalResult::Boolean(false));
+    }
+
+    #[test]
+    fn test_less_than_multiple() {
+        let env = Env::new();
+        let expr = Expr::new(
+            ExprKind::FnLess,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr, &env), EvalResult::Boolean(false));
+    }
+
+    // ==========================
+
+    //     Less than or equal
+
+    // ==========================
+
+    #[test]
+    fn test_less_or_equal() {
+        let env = Env::new();
+        let expr = Expr::new(
+            ExprKind::FnLessEq,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr, &env), EvalResult::Boolean(false));
+    }
+
+    #[test]
+    fn test_less_eq_multiple() {
+        let env = Env::new();
+        let expr = Expr::new(
+            ExprKind::FnLessEq,
+            vec![
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr, &env), EvalResult::Boolean(true));
+    }
+
+    // ==========================
+
+    //         Negation
+
+    // ==========================
+
+    #[test]
+    fn test_not_bool() {
+        let env = Env::new();
+
+        assert_eq!(
+            eval(
+                &Expr::new(
+                    ExprKind::FnNot,
+                    vec![Box::new(Expr::new(ExprKind::Boolean(true), vec![]))],
+                ),
+                &env
+            ),
+            EvalResult::Boolean(false)
+        );
+
+        assert_eq!(
+            eval(
+                &Expr::new(
+                    ExprKind::FnNot,
+                    vec![Box::new(Expr::new(ExprKind::Boolean(false), vec![]))],
+                ),
+                &env
+            ),
+            EvalResult::Boolean(true)
+        );
+    }
+
+    #[test]
+    fn test_not_nil() {
+        let env = Env::new();
+
+        assert_eq!(
+            eval(
+                &Expr::new(
+                    ExprKind::FnNot,
+                    vec![Box::new(Expr::new(ExprKind::Nil, vec![]))],
+                ),
+                &env
+            ),
+            EvalResult::Boolean(true)
+        );
+    }
+    #[test]
+    fn test_not_other() {
+        let env = Env::new();
+
+        assert_eq!(
+            eval(
+                &Expr::new(
+                    ExprKind::FnNot,
+                    vec![Box::new(Expr::new(
+                        ExprKind::String("".to_string()),
+                        vec![]
+                    ))],
+                ),
+                &env
+            ),
+            EvalResult::Boolean(false)
+        );
+
+        assert_eq!(
+            eval(
+                &Expr::new(
+                    ExprKind::FnNot,
+                    vec![Box::new(Expr::new(
+                        ExprKind::Number(0.0),
+                        vec![]
+                    ))],
+                ),
+                &env
+            ),
+            EvalResult::Boolean(false)
+        );
     }
 }

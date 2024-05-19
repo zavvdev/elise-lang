@@ -1,4 +1,5 @@
 use crate::{
+    compare,
     interpreter::messages,
     lexer::lexemes,
     parser::models::ast::{Expr, ExprKind},
@@ -9,18 +10,31 @@ use super::models::{Env, EnvRecord, EvalResult};
 
 pub fn eval(expr: &Expr, env: &Env) -> EvalResult {
     match &expr.kind {
+        ExprKind::Nil => EvalResult::Nil,
         ExprKind::Number(x) => EvalResult::Number(*x),
+        ExprKind::Boolean(x) => EvalResult::Boolean(*x),
+        ExprKind::String(x) => EvalResult::String(x.to_string()),
+        
+        ExprKind::Identifier(x) => eval_identifier(x.to_string(), env),
+        ExprKind::FnLetBinding => eval_fn_let_binding(expr, env),
+        
         ExprKind::FnPrint => eval_fn_print(expr, false, env),
         ExprKind::FnPrintLn => eval_fn_print(expr, true, env),
+        
         ExprKind::FnAdd => eval_fn_add(expr, env),
         ExprKind::FnSub => eval_fn_sub(expr, env),
         ExprKind::FnMul => eval_fn_mul(expr, env),
         ExprKind::FnDiv => eval_fn_div(expr, env),
-        ExprKind::Identifier(x) => eval_identifier(x.to_string(), env),
-        ExprKind::FnLetBinding => eval_fn_let_binding(expr, env),
-        ExprKind::Nil => EvalResult::Nil,
-        ExprKind::Boolean(x) => EvalResult::Boolean(*x),
-        ExprKind::String(x) => EvalResult::String(x.to_string()),
+        
+        ExprKind::FnGreatr => eval_number_comparison(expr, env, |x, y| compare!(x, >, y)),
+        ExprKind::FnGreatrEq => eval_number_comparison(expr, env, |x, y| compare!(x, >=, y)),
+        ExprKind::FnLess => eval_number_comparison(expr, env, |x, y| compare!(x, <, y)),
+        ExprKind::FnLessEq => eval_number_comparison(expr, env, |x, y| compare!(x, <=, y)),
+        ExprKind::FnNot => eval_fn_not(expr, env),
+        
+        // ExprKind::FnEq => eval_fn_eq(expr, env),
+        // ExprKind::FnNotEq => eval_fn_not_eq(expr, env),
+        
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
@@ -28,9 +42,16 @@ pub fn eval(expr: &Expr, env: &Env) -> EvalResult {
     }
 }
 
+fn ensure_number(res: &EvalResult) -> types::Number {
+    match &res {
+        EvalResult::Number(x) => *x,
+        _ => panic!("{}", messages::expected_number(&format!("{:?}", res))),
+    }
+}
+
 // ==========================
 
-//         Print Fn
+//        Print value
 
 // ==========================
 
@@ -80,7 +101,7 @@ fn eval_fn_print(expr: &Expr, new_line: bool, env: &Env) -> EvalResult {
 
 // ==========================
 
-//          Add Fn
+//         Addition
 
 // ==========================
 
@@ -107,15 +128,11 @@ fn eval_fn_add(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-//          Sub Fn
+//        Subtraction
 
 // ==========================
 
 fn eval_fn_sub(expr: &Expr, env: &Env) -> EvalResult {
-    if expr.children.len() == 0 {
-        panic!("{}", messages::fn_no_args(lexemes::L_FN_SUB.1));
-    }
-
     let mut result: types::Number = 0.0;
 
     for (i, child) in expr.children.iter().enumerate() {
@@ -140,7 +157,7 @@ fn eval_fn_sub(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-//          Mul Fn
+//      Multiplication
 
 // ==========================
 
@@ -167,15 +184,11 @@ fn eval_fn_mul(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-//          Div Fn
+//         Division
 
 // ==========================
 
 fn eval_fn_div(expr: &Expr, env: &Env) -> EvalResult {
-    if expr.children.len() == 0 {
-        panic!("{}", messages::fn_no_args(lexemes::L_FN_DIV.1));
-    }
-
     let mut result = 1 as types::Number;
 
     for (i, child) in expr.children.iter().enumerate() {
@@ -243,7 +256,7 @@ fn unwrap_identifier(expr_kind: &ExprKind) -> String {
 
 // ==========================
 
-//       Let Binding Fn
+//  Immutable value binding
 
 // ==========================
 
@@ -288,3 +301,105 @@ fn eval_fn_let_binding(expr: &Expr, env: &Env) -> EvalResult {
 
     result
 }
+
+// ==========================
+
+//     Number Comparison
+
+// ==========================
+
+fn eval_number_comparison<P>(expr: &Expr, env: &Env, predicate: P) -> EvalResult
+where
+    P: Fn(types::Number, types::Number) -> bool,
+{
+    if expr.children.len() == 1 {
+        return EvalResult::Boolean(true);
+    }
+
+    let mut result = true;
+    let mut current: types::Number = ensure_number(&eval(expr.children.first().unwrap(), env));
+
+    for child in expr.children.iter().skip(1) {
+        let child_res = ensure_number(&eval(child, env));
+
+        if predicate(current, child_res) {
+            current = child_res;
+            continue;
+        }
+
+        result = false;
+        break;
+    }
+
+    EvalResult::Boolean(result)
+}
+
+// ==========================
+
+//            Not
+
+// ==========================
+
+fn eval_fn_not(expr: &Expr, env: &Env) -> EvalResult {
+    let child_res = eval(expr.children.first().unwrap(), env);
+
+    match child_res {
+        EvalResult::Boolean(x) => EvalResult::Boolean(!x),
+        EvalResult::Nil => EvalResult::Boolean(true),
+        _ => EvalResult::Boolean(false),
+    }
+}
+
+// ==========================
+
+//           Equal
+
+// ==========================
+
+// TODO: Implement polymorphic equality
+
+// fn eval_fn_eq(expr: &Expr, env: &Env) -> EvalResult {
+//     let mut result = true;
+//     let mut current: types::Number = 0.0;
+//
+//     for child in expr.children.iter() {
+//         let child_res = eval(child, env);
+//
+//         match child_res {
+//             EvalResult::Number(x) => {
+//                 result = x == current;
+//                 current = x;
+//             }
+//             _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_GREATR.1)),
+//         }
+//     }
+//
+//     EvalResult::Boolean(result)
+// }
+
+// ==========================
+
+//         Not Equal
+
+// ==========================
+
+// fn eval_fn_not_eq(expr: &Expr, env: &Env) -> EvalResult {
+//     let mut result = true;
+//     let mut current: types::Number = 0.0;
+//
+//     for child in expr.children.iter() {
+//         let child_res = eval(child, env);
+//
+//         match child_res {
+//             EvalResult::Number(x) => {
+//                 result = x != current;
+//                 current = x;
+//             }
+//             _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_GREATR.1)),
+//         }
+//     }
+//
+//     EvalResult::Boolean(result)
+// }
+
+// TODO: Implement OR and AND logical functions

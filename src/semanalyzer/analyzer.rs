@@ -5,25 +5,21 @@ use crate::{
 
 pub fn analyze(expr: &Expr) -> &Expr {
     match expr.kind {
-        ExprKind::FnLetBinding => analyze_fn_let_binding(expr),
-        ExprKind::FnGreatr => analyze_non_zero_args_fn(expr),
-        ExprKind::FnGreatrEq => analyze_non_zero_args_fn(expr),
-        ExprKind::FnLess => analyze_non_zero_args_fn(expr),
-        ExprKind::FnLessEq => analyze_non_zero_args_fn(expr),
-        ExprKind::FnEq => analyze_non_zero_args_fn(expr),
-        ExprKind::FnNotEq => analyze_non_zero_args_fn(expr),
-        ExprKind::FnNot => analyze_non_zero_args_fn(expr),
+        ExprKind::FnSub => non_zero_children_expr(expr),
+        ExprKind::FnDiv => non_zero_children_expr(expr),
+        ExprKind::FnLetBinding => let_binding(expr),
+        ExprKind::FnGreatr => non_zero_children_expr(expr),
+        ExprKind::FnGreatrEq => non_zero_children_expr(expr),
+        ExprKind::FnLess => non_zero_children_expr(expr),
+        ExprKind::FnLessEq => non_zero_children_expr(expr),
+        ExprKind::FnEq => non_zero_children_expr(expr),
+        ExprKind::FnNotEq => non_zero_children_expr(expr),
+        ExprKind::FnNot => not(expr),
         _ => expr,
     }
 }
 
-// ==========================
-
-//      Non Zero Args Fn
-
-// ==========================
-
-fn analyze_non_zero_args_fn(expr: &Expr) -> &Expr {
+fn non_zero_children_expr(expr: &Expr) -> &Expr {
     if expr.children.len() == 0 {
         panic!("{}", messages::zero_args_fn(&format!("{:?}", expr.kind)));
     }
@@ -37,12 +33,12 @@ fn analyze_non_zero_args_fn(expr: &Expr) -> &Expr {
 
 // ==========================
 
-//      Fn Let Binding
+//  Immutable value binding
 
 // ==========================
 
-fn analyze_fn_let_binding(expr: &Expr) -> &Expr {
-    let result = analyze_non_zero_args_fn(expr);
+fn let_binding(expr: &Expr) -> &Expr {
+    let result = non_zero_children_expr(expr);
     let first_arg = result.children.first().unwrap();
 
     if first_arg.kind != ExprKind::List {
@@ -60,6 +56,29 @@ fn analyze_fn_let_binding(expr: &Expr) -> &Expr {
                 _ => panic!("{}", messages::let_binding_arg_identifiers()),
             }
         }
+    }
+
+    for child in result.children.iter().skip(1) {
+        analyze(child);
+    }
+
+    result
+}
+
+// ==========================
+
+//         Negation
+
+// ==========================
+
+fn not(expr: &Expr) -> &Expr {
+    let result = non_zero_children_expr(expr);
+
+    if expr.children.len() > 1 {
+        panic!(
+            "{}",
+            messages::more_than_one_arg_fn(&format!("{:?}", expr.kind))
+        );
     }
 
     for child in result.children.iter().skip(1) {

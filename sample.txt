@@ -1,4 +1,2 @@
-@let ([age 18]
-    @if (@greatr_eq (age 18)
-        @println ("You are an adult")
-        @println ("You are a minor")))
+@println(
+    @less(2 1))

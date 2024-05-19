@@ -16,8 +16,6 @@ pub fn analyze_semantics(ast: &Vec<Expr>) -> Vec<&Expr> {
     result
 }
 
-// Tests
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -26,12 +24,46 @@ mod tests {
 
     // ==========================
     //
-    //        Let Binding
+    //        Subtraction
     //
     // ==========================
 
     #[test]
-    fn test_let_semantics() {
+    fn test_subtraction() {
+        assert_panic!(
+            {
+                analyze_semantics(&vec![Expr::new(ExprKind::FnSub, vec![])]);
+            },
+            String,
+            messages::zero_args_fn(&format!("{:?}", ExprKind::FnSub))
+        );
+    }
+
+    // ==========================
+    //
+    //         Division
+    //
+    // ==========================
+
+    #[test]
+    fn test_division() {
+        assert_panic!(
+            {
+                analyze_semantics(&vec![Expr::new(ExprKind::FnDiv, vec![])]);
+            },
+            String,
+            messages::zero_args_fn(&format!("{:?}", ExprKind::FnDiv))
+        );
+    }
+
+    // ==========================
+    //
+    //  Immutable value binding
+    //
+    // ==========================
+
+    #[test]
+    fn test_let_binding() {
         assert_panic!(
             {
                 analyze_semantics(&vec![Expr::new(ExprKind::FnLetBinding, vec![])]);
@@ -82,6 +114,139 @@ mod tests {
             },
             String,
             messages::let_binding_arg_identifiers()
+        );
+    }
+
+    // ==========================
+    //
+    //         Negation
+    //
+    // ==========================
+
+    #[test]
+    fn test_not() {
+        assert_panic!(
+            {
+                analyze_semantics(&vec![Expr::new(ExprKind::FnNot, vec![])]);
+            },
+            String,
+            messages::zero_args_fn(&format!("{:?}", ExprKind::FnNot))
+        );
+
+        assert_panic!(
+            {
+                analyze_semantics(&vec![Expr::new(
+                    ExprKind::FnNot,
+                    vec![
+                        Box::new(Expr::new(ExprKind::Nil, vec![])),
+                        Box::new(Expr::new(ExprKind::Nil, vec![])),
+                    ],
+                )]);
+            },
+            String,
+            messages::more_than_one_arg_fn(&format!("{:?}", ExprKind::FnNot))
+        );
+    }
+
+    // ==========================
+    //
+    //       Greater than
+    //
+    // ==========================
+
+    #[test]
+    fn test_greatr_semantics() {
+        assert_panic!(
+            {
+                analyze_semantics(&vec![Expr::new(ExprKind::FnGreatr, vec![])]);
+            },
+            String,
+            messages::zero_args_fn(&format!("{:?}", ExprKind::FnGreatr))
+        );
+    }
+
+    // ==========================
+    //
+    //         greatr-eq
+    //
+    // ==========================
+
+    #[test]
+    fn test_greater_eq_semantics() {
+        assert_panic!(
+            {
+                analyze_semantics(&vec![Expr::new(ExprKind::FnGreatrEq, vec![])]);
+            },
+            String,
+            messages::zero_args_fn(&format!("{:?}", ExprKind::FnGreatrEq))
+        );
+    }
+
+    // ==========================
+    //
+    //           less
+    //
+    // ==========================
+
+    #[test]
+    fn test_less_semantics() {
+        assert_panic!(
+            {
+                analyze_semantics(&vec![Expr::new(ExprKind::FnLess, vec![])]);
+            },
+            String,
+            messages::zero_args_fn(&format!("{:?}", ExprKind::FnLess))
+        );
+    }
+
+    // ==========================
+    //
+    //          less-eq
+    //
+    // ==========================
+
+    #[test]
+    fn test_less_eq_semantics() {
+        assert_panic!(
+            {
+                analyze_semantics(&vec![Expr::new(ExprKind::FnLessEq, vec![])]);
+            },
+            String,
+            messages::zero_args_fn(&format!("{:?}", ExprKind::FnLessEq))
+        );
+    }
+
+    // ==========================
+    //
+    //            eq
+    //
+    // ==========================
+
+    #[test]
+    fn test_eq_semantics() {
+        assert_panic!(
+            {
+                analyze_semantics(&vec![Expr::new(ExprKind::FnEq, vec![])]);
+            },
+            String,
+            messages::zero_args_fn(&format!("{:?}", ExprKind::FnEq))
+        );
+    }
+
+    // ==========================
+    //
+    //          not-eq
+    //
+    // ==========================
+
+    #[test]
+    fn test_not_eq_semantics() {
+        assert_panic!(
+            {
+                analyze_semantics(&vec![Expr::new(ExprKind::FnNotEq, vec![])]);
+            },
+            String,
+            messages::zero_args_fn(&format!("{:?}", ExprKind::FnNotEq))
         );
     }
 }

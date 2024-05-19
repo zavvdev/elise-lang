@@ -13,11 +13,8 @@ pub fn fn_expected_num_arg(fn_name: &str) -> String {
     )
 }
 
-pub fn fn_no_args(fn_name: &str) -> String {
-    format!(
-        "Interpretation error. Invalid number of arguments (0) for function \"{}\".",
-        fn_name
-    )
+pub fn expected_number(x: &str) -> String {
+    format!("Interpretation error. Expected number, found \"{}\".", x)
 }
 
 pub fn division_by_zero() -> String {
