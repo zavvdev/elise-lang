@@ -123,3 +123,16 @@ Keep in mind that binding won't be performed if there are no further expressions
 ```
 
 Result: `x` will not be bound to `1` because it makes no sense since there are no expressions found to use this binding.
+
+## Boolean
+
+Boolean literals: `true` and `false`
+
+## String
+
+Use `"` to create string literals. Example:
+
+```
+"Hello, World"
+"Hello\nWorld"
+```
