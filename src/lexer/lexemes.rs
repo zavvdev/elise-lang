@@ -24,6 +24,8 @@ pub const L_FN_LESS_EQ: (char, &str) = (L_FN, "less-eq");
 pub const L_FN_EQ: (char, &str) = (L_FN, "eq");
 pub const L_FN_NOT_EQ: (char, &str) = (L_FN, "not-eq");
 pub const L_FN_NOT: (char, &str) = (L_FN, "not");
+pub const L_FN_AND: (char, &str) = (L_FN, "and");
+pub const L_FN_OR: (char, &str) = (L_FN, "or");
 
 pub const L_NIL: &str = "nil";
 pub const L_TRUE: &str = "true";

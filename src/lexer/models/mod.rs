@@ -360,6 +360,14 @@ impl Lexer {
             return TokenKind::FnNot;
         }
 
+        if fn_name == lexemes::L_FN_AND.1 {
+            return TokenKind::FnAnd;
+        }
+
+        if fn_name == lexemes::L_FN_OR.1 {
+            return TokenKind::FnOr;
+        }
+
         TokenKind::Unknown
     }
 

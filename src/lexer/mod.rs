@@ -331,6 +331,28 @@ mod tests {
         )
     }
 
+    #[test]
+    fn test_fn_and() {
+        assert_eq!(
+            tokenize("@and"),
+            vec![Token {
+                kind: TokenKind::FnAnd,
+                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_AND))
+            }]
+        )
+    }
+
+    #[test]
+    fn test_fn_or() {
+        assert_eq!(
+            tokenize("@or"),
+            vec![Token {
+                kind: TokenKind::FnOr,
+                span: TokenSpan::new(0, 3, fn_lexeme_to_string(lexemes::L_FN_OR))
+            }]
+        )
+    }
+
     // ==========================
 
     //        Identifier

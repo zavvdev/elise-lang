@@ -29,6 +29,8 @@ pub enum ExprKind {
     FnEq,
     FnNotEq,
     FnNot,
+    FnAnd,
+    FnOr,
 }
 
 #[derive(Debug, PartialEq)]

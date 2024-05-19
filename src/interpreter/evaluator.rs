@@ -1,5 +1,5 @@
 use crate::{
-    compare,
+    binary_op,
     interpreter::messages,
     lexer::lexemes,
     parser::models::ast::{Expr, ExprKind},
@@ -26,15 +26,15 @@ pub fn eval(expr: &Expr, env: &Env) -> EvalResult {
         ExprKind::FnMul => eval_fn_mul(expr, env),
         ExprKind::FnDiv => eval_fn_div(expr, env),
 
-        ExprKind::FnGreatr => eval_number_comparison(expr, env, |x, y| compare!(x, >, y)),
-        ExprKind::FnGreatrEq => eval_number_comparison(expr, env, |x, y| compare!(x, >=, y)),
-        ExprKind::FnLess => eval_number_comparison(expr, env, |x, y| compare!(x, <, y)),
-        ExprKind::FnLessEq => eval_number_comparison(expr, env, |x, y| compare!(x, <=, y)),
+        ExprKind::FnGreatr => eval_number_comparison(expr, env, |x, y| binary_op!(x, >, y)),
+        ExprKind::FnGreatrEq => eval_number_comparison(expr, env, |x, y| binary_op!(x, >=, y)),
+        ExprKind::FnLess => eval_number_comparison(expr, env, |x, y| binary_op!(x, <, y)),
+        ExprKind::FnLessEq => eval_number_comparison(expr, env, |x, y| binary_op!(x, <=, y)),
         ExprKind::FnNot => eval_fn_not(expr, env),
 
         ExprKind::FnEq => eval_fn_eq(expr, env),
         ExprKind::FnNotEq => eval_fn_not_eq(expr, env),
-        
+
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
