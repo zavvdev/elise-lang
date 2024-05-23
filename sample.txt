@@ -1,2 +1,6 @@
 @println(
-    @eq("2" "2"))
+    @bool(false)
+    @bool(true)
+    @bool(nil)
+    @bool(0)
+    @bool(""))

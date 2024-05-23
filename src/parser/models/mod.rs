@@ -76,6 +76,7 @@ impl Parser {
             TokenKind::FnNot => self.consume_known_fn(ExprKind::FnNot),
             TokenKind::FnAnd => self.consume_known_fn(ExprKind::FnAnd),
             TokenKind::FnOr => self.consume_known_fn(ExprKind::FnOr),
+            TokenKind::FnBool => self.consume_known_fn(ExprKind::FnBool),
             _ => None,
         }
     }

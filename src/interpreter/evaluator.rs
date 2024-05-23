@@ -35,6 +35,8 @@ pub fn eval(expr: &Expr, env: &Env) -> EvalResult {
         ExprKind::FnEq => eval_fn_eq(expr, env),
         ExprKind::FnNotEq => eval_fn_not_eq(expr, env),
 
+        ExprKind::FnBool => eval_fn_bool(expr, env),
+
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
@@ -386,6 +388,28 @@ fn eval_fn_not_eq(expr: &Expr, env: &Env) -> EvalResult {
     match res {
         EvalResult::Boolean(x) => EvalResult::Boolean(!x),
         _ => panic!("{}", messages::expected_boolean(&format!("{:?}", res))),
+    }
+}
+
+// ==========================
+
+//      Boolean coercion
+
+// ==========================
+
+fn eval_fn_bool(expr: &Expr, env: &Env) -> EvalResult {
+    let child_res = eval(expr.children.first().unwrap(), env);
+
+    match child_res {
+        EvalResult::Boolean(x) => {
+            if x {
+                EvalResult::Boolean(true)
+            } else {
+                EvalResult::Boolean(false)
+            }
+        }
+        EvalResult::Nil => EvalResult::Boolean(false),
+        _ => EvalResult::Boolean(true),
     }
 }
 

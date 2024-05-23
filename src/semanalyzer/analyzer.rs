@@ -14,7 +14,8 @@ pub fn analyze(expr: &Expr) -> &Expr {
         ExprKind::FnLessEq => non_zero_children_expr(expr),
         ExprKind::FnEq => non_zero_children_expr(expr),
         ExprKind::FnNotEq => non_zero_children_expr(expr),
-        ExprKind::FnNot => not(expr),
+        ExprKind::FnNot => one_children_expr(expr),
+        ExprKind::FnBool => one_children_expr(expr),
         _ => expr,
     }
 }
@@ -29,6 +30,23 @@ fn non_zero_children_expr(expr: &Expr) -> &Expr {
     }
 
     expr
+}
+
+fn one_children_expr(expr: &Expr) -> &Expr {
+    let result = non_zero_children_expr(expr);
+
+    if expr.children.len() > 1 {
+        panic!(
+            "{}",
+            messages::more_than_one_arg_fn(&format!("{:?}", expr.kind))
+        );
+    }
+
+    for child in result.children.iter().skip(1) {
+        analyze(child);
+    }
+
+    result
 }
 
 // ==========================
@@ -56,29 +74,6 @@ fn let_binding(expr: &Expr) -> &Expr {
                 _ => panic!("{}", messages::let_binding_arg_identifiers()),
             }
         }
-    }
-
-    for child in result.children.iter().skip(1) {
-        analyze(child);
-    }
-
-    result
-}
-
-// ==========================
-
-//         Negation
-
-// ==========================
-
-fn not(expr: &Expr) -> &Expr {
-    let result = non_zero_children_expr(expr);
-
-    if expr.children.len() > 1 {
-        panic!(
-            "{}",
-            messages::more_than_one_arg_fn(&format!("{:?}", expr.kind))
-        );
     }
 
     for child in result.children.iter().skip(1) {

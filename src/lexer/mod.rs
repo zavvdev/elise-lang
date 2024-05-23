@@ -353,6 +353,17 @@ mod tests {
         )
     }
 
+    #[test]
+    fn test_fn_bool() {
+        assert_eq!(
+            tokenize("@bool"),
+            vec![Token {
+                kind: TokenKind::FnBool,
+                span: TokenSpan::new(0, 5, fn_lexeme_to_string(lexemes::L_FN_BOOL))
+            }]
+        )
+    }
+
     // ==========================
 
     //        Identifier
