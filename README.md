@@ -11,102 +11,95 @@
 - [x] strings
 - [x] conditions
 
+## Boolean
+
+Boolean literals: `true` and `false`
+
+## String
+
+Use `"` to create string literals. Example:
+
+```
+"Hello, World"
+"Hello\nWorld"
+```
+
+## Number
+
+Number literals: `1`, `1.2`
+
 ## @print
 
 Prints result of expressions to console
 
-Min number of arguments: _0_
-
-Max number of arguments: _unlimited_
-
 ```
-@print(n1..n)
+@print(& more)
 ```
 
 ## @println
 
 Like `@print` but with `\n` at the end
 
-Min number of arguments: _0_
-
-Max number of arguments: _unlimited_
-
 ```
-@println(n1..n)
+@println(& more)
 ```
 
 ## @add
 
-Performs mathematical addition of expressions passed as arguments
-
-Min number of arguments: _0_
-
-Max number of arguments: _unlimited_
+Returns the sum of numbers. `@add()` returns 0
 
 ```
-@add(1 2 3)
+@add()
+@add(x)
+@add(x y)
+@add(x y & more)
 ```
-
-Result: `6`
 
 ## @sub
 
-Performs mathematical subtraction of expressions passed as arguments
-
-Min number of arguments: _1_
-
-Max number of arguments: _unlimited_
+If no ys are supplied, returns the negation of x, else subtracts the ys from x and returns the result
 
 ```
-@sub(10 5)
+@sub(x)
+@sub(x y)
+@sub(x y & more)
 ```
-
-Result: `5`
 
 ## @mul
 
-Performs mathematical multiplication of expressions passed as arguments
-
-Min number of arguments: _0_
-
-Max number of arguments: _unlimited_
+Returns the product of nums. `@mul()` returns 1
 
 ```
-@mul(10 5)
+@mul()
+@mul(x)
+@mul(x y)
+@mul(x y & more)
 ```
-
-Result: `50`
 
 ## @div
 
-Performs mathematical division of expressions passed as arguments
-
-Min number of arguments: _1_
-
-Max number of arguments: _unlimited_
+If no denominators are supplied, returns result of `1/numerator`, else returns numerator divided by all of the denominators
 
 ```
-@div(10 5)
+@div(x)
+@div(x y)
+@div(x y & more)
 ```
-
-Result: `2`
 
 ## @let 
 
-Performs value binding.
+Evaluates the exprs in a lexical context in which the symbols in the binding-forms are bound to their respective init-exprs 
 
-Min number of arguments: _1_
+```
+@let ([binding-form init-expr] exprs*)
+```
 
-Max number of arguments: _unlimited_
-
-_First argument should always be a list literal ([]) with even number of elements where each non-even is an Identifier_
+Example:
 
 ```
 @let ([x 2, y 10]
-    @println (@add (x y)))
+    @println (@add(x y)))
 ```
-
-Result: `12`
 
 Also, `@let` function returns the result of the last expression:
 
@@ -123,19 +116,6 @@ Keep in mind that binding won't be performed if there are no further expressions
 ```
 
 Result: `x` will not be bound to `1` because it makes no sense since there are no expressions found to use this binding.
-
-## Boolean
-
-Boolean literals: `true` and `false`
-
-## String
-
-Use `"` to create string literals. Example:
-
-```
-"Hello, World"
-"Hello\nWorld"
-```
 
 ## @greatr
 
