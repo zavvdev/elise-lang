@@ -17,7 +17,14 @@ fn analyze(expr: &Expr) -> &Expr {
         ExprKind::FnNot => one_children_expr(expr),
         ExprKind::FnBool => one_children_expr(expr),
         ExprKind::FnIf => fn_if(expr),
-        _ => expr,
+        ExprKind::FnIsNil => one_children_expr(expr),
+        _ => {
+            for child in expr.children.iter() {
+                analyze(child);
+            }
+
+            expr
+        }
     }
 }
 

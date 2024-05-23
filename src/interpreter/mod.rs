@@ -46,6 +46,8 @@ fn eval(expr: &Expr, env: &Env) -> EvalResult {
 
         ExprKind::FnIf => eval_fn_if(expr, env),
 
+        ExprKind::FnIsNil => eval_fn_is_nil(expr, env),
+
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
@@ -520,6 +522,21 @@ fn eval_fn_if(expr: &Expr, env: &Env) -> EvalResult {
             "{}",
             messages::expected_boolean(&format!("{:?}", condition_res))
         ),
+    }
+}
+
+// ==========================
+
+//          Is Nil
+
+// ==========================
+
+fn eval_fn_is_nil(expr: &Expr, env: &Env) -> EvalResult {
+    let child_res = eval(expr.children.first().unwrap(), env);
+
+    match child_res {
+        EvalResult::Nil => EvalResult::Boolean(true),
+        _ => EvalResult::Boolean(false),
     }
 }
 

@@ -8,7 +8,7 @@ mod tests {
     };
 
     #[test]
-    fn test_fn_add() {
+    fn test_add() {
         assert_eq!(
             tokenize("@add"),
             vec![Token {
@@ -19,7 +19,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_sub() {
+    fn test_sub() {
         assert_eq!(
             tokenize("@sub"),
             vec![Token {
@@ -30,7 +30,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_mul() {
+    fn test_mul() {
         assert_eq!(
             tokenize("@mul"),
             vec![Token {
@@ -41,7 +41,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_div() {
+    fn test_div() {
         assert_eq!(
             tokenize("@div"),
             vec![Token {
@@ -52,7 +52,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_print() {
+    fn test_print() {
         assert_eq!(
             tokenize("@print"),
             vec![Token {
@@ -63,7 +63,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_let_binding() {
+    fn test_let() {
         assert_eq!(
             tokenize("@let"),
             vec![Token {
@@ -74,7 +74,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_greatr() {
+    fn test_greatr() {
         assert_eq!(
             tokenize("@greatr"),
             vec![Token {
@@ -85,7 +85,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_greatr_eq() {
+    fn test_greatr_eq() {
         assert_eq!(
             tokenize("@greatr-eq"),
             vec![Token {
@@ -96,7 +96,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_less() {
+    fn test_less() {
         assert_eq!(
             tokenize("@less"),
             vec![Token {
@@ -107,7 +107,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_less_eq() {
+    fn test_less_eq() {
         assert_eq!(
             tokenize("@less-eq"),
             vec![Token {
@@ -118,7 +118,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_eq() {
+    fn test_eq() {
         assert_eq!(
             tokenize("@eq"),
             vec![Token {
@@ -129,7 +129,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_not_eq() {
+    fn test_not_eq() {
         assert_eq!(
             tokenize("@not-eq"),
             vec![Token {
@@ -140,7 +140,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_not() {
+    fn test_not() {
         assert_eq!(
             tokenize("@not"),
             vec![Token {
@@ -151,7 +151,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_and() {
+    fn test_and() {
         assert_eq!(
             tokenize("@and"),
             vec![Token {
@@ -162,7 +162,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_or() {
+    fn test_or() {
         assert_eq!(
             tokenize("@or"),
             vec![Token {
@@ -173,7 +173,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_bool() {
+    fn test_bool() {
         assert_eq!(
             tokenize("@bool"),
             vec![Token {
@@ -184,12 +184,23 @@ mod tests {
     }
 
     #[test]
-    fn test_fn_if() {
+    fn test_if() {
         assert_eq!(
             tokenize("@if"),
             vec![Token {
                 kind: TokenKind::FnIf,
                 span: TokenSpan::new(0, 3, fn_lexeme_to_string(lexemes::L_FN_IF))
+            }]
+        )
+    }
+
+    #[test]
+    fn test_is_nil() {
+        assert_eq!(
+            tokenize("@nil?"),
+            vec![Token {
+                kind: TokenKind::FnIsNil,
+                span: TokenSpan::new(0, 5, fn_lexeme_to_string(lexemes::L_FN_IS_NIL))
             }]
         )
     }

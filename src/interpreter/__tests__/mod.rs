@@ -18,3 +18,4 @@ pub mod test_bool_coercion;
 pub mod test_or;
 pub mod test_and;
 pub mod test_if;
+pub mod test_is_nil;

@@ -10,8 +10,8 @@
 - [x] boolean
 - [x] strings
 - [x] conditions
-- [ ] nil? function
-- [ ] list data structure
+- [x] nil? function
+- [ ] list
 - [ ] custom function
 
 ## Boolean
@@ -223,4 +223,12 @@ Evaluates the first argument and performs boolean coercion of the result. If it 
 ```
 @if (condition then)
 @if (condition then else)
+```
+
+## @nil?
+
+Returns true if x is nil, false otherwise
+
+```
+@nil? (x)
 ```

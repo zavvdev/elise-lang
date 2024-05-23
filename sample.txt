@@ -6,3 +6,5 @@
         @if (@greatr-eq(age 18)
             @println("Permission granted.")
             @println("Permission denied. Too young"))))
+
+@println(@nil?(@or()))
