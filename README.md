@@ -10,6 +10,9 @@
 - [x] boolean
 - [x] strings
 - [x] conditions
+- [ ] nil? function
+- [ ] list data structure
+- [ ] custom function
 
 ## Boolean
 
