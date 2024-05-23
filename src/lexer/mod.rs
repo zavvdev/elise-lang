@@ -1,12 +1,468 @@
+use std::collections::VecDeque;
+
+use regex::Regex;
+
+use crate::types;
+
+use self::models::{number::{BaseNumber, ConsumedNumber, FLOAT_SEPARATOR}, token::{Token, TokenKind, TokenSpan}};
+
 pub mod config;
 pub mod lexemes;
 pub mod messages;
 pub mod models;
+pub mod __tests__;
 
-use self::models::{
-    token::{Token, TokenKind},
-    Lexer,
-};
+struct Lexer {
+    input: String,
+    char_pos: usize,
+}
+
+impl Lexer {
+    fn new(input: &str) -> Self {
+        Self {
+            input: Self::preprocess(input),
+            char_pos: 0,
+        }
+    }
+
+    // ==========================
+
+    //          Defaults
+
+    // ==========================
+
+    fn distinguish_token_kind(&mut self, c: &char) -> TokenKind {
+        if Self::is_number(&c) {
+            let number = self.consume_number();
+            self.construct_number_token(number)
+        } else if Self::is_whitespace(&c) {
+            self.consume();
+            TokenKind::Whitespace
+        } else if Self::is_fn_start(&c) {
+            self.consume();
+            let fn_name = self.consume_known_fn_name();
+            Self::distinguish_known_fn(&fn_name)
+        } else if Self::is_string_literal(&c) {
+            self.consume();
+            self.consume_string_literal()
+        } else if let Some(punctuation_token_kind) = self.consume_punctuation() {
+            punctuation_token_kind
+        } else {
+            self.consume_identifier()
+        }
+    }
+
+    fn next_token(&mut self) -> Option<Token> {
+        if self.char_pos > self.input.len() {
+            return None;
+        }
+
+        let current_char = self.get_current_char();
+
+        current_char.map(|char| {
+            let start = self.char_pos;
+            let token_kind = self.distinguish_token_kind(&char);
+
+            let end = self.char_pos;
+            let lexeme = self.input[start..end].to_string();
+
+            if token_kind == TokenKind::Unknown {
+                panic!("{}", messages::unknown_lexeme(&lexeme));
+            }
+
+            let token_span = TokenSpan { start, end, lexeme };
+
+            Token {
+                kind: token_kind,
+                span: token_span,
+            }
+        })
+    }
+
+    /**
+     *
+     * Should be used for processing raw user input during Lexer instance construction.
+     * Should remove multiple Unicode whitespace characters
+     *
+     * TODO: Benchmark it and find faster solution if possible
+     *
+     */
+    fn preprocess(input: &str) -> String {
+        let entries: Vec<&str> = input.split_whitespace().collect();
+        entries.join(&lexemes::L_WHITESPACE.to_string())
+    }
+
+    /**
+     *
+     * Should be used when current character is required withoud consuming
+     *
+     */
+    fn get_current_char(&self) -> Option<char> {
+        self.input.chars().nth(self.char_pos)
+    }
+
+    fn get_prev_char(&self) -> Option<char> {
+        self.input.chars().nth(self.char_pos - 1)
+    }
+
+    /**
+     *
+     * Should be used when current character is required but with
+     * addition move to the next character
+     *
+     */
+    fn consume(&mut self) -> Option<char> {
+        if self.char_pos >= self.input.len() {
+            return None;
+        }
+
+        let current_char = self.get_current_char();
+
+        self.char_pos += 1;
+
+        current_char
+    }
+
+    fn is_separator(c: &char) -> bool {
+        *c == lexemes::L_WHITESPACE || *c == lexemes::L_COMMA
+    }
+
+    // ==========================
+
+    //          Numbers
+
+    // ==========================
+
+    /**
+     *
+     * Identify Base 10 numeric character
+     *
+     */
+    fn is_number(char: &char) -> bool {
+        char.is_digit(10)
+    }
+
+    /**
+     *
+     * Analysing numeric sequence as `Number`
+     *
+     */
+    fn consume_number(&mut self) -> ConsumedNumber {
+        let mut int: BaseNumber = 0;
+        let mut precision: BaseNumber = 0;
+        let mut is_int = true;
+
+        while let Some(c) = self.get_current_char() {
+            let is_digit = c.is_digit(10);
+
+            if is_digit && is_int {
+                int = int.checked_mul(10).expect(&messages::number_overflow());
+
+                int = int
+                    .checked_add(c.to_digit(10).unwrap() as BaseNumber)
+                    .expect(&messages::number_overflow());
+
+                self.consume();
+            } else if is_digit && !is_int {
+                precision = precision
+                    .checked_mul(10)
+                    .expect(&messages::number_overflow());
+
+                precision = precision
+                    .checked_add(c.to_digit(10).unwrap() as BaseNumber)
+                    .expect(&messages::number_overflow());
+
+                self.consume();
+            } else if c == FLOAT_SEPARATOR {
+                is_int = false;
+                self.consume();
+            } else {
+                break;
+            }
+        }
+
+        ConsumedNumber {
+            int,
+            precision,
+            is_int,
+        }
+    }
+
+    fn construct_number_token(&self, number: ConsumedNumber) -> TokenKind {
+        if number.is_int {
+            TokenKind::Number(number.int as types::Number)
+        } else {
+            TokenKind::Number(
+                format!("{}{}{}", number.int, FLOAT_SEPARATOR, number.precision)
+                    .parse::<types::Number>()
+                    .unwrap(),
+            )
+        }
+    }
+
+    // ==========================
+
+    //       Punctuations
+
+    // ==========================
+
+    /**
+     *
+     * Analyse all possible punctuations
+     *
+     */
+    fn consume_punctuation(&mut self) -> Option<TokenKind> {
+        let char = self.get_current_char()?;
+
+        if let Some(c) = match char {
+            lexemes::L_MINUS => Some(TokenKind::Minus),
+            lexemes::L_LEFT_PAREN => Some(TokenKind::LeftParen),
+            lexemes::L_RIGHT_PAREN => Some(TokenKind::RightParen),
+            lexemes::L_LEFT_SQR_BR => Some(TokenKind::LeftSqrBr),
+            lexemes::L_RIGHT_SQR_BR => Some(TokenKind::RightSqrBr),
+            lexemes::L_COMMA => Some(TokenKind::Comma),
+            _ => None,
+        } {
+            self.consume();
+            Some(c)
+        } else {
+            None
+        }
+    }
+
+    // ==========================
+
+    //           Other
+
+    // ==========================
+
+    /**
+     *
+     * Checks if given character is a Unicode whitespace
+     *
+     */
+    fn is_whitespace(c: &char) -> bool {
+        c.is_whitespace()
+    }
+
+    // ==========================
+
+    //        Known functions
+
+    // ==========================
+
+    /**
+     *
+     * Determine the start of the custom or known function
+     *
+     */
+    fn is_fn_start(c: &char) -> bool {
+        *c == lexemes::L_FN
+    }
+
+    /**
+     *
+     * Consume only known function names
+     *
+     */
+    fn consume_known_fn_name(&mut self) -> String {
+        let mut result = String::new();
+
+        while let Some(c) = self.get_current_char() {
+            if c == lexemes::L_LEFT_PAREN || c == lexemes::L_WHITESPACE {
+                break;
+            }
+
+            result.push(c);
+            self.consume();
+        }
+
+        result
+    }
+
+    /**
+     *
+     * Match known function lexeme
+     *
+     */
+    fn distinguish_known_fn(fn_name: &str) -> TokenKind {
+        if fn_name == lexemes::L_FN_ADD.1 {
+            return TokenKind::FnAdd;
+        }
+
+        if fn_name == lexemes::L_FN_SUB.1 {
+            return TokenKind::FnSub;
+        }
+
+        if fn_name == lexemes::L_FN_MUL.1 {
+            return TokenKind::FnMul;
+        }
+
+        if fn_name == lexemes::L_FN_DIV.1 {
+            return TokenKind::FnDiv;
+        }
+
+        if fn_name == lexemes::L_FN_PRINT.1 {
+            return TokenKind::FnPrint;
+        }
+
+        if fn_name == lexemes::L_FN_PRINTLN.1 {
+            return TokenKind::FnPrintLn;
+        }
+
+        if fn_name == lexemes::L_FN_LET_BINDING.1 {
+            return TokenKind::FnLetBinding;
+        }
+
+        if fn_name == lexemes::L_FN_GREATR.1 {
+            return TokenKind::FnGreatr;
+        }
+
+        if fn_name == lexemes::L_FN_LESS.1 {
+            return TokenKind::FnLess;
+        }
+
+        if fn_name == lexemes::L_FN_GREATR_EQ.1 {
+            return TokenKind::FnGreatrEq;
+        }
+
+        if fn_name == lexemes::L_FN_LESS_EQ.1 {
+            return TokenKind::FnLessEq;
+        }
+
+        if fn_name == lexemes::L_FN_EQ.1 {
+            return TokenKind::FnEq;
+        }
+
+        if fn_name == lexemes::L_FN_NOT_EQ.1 {
+            return TokenKind::FnNotEq;
+        }
+
+        if fn_name == lexemes::L_FN_NOT.1 {
+            return TokenKind::FnNot;
+        }
+
+        if fn_name == lexemes::L_FN_AND.1 {
+            return TokenKind::FnAnd;
+        }
+
+        if fn_name == lexemes::L_FN_OR.1 {
+            return TokenKind::FnOr;
+        }
+
+        if fn_name == lexemes::L_FN_BOOL.1 {
+            return TokenKind::FnBool;
+        }
+
+        if fn_name == lexemes::L_FN_IF.1 {
+            return TokenKind::FnIf;
+        }
+
+        TokenKind::Unknown
+    }
+
+    // ==========================
+
+    //         Identifier
+
+    // ==========================
+
+    fn is_identifier_end(c: &char) -> bool {
+        Self::is_separator(c) || *c == lexemes::L_RIGHT_PAREN || *c == lexemes::L_RIGHT_SQR_BR
+    }
+
+    fn distinguish_identifier(&self, identifier: &str) -> TokenKind {
+        if identifier == lexemes::L_NIL {
+            return TokenKind::Nil;
+        }
+
+        if identifier == lexemes::L_TRUE {
+            return TokenKind::Boolean(true);
+        }
+
+        if identifier == lexemes::L_FALSE {
+            return TokenKind::Boolean(false);
+        }
+
+        TokenKind::Identifier(identifier.to_string())
+    }
+
+    fn consume_identifier(&mut self) -> TokenKind {
+        let re = Regex::new(config::IDENTIFIER_REGEX).unwrap();
+        let mut result = String::new();
+
+        while let Some(c) = self.get_current_char() {
+            if Self::is_identifier_end(&c) {
+                break;
+            }
+
+            result.push(c);
+            self.consume();
+        }
+
+        if !re.is_match(&result) {
+            panic!("{}", messages::invalid_identifier_name(&result));
+        }
+
+        self.distinguish_identifier(&result)
+    }
+
+    // ==========================
+
+    //          String
+
+    // ==========================
+
+    fn is_string_literal(char: &char) -> bool {
+        *char == lexemes::L_STRING_LITERAL
+    }
+
+    fn is_current_char_escaped(&self) -> bool {
+        self.get_prev_char() == Some(lexemes::L_STRING_LITERAL_ESCAPE)
+    }
+
+    fn replace_escape_chars(s: &str) -> Option<String> {
+        let mut queue = String::from(s).chars().collect::<VecDeque<_>>();
+        let mut result = String::new();
+
+        while let Some(c) = queue.pop_front() {
+            if c != '\\' {
+                result.push(c);
+                continue;
+            }
+
+            match queue.pop_front() {
+                Some('n') => result.push('\n'),
+                Some('r') => result.push('\r'),
+                Some('t') => result.push('\t'),
+                Some('\"') => result.push('\"'),
+                Some('\\') => result.push('\\'),
+                Some('0') => result.push('\0'),
+                _ => return None,
+            };
+        }
+
+        Some(result)
+    }
+
+    fn consume_string_literal(&mut self) -> TokenKind {
+        let mut result = String::new();
+
+        while let Some(c) = self.get_current_char() {
+            if c == lexemes::L_STRING_LITERAL && !self.is_current_char_escaped() {
+                self.consume();
+                break;
+            }
+
+            result.push(c);
+            self.consume();
+        }
+
+        TokenKind::String(Self::replace_escape_chars(&result).unwrap())
+    }
+}
+
+// ==============================================
 
 pub fn tokenize(input: &str) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
@@ -20,609 +476,4 @@ pub fn tokenize(input: &str) -> Vec<Token> {
     }
 
     tokens
-}
-
-// ======== Tests ========
-
-#[cfg(test)]
-mod tests {
-    use std::num::Wrapping;
-
-    use assert_panic::assert_panic;
-    use tests::{
-        lexemes::fn_lexeme_to_string,
-        models::token::{TokenKind, TokenSpan},
-    };
-
-    use self::models::number::BaseNumber;
-
-    use super::*;
-    use crate::types;
-
-    // ==========================
-
-    //          Numbers
-
-    // ==========================
-
-    #[test]
-    fn test_tokenize_int() {
-        assert_eq!(
-            tokenize("0"),
-            vec![Token {
-                kind: TokenKind::Number(0 as types::Number),
-                span: TokenSpan::new(0, 1, "0".to_string()),
-            }]
-        );
-
-        assert_eq!(
-            tokenize("99"),
-            vec![Token {
-                kind: TokenKind::Number(99 as types::Number),
-                span: TokenSpan::new(0, 2, "99".to_string()),
-            }]
-        );
-    }
-
-    #[test]
-    #[should_panic(expected = "Number overflow")]
-    fn test_tokenize_int_overflow() {
-        tokenize(&format!("{}", Wrapping(BaseNumber::MAX) + Wrapping(1)));
-    }
-
-    #[test]
-    fn test_tokenize_float() {
-        assert_eq!(
-            tokenize("0.5"),
-            vec![Token {
-                kind: TokenKind::Number(0.5),
-                span: TokenSpan::new(0, 3, "0.5".to_string()),
-            }]
-        );
-
-        assert_eq!(
-            tokenize("99.9999"),
-            vec![Token {
-                kind: TokenKind::Number(99.9999),
-                span: TokenSpan::new(0, 7, "99.9999".to_string()),
-            }]
-        )
-    }
-
-    #[test]
-    #[should_panic(expected = "Number overflow")]
-    fn test_tokenize_float_overflow() {
-        #[allow(arithmetic_overflow)]
-        let overflowed = types::Number::MAX + 0.1;
-        #[deny(arithmetic_overflow)]
-        tokenize(&format!("1.{}", overflowed));
-    }
-
-    // ==========================
-
-    //        Punctuation
-
-    // ==========================
-
-    #[test]
-    fn test_tokenize_minus() {
-        assert_eq!(
-            tokenize("-"),
-            vec![Token {
-                kind: TokenKind::Minus,
-                span: TokenSpan::new(0, 1, lexemes::L_MINUS.to_string())
-            }]
-        )
-    }
-
-    #[test]
-    fn test_tokenize_left_paren() {
-        assert_eq!(
-            tokenize("("),
-            vec![Token {
-                kind: TokenKind::LeftParen,
-                span: TokenSpan::new(0, 1, lexemes::L_LEFT_PAREN.to_string())
-            }]
-        )
-    }
-
-    #[test]
-    fn test_tokenize_right_paren() {
-        assert_eq!(
-            tokenize(")"),
-            vec![Token {
-                kind: TokenKind::RightParen,
-                span: TokenSpan::new(0, 1, lexemes::L_RIGHT_PAREN.to_string())
-            }]
-        )
-    }
-
-    #[test]
-    fn test_tokenize_left_sqr_br() {
-        assert_eq!(
-            tokenize("["),
-            vec![Token {
-                kind: TokenKind::LeftSqrBr,
-                span: TokenSpan::new(0, 1, lexemes::L_LEFT_SQR_BR.to_string())
-            }]
-        )
-    }
-
-    #[test]
-    fn test_tokenize_right_sqr_br() {
-        assert_eq!(
-            tokenize("]"),
-            vec![Token {
-                kind: TokenKind::RightSqrBr,
-                span: TokenSpan::new(0, 1, lexemes::L_RIGHT_SQR_BR.to_string())
-            }]
-        )
-    }
-
-    #[test]
-    fn test_tokenize_comma() {
-        assert_eq!(
-            tokenize(","),
-            vec![Token {
-                kind: TokenKind::Comma,
-                span: TokenSpan::new(0, 1, lexemes::L_COMMA.to_string())
-            }]
-        )
-    }
-
-    // ==========================
-
-    //      Unexpected Token
-
-    // ==========================
-
-    #[test]
-    #[should_panic(expected = "Lexing error. Unknown lexeme \"@klk\"")]
-    fn test_tokenize_unknown() {
-        tokenize("@klk");
-    }
-
-    // ==========================
-
-    //      Known functions
-
-    // ==========================
-
-    #[test]
-    fn test_fn_add() {
-        assert_eq!(
-            tokenize("@add"),
-            vec![Token {
-                kind: TokenKind::FnAdd,
-                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_sub() {
-        assert_eq!(
-            tokenize("@sub"),
-            vec![Token {
-                kind: TokenKind::FnSub,
-                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_SUB))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_mul() {
-        assert_eq!(
-            tokenize("@mul"),
-            vec![Token {
-                kind: TokenKind::FnMul,
-                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_MUL))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_div() {
-        assert_eq!(
-            tokenize("@div"),
-            vec![Token {
-                kind: TokenKind::FnDiv,
-                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_DIV))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_print() {
-        assert_eq!(
-            tokenize("@print"),
-            vec![Token {
-                kind: TokenKind::FnPrint,
-                span: TokenSpan::new(0, 6, fn_lexeme_to_string(lexemes::L_FN_PRINT))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_let_binding() {
-        assert_eq!(
-            tokenize("@let"),
-            vec![Token {
-                kind: TokenKind::FnLetBinding,
-                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_LET_BINDING))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_greatr() {
-        assert_eq!(
-            tokenize("@greatr"),
-            vec![Token {
-                kind: TokenKind::FnGreatr,
-                span: TokenSpan::new(0, 7, fn_lexeme_to_string(lexemes::L_FN_GREATR))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_greatr_eq() {
-        assert_eq!(
-            tokenize("@greatr-eq"),
-            vec![Token {
-                kind: TokenKind::FnGreatrEq,
-                span: TokenSpan::new(0, 10, fn_lexeme_to_string(lexemes::L_FN_GREATR_EQ))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_less() {
-        assert_eq!(
-            tokenize("@less"),
-            vec![Token {
-                kind: TokenKind::FnLess,
-                span: TokenSpan::new(0, 5, fn_lexeme_to_string(lexemes::L_FN_LESS))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_less_eq() {
-        assert_eq!(
-            tokenize("@less-eq"),
-            vec![Token {
-                kind: TokenKind::FnLessEq,
-                span: TokenSpan::new(0, 8, fn_lexeme_to_string(lexemes::L_FN_LESS_EQ))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_eq() {
-        assert_eq!(
-            tokenize("@eq"),
-            vec![Token {
-                kind: TokenKind::FnEq,
-                span: TokenSpan::new(0, 3, fn_lexeme_to_string(lexemes::L_FN_EQ))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_not_eq() {
-        assert_eq!(
-            tokenize("@not-eq"),
-            vec![Token {
-                kind: TokenKind::FnNotEq,
-                span: TokenSpan::new(0, 7, fn_lexeme_to_string(lexemes::L_FN_NOT_EQ))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_not() {
-        assert_eq!(
-            tokenize("@not"),
-            vec![Token {
-                kind: TokenKind::FnNot,
-                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_NOT))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_and() {
-        assert_eq!(
-            tokenize("@and"),
-            vec![Token {
-                kind: TokenKind::FnAnd,
-                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_AND))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_or() {
-        assert_eq!(
-            tokenize("@or"),
-            vec![Token {
-                kind: TokenKind::FnOr,
-                span: TokenSpan::new(0, 3, fn_lexeme_to_string(lexemes::L_FN_OR))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_bool() {
-        assert_eq!(
-            tokenize("@bool"),
-            vec![Token {
-                kind: TokenKind::FnBool,
-                span: TokenSpan::new(0, 5, fn_lexeme_to_string(lexemes::L_FN_BOOL))
-            }]
-        )
-    }
-
-    #[test]
-    fn test_fn_if() {
-        assert_eq!(
-            tokenize("@if"),
-            vec![Token {
-                kind: TokenKind::FnIf,
-                span: TokenSpan::new(0, 3, fn_lexeme_to_string(lexemes::L_FN_IF))
-            }]
-        )
-    }
-
-    // ==========================
-
-    //        Identifier
-
-    // ==========================
-
-    #[test]
-    fn test_valid_identifiers() {
-        assert_eq!(
-            tokenize("x"),
-            vec![Token {
-                kind: TokenKind::Identifier("x".to_string()),
-                span: TokenSpan::new(0, 1, "x".to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize("hello"),
-            vec![Token {
-                kind: TokenKind::Identifier("hello".to_string()),
-                span: TokenSpan::new(0, 5, "hello".to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize("HELLO"),
-            vec![Token {
-                kind: TokenKind::Identifier("HELLO".to_string()),
-                span: TokenSpan::new(0, 5, "HELLO".to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize("hello123"),
-            vec![Token {
-                kind: TokenKind::Identifier("hello123".to_string()),
-                span: TokenSpan::new(0, 8, "hello123".to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize("hello_world"),
-            vec![Token {
-                kind: TokenKind::Identifier("hello_world".to_string()),
-                span: TokenSpan::new(0, 11, "hello_world".to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize("hello-world"),
-            vec![Token {
-                kind: TokenKind::Identifier("hello-world".to_string()),
-                span: TokenSpan::new(0, 11, "hello-world".to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize("hello?"),
-            vec![Token {
-                kind: TokenKind::Identifier("hello?".to_string()),
-                span: TokenSpan::new(0, 6, "hello?".to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize("hello!"),
-            vec![Token {
-                kind: TokenKind::Identifier("hello!".to_string()),
-                span: TokenSpan::new(0, 6, "hello!".to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize("hello_world-42"),
-            vec![Token {
-                kind: TokenKind::Identifier("hello_world-42".to_string()),
-                span: TokenSpan::new(0, 14, "hello_world-42".to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize("_hello"),
-            vec![Token {
-                kind: TokenKind::Identifier("_hello".to_string()),
-                span: TokenSpan::new(0, 6, "_hello".to_string())
-            }]
-        );
-    }
-
-    #[test]
-    fn test_invalid_identifiers() {
-        let invalid_identifiers = vec![
-            "?hello",
-            "!hello",
-            "hello@world",
-            "hello#world",
-            "hello$world",
-            "hello%world",
-            "hello^world",
-            "hello&world",
-            "hello*world",
-            "hello+world",
-            "hello=world",
-            "hello/world",
-            "hello\\world",
-            "hello\"world",
-            "hello'world",
-            "hello>world",
-            "hello<world",
-            "hello;world",
-            "hello:world",
-        ];
-
-        for invalid_identifier in invalid_identifiers {
-            assert_panic!(
-                {
-                    tokenize(invalid_identifier);
-                },
-                String,
-                format!(
-                    "Lexing error. Invalid identifier name \"{}\".",
-                    invalid_identifier
-                )
-            );
-        }
-    }
-
-    // ==========================
-
-    //           Nil
-
-    // ==========================
-
-    #[test]
-    fn test_nil() {
-        assert_eq!(
-            tokenize("nil"),
-            vec![Token {
-                kind: TokenKind::Nil,
-                span: TokenSpan::new(0, 3, lexemes::L_NIL.to_string())
-            }]
-        )
-    }
-
-    // ==========================
-
-    //         Boolean
-
-    // ==========================
-
-    #[test]
-    fn test_true() {
-        assert_eq!(
-            tokenize("true"),
-            vec![Token {
-                kind: TokenKind::Boolean(true),
-                span: TokenSpan::new(0, 4, lexemes::L_TRUE.to_string())
-            }]
-        )
-    }
-
-    #[test]
-    fn test_false() {
-        assert_eq!(
-            tokenize("false"),
-            vec![Token {
-                kind: TokenKind::Boolean(false),
-                span: TokenSpan::new(0, 5, lexemes::L_FALSE.to_string())
-            }]
-        )
-    }
-
-    // ==========================
-
-    //          String
-
-    // ==========================
-
-    #[test]
-    fn test_string() {
-        assert_eq!(
-            tokenize(r#""hello world""#),
-            vec![Token {
-                kind: TokenKind::String("hello world".to_string()),
-                span: TokenSpan::new(0, 13, r#""hello world""#.to_string())
-            }]
-        )
-    }
-
-    #[test]
-    fn test_string_empty() {
-        assert_eq!(
-            tokenize(r#""""#),
-            vec![Token {
-                kind: TokenKind::String("".to_string()),
-                span: TokenSpan::new(0, 2, r#""""#.to_string())
-            }]
-        )
-    }
-
-    #[test]
-    fn test_string_with_escape() {
-        assert_eq!(
-            tokenize(&r#""hello\nworld""#),
-            vec![Token {
-                kind: TokenKind::String("hello\nworld".to_string()),
-                span: TokenSpan::new(0, 14, r#""hello\nworld""#.to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize(&r#""hello\rworld""#),
-            vec![Token {
-                kind: TokenKind::String("hello\rworld".to_string()),
-                span: TokenSpan::new(0, 14, r#""hello\rworld""#.to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize(&r#""hello\tworld""#),
-            vec![Token {
-                kind: TokenKind::String("hello\tworld".to_string()),
-                span: TokenSpan::new(0, 14, r#""hello\tworld""#.to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize(&r#""hello\"world""#),
-            vec![Token {
-                kind: TokenKind::String("hello\"world".to_string()),
-                span: TokenSpan::new(0, 14, r#""hello\"world""#.to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize(&r#""hello\\world""#),
-            vec![Token {
-                kind: TokenKind::String("hello\\world".to_string()),
-                span: TokenSpan::new(0, 14, r#""hello\\world""#.to_string())
-            }]
-        );
-
-        assert_eq!(
-            tokenize(&r#""hello\0world""#),
-            vec![Token {
-                kind: TokenKind::String("hello\0world".to_string()),
-                span: TokenSpan::new(0, 14, r#""hello\0world""#.to_string())
-            }]
-        );
-    }
 }
