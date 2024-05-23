@@ -1,1197 +1,532 @@
-pub mod evaluator;
+pub mod __tests__;
 pub mod macros;
 pub mod messages;
 pub mod models;
 
-use self::{evaluator::eval, models::Env};
-use crate::parser::models::expression::Expr;
+use crate::{
+    binary_op,
+    lexer::lexemes,
+    parser::models::expression::{Expr, ExprKind},
+    types,
+};
+
+use self::models::env::{Env, EnvRecord, EvalResult};
+
+fn eval(expr: &Expr, env: &Env) -> EvalResult {
+    match &expr.kind {
+        ExprKind::Nil => EvalResult::Nil,
+        ExprKind::Number(x) => EvalResult::Number(*x),
+        ExprKind::Boolean(x) => EvalResult::Boolean(*x),
+        ExprKind::String(x) => EvalResult::String(x.to_string()),
+
+        ExprKind::Identifier(x) => eval_identifier(x.to_string(), env),
+        ExprKind::FnLetBinding => eval_fn_let_binding(expr, env),
+
+        ExprKind::FnPrint => eval_fn_print(expr, false, env),
+        ExprKind::FnPrintLn => eval_fn_print(expr, true, env),
+
+        ExprKind::FnAdd => eval_fn_add(expr, env),
+        ExprKind::FnSub => eval_fn_sub(expr, env),
+        ExprKind::FnMul => eval_fn_mul(expr, env),
+        ExprKind::FnDiv => eval_fn_div(expr, env),
+
+        ExprKind::FnGreatr => eval_number_comparison(expr, env, |x, y| binary_op!(x, >, y)),
+        ExprKind::FnGreatrEq => eval_number_comparison(expr, env, |x, y| binary_op!(x, >=, y)),
+        ExprKind::FnLess => eval_number_comparison(expr, env, |x, y| binary_op!(x, <, y)),
+        ExprKind::FnLessEq => eval_number_comparison(expr, env, |x, y| binary_op!(x, <=, y)),
+        ExprKind::FnNot => eval_fn_not(expr, env),
+
+        ExprKind::FnEq => eval_fn_eq(expr, env),
+        ExprKind::FnNotEq => eval_fn_not_eq(expr, env),
+
+        ExprKind::FnBool => eval_fn_bool(expr, env),
+
+        ExprKind::FnOr => eval_fn_or(expr, env),
+        ExprKind::FnAnd => eval_fn_and(expr, env),
+
+        ExprKind::FnIf => eval_fn_if(expr, env),
+
+        _ => panic!(
+            "{}",
+            messages::unknown_expression(&format!("{:?}", expr.kind))
+        ),
+    }
+}
+
+fn ensure_number(res: &EvalResult) -> types::Number {
+    match &res {
+        EvalResult::Number(x) => *x,
+        _ => panic!("{}", messages::expected_number(&format!("{:?}", res))),
+    }
+}
+
+// ==========================
+
+//        Print value
+
+// ==========================
+
+#[derive(Debug, PartialEq)]
+pub enum PrintEvalResult {
+    Empty,
+    Success(String),
+}
+
+pub fn eval_for_fn_print(expr: &Expr, env: &Env) -> PrintEvalResult {
+    if expr.children.len() == 0 {
+        return PrintEvalResult::Empty;
+    }
+
+    let mut result: Vec<String> = Vec::new();
+
+    for child in expr.children.iter() {
+        let child_res = eval(child, env);
+
+        match child_res {
+            EvalResult::Number(x) => {
+                result.push(x.to_string());
+            }
+            EvalResult::Nil => result.push(lexemes::L_NIL.to_string()),
+            EvalResult::Boolean(x) => result.push(x.to_string()),
+            EvalResult::String(x) => result.push(x),
+        }
+    }
+
+    return PrintEvalResult::Success(result.join(" "));
+}
+
+fn eval_fn_print(expr: &Expr, new_line: bool, env: &Env) -> EvalResult {
+    match eval_for_fn_print(expr, env) {
+        PrintEvalResult::Empty => EvalResult::Nil,
+        PrintEvalResult::Success(result) => {
+            if new_line {
+                println!("{}", result);
+            } else {
+                print!("{}", result);
+            }
+
+            return EvalResult::Nil;
+        }
+    }
+}
+
+// ==========================
+
+//         Addition
+
+// ==========================
+
+fn eval_fn_add(expr: &Expr, env: &Env) -> EvalResult {
+    if expr.children.len() == 0 {
+        return EvalResult::Number(0 as types::Number);
+    }
+
+    let mut result: types::Number = 0.0;
+
+    for child in expr.children.iter() {
+        let child_res = eval(child, env);
+
+        match child_res {
+            EvalResult::Number(x) => {
+                result += x;
+            }
+            _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_ADD.1)),
+        }
+    }
+
+    EvalResult::Number(result)
+}
+
+// ==========================
+
+//        Subtraction
+
+// ==========================
+
+fn eval_fn_sub(expr: &Expr, env: &Env) -> EvalResult {
+    let mut result: types::Number = 0.0;
+
+    for (i, child) in expr.children.iter().enumerate() {
+        let child_res = eval(child, env);
+
+        match child_res {
+            EvalResult::Number(x) => {
+                if expr.children.len() == 1 {
+                    result = -x;
+                } else if i == 0 {
+                    result = x;
+                } else {
+                    result -= x;
+                }
+            }
+            _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_SUB.1)),
+        }
+    }
+
+    EvalResult::Number(result)
+}
+
+// ==========================
+
+//      Multiplication
+
+// ==========================
+
+fn eval_fn_mul(expr: &Expr, env: &Env) -> EvalResult {
+    if expr.children.len() == 0 {
+        return EvalResult::Number(1 as types::Number);
+    }
+
+    let mut result = 1 as types::Number;
+
+    for child in expr.children.iter() {
+        let child_res = eval(child, env);
+
+        match child_res {
+            EvalResult::Number(x) => {
+                result *= x;
+            }
+            _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_MUL.1)),
+        }
+    }
+
+    EvalResult::Number(result)
+}
+
+// ==========================
+
+//         Division
+
+// ==========================
+
+fn eval_fn_div(expr: &Expr, env: &Env) -> EvalResult {
+    let mut result = 1 as types::Number;
+
+    for (i, child) in expr.children.iter().enumerate() {
+        let child_res = eval(child, env);
+
+        match child_res {
+            EvalResult::Number(x) => {
+                if (i != 0 || expr.children.len() == 1) && x == 0.0 {
+                    panic!("{}", messages::division_by_zero());
+                }
+
+                if expr.children.len() == 1 {
+                    result = 1.0 / x;
+                } else if i == 0 {
+                    result = x;
+                } else {
+                    result /= x;
+                }
+            }
+            _ => panic!("{}", messages::fn_expected_num_arg(lexemes::L_FN_DIV.1)),
+        }
+    }
+
+    EvalResult::Number(result)
+}
+
+// ==========================
+
+//        Identifier
+
+// ==========================
+
+fn eval_identifier(name: String, env: &Env) -> EvalResult {
+    match env.get(&name) {
+        Some(x) => {
+            // TODO: Get rid of clone
+            return x.value.clone();
+        }
+        None => panic!("{}", messages::undefined_identifier(&name)),
+    }
+}
+
+// ==========================
+
+//       Value Binding
+
+// ==========================
+
+fn bind(bindings: Vec<(String, EvalResult)>, env: &mut Env, mutable: bool, allow_rebind: bool) {
+    for (identifier, value) in bindings {
+        if !allow_rebind && env.has(&identifier) {
+            panic!("{}", messages::identifier_exists(&identifier));
+        }
+
+        env.set(identifier, EnvRecord { value, mutable });
+    }
+}
+
+fn unwrap_identifier(expr_kind: &ExprKind) -> String {
+    match expr_kind {
+        ExprKind::Identifier(x) => x.to_string(),
+        x => panic!("{}", messages::non_identifier(&format!("{:?}", x))),
+    }
+}
+
+// ==========================
+
+//  Immutable value binding
+
+// ==========================
+
+fn collect_bindings(expr: &Box<Expr>, env: &Env) -> Vec<(String, EvalResult)> {
+    let mut bindings = Vec::new();
+
+    for (i, child) in expr.children.iter().enumerate() {
+        if i & 1 == 1 {
+            continue;
+        }
+
+        let identifier = unwrap_identifier(&child.kind);
+        let value = eval(
+            expr.children
+                .get(i + 1)
+                .expect(&messages::bind_value_not_found()),
+            env,
+        );
+
+        bindings.push((identifier, value));
+    }
+
+    bindings
+}
+
+fn eval_fn_let_binding(expr: &Expr, env: &Env) -> EvalResult {
+    if expr.children.len() == 1 {
+        return EvalResult::Nil;
+    }
+
+    let bindings = collect_bindings(expr.children.first().unwrap(), env);
+    let mut child_env = Env::new();
+
+    child_env.attach_parent(env);
+    bind(bindings, &mut child_env, false, false);
+
+    let mut result = EvalResult::Nil;
+
+    for child_expr in expr.children.iter().skip(1) {
+        result = eval(child_expr, &child_env);
+    }
+
+    result
+}
+
+// ==========================
+
+//     Number Comparison
+
+// ==========================
+
+fn eval_number_comparison<P>(expr: &Expr, env: &Env, predicate: P) -> EvalResult
+where
+    P: Fn(types::Number, types::Number) -> bool,
+{
+    if expr.children.len() == 1 {
+        return EvalResult::Boolean(true);
+    }
+
+    let mut result = true;
+    let mut current: types::Number = ensure_number(&eval(expr.children.first().unwrap(), env));
+
+    for child in expr.children.iter().skip(1) {
+        let child_res = ensure_number(&eval(child, env));
+
+        if predicate(current, child_res) {
+            current = child_res;
+            continue;
+        }
+
+        result = false;
+        break;
+    }
+
+    EvalResult::Boolean(result)
+}
+
+// ==========================
+
+//            Not
+
+// ==========================
+
+fn eval_fn_not(expr: &Expr, env: &Env) -> EvalResult {
+    let child_res = eval(expr.children.first().unwrap(), env);
+
+    match child_res {
+        EvalResult::Boolean(x) => EvalResult::Boolean(!x),
+        EvalResult::Nil => EvalResult::Boolean(true),
+        _ => EvalResult::Boolean(false),
+    }
+}
+
+// ==========================
+
+//           Equal
+
+// ==========================
+
+fn eval_fn_eq(expr: &Expr, env: &Env) -> EvalResult {
+    let mut result = true;
+
+    for (i, child) in expr.children.iter().enumerate() {
+        if i < expr.children.len() - 1 {
+            let child_res = eval(child, env);
+            let next_child_res = eval(expr.children.get(i + 1).unwrap(), env);
+
+            if child_res != next_child_res {
+                result = false;
+                break;
+            }
+        }
+    }
+
+    EvalResult::Boolean(result)
+}
+
+// ==========================
+
+//         Not Equal
+
+// ==========================
+
+fn eval_fn_not_eq(expr: &Expr, env: &Env) -> EvalResult {
+    let res = eval_fn_eq(expr, env);
+
+    match res {
+        EvalResult::Boolean(x) => EvalResult::Boolean(!x),
+        _ => panic!("{}", messages::expected_boolean(&format!("{:?}", res))),
+    }
+}
+
+// ==========================
+
+//      Boolean coercion
+
+// ==========================
+
+fn coerce_to_boolean(res: EvalResult) -> EvalResult {
+    match res {
+        EvalResult::Boolean(x) => {
+            if x {
+                EvalResult::Boolean(true)
+            } else {
+                EvalResult::Boolean(false)
+            }
+        }
+        EvalResult::Nil => EvalResult::Boolean(false),
+        _ => EvalResult::Boolean(true),
+    }
+}
+
+fn eval_fn_bool(expr: &Expr, env: &Env) -> EvalResult {
+    let child_res = eval(expr.children.first().unwrap(), env);
+    coerce_to_boolean(child_res)
+}
+
+// ==========================
+
+//            Or
+
+// ==========================
+
+fn eval_fn_or(expr: &Expr, env: &Env) -> EvalResult {
+    if expr.children.len() == 0 {
+        return EvalResult::Nil;
+    }
+
+    let mut result_index = 0;
+
+    for (i, child) in expr.children.iter().enumerate() {
+        let child_res = coerce_to_boolean(eval(child, env));
+
+        match child_res {
+            EvalResult::Boolean(x) => {
+                result_index = i;
+
+                if x {
+                    break;
+                }
+
+                continue;
+            }
+            _ => continue,
+        }
+    }
+
+    eval(expr.children.get(result_index).unwrap(), env)
+}
+
+// ==========================
+
+//            And
+
+// ==========================
+
+fn eval_fn_and(expr: &Expr, env: &Env) -> EvalResult {
+    if expr.children.len() == 0 {
+        return EvalResult::Boolean(true);
+    }
+
+    let mut result_index = 0;
+
+    for (i, child) in expr.children.iter().enumerate() {
+        let child_res = coerce_to_boolean(eval(child, env));
+
+        match child_res {
+            EvalResult::Boolean(x) => {
+                result_index = i;
+
+                if !x {
+                    break;
+                }
+
+                continue;
+            }
+            _ => continue,
+        }
+    }
+
+    eval(expr.children.get(result_index).unwrap(), env)
+}
+
+// ==========================
+
+//            If
+
+// ==========================
+
+fn eval_fn_if(expr: &Expr, env: &Env) -> EvalResult {
+    let condition = expr.children.first().unwrap();
+    let then_branch = expr.children.get(1).unwrap();
+    let else_branch = expr.children.get(2);
+
+    let condition_res = coerce_to_boolean(eval(condition, env));
+
+    match condition_res {
+        EvalResult::Boolean(x) => {
+            if x {
+                return eval(then_branch, env);
+            }
+
+            if let Some(else_branch) = else_branch {
+                return eval(else_branch, env);
+            }
+
+            return EvalResult::Nil;
+        }
+        _ => panic!(
+            "{}",
+            messages::expected_boolean(&format!("{:?}", condition_res))
+        ),
+    }
+}
+
+// ==============================================
 
 pub fn interpret(exprs: Vec<&Expr>, env: Env) {
     for expr in exprs {
         eval(expr, &env);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{
-        interpreter::{
-            evaluator::{eval, eval_for_fn_print, PrintEvalResult},
-            models::{Env, EnvRecord, EvalResult},
-        },
-        lexer::lexemes,
-        parser::models::expression::{Expr, ExprKind},
-        types,
-    };
-
-    // ==========================
-
-    //         Print Fn
-
-    // ==========================
-
-    #[test]
-    fn test_eval_for_fn_print() {
-        let expr = Expr::new(
-            ExprKind::FnPrint,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1.4), vec![])),
-            ],
-        );
-
-        assert_eq!(
-            eval_for_fn_print(&expr, &Env::new()),
-            PrintEvalResult::Success("1 1.4".to_string())
-        );
-    }
-
-    #[test]
-    fn test_eval_for_fn_print_empty() {
-        let expr = Expr::new(ExprKind::FnPrint, vec![]);
-        assert_eq!(
-            eval_for_fn_print(&expr, &Env::new()),
-            PrintEvalResult::Empty
-        );
-    }
-
-    #[test]
-    fn test_eval_for_nil() {
-        let expr = Expr::new(
-            ExprKind::FnPrint,
-            vec![Box::new(Expr::new(
-                ExprKind::FnPrint,
-                vec![Box::new(Expr::new(
-                    ExprKind::Number(1 as types::Number),
-                    vec![],
-                ))],
-            ))],
-        );
-        assert_eq!(
-            eval_for_fn_print(&expr, &Env::new()),
-            PrintEvalResult::Success(lexemes::L_NIL.to_string())
-        );
-    }
-
-    // ==========================
-
-    //          Add Fn
-
-    // ==========================
-
-    #[test]
-    fn test_eval_fn_add_int() {
-        let expr = Expr::new(
-            ExprKind::FnAdd,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-            ],
-        );
-
-        assert_eq!(
-            eval(&expr, &Env::new()),
-            EvalResult::Number(3 as types::Number)
-        );
-    }
-
-    #[test]
-    fn test_eval_fn_add_float() {
-        let expr = Expr::new(
-            ExprKind::FnAdd,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(1.1), vec![])),
-                Box::new(Expr::new(ExprKind::Number(2.4), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(3.5));
-    }
-
-    #[test]
-    fn test_eval_fn_add() {
-        let expr = Expr::new(
-            ExprKind::FnAdd,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(2.4), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(3.4));
-    }
-
-    #[test]
-    fn test_eval_fn_add_empty() {
-        let expr = Expr::new(ExprKind::FnAdd, vec![]);
-        assert_eq!(
-            eval(&expr, &Env::new()),
-            EvalResult::Number(0 as types::Number)
-        );
-    }
-
-    #[test]
-    #[should_panic(
-        expected = "Interpretation error. Invalid arguments for function \"add\". Expected numbers."
-    )]
-    fn test_eval_fn_add_invalid() {
-        let expr = Expr::new(
-            ExprKind::FnAdd,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::FnPrint, vec![])),
-            ],
-        );
-        eval(&expr, &Env::new());
-    }
-
-    // ==========================
-
-    //          Sub Fn
-
-    // ==========================
-
-    #[test]
-    fn test_eval_fn_sub_int() {
-        let expr = Expr::new(
-            ExprKind::FnSub,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-            ],
-        );
-
-        assert_eq!(
-            eval(&expr, &Env::new()),
-            EvalResult::Number(1 as types::Number)
-        );
-    }
-
-    #[test]
-    fn test_eval_fn_sub_float() {
-        let expr = Expr::new(
-            ExprKind::FnSub,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2.5), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1.1), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(1.4));
-    }
-
-    #[test]
-    fn test_eval_fn_sub() {
-        let expr = Expr::new(
-            ExprKind::FnSub,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(-1.4), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(2.4));
-    }
-
-    #[test]
-    fn test_eval_fn_sub_one() {
-        let expr = Expr::new(
-            ExprKind::FnSub,
-            vec![Box::new(Expr::new(
-                ExprKind::Number(1 as types::Number),
-                vec![],
-            ))],
-        );
-
-        assert_eq!(
-            eval(&expr, &Env::new()),
-            EvalResult::Number(-1 as types::Number)
-        );
-    }
-
-    #[test]
-    #[should_panic(
-        expected = "Interpretation error. Invalid arguments for function \"sub\". Expected numbers."
-    )]
-    fn test_eval_fn_sub_invalid() {
-        let expr = Expr::new(
-            ExprKind::FnSub,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::FnPrint, vec![])),
-            ],
-        );
-        eval(&expr, &Env::new());
-    }
-
-    // ==========================
-
-    //          Mul Fn
-
-    // ==========================
-
-    #[test]
-    fn test_eval_fn_mul_int() {
-        let expr = Expr::new(
-            ExprKind::FnMul,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(3 as types::Number), vec![])),
-            ],
-        );
-
-        assert_eq!(
-            eval(&expr, &Env::new()),
-            EvalResult::Number(6 as types::Number)
-        );
-    }
-
-    #[test]
-    fn test_eval_fn_mul_float() {
-        let expr = Expr::new(
-            ExprKind::FnMul,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2.5), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1.1), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(2.75));
-    }
-
-    #[test]
-    fn test_eval_fn_mul() {
-        let expr = Expr::new(
-            ExprKind::FnMul,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(-1.4), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(-2.8));
-    }
-
-    #[test]
-    fn test_eval_fn_mul_one() {
-        let expr = Expr::new(
-            ExprKind::FnMul,
-            vec![Box::new(Expr::new(
-                ExprKind::Number(3 as types::Number),
-                vec![],
-            ))],
-        );
-
-        assert_eq!(
-            eval(&expr, &Env::new()),
-            EvalResult::Number(3 as types::Number)
-        );
-    }
-
-    #[test]
-    fn test_eval_fn_mul_empty() {
-        assert_eq!(
-            eval(&Expr::new(ExprKind::FnMul, vec![]), &Env::new()),
-            EvalResult::Number(1 as types::Number)
-        );
-    }
-
-    #[test]
-    #[should_panic(
-        expected = "Interpretation error. Invalid arguments for function \"mul\". Expected numbers."
-    )]
-    fn test_eval_fn_mul_invalid() {
-        let expr = Expr::new(
-            ExprKind::FnMul,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::FnPrint, vec![])),
-            ],
-        );
-        eval(&expr, &Env::new());
-    }
-
-    // ==========================
-
-    //          Div Fn
-
-    // ==========================
-
-    #[test]
-    fn test_eval_fn_div_int() {
-        let expr = Expr::new(
-            ExprKind::FnDiv,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(4 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-            ],
-        );
-
-        assert_eq!(
-            eval(&expr, &Env::new()),
-            EvalResult::Number(2 as types::Number)
-        );
-    }
-
-    #[test]
-    fn test_eval_fn_div_float() {
-        let expr = Expr::new(
-            ExprKind::FnDiv,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(5.5), vec![])),
-                Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(2.5));
-    }
-
-    #[test]
-    fn test_eval_fn_div() {
-        let expr = Expr::new(
-            ExprKind::FnDiv,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(-1.6), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(-1.25));
-    }
-
-    #[test]
-    fn test_eval_fn_div_one() {
-        let expr = Expr::new(
-            ExprKind::FnDiv,
-            vec![Box::new(Expr::new(
-                ExprKind::Number(2 as types::Number),
-                vec![],
-            ))],
-        );
-
-        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(0.5));
-    }
-
-    #[test]
-    #[should_panic(
-        expected = "Interpretation error. Invalid arguments for function \"div\". Expected numbers."
-    )]
-    fn test_eval_fn_div_invalid() {
-        let expr = Expr::new(
-            ExprKind::FnDiv,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::FnPrint, vec![])),
-            ],
-        );
-        eval(&expr, &Env::new());
-    }
-
-    #[test]
-    #[should_panic(expected = "Interpretation error. Division by zero.")]
-    fn test_eval_fn_div_division_by_zero_single_arg() {
-        let expr = Expr::new(
-            ExprKind::FnDiv,
-            vec![Box::new(Expr::new(
-                ExprKind::Number(0 as types::Number),
-                vec![],
-            ))],
-        );
-        eval(&expr, &Env::new());
-    }
-
-    #[test]
-    #[should_panic(expected = "Interpretation error. Division by zero.")]
-    fn test_eval_fn_div_division_by_zero() {
-        let expr = Expr::new(
-            ExprKind::FnDiv,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2.4), vec![])),
-                Box::new(Expr::new(ExprKind::Number(0 as types::Number), vec![])),
-            ],
-        );
-        eval(&expr, &Env::new());
-    }
-
-    // ==========================
-
-    //         Identifier
-
-    // ==========================
-
-    #[test]
-    fn test_eval_identifier() {
-        let mut env = Env::new();
-
-        env.set(
-            "x".to_string(),
-            EnvRecord {
-                value: EvalResult::Number(1.0),
-                mutable: false,
-            },
-        );
-
-        let expr = Expr::new(ExprKind::Identifier("x".to_string()), vec![]);
-
-        assert_eq!(eval(&expr, &env), EvalResult::Number(1.0));
-    }
-
-    #[test]
-    #[should_panic(expected = "Interpretation error. Undefined identifier \"x\".")]
-    fn test_eval_identifier_undefined() {
-        let env = Env::new();
-        let expr = Expr::new(ExprKind::Identifier("x".to_string()), vec![]);
-        eval(&expr, &env);
-    }
-
-    // ==========================
-
-    //        Let Binding
-
-    // ==========================
-
-    #[test]
-    fn test_let_binding() {
-        let env = Env::new();
-
-        let expr = Expr::new(
-            ExprKind::FnLetBinding,
-            vec![
-                Box::new(Expr::new(
-                    ExprKind::List,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                    ],
-                )),
-                Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &env), EvalResult::Number(1.0));
-    }
-
-    #[test]
-    fn test_let_binding_nested() {
-        let env = Env::new();
-
-        let expr = Expr::new(
-            ExprKind::FnLetBinding,
-            vec![
-                Box::new(Expr::new(
-                    ExprKind::List,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                    ],
-                )),
-                Box::new(Expr::new(
-                    ExprKind::FnLetBinding,
-                    vec![
-                        Box::new(Expr::new(
-                            ExprKind::List,
-                            vec![
-                                Box::new(Expr::new(ExprKind::Identifier("y".to_string()), vec![])),
-                                Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
-                            ],
-                        )),
-                        Box::new(Expr::new(
-                            ExprKind::FnAdd,
-                            vec![
-                                Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                                Box::new(Expr::new(ExprKind::Identifier("y".to_string()), vec![])),
-                            ],
-                        )),
-                    ],
-                )),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &env), EvalResult::Number(3.0));
-    }
-
-    #[test]
-    fn test_let_binding_empty() {
-        let env = Env::new();
-
-        let expr = Expr::new(
-            ExprKind::FnLetBinding,
-            vec![Box::new(Expr::new(
-                ExprKind::List,
-                vec![
-                    Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                    Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                ],
-            ))],
-        );
-
-        assert_eq!(eval(&expr, &env), EvalResult::Nil);
-    }
-
-    #[test]
-    #[should_panic(expected = "Interpretation error. Identifier \"x\" already exists.")]
-    fn test_let_binding_rebind() {
-        let mut env = Env::new();
-
-        let expr = Expr::new(
-            ExprKind::FnLetBinding,
-            vec![
-                Box::new(Expr::new(
-                    ExprKind::List,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                    ],
-                )),
-                Box::new(Expr::new(
-                    ExprKind::FnLetBinding,
-                    vec![
-                        Box::new(Expr::new(
-                            ExprKind::List,
-                            vec![
-                                Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                                Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
-                            ],
-                        )),
-                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                    ],
-                )),
-            ],
-        );
-
-        eval(&expr, &mut env);
-    }
-
-    // ==========================
-
-    //           Nil
-
-    // ==========================
-
-    #[test]
-    fn test_nil() {
-        let env = Env::new();
-        let expr = Expr::new(ExprKind::Nil, vec![]);
-
-        assert_eq!(eval(&expr, &env), EvalResult::Nil);
-    }
-
-    // ==========================
-
-    //          Boolean
-
-    // ==========================
-
-    #[test]
-    fn test_true() {
-        let env = Env::new();
-        let expr = Expr::new(ExprKind::Boolean(true), vec![]);
-
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(true));
-    }
-
-    #[test]
-    fn test_false() {
-        let env = Env::new();
-        let expr = Expr::new(ExprKind::Boolean(false), vec![]);
-
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(false));
-    }
-
-    // ==========================
-
-    //       Greater than
-
-    // ==========================
-
-    #[test]
-    fn test_greater_than() {
-        let env = Env::new();
-        let expr = Expr::new(
-            ExprKind::FnGreatr,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(true));
-    }
-
-    #[test]
-    fn test_greater_than_multiple() {
-        let env = Env::new();
-        let expr = Expr::new(
-            ExprKind::FnGreatr,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(false));
-    }
-
-    // ==========================
-
-    //   Greater than or equal
-
-    // ==========================
-
-    #[test]
-    fn test_greater_or_equal() {
-        let env = Env::new();
-        let expr = Expr::new(
-            ExprKind::FnGreatrEq,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(true));
-    }
-
-    #[test]
-    fn test_greater_eq_multiple() {
-        let env = Env::new();
-        let expr = Expr::new(
-            ExprKind::FnGreatrEq,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(true));
-    }
-
-    // ==========================
-
-    //         Less than
-
-    // ==========================
-
-    #[test]
-    fn test_less_than() {
-        let env = Env::new();
-        let expr = Expr::new(
-            ExprKind::FnLess,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(false));
-    }
-
-    #[test]
-    fn test_less_than_multiple() {
-        let env = Env::new();
-        let expr = Expr::new(
-            ExprKind::FnLess,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(false));
-    }
-
-    // ==========================
-
-    //     Less than or equal
-
-    // ==========================
-
-    #[test]
-    fn test_less_or_equal() {
-        let env = Env::new();
-        let expr = Expr::new(
-            ExprKind::FnLessEq,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(false));
-    }
-
-    #[test]
-    fn test_less_eq_multiple() {
-        let env = Env::new();
-        let expr = Expr::new(
-            ExprKind::FnLessEq,
-            vec![
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-            ],
-        );
-
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(true));
-    }
-
-    // ==========================
-
-    //         Negation
-
-    // ==========================
-
-    #[test]
-    fn test_not_bool() {
-        let env = Env::new();
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnNot,
-                    vec![Box::new(Expr::new(ExprKind::Boolean(true), vec![]))],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(false)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnNot,
-                    vec![Box::new(Expr::new(ExprKind::Boolean(false), vec![]))],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(true)
-        );
-    }
-
-    #[test]
-    fn test_not_nil() {
-        let env = Env::new();
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnNot,
-                    vec![Box::new(Expr::new(ExprKind::Nil, vec![]))],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(true)
-        );
-    }
-    #[test]
-    fn test_not_other() {
-        let env = Env::new();
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnNot,
-                    vec![Box::new(Expr::new(
-                        ExprKind::String("".to_string()),
-                        vec![]
-                    ))],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(false)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnNot,
-                    vec![Box::new(Expr::new(ExprKind::Number(0.0), vec![]))],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(false)
-        );
-    }
-
-    // ==========================
-
-    //          Equal
-
-    // ==========================
-
-    #[test]
-    fn test_equal() {
-        let env = Env::new();
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnEq,
-                    vec![
-                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![]))
-                    ],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(true)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnEq,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
-                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![]))
-                    ],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(false)
-        );
-    }
-
-    // ==========================
-
-    //         Not Equal
-
-    // ==========================
-
-    #[test]
-    fn test_not_equal() {
-        let env = Env::new();
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnNotEq,
-                    vec![
-                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![]))
-                    ],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(false)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnNotEq,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
-                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![]))
-                    ],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(true)
-        );
-    }
-
-    // ==========================
-
-    //      Boolean coercion
-
-    // ==========================
-
-    #[test]
-    fn test_boolean() {
-        let env = Env::new();
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnBool,
-                    vec![Box::new(Expr::new(
-                        ExprKind::String("2".to_string()),
-                        vec![]
-                    )),],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(true)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnBool,
-                    vec![Box::new(Expr::new(ExprKind::Number(2.2), vec![])),],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(true)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnBool,
-                    vec![Box::new(Expr::new(ExprKind::Boolean(true), vec![])),],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(true)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnBool,
-                    vec![Box::new(Expr::new(ExprKind::Nil, vec![])),],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(false)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnBool,
-                    vec![Box::new(Expr::new(ExprKind::Boolean(false), vec![])),],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(false)
-        );
-    }
-
-    // ==========================
-
-    //            Or
-
-    // ==========================
-
-    #[test]
-    fn test_or() {
-        let env = Env::new();
-
-        assert_eq!(
-            eval(&Expr::new(ExprKind::FnOr, vec![],), &env),
-            EvalResult::Nil
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnOr,
-                    vec![Box::new(Expr::new(ExprKind::Number(2.2), vec![])),],
-                ),
-                &env
-            ),
-            EvalResult::Number(2.2)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnOr,
-                    vec![Box::new(Expr::new(ExprKind::Boolean(false), vec![])),],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(false)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnOr,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Boolean(false), vec![])),
-                        Box::new(Expr::new(ExprKind::Nil, vec![]))
-                    ],
-                ),
-                &env
-            ),
-            EvalResult::Nil
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnOr,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Boolean(false), vec![])),
-                        Box::new(Expr::new(ExprKind::Nil, vec![])),
-                        Box::new(Expr::new(ExprKind::String("123".to_string()), vec![]))
-                    ],
-                ),
-                &env
-            ),
-            EvalResult::String("123".to_string())
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnOr,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Boolean(false), vec![])),
-                        Box::new(Expr::new(ExprKind::String("123".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::Nil, vec![])),
-                    ],
-                ),
-                &env
-            ),
-            EvalResult::String("123".to_string())
-        );
-    }
-
-    // ==========================
-
-    //            And
-
-    // ==========================
-
-    #[test]
-    fn test_and() {
-        let env = Env::new();
-
-        assert_eq!(
-            eval(&Expr::new(ExprKind::FnAnd, vec![],), &env),
-            EvalResult::Boolean(true)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnAnd,
-                    vec![Box::new(Expr::new(ExprKind::Number(2.2), vec![])),],
-                ),
-                &env
-            ),
-            EvalResult::Number(2.2)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnAnd,
-                    vec![Box::new(Expr::new(ExprKind::Boolean(false), vec![])),],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(false)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnAnd,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Boolean(false), vec![])),
-                        Box::new(Expr::new(ExprKind::Nil, vec![]))
-                    ],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(false)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnAnd,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Boolean(false), vec![])),
-                        Box::new(Expr::new(ExprKind::Nil, vec![])),
-                        Box::new(Expr::new(ExprKind::String("123".to_string()), vec![]))
-                    ],
-                ),
-                &env
-            ),
-            EvalResult::Boolean(false)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnAnd,
-                    vec![
-                        Box::new(Expr::new(ExprKind::String("123".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::Nil, vec![])),
-                    ],
-                ),
-                &env
-            ),
-            EvalResult::Nil
-        );
-    }
-
-    // ==========================
-
-    //            If
-
-    // ==========================
-
-    #[test]
-    fn test_if() {
-        let env = Env::new();
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnIf,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Boolean(true), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
-                    ]
-                ),
-                &env
-            ),
-            EvalResult::Number(1.0)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnIf,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Boolean(false), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
-                    ]
-                ),
-                &env
-            ),
-            EvalResult::Number(2.0)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnIf,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Boolean(true), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                    ]
-                ),
-                &env
-            ),
-            EvalResult::Number(1.0)
-        );
-
-        assert_eq!(
-            eval(
-                &Expr::new(
-                    ExprKind::FnIf,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Boolean(false), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                    ]
-                ),
-                &env
-            ),
-            EvalResult::Nil
-        );
     }
 }

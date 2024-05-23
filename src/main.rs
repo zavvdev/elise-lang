@@ -2,7 +2,7 @@ use std::env;
 use std::fs;
 
 use elise::config::Config;
-use elise::interpreter::models::Env;
+use elise::interpreter::models::env::Env;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

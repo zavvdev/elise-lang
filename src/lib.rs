@@ -5,7 +5,7 @@ pub mod parser;
 pub mod semanalyzer;
 pub mod types;
 
-use interpreter::{interpret, models::Env};
+use interpreter::{interpret, models::env::Env};
 use lexer::tokenize;
 use parser::parse;
 use semanalyzer::analyze_semantics;

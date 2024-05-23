@@ -1,0 +1,122 @@
+#[cfg(test)]
+mod tests {
+    use crate::{
+        interpreter::{
+            eval,
+            models::env::{Env, EvalResult},
+        },
+        parser::models::expression::{Expr, ExprKind},
+    };
+
+    #[test]
+    fn test_let() {
+        let env = Env::new();
+
+        let expr = Expr::new(
+            ExprKind::FnLetBinding,
+            vec![
+                Box::new(Expr::new(
+                    ExprKind::List,
+                    vec![
+                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
+                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
+                    ],
+                )),
+                Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
+            ],
+        );
+
+        assert_eq!(eval(&expr, &env), EvalResult::Number(1.0));
+    }
+
+    #[test]
+    fn test_let_nested() {
+        let env = Env::new();
+
+        let expr = Expr::new(
+            ExprKind::FnLetBinding,
+            vec![
+                Box::new(Expr::new(
+                    ExprKind::List,
+                    vec![
+                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
+                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
+                    ],
+                )),
+                Box::new(Expr::new(
+                    ExprKind::FnLetBinding,
+                    vec![
+                        Box::new(Expr::new(
+                            ExprKind::List,
+                            vec![
+                                Box::new(Expr::new(ExprKind::Identifier("y".to_string()), vec![])),
+                                Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
+                            ],
+                        )),
+                        Box::new(Expr::new(
+                            ExprKind::FnAdd,
+                            vec![
+                                Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
+                                Box::new(Expr::new(ExprKind::Identifier("y".to_string()), vec![])),
+                            ],
+                        )),
+                    ],
+                )),
+            ],
+        );
+
+        assert_eq!(eval(&expr, &env), EvalResult::Number(3.0));
+    }
+
+    #[test]
+    fn test_let_empty() {
+        let env = Env::new();
+
+        let expr = Expr::new(
+            ExprKind::FnLetBinding,
+            vec![Box::new(Expr::new(
+                ExprKind::List,
+                vec![
+                    Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
+                    Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
+                ],
+            ))],
+        );
+
+        assert_eq!(eval(&expr, &env), EvalResult::Nil);
+    }
+
+    #[test]
+    #[should_panic(expected = "Interpretation error. Identifier \"x\" already exists.")]
+    fn test_let_rebind() {
+        let mut env = Env::new();
+
+        let expr = Expr::new(
+            ExprKind::FnLetBinding,
+            vec![
+                Box::new(Expr::new(
+                    ExprKind::List,
+                    vec![
+                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
+                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
+                    ],
+                )),
+                Box::new(Expr::new(
+                    ExprKind::FnLetBinding,
+                    vec![
+                        Box::new(Expr::new(
+                            ExprKind::List,
+                            vec![
+                                Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
+                                Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
+                            ],
+                        )),
+                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
+                    ],
+                )),
+            ],
+        );
+
+        eval(&expr, &mut env);
+    }
+}

@@ -1,2 +1,8 @@
-@println (
-    @eq(2 2 3))
+@let ([name "John"]
+    @if (@eq(name "John")
+        @println("Hello John")
+        @println("Hello someone else"))
+    @let ([age 20]
+        @if (@greatr-eq(age 18)
+            @println("Permission granted.")
+            @println("Permission denied. Too young"))))

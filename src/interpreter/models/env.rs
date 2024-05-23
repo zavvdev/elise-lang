@@ -2,8 +2,6 @@ use std::collections::HashMap;
 
 use crate::types;
 
-// Eval Result
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum EvalResult {
     Nil,
@@ -11,8 +9,6 @@ pub enum EvalResult {
     Boolean(bool),
     String(String),
 }
-
-// Env
 
 #[derive(Clone)]
 pub struct EnvRecord {
