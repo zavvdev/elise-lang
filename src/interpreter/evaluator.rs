@@ -2,7 +2,7 @@ use crate::{
     binary_op,
     interpreter::messages,
     lexer::lexemes,
-    parser::models::ast::{Expr, ExprKind},
+    parser::models::expression::{Expr, ExprKind},
     types,
 };
 

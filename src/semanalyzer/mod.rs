@@ -2,12 +2,12 @@ pub mod analyzer;
 pub mod messages;
 
 use self::analyzer::analyze;
-use crate::parser::models::ast::Expr;
+use crate::parser::models::expression::Expr;
 
-pub fn analyze_semantics(ast: &Vec<Expr>) -> Vec<&Expr> {
+pub fn analyze_semantics(expressions: &Vec<Expr>) -> Vec<&Expr> {
     let mut result: Vec<&Expr> = Vec::new();
 
-    for expr in ast {
+    for expr in expressions {
         let next_expr: &Expr = analyze(expr);
 
         result.push(next_expr);
@@ -19,7 +19,7 @@ pub fn analyze_semantics(ast: &Vec<Expr>) -> Vec<&Expr> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::models::ast::ExprKind;
+    use crate::parser::models::expression::ExprKind;
     use assert_panic::assert_panic;
 
     // ==========================

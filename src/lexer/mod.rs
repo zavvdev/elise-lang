@@ -25,12 +25,6 @@ impl Lexer {
         }
     }
 
-    // ==========================
-
-    //          Defaults
-
-    // ==========================
-
     fn distinguish_token_kind(&mut self, c: &char) -> TokenKind {
         if Self::is_number(&c) {
             let number = self.consume_number();

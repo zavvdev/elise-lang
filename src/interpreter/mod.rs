@@ -4,7 +4,7 @@ pub mod messages;
 pub mod models;
 
 use self::{evaluator::eval, models::Env};
-use crate::parser::models::ast::Expr;
+use crate::parser::models::expression::Expr;
 
 pub fn interpret(exprs: Vec<&Expr>, env: Env) {
     for expr in exprs {
@@ -20,7 +20,7 @@ mod tests {
             models::{Env, EnvRecord, EvalResult},
         },
         lexer::lexemes,
-        parser::models::ast::{Expr, ExprKind},
+        parser::models::expression::{Expr, ExprKind},
         types,
     };
 

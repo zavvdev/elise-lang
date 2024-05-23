@@ -1,5 +1,5 @@
 use crate::{
-    parser::models::ast::{Expr, ExprKind},
+    parser::models::expression::{Expr, ExprKind},
     semanalyzer::messages,
 };
 

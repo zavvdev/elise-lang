@@ -1,8 +1,297 @@
+use crate::{lexer::models::token::{Token, TokenKind}, types};
+
+use self::models::expression::{Expr, ExprKind};
+
+pub mod __tests__;
 pub mod messages;
 pub mod models;
 
-use self::models::{ast::Expr, Parser};
-use crate::lexer::models::token::Token;
+struct Parser {
+    tokens: Vec<Token>,
+    token_pos: usize,
+    seq_start_count: usize,
+    seq_end_count: usize,
+}
+
+impl Parser {
+    fn new(tokens: Vec<Token>) -> Self {
+        Self {
+            tokens,
+            token_pos: 0,
+            seq_start_count: 0,
+            seq_end_count: 0,
+        }
+    }
+
+    fn next_expr(&mut self) -> Option<Expr> {
+        if self.seq_start_count != self.seq_end_count && self.get_current_token().is_none() {
+            panic!("{}", messages::unexpected_end_of_input());
+        } else if self.seq_start_count == self.seq_end_count && self.seq_start_count != 0 {
+            self.seq_start_count = 0;
+            self.seq_end_count = 0;
+        }
+
+        if self.token_pos > self.tokens.len() {
+            return None;
+        }
+
+        let current_token = self.get_current_token()?;
+
+        match &current_token.kind {
+            TokenKind::Number(x) => self.consume_number(*x),
+            TokenKind::Nil => self.consume_nil(),
+            TokenKind::Identifier(x) => self.consume_identifier(x.to_string()),
+            TokenKind::Minus => self.consume_negative_number(),
+            TokenKind::RightParen => Some(Expr::new(ExprKind::_EndOfFn, vec![])),
+            TokenKind::Comma => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
+            TokenKind::LeftSqrBr => self.consume_list(),
+            TokenKind::RightSqrBr => Some(Expr::new(ExprKind::_EndOfList, vec![])),
+            TokenKind::Boolean(x) => self.consume_boolean(*x),
+            TokenKind::String(x) => self.consume_string(x.to_string()),
+            TokenKind::FnAdd => self.consume_known_fn(ExprKind::FnAdd),
+            TokenKind::FnSub => self.consume_known_fn(ExprKind::FnSub),
+            TokenKind::FnMul => self.consume_known_fn(ExprKind::FnMul),
+            TokenKind::FnDiv => self.consume_known_fn(ExprKind::FnDiv),
+            TokenKind::FnPrint => self.consume_known_fn(ExprKind::FnPrint),
+            TokenKind::FnPrintLn => self.consume_known_fn(ExprKind::FnPrintLn),
+            TokenKind::FnLetBinding => self.consume_known_fn(ExprKind::FnLetBinding),
+            TokenKind::FnGreatr => self.consume_known_fn(ExprKind::FnGreatr),
+            TokenKind::FnGreatrEq => self.consume_known_fn(ExprKind::FnGreatrEq),
+            TokenKind::FnLess => self.consume_known_fn(ExprKind::FnLess),
+            TokenKind::FnLessEq => self.consume_known_fn(ExprKind::FnLessEq),
+            TokenKind::FnEq => self.consume_known_fn(ExprKind::FnEq),
+            TokenKind::FnNotEq => self.consume_known_fn(ExprKind::FnNotEq),
+            TokenKind::FnNot => self.consume_known_fn(ExprKind::FnNot),
+            TokenKind::FnAnd => self.consume_known_fn(ExprKind::FnAnd),
+            TokenKind::FnOr => self.consume_known_fn(ExprKind::FnOr),
+            TokenKind::FnBool => self.consume_known_fn(ExprKind::FnBool),
+            TokenKind::FnIf => self.consume_known_fn(ExprKind::FnIf),
+            _ => None,
+        }
+    }
+
+    /**
+     *
+     * Should be used if you want to skip `offset` amount of tokens that are
+     * next to the current token. For example, if I'm at token 4 and I call
+     * `self.skip_tokens(1)` then the next token_pos will be 6. Useful in the case
+     * when you parsed a sequence of tokens at once.
+     *
+     */
+    fn skip_tokens(&mut self, offset: usize) {
+        let tokens_len = self.tokens.len();
+
+        if self.token_pos < tokens_len {
+            self.token_pos += offset + 1;
+        }
+    }
+
+    /**
+     *
+     * Should be used when current token is required but with
+     * addition move to the next token
+     *
+     */
+    fn consume(&mut self) -> Option<&Token> {
+        if self.token_pos >= self.tokens.len() {
+            return None;
+        }
+
+        let current_token = self.tokens.get(self.token_pos);
+
+        self.token_pos += 1;
+
+        current_token
+    }
+
+    fn get_current_token(&self) -> Option<&Token> {
+        self.tokens.get(self.token_pos)
+    }
+
+    fn get_next_token(&self) -> Option<&Token> {
+        self.tokens.get(self.token_pos + 1)
+    }
+
+    fn panic_at_current_token(&self) -> ! {
+        panic!(
+            "{}",
+            messages::unexpected_token(&format!("{:?}", self.get_current_token()))
+        );
+    }
+
+    /**
+     *
+     * Should be used for counting start of sequense
+     *
+     */
+    fn capture_seq(&mut self) {
+        self.seq_start_count += 1;
+    }
+
+    /**
+     *
+     * Should be used for counting end of sequense
+     *
+     */
+    fn end_seq(&mut self) {
+        self.seq_end_count += 1;
+    }
+
+    /**
+     *
+     * Can be used for consuming arguemnts of any sequentioan entity like function or list
+     *
+     */
+    fn consume_seq_arguments(&mut self, seq_end_expr: ExprKind) -> Vec<Box<Expr>> {
+        let mut arguments: Vec<Box<Expr>> = Vec::new();
+
+        while let Some(expr) = self.next_expr() {
+            if expr.kind == seq_end_expr {
+                self.consume();
+                self.end_seq();
+                return arguments;
+            }
+
+            if expr.kind == ExprKind::_ArgumentSeparator {
+                self.consume();
+                continue;
+            }
+
+            arguments.push(Box::new(expr));
+        }
+
+        arguments
+    }
+
+    // ==========================
+
+    //          Numbers
+
+    // ==========================
+
+    fn consume_number(&mut self, x: types::Number) -> Option<Expr> {
+        self.consume();
+        Some(Expr::new(ExprKind::Number(x), vec![]))
+    }
+
+    fn consume_negative_number(&mut self) -> Option<Expr> {
+        let next = self.get_next_token();
+
+        if next.is_none() {
+            self.panic_at_current_token();
+        }
+
+        let next = next.unwrap();
+
+        if let TokenKind::Number(x) = next.kind {
+            self.skip_tokens(1);
+            return Some(Expr::new(ExprKind::Number(x * -1.0), vec![]));
+        } else {
+            panic!("{}", messages::unexpected_token(&next.span.lexeme));
+        }
+    }
+
+    // ==========================
+
+    //      Known functions
+
+    // ==========================
+
+    /**
+     *
+     * Should be used for consuming known functions only
+     *
+     */
+    fn consume_known_fn(&mut self, known_fn_expr_kind: ExprKind) -> Option<Expr> {
+        let next = self.get_next_token();
+
+        if next.is_none() {
+            self.panic_at_current_token();
+        }
+
+        let next = next.unwrap();
+
+        if next.kind == TokenKind::LeftParen {
+            self.skip_tokens(1);
+            self.capture_seq();
+
+            return Some(Expr::new(
+                known_fn_expr_kind,
+                self.consume_seq_arguments(ExprKind::_EndOfFn),
+            ));
+        } else {
+            self.panic_at_current_token();
+        }
+    }
+
+    // ==========================
+
+    //           List
+
+    // ==========================
+
+    fn consume_list(&mut self) -> Option<Expr> {
+        let next = self.get_next_token();
+
+        if next.is_none() {
+            self.panic_at_current_token();
+        }
+
+        self.consume();
+        self.capture_seq();
+
+        Some(Expr::new(
+            ExprKind::List,
+            self.consume_seq_arguments(ExprKind::_EndOfList),
+        ))
+    }
+
+    // ==========================
+
+    //         Identifier
+
+    // ==========================
+
+    fn consume_identifier(&mut self, x: String) -> Option<Expr> {
+        self.consume();
+        Some(Expr::new(ExprKind::Identifier(x), vec![]))
+    }
+
+    // ==========================
+
+    //           Nil
+
+    // ==========================
+
+    fn consume_nil(&mut self) -> Option<Expr> {
+        self.consume();
+        Some(Expr::new(ExprKind::Nil, vec![]))
+    }
+
+    // ==========================
+
+    //         Boolean
+
+    // ==========================
+
+    fn consume_boolean(&mut self, x: bool) -> Option<Expr> {
+        self.consume();
+        Some(Expr::new(ExprKind::Boolean(x), vec![]))
+    }
+
+    // ==========================
+
+    //          String
+
+    // ==========================
+
+    fn consume_string(&mut self, x: String) -> Option<Expr> {
+        self.consume();
+        Some(Expr::new(ExprKind::String(x), vec![]))
+    }
+}
+
+// ==============================================
 
 pub fn parse(tokens: Vec<Token>) -> Vec<Expr> {
     let mut parser = Parser::new(tokens);
@@ -13,560 +302,4 @@ pub fn parse(tokens: Vec<Token>) -> Vec<Expr> {
     }
 
     expressions
-}
-
-// ======== Tests ========
-
-#[cfg(test)]
-mod tests {
-    use tests::models::ast::ExprKind;
-
-    use crate::{
-        lexer::{
-            lexemes::{self, fn_lexeme_to_string},
-            models::token::{TokenKind, TokenSpan},
-        },
-        types,
-    };
-
-    use super::*;
-
-    // ==========================
-
-    //          Numbers
-
-    // ==========================
-
-    #[test]
-    fn test_parse_int() {
-        assert_eq!(
-            parse(vec![Token {
-                kind: TokenKind::Number(42 as types::Number),
-                span: TokenSpan::new(0, 2, "42".to_string())
-            }]),
-            vec![Expr {
-                kind: ExprKind::Number(42 as types::Number),
-                children: vec![],
-            }]
-        );
-    }
-
-    #[test]
-    fn test_parse_int_negative() {
-        assert_eq!(
-            parse(vec![
-                Token {
-                    kind: TokenKind::Minus,
-                    span: TokenSpan::new(0, 1, lexemes::L_MINUS.to_string())
-                },
-                Token {
-                    kind: TokenKind::Number(2 as types::Number),
-                    span: TokenSpan::new(1, 2, "2".to_string())
-                }
-            ]),
-            vec![Expr {
-                kind: ExprKind::Number(-2 as types::Number),
-                children: vec![],
-            }]
-        );
-    }
-
-    #[test]
-    fn test_parse_float() {
-        assert_eq!(
-            parse(vec![Token {
-                kind: TokenKind::Number(4.2),
-                span: TokenSpan::new(0, 3, "4.2".to_string())
-            }]),
-            vec![Expr {
-                kind: ExprKind::Number(4.2),
-                children: vec![],
-            }]
-        );
-    }
-
-    #[test]
-    fn test_parse_float_negative() {
-        assert_eq!(
-            parse(vec![
-                Token {
-                    kind: TokenKind::Minus,
-                    span: TokenSpan::new(0, 1, lexemes::L_MINUS.to_string())
-                },
-                Token {
-                    kind: TokenKind::Number(5.6),
-                    span: TokenSpan::new(1, 4, "5.6".to_string())
-                }
-            ]),
-            vec![Expr {
-                kind: ExprKind::Number(-5.6),
-                children: vec![],
-            }]
-        );
-    }
-
-    // ==========================
-
-    //     Unexpected Tokens
-
-    // ==========================
-
-    #[test]
-    #[should_panic(expected = "Unexpected token")]
-    fn test_unexpected_token_trailing_minus() {
-        parse(vec![Token {
-            kind: TokenKind::Minus,
-            span: TokenSpan::new(0, 1, lexemes::L_MINUS.to_string()),
-        }]);
-    }
-
-    #[test]
-    #[should_panic(expected = "Unexpected token")]
-    fn test_unexpected_token_minus() {
-        parse(vec![
-            Token {
-                kind: TokenKind::Minus,
-                span: TokenSpan::new(0, 1, lexemes::L_MINUS.to_string()),
-            },
-            Token {
-                kind: TokenKind::FnAdd,
-                span: TokenSpan::new(1, 5, fn_lexeme_to_string(lexemes::L_FN_ADD)),
-            },
-        ]);
-    }
-
-    // ==========================
-
-    //      Known functions
-
-    // ==========================
-
-    #[test]
-    #[should_panic(expected = "Unexpected end of input")]
-    fn test_known_function_unclosed_paren() {
-        parse(vec![
-            Token {
-                kind: TokenKind::FnAdd,
-                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD)),
-            },
-            Token {
-                kind: TokenKind::LeftParen,
-                span: TokenSpan::new(4, 5, lexemes::L_LEFT_PAREN.to_string()),
-            },
-            Token {
-                kind: TokenKind::Number(2 as types::Number),
-                span: TokenSpan::new(5, 6, "2".to_string()),
-            },
-        ]);
-    }
-
-    #[test]
-    #[should_panic(expected = "Unexpected end of input")]
-    fn test_known_function_unclosed_paren_no_children() {
-        parse(vec![
-            Token {
-                kind: TokenKind::FnAdd,
-                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD)),
-            },
-            Token {
-                kind: TokenKind::LeftParen,
-                span: TokenSpan::new(4, 5, lexemes::L_LEFT_PAREN.to_string()),
-            },
-        ]);
-    }
-
-    #[test]
-    #[should_panic(expected = "Unexpected end of input")]
-    fn test_known_function_unclosed_paren_nested() {
-        parse(vec![
-            Token {
-                kind: TokenKind::FnAdd,
-                span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD)),
-            },
-            Token {
-                kind: TokenKind::LeftParen,
-                span: TokenSpan::new(4, 5, lexemes::L_LEFT_PAREN.to_string()),
-            },
-            Token {
-                kind: TokenKind::FnAdd,
-                span: TokenSpan::new(5, 9, fn_lexeme_to_string(lexemes::L_FN_ADD)),
-            },
-            Token {
-                kind: TokenKind::LeftParen,
-                span: TokenSpan::new(9, 10, lexemes::L_LEFT_PAREN.to_string()),
-            },
-            Token {
-                kind: TokenKind::Number(3.4),
-                span: TokenSpan::new(10, 13, "3.4".to_string()),
-            },
-            Token {
-                kind: TokenKind::Number(1 as types::Number),
-                span: TokenSpan::new(13, 14, "1".to_string()),
-            },
-            Token {
-                kind: TokenKind::RightParen,
-                span: TokenSpan::new(14, 15, lexemes::L_RIGHT_PAREN.to_string()),
-            },
-        ]);
-    }
-
-    #[test]
-    fn test_known_function_no_children() {
-        assert_eq!(
-            parse(vec![
-                Token {
-                    kind: TokenKind::FnAdd,
-                    span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD)),
-                },
-                Token {
-                    kind: TokenKind::LeftParen,
-                    span: TokenSpan::new(4, 5, lexemes::L_LEFT_PAREN.to_string()),
-                },
-                Token {
-                    kind: TokenKind::RightParen,
-                    span: TokenSpan::new(5, 6, lexemes::L_RIGHT_PAREN.to_string()),
-                }
-            ]),
-            vec![Expr {
-                kind: ExprKind::FnAdd,
-                children: vec![],
-            }]
-        );
-    }
-
-    #[test]
-    fn test_known_function() {
-        assert_eq!(
-            parse(vec![
-                Token {
-                    kind: TokenKind::FnAdd,
-                    span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD)),
-                },
-                Token {
-                    kind: TokenKind::LeftParen,
-                    span: TokenSpan::new(4, 5, lexemes::L_LEFT_PAREN.to_string()),
-                },
-                Token {
-                    kind: TokenKind::Number(2 as types::Number),
-                    span: TokenSpan::new(5, 6, "2".to_string()),
-                },
-                Token {
-                    kind: TokenKind::Number(3.4),
-                    span: TokenSpan::new(8, 9, "3.4".to_string()),
-                },
-                Token {
-                    kind: TokenKind::RightParen,
-                    span: TokenSpan::new(9, 10, lexemes::L_RIGHT_PAREN.to_string()),
-                },
-            ]),
-            vec![Expr {
-                kind: ExprKind::FnAdd,
-                children: vec![
-                    Box::new(Expr {
-                        kind: ExprKind::Number(2 as types::Number),
-                        children: vec![],
-                    }),
-                    Box::new(Expr {
-                        kind: ExprKind::Number(3.4),
-                        children: vec![],
-                    }),
-                ],
-            }]
-        );
-    }
-
-    #[test]
-    fn test_known_function_nested() {
-        assert_eq!(
-            parse(vec![
-                Token {
-                    kind: TokenKind::FnAdd,
-                    span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD)),
-                },
-                Token {
-                    kind: TokenKind::LeftParen,
-                    span: TokenSpan::new(5, 6, lexemes::L_LEFT_PAREN.to_string()),
-                },
-                Token {
-                    kind: TokenKind::FnAdd,
-                    span: TokenSpan::new(6, 10, fn_lexeme_to_string(lexemes::L_FN_ADD)),
-                },
-                Token {
-                    kind: TokenKind::LeftParen,
-                    span: TokenSpan::new(10, 11, lexemes::L_LEFT_PAREN.to_string()),
-                },
-                Token {
-                    kind: TokenKind::Number(3.4),
-                    span: TokenSpan::new(11, 14, "3.4".to_string()),
-                },
-                Token {
-                    kind: TokenKind::Number(1 as types::Number),
-                    span: TokenSpan::new(14, 15, "1".to_string()),
-                },
-                Token {
-                    kind: TokenKind::RightParen,
-                    span: TokenSpan::new(15, 16, lexemes::L_RIGHT_PAREN.to_string()),
-                },
-                Token {
-                    kind: TokenKind::Number(2 as types::Number),
-                    span: TokenSpan::new(16, 17, "2".to_string()),
-                },
-                Token {
-                    kind: TokenKind::RightParen,
-                    span: TokenSpan::new(17, 18, lexemes::L_RIGHT_PAREN.to_string()),
-                },
-            ]),
-            vec![Expr {
-                kind: ExprKind::FnAdd,
-                children: vec![
-                    Box::new(Expr {
-                        kind: ExprKind::FnAdd,
-                        children: vec![
-                            Box::new(Expr {
-                                kind: ExprKind::Number(3.4),
-                                children: vec![],
-                            }),
-                            Box::new(Expr {
-                                kind: ExprKind::Number(1 as types::Number),
-                                children: vec![],
-                            }),
-                        ],
-                    }),
-                    Box::new(Expr {
-                        kind: ExprKind::Number(2 as types::Number),
-                        children: vec![],
-                    }),
-                ],
-            }]
-        );
-    }
-
-    // ==========================
-
-    //           List
-
-    // ==========================
-
-    #[test]
-    fn test_empty_list() {
-        assert_eq!(
-            parse(vec![
-                Token {
-                    kind: TokenKind::LeftSqrBr,
-                    span: TokenSpan::new(0, 1, lexemes::L_LEFT_SQR_BR.to_string()),
-                },
-                Token {
-                    kind: TokenKind::RightSqrBr,
-                    span: TokenSpan::new(1, 2, lexemes::L_RIGHT_SQR_BR.to_string()),
-                },
-            ]),
-            vec![Expr {
-                kind: ExprKind::List,
-                children: vec![],
-            }]
-        );
-    }
-
-    #[test]
-    fn test_list() {
-        assert_eq!(
-            parse(vec![
-                Token {
-                    kind: TokenKind::LeftSqrBr,
-                    span: TokenSpan::new(0, 1, lexemes::L_LEFT_SQR_BR.to_string()),
-                },
-                Token {
-                    kind: TokenKind::Number(2.2),
-                    span: TokenSpan::new(1, 4, "2.2".to_string()),
-                },
-                Token {
-                    kind: TokenKind::RightSqrBr,
-                    span: TokenSpan::new(4, 5, lexemes::L_RIGHT_SQR_BR.to_string()),
-                },
-            ]),
-            vec![Expr {
-                kind: ExprKind::List,
-                children: vec![Box::new(Expr {
-                    kind: ExprKind::Number(2.2),
-                    children: vec![],
-                })],
-            }]
-        );
-    }
-
-    #[test]
-    fn test_nested_list() {
-        assert_eq!(
-            parse(vec![
-                Token {
-                    kind: TokenKind::LeftSqrBr,
-                    span: TokenSpan::new(0, 1, lexemes::L_LEFT_SQR_BR.to_string()),
-                },
-                Token {
-                    kind: TokenKind::Number(2.2),
-                    span: TokenSpan::new(1, 4, "2.2".to_string()),
-                },
-                Token {
-                    kind: TokenKind::LeftSqrBr,
-                    span: TokenSpan::new(4, 5, lexemes::L_LEFT_SQR_BR.to_string()),
-                },
-                Token {
-                    kind: TokenKind::Number(4.2),
-                    span: TokenSpan::new(5, 8, "4.2".to_string()),
-                },
-                Token {
-                    kind: TokenKind::Number(4.6),
-                    span: TokenSpan::new(8, 11, "4.6".to_string()),
-                },
-                Token {
-                    kind: TokenKind::RightSqrBr,
-                    span: TokenSpan::new(11, 12, lexemes::L_RIGHT_SQR_BR.to_string()),
-                },
-                Token {
-                    kind: TokenKind::RightSqrBr,
-                    span: TokenSpan::new(12, 13, lexemes::L_RIGHT_SQR_BR.to_string()),
-                },
-            ]),
-            vec![Expr {
-                kind: ExprKind::List,
-                children: vec![
-                    Box::new(Expr {
-                        kind: ExprKind::Number(2.2),
-                        children: vec![],
-                    }),
-                    Box::new(Expr {
-                        kind: ExprKind::List,
-                        children: vec![
-                            Box::new(Expr {
-                                kind: ExprKind::Number(4.2),
-                                children: vec![],
-                            }),
-                            Box::new(Expr {
-                                kind: ExprKind::Number(4.6),
-                                children: vec![],
-                            })
-                        ],
-                    })
-                ],
-            }]
-        );
-    }
-
-    #[test]
-    #[should_panic(expected = "Unexpected end of input")]
-    fn test_unclosed_list() {
-        parse(vec![
-            Token {
-                kind: TokenKind::LeftSqrBr,
-                span: TokenSpan::new(0, 1, lexemes::L_LEFT_SQR_BR.to_string()),
-            },
-            Token {
-                kind: TokenKind::Number(2.2),
-                span: TokenSpan::new(1, 4, "2.2".to_string()),
-            },
-        ]);
-    }
-
-    #[test]
-    #[should_panic(expected = "Parse error. Unexpected token")]
-    fn test_unclosed_list_2() {
-        parse(vec![Token {
-            kind: TokenKind::LeftSqrBr,
-            span: TokenSpan::new(0, 1, lexemes::L_LEFT_SQR_BR.to_string()),
-        }]);
-    }
-
-    // ==========================
-
-    //        Identifier
-
-    // ==========================
-
-    #[test]
-    fn test_identifier() {
-        assert_eq!(
-            parse(vec![Token {
-                kind: TokenKind::Identifier("x".to_string()),
-                span: TokenSpan::new(0, 1, "x".to_string()),
-            }]),
-            vec![Expr {
-                kind: ExprKind::Identifier("x".to_string()),
-                children: vec![],
-            }]
-        );
-    }
-
-    // ==========================
-
-    //           Nil
-
-    // ==========================
-
-    #[test]
-    fn test_nil() {
-        assert_eq!(
-            parse(vec![Token {
-                kind: TokenKind::Nil,
-                span: TokenSpan::new(0, 3, lexemes::L_NIL.to_string()),
-            }]),
-            vec![Expr {
-                kind: ExprKind::Nil,
-                children: vec![],
-            }]
-        );
-    }
-
-    // ==========================
-
-    //         Boolean
-
-    // ==========================
-
-    #[test]
-    fn test_true() {
-        assert_eq!(
-            parse(vec![Token {
-                kind: TokenKind::Boolean(true),
-                span: TokenSpan::new(0, 4, lexemes::L_TRUE.to_string()),
-            }]),
-            vec![Expr {
-                kind: ExprKind::Boolean(true),
-                children: vec![],
-            }]
-        );
-    }
-
-    #[test]
-    fn test_false() {
-        assert_eq!(
-            parse(vec![Token {
-                kind: TokenKind::Boolean(false),
-                span: TokenSpan::new(0, 5, lexemes::L_FALSE.to_string()),
-            }]),
-            vec![Expr {
-                kind: ExprKind::Boolean(false),
-                children: vec![],
-            }]
-        );
-    }
-
-    // ==========================
-
-    //         String
-
-    // ==========================
-
-    #[test]
-    fn test_string() {
-        assert_eq!(
-            parse(vec![Token {
-                kind: TokenKind::String("Hello, World!".to_string()),
-                span: TokenSpan::new(0, 15, "\"Hello, World!\"".to_string()),
-            }]),
-            vec![Expr {
-                kind: ExprKind::String("Hello, World!".to_string()),
-                children: vec![],
-            }]
-        );
-    }
 }
