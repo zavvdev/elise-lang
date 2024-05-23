@@ -9,7 +9,7 @@
 - [x] nil
 - [x] boolean
 - [x] strings
-- [ ] conditions
+- [x] conditions
 
 ## @print
 

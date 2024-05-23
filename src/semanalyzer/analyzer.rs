@@ -16,6 +16,7 @@ pub fn analyze(expr: &Expr) -> &Expr {
         ExprKind::FnNotEq => non_zero_children_expr(expr),
         ExprKind::FnNot => one_children_expr(expr),
         ExprKind::FnBool => one_children_expr(expr),
+        ExprKind::FnIf => fn_if(expr),
         _ => expr,
     }
 }
@@ -74,6 +75,30 @@ fn let_binding(expr: &Expr) -> &Expr {
                 _ => panic!("{}", messages::let_binding_arg_identifiers()),
             }
         }
+    }
+
+    for child in result.children.iter().skip(1) {
+        analyze(child);
+    }
+
+    result
+}
+
+// ==========================
+
+//            If
+
+// ==========================
+
+fn fn_if(expr: &Expr) -> &Expr {
+    let result = non_zero_children_expr(expr);
+
+    if result.children.len() == 1 {
+        panic!("{}", messages::too_few_args_fn(&format!("{:?}", expr.kind)));
+    }
+
+    if result.children.len() > 3 {
+        panic!("{}", messages::too_many_args_fn(&format!("{:?}", expr.kind)));
     }
 
     for child in result.children.iter().skip(1) {

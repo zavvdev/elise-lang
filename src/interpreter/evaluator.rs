@@ -40,6 +40,8 @@ pub fn eval(expr: &Expr, env: &Env) -> EvalResult {
         ExprKind::FnOr => eval_fn_or(expr, env),
         ExprKind::FnAnd => eval_fn_and(expr, env),
 
+        ExprKind::FnIf => eval_fn_if(expr, env),
+
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
@@ -483,4 +485,33 @@ fn eval_fn_and(expr: &Expr, env: &Env) -> EvalResult {
     }
 
     eval(expr.children.get(result_index).unwrap(), env)
+}
+
+// ==========================
+
+//            If
+
+// ==========================
+
+fn eval_fn_if(expr: &Expr, env: &Env) -> EvalResult {
+    let condition = expr.children.first().unwrap();
+    let then_branch = expr.children.get(1).unwrap();
+    let else_branch = expr.children.get(2);
+
+    let condition_res = coerce_to_boolean(eval(condition, env));
+
+    match condition_res {
+        EvalResult::Boolean(x) => {
+            if x {
+                return eval(then_branch, env);
+            }
+
+            if let Some(else_branch) = else_branch {
+                return eval(else_branch, env);
+            }
+
+            return EvalResult::Nil;
+        }
+        _ => panic!("{}", messages::expected_boolean(&format!("{:?}", condition_res))),
+    }
 }

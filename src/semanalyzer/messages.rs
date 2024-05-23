@@ -19,3 +19,11 @@ pub fn zero_args_fn(fn_name: &str) -> String {
 pub fn more_than_one_arg_fn(fn_name: &str) -> String {
     format!("Semantic Analyzer error. Invalid amount of arguments (> 1) for function: {}", fn_name.to_string())
 }
+
+pub fn too_few_args_fn(fn_name: &str) -> String {
+    format!("Semantic Analyzer error. Too few arguments for function: {}", fn_name.to_string())
+}
+
+pub fn too_many_args_fn(fn_name: &str) -> String {
+    format!("Semantic Analyzer error. Too many arguments for function: {}", fn_name.to_string())
+}

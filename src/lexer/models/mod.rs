@@ -372,6 +372,10 @@ impl Lexer {
             return TokenKind::FnBool;
         }
 
+        if fn_name == lexemes::L_FN_IF.1 {
+            return TokenKind::FnIf;
+        }
+
         TokenKind::Unknown
     }
 

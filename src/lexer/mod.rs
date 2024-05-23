@@ -364,6 +364,17 @@ mod tests {
         )
     }
 
+    #[test]
+    fn test_fn_if() {
+        assert_eq!(
+            tokenize("@if"),
+            vec![Token {
+                kind: TokenKind::FnIf,
+                span: TokenSpan::new(0, 3, fn_lexeme_to_string(lexemes::L_FN_IF))
+            }]
+        )
+    }
+
     // ==========================
 
     //        Identifier
