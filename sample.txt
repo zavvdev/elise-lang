@@ -1,5 +1,2 @@
 @println (
-    @let ([age 17]
-        @if (@greatr-eq (age 18) 
-            "Access granted"
-            "Access denied")))
+    @eq(2 2 3))
