@@ -37,6 +37,9 @@ pub fn eval(expr: &Expr, env: &Env) -> EvalResult {
 
         ExprKind::FnBool => eval_fn_bool(expr, env),
 
+        ExprKind::FnOr => eval_fn_or(expr, env),
+        ExprKind::FnAnd => eval_fn_and(expr, env),
+
         _ => panic!(
             "{}",
             messages::unknown_expression(&format!("{:?}", expr.kind))
@@ -397,10 +400,8 @@ fn eval_fn_not_eq(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_bool(expr: &Expr, env: &Env) -> EvalResult {
-    let child_res = eval(expr.children.first().unwrap(), env);
-
-    match child_res {
+fn coerce_to_boolean(res: EvalResult) -> EvalResult {
+    match res {
         EvalResult::Boolean(x) => {
             if x {
                 EvalResult::Boolean(true)
@@ -413,4 +414,73 @@ fn eval_fn_bool(expr: &Expr, env: &Env) -> EvalResult {
     }
 }
 
-// TODO: Implement OR and AND logical functions
+fn eval_fn_bool(expr: &Expr, env: &Env) -> EvalResult {
+    let child_res = eval(expr.children.first().unwrap(), env);
+    coerce_to_boolean(child_res)
+}
+
+// ==========================
+
+//            Or
+
+// ==========================
+
+fn eval_fn_or(expr: &Expr, env: &Env) -> EvalResult {
+    if expr.children.len() == 0 {
+        return EvalResult::Nil;
+    }
+
+    let mut result_index = 0;
+
+    for (i, child) in expr.children.iter().enumerate() {
+        let child_res = coerce_to_boolean(eval(child, env));
+
+        match child_res {
+            EvalResult::Boolean(x) => {
+                result_index = i;
+
+                if x {
+                    break;
+                }
+
+                continue;
+            }
+            _ => continue,
+        }
+    }
+
+    eval(expr.children.get(result_index).unwrap(), env)
+}
+
+// ==========================
+
+//            And
+
+// ==========================
+
+fn eval_fn_and(expr: &Expr, env: &Env) -> EvalResult {
+    if expr.children.len() == 0 {
+        return EvalResult::Boolean(true);
+    }
+
+    let mut result_index = 0;
+
+    for (i, child) in expr.children.iter().enumerate() {
+        let child_res = coerce_to_boolean(eval(child, env));
+
+        match child_res {
+            EvalResult::Boolean(x) => {
+                result_index = i;
+
+                if !x {
+                    break;
+                }
+
+                continue;
+            }
+            _ => continue,
+        }
+    }
+
+    eval(expr.children.get(result_index).unwrap(), env)
+}

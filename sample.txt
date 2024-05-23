@@ -1,6 +1,2 @@
 @println(
-    @bool(false)
-    @bool(true)
-    @bool(nil)
-    @bool(0)
-    @bool(""))
+    @or(false nil))
