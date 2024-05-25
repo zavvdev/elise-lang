@@ -4,13 +4,16 @@ use regex::Regex;
 
 use crate::types;
 
-use self::models::{number::{BaseNumber, ConsumedNumber, FLOAT_SEPARATOR}, token::{Token, TokenKind, TokenSpan}};
+use self::models::{
+    number::{BaseNumber, ConsumedNumber, FLOAT_SEPARATOR},
+    token::{Token, TokenKind, TokenSpan},
+};
 
+pub mod __tests__;
 pub mod config;
 pub mod lexemes;
 pub mod messages;
 pub mod models;
-pub mod __tests__;
 
 struct Lexer {
     input: String,
@@ -25,19 +28,14 @@ impl Lexer {
         }
     }
 
-    fn distinguish_token_kind(&mut self, c: &char) -> TokenKind {
+    fn get_token_kind(&mut self, c: &char) -> TokenKind {
         if Self::is_number(&c) {
-            let number = self.consume_number();
-            self.construct_number_token(number)
+            self.consume_number()
         } else if Self::is_whitespace(&c) {
-            self.consume();
-            TokenKind::Whitespace
+            self.consume_whitespace()
         } else if Self::is_fn_start(&c) {
-            self.consume();
-            let fn_name = self.consume_known_fn_name();
-            Self::distinguish_known_fn(&fn_name)
+            self.consume_fn()
         } else if Self::is_string_literal(&c) {
-            self.consume();
             self.consume_string_literal()
         } else if let Some(punctuation_token_kind) = self.consume_punctuation() {
             punctuation_token_kind
@@ -55,7 +53,7 @@ impl Lexer {
 
         current_char.map(|char| {
             let start = self.char_pos;
-            let token_kind = self.distinguish_token_kind(&char);
+            let token_kind = self.get_token_kind(&char);
 
             let end = self.char_pos;
             let lexeme = self.input[start..end].to_string();
@@ -74,9 +72,6 @@ impl Lexer {
     }
 
     /**
-     *
-     * Should be used for processing raw user input during Lexer instance construction.
-     * Should remove multiple Unicode whitespace characters
      *
      * TODO: Benchmark it and find faster solution if possible
      *
@@ -127,21 +122,23 @@ impl Lexer {
 
     // ==========================
 
-    /**
-     *
-     * Identify Base 10 numeric character
-     *
-     */
     fn is_number(char: &char) -> bool {
         char.is_digit(10)
     }
 
-    /**
-     *
-     * Analysing numeric sequence as `Number`
-     *
-     */
-    fn consume_number(&mut self) -> ConsumedNumber {
+    fn construct_number_token(&self, number: ConsumedNumber) -> TokenKind {
+        if number.is_int {
+            TokenKind::Number(number.int as types::Number)
+        } else {
+            TokenKind::Number(
+                format!("{}{}{}", number.int, FLOAT_SEPARATOR, number.precision)
+                    .parse::<types::Number>()
+                    .unwrap(),
+            )
+        }
+    }
+
+    fn consume_number(&mut self) -> TokenKind {
         let mut int: BaseNumber = 0;
         let mut precision: BaseNumber = 0;
         let mut is_int = true;
@@ -175,23 +172,26 @@ impl Lexer {
             }
         }
 
-        ConsumedNumber {
+        self.construct_number_token(ConsumedNumber {
             int,
             precision,
             is_int,
-        }
+        })
     }
 
-    fn construct_number_token(&self, number: ConsumedNumber) -> TokenKind {
-        if number.is_int {
-            TokenKind::Number(number.int as types::Number)
-        } else {
-            TokenKind::Number(
-                format!("{}{}{}", number.int, FLOAT_SEPARATOR, number.precision)
-                    .parse::<types::Number>()
-                    .unwrap(),
-            )
-        }
+    // ==========================
+
+    //        Whitespace
+
+    // ==========================
+
+    fn is_whitespace(c: &char) -> bool {
+        c.is_whitespace()
+    }
+
+    fn consume_whitespace(&mut self) -> TokenKind {
+        self.consume();
+        TokenKind::Whitespace
     }
 
     // ==========================
@@ -200,11 +200,6 @@ impl Lexer {
 
     // ==========================
 
-    /**
-     *
-     * Analyse all possible punctuations
-     *
-     */
     fn consume_punctuation(&mut self) -> Option<TokenKind> {
         let char = self.get_current_char()?;
 
@@ -226,40 +221,15 @@ impl Lexer {
 
     // ==========================
 
-    //           Other
+    //         Functions
 
     // ==========================
 
-    /**
-     *
-     * Checks if given character is a Unicode whitespace
-     *
-     */
-    fn is_whitespace(c: &char) -> bool {
-        c.is_whitespace()
-    }
-
-    // ==========================
-
-    //        Known functions
-
-    // ==========================
-
-    /**
-     *
-     * Determine the start of the custom or known function
-     *
-     */
     fn is_fn_start(c: &char) -> bool {
         *c == lexemes::L_FN
     }
 
-    /**
-     *
-     * Consume only known function names
-     *
-     */
-    fn consume_known_fn_name(&mut self) -> String {
+    fn consume_fn_name(&mut self) -> String {
         let mut result = String::new();
 
         while let Some(c) = self.get_current_char() {
@@ -274,11 +244,6 @@ impl Lexer {
         result
     }
 
-    /**
-     *
-     * Match known function lexeme
-     *
-     */
     fn distinguish_known_fn(fn_name: &str) -> TokenKind {
         if fn_name == lexemes::L_FN_ADD.1 {
             return TokenKind::FnAdd;
@@ -357,6 +322,12 @@ impl Lexer {
         }
 
         TokenKind::Unknown
+    }
+
+    fn consume_fn(&mut self) -> TokenKind {
+        self.consume();
+        let fn_name = self.consume_fn_name();
+        Self::distinguish_known_fn(&fn_name)
     }
 
     // ==========================
@@ -444,6 +415,7 @@ impl Lexer {
     }
 
     fn consume_string_literal(&mut self) -> TokenKind {
+        self.consume();
         let mut result = String::new();
 
         while let Some(c) = self.get_current_char() {
