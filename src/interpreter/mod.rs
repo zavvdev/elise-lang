@@ -64,7 +64,7 @@ fn ensure_number(res: &EvalResult) -> types::Number {
 
 // ==========================
 
-//        Print value
+//          Print
 
 // ==========================
 
