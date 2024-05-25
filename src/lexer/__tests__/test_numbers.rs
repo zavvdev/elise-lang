@@ -14,7 +14,7 @@ mod tests {
     };
 
     #[test]
-    fn test_tokenize_int() {
+    fn test_int() {
         assert_eq!(
             tokenize("0"),
             vec![Token {
@@ -34,12 +34,12 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "Number overflow")]
-    fn test_tokenize_int_overflow() {
+    fn test_int_overflow() {
         tokenize(&format!("{}", Wrapping(BaseNumber::MAX) + Wrapping(1)));
     }
 
     #[test]
-    fn test_tokenize_float() {
+    fn test_float() {
         assert_eq!(
             tokenize("0.5"),
             vec![Token {
@@ -59,7 +59,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "Number overflow")]
-    fn test_tokenize_float_overflow() {
+    fn test_float_overflow() {
         #[allow(arithmetic_overflow)]
         let overflowed = types::Number::MAX + 0.1;
         #[deny(arithmetic_overflow)]

@@ -4,7 +4,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "Lexing error. Unknown lexeme \"@klk\"")]
-    fn test_tokenize_unknown() {
+    fn test_unknown() {
         tokenize("@klk");
     }
 }

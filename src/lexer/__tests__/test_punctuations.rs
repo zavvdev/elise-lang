@@ -3,7 +3,7 @@ mod tests {
     use crate::lexer::{lexemes, models::token::{Token, TokenKind, TokenSpan}, tokenize};
 
     #[test]
-    fn test_tokenize_minus() {
+    fn test_minus() {
         assert_eq!(
             tokenize("-"),
             vec![Token {
@@ -14,7 +14,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tokenize_left_paren() {
+    fn test_left_paren() {
         assert_eq!(
             tokenize("("),
             vec![Token {
@@ -25,7 +25,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tokenize_right_paren() {
+    fn test_right_paren() {
         assert_eq!(
             tokenize(")"),
             vec![Token {
@@ -36,7 +36,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tokenize_left_sqr_br() {
+    fn test_left_sqr_br() {
         assert_eq!(
             tokenize("["),
             vec![Token {
@@ -47,7 +47,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tokenize_right_sqr_br() {
+    fn test_right_sqr_br() {
         assert_eq!(
             tokenize("]"),
             vec![Token {
@@ -58,7 +58,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tokenize_comma() {
+    fn test_comma() {
         assert_eq!(
             tokenize(","),
             vec![Token {
