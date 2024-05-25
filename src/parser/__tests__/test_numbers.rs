@@ -13,7 +13,7 @@ mod tests {
     };
 
     #[test]
-    fn test_parse_int() {
+    fn test_int() {
         assert_eq!(
             parse(vec![Token {
                 kind: TokenKind::Number(42 as types::Number),
@@ -27,7 +27,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_int_negative() {
+    fn test_int_negative() {
         assert_eq!(
             parse(vec![
                 Token {
@@ -47,7 +47,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_float() {
+    fn test_float() {
         assert_eq!(
             parse(vec![Token {
                 kind: TokenKind::Number(4.2),
@@ -61,7 +61,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_float_negative() {
+    fn test_float_negative() {
         assert_eq!(
             parse(vec![
                 Token {

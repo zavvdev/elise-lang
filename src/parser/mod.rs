@@ -1,4 +1,7 @@
-use crate::{lexer::models::token::{Token, TokenKind}, types};
+use crate::{
+    lexer::models::token::{Token, TokenKind},
+    types,
+};
 
 use self::models::expression::{Expr, ExprKind};
 
@@ -9,6 +12,12 @@ pub mod models;
 struct Parser {
     tokens: Vec<Token>,
     token_pos: usize,
+
+    // Sequence counting. Sequence is something
+    // that has specific amount of elements within
+    // distinct bounds (start and end tokens).
+    // For example, function is a sequence of arguments,
+    // list is a sequence of elements, etc.
     seq_start_count: usize,
     seq_end_count: usize,
 }
@@ -23,13 +32,17 @@ impl Parser {
         }
     }
 
-    fn next_expr(&mut self) -> Option<Expr> {
+    fn check_valid_eof(&mut self) {
         if self.seq_start_count != self.seq_end_count && self.get_current_token().is_none() {
             panic!("{}", messages::unexpected_end_of_input());
         } else if self.seq_start_count == self.seq_end_count && self.seq_start_count != 0 {
             self.seq_start_count = 0;
             self.seq_end_count = 0;
         }
+    }
+
+    fn next_expr(&mut self) -> Option<Expr> {
+        self.check_valid_eof();
 
         if self.token_pos > self.tokens.len() {
             return None;
@@ -38,35 +51,38 @@ impl Parser {
         let current_token = self.get_current_token()?;
 
         match &current_token.kind {
-            TokenKind::Number(x) => self.consume_number(*x),
-            TokenKind::Nil => self.consume_nil(),
-            TokenKind::Identifier(x) => self.consume_identifier(x.to_string()),
-            TokenKind::Minus => self.consume_negative_number(),
+            // Private Tokens
             TokenKind::RightParen => Some(Expr::new(ExprKind::_EndOfFn, vec![])),
             TokenKind::Comma => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
-            TokenKind::LeftSqrBr => self.consume_list(),
             TokenKind::RightSqrBr => Some(Expr::new(ExprKind::_EndOfList, vec![])),
-            TokenKind::Boolean(x) => self.consume_boolean(*x),
+
+            // Public Tokens
+            TokenKind::Nil => self.consume_nil(),
+            TokenKind::Number(x) => self.consume_number(*x),
             TokenKind::String(x) => self.consume_string(x.to_string()),
-            TokenKind::FnAdd => self.consume_known_fn(ExprKind::FnAdd),
-            TokenKind::FnSub => self.consume_known_fn(ExprKind::FnSub),
-            TokenKind::FnMul => self.consume_known_fn(ExprKind::FnMul),
-            TokenKind::FnDiv => self.consume_known_fn(ExprKind::FnDiv),
-            TokenKind::FnPrint => self.consume_known_fn(ExprKind::FnPrint),
-            TokenKind::FnPrintLn => self.consume_known_fn(ExprKind::FnPrintLn),
-            TokenKind::FnLetBinding => self.consume_known_fn(ExprKind::FnLetBinding),
-            TokenKind::FnGreatr => self.consume_known_fn(ExprKind::FnGreatr),
-            TokenKind::FnGreatrEq => self.consume_known_fn(ExprKind::FnGreatrEq),
-            TokenKind::FnLess => self.consume_known_fn(ExprKind::FnLess),
-            TokenKind::FnLessEq => self.consume_known_fn(ExprKind::FnLessEq),
-            TokenKind::FnEq => self.consume_known_fn(ExprKind::FnEq),
-            TokenKind::FnNotEq => self.consume_known_fn(ExprKind::FnNotEq),
-            TokenKind::FnNot => self.consume_known_fn(ExprKind::FnNot),
-            TokenKind::FnAnd => self.consume_known_fn(ExprKind::FnAnd),
-            TokenKind::FnOr => self.consume_known_fn(ExprKind::FnOr),
-            TokenKind::FnBool => self.consume_known_fn(ExprKind::FnBool),
-            TokenKind::FnIf => self.consume_known_fn(ExprKind::FnIf),
-            TokenKind::FnIsNil => self.consume_known_fn(ExprKind::FnIsNil),
+            TokenKind::Identifier(x) => self.consume_identifier(x.to_string()),
+            TokenKind::Boolean(x) => self.consume_boolean(*x),
+            TokenKind::Minus => self.consume_negative_number(),
+            TokenKind::LeftSqrBr => self.consume_list(),
+            TokenKind::FnAdd => self.consume_fn(ExprKind::FnAdd),
+            TokenKind::FnSub => self.consume_fn(ExprKind::FnSub),
+            TokenKind::FnMul => self.consume_fn(ExprKind::FnMul),
+            TokenKind::FnDiv => self.consume_fn(ExprKind::FnDiv),
+            TokenKind::FnPrint => self.consume_fn(ExprKind::FnPrint),
+            TokenKind::FnPrintLn => self.consume_fn(ExprKind::FnPrintLn),
+            TokenKind::FnLetBinding => self.consume_fn(ExprKind::FnLetBinding),
+            TokenKind::FnGreatr => self.consume_fn(ExprKind::FnGreatr),
+            TokenKind::FnGreatrEq => self.consume_fn(ExprKind::FnGreatrEq),
+            TokenKind::FnLess => self.consume_fn(ExprKind::FnLess),
+            TokenKind::FnLessEq => self.consume_fn(ExprKind::FnLessEq),
+            TokenKind::FnEq => self.consume_fn(ExprKind::FnEq),
+            TokenKind::FnNotEq => self.consume_fn(ExprKind::FnNotEq),
+            TokenKind::FnNot => self.consume_fn(ExprKind::FnNot),
+            TokenKind::FnAnd => self.consume_fn(ExprKind::FnAnd),
+            TokenKind::FnOr => self.consume_fn(ExprKind::FnOr),
+            TokenKind::FnBool => self.consume_fn(ExprKind::FnBool),
+            TokenKind::FnIf => self.consume_fn(ExprKind::FnIf),
+            TokenKind::FnIsNil => self.consume_fn(ExprKind::FnIsNil),
             _ => None,
         }
     }
@@ -122,7 +138,7 @@ impl Parser {
 
     /**
      *
-     * Should be used for counting start of sequense
+     * Should be used for counting start of sequence
      *
      */
     fn capture_seq(&mut self) {
@@ -131,7 +147,7 @@ impl Parser {
 
     /**
      *
-     * Should be used for counting end of sequense
+     * Should be used for counting end of sequence
      *
      */
     fn end_seq(&mut self) {
@@ -140,7 +156,7 @@ impl Parser {
 
     /**
      *
-     * Can be used for consuming arguemnts of any sequentioan entity like function or list
+     * Can be used for consuming arguemnts of any sequentional entity
      *
      */
     fn consume_seq_arguments(&mut self, seq_end_expr: ExprKind) -> Vec<Box<Expr>> {
@@ -194,16 +210,11 @@ impl Parser {
 
     // ==========================
 
-    //      Known functions
+    //         Functions
 
     // ==========================
 
-    /**
-     *
-     * Should be used for consuming known functions only
-     *
-     */
-    fn consume_known_fn(&mut self, known_fn_expr_kind: ExprKind) -> Option<Expr> {
+    fn consume_fn(&mut self, fn_expr_kind: ExprKind) -> Option<Expr> {
         let next = self.get_next_token();
 
         if next.is_none() {
@@ -217,7 +228,7 @@ impl Parser {
             self.capture_seq();
 
             return Some(Expr::new(
-                known_fn_expr_kind,
+                fn_expr_kind,
                 self.consume_seq_arguments(ExprKind::_EndOfFn),
             ));
         } else {

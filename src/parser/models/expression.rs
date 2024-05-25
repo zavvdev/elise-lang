@@ -2,8 +2,7 @@ use crate::types;
 
 #[derive(Debug, PartialEq)]
 pub enum ExprKind {
-    // For internal use
-    // TODO: Remove if possible
+    // Private. Only for internal usage
     _EndOfFn,
     _EndOfList,
     _ArgumentSeparator,
