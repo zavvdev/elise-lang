@@ -5,6 +5,7 @@ mod tests {
     use crate::{
         parser::models::expression::{Expr, ExprKind},
         semanalyzer::{analyze_semantics, messages},
+        to_str,
     };
 
     #[test]
@@ -14,7 +15,7 @@ mod tests {
                 analyze_semantics(&vec![Expr::new(ExprKind::FnIf, vec![])]);
             },
             String,
-            messages::zero_args_fn(&format!("{:?}", ExprKind::FnIf))
+            messages::invalid_args_amount(to_str!(ExprKind::FnIf), "2 or 3", "0")
         );
 
         assert_panic!(
@@ -25,7 +26,7 @@ mod tests {
                 )]);
             },
             String,
-            messages::too_few_args_fn(&format!("{:?}", ExprKind::FnIf))
+            messages::invalid_args_amount(to_str!(ExprKind::FnIf), "2 or 3", "1")
         );
 
         assert_panic!(
@@ -41,7 +42,7 @@ mod tests {
                 )]);
             },
             String,
-            messages::too_many_args_fn(&format!("{:?}", ExprKind::FnIf))
+            messages::invalid_args_amount(to_str!(ExprKind::FnIf), "2 or 3", "4")
         );
     }
 }

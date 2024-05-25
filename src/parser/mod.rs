@@ -1,6 +1,6 @@
 use crate::{
     lexer::models::token::{Token, TokenKind},
-    types,
+    to_str, types,
 };
 
 use self::models::expression::{Expr, ExprKind};
@@ -83,6 +83,7 @@ impl Parser {
             TokenKind::FnBool => self.consume_fn(ExprKind::FnBool),
             TokenKind::FnIf => self.consume_fn(ExprKind::FnIf),
             TokenKind::FnIsNil => self.consume_fn(ExprKind::FnIsNil),
+            TokenKind::FnCustom => self.consume_fn(ExprKind::FnCustom),
             _ => None,
         }
     }
@@ -132,7 +133,7 @@ impl Parser {
     fn panic_at_current_token(&self) -> ! {
         panic!(
             "{}",
-            messages::unexpected_token(&format!("{:?}", self.get_current_token()))
+            messages::unexpected_token(to_str!(self.get_current_token()))
         );
     }
 

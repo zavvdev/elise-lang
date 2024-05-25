@@ -5,6 +5,7 @@ mod tests {
     use crate::{
         parser::models::expression::{Expr, ExprKind},
         semanalyzer::{analyze_semantics, messages},
+        to_str,
     };
 
     #[test]
@@ -14,7 +15,7 @@ mod tests {
                 analyze_semantics(&vec![Expr::new(ExprKind::FnLetBinding, vec![])]);
             },
             String,
-            messages::zero_args_fn(&format!("{:?}", ExprKind::FnLetBinding))
+            messages::invalid_args_amount(to_str!(ExprKind::FnLetBinding), ">= 1", "0")
         );
 
         assert_panic!(
@@ -25,7 +26,12 @@ mod tests {
                 )]);
             },
             String,
-            messages::let_binding_first_arg_list()
+            messages::invalid_arg_type(
+                to_str!(ExprKind::FnLetBinding),
+                1,
+                to_str!(ExprKind::List),
+                to_str!(ExprKind::Nil)
+            )
         );
 
         assert_panic!(
@@ -39,7 +45,7 @@ mod tests {
                 )]);
             },
             String,
-            messages::let_binding_first_arg_even_elements()
+            messages::invalid_args_amount(to_str!(ExprKind::FnLetBinding), "even", "1")
         );
 
         assert_panic!(
@@ -58,7 +64,7 @@ mod tests {
                 )]);
             },
             String,
-            messages::let_binding_arg_identifiers()
+            messages::invalid_let_binding_form()
         );
     }
 }

@@ -33,6 +33,7 @@ pub enum ExprKind {
     FnBool,
     FnIf,
     FnIsNil,
+    FnCustom,
 }
 
 #[derive(Debug, PartialEq)]

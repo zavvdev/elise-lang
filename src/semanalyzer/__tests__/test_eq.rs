@@ -5,6 +5,7 @@ mod tests {
     use crate::{
         parser::models::expression::{Expr, ExprKind},
         semanalyzer::{analyze_semantics, messages},
+        to_str,
     };
 
     #[test]
@@ -14,7 +15,7 @@ mod tests {
                 analyze_semantics(&vec![Expr::new(ExprKind::FnEq, vec![])]);
             },
             String,
-            messages::zero_args_fn(&format!("{:?}", ExprKind::FnEq))
+            messages::invalid_args_amount(to_str!(ExprKind::FnEq), "> 0", "0")
         );
     }
 }

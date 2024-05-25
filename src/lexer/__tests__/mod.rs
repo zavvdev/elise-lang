@@ -5,4 +5,4 @@ pub mod test_identifier;
 pub mod test_nil;
 pub mod test_bool;
 pub mod test_strings;
-pub mod test_known_functions;
+pub mod test_functions;

@@ -1,6 +1,7 @@
 pub mod config;
 pub mod interpreter;
 pub mod lexer;
+pub mod macros;
 pub mod parser;
 pub mod semanalyzer;
 pub mod types;

@@ -11,3 +11,4 @@ pub mod test_not_eq;
 pub mod test_bool;
 pub mod test_if;
 pub mod test_is_nil;
+pub mod test_custom_fn;

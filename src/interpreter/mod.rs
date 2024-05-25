@@ -7,7 +7,7 @@ use crate::{
     binary_op,
     lexer::lexemes,
     parser::models::expression::{Expr, ExprKind},
-    types,
+    to_str, types,
 };
 
 use self::models::env::{Env, EnvRecord, EvalResult};
@@ -48,17 +48,14 @@ fn eval(expr: &Expr, env: &Env) -> EvalResult {
 
         ExprKind::FnIsNil => eval_fn_is_nil(expr, env),
 
-        _ => panic!(
-            "{}",
-            messages::unknown_expression(&format!("{:?}", expr.kind))
-        ),
+        _ => panic!("{}", messages::unknown_expression(to_str!(expr.kind))),
     }
 }
 
 fn ensure_number(res: &EvalResult) -> types::Number {
     match &res {
         EvalResult::Number(x) => *x,
-        _ => panic!("{}", messages::expected_number(&format!("{:?}", res))),
+        _ => panic!("{}", messages::expected_number(to_str!(res))),
     }
 }
 
@@ -263,7 +260,7 @@ fn bind(bindings: Vec<(String, EvalResult)>, env: &mut Env, mutable: bool, allow
 fn unwrap_identifier(expr_kind: &ExprKind) -> String {
     match expr_kind {
         ExprKind::Identifier(x) => x.to_string(),
-        x => panic!("{}", messages::non_identifier(&format!("{:?}", x))),
+        x => panic!("{}", messages::non_identifier(to_str!(x))),
     }
 }
 
@@ -398,7 +395,7 @@ fn eval_fn_not_eq(expr: &Expr, env: &Env) -> EvalResult {
 
     match res {
         EvalResult::Boolean(x) => EvalResult::Boolean(!x),
-        _ => panic!("{}", messages::expected_boolean(&format!("{:?}", res))),
+        _ => panic!("{}", messages::expected_boolean(to_str!(res))),
     }
 }
 
@@ -518,10 +515,7 @@ fn eval_fn_if(expr: &Expr, env: &Env) -> EvalResult {
 
             return EvalResult::Nil;
         }
-        _ => panic!(
-            "{}",
-            messages::expected_boolean(&format!("{:?}", condition_res))
-        ),
+        _ => panic!("{}", messages::expected_boolean(to_str!(condition_res))),
     }
 }
 
