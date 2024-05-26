@@ -19,3 +19,4 @@ pub mod test_or;
 pub mod test_and;
 pub mod test_if;
 pub mod test_is_nil;
+pub mod test_declare_fn;
