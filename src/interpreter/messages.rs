@@ -33,10 +33,18 @@ pub fn non_identifier(x: &str) -> String {
     format!("Interpretation error. \"{}\" is not an identifier.", x)
 }
 
-pub fn identifier_exists(x: &str) -> String {
-    format!("Interpretation error. Identifier \"{}\" already exists.", x)
+pub fn identifier_exists_same_env(x: &str) -> String {
+    format!("Interpretation error. Identifier \"{}\" already exists in the same scope.", x)
+}
+
+pub fn identifier_exists_parent_env(x: &str) -> String {
+    format!("Interpretation error. Identifier \"{}\" already exists in the parent scope.", x)
 }
 
 pub fn expected_boolean(x: &str) -> String {
     format!("Interpretation error. Expected boolean, found \"{}\".", x)
+}
+
+pub fn not_callable(x: &str) -> String {
+    format!("Interpretation error. \"{}\" is not callable", x)
 }

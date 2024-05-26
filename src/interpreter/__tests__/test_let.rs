@@ -87,7 +87,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Interpretation error. Identifier \"x\" already exists.")]
+    #[should_panic(expected = "Interpretation error. Identifier \"x\" already exists")]
     fn test_let_rebind() {
         let mut env = Env::new();
 

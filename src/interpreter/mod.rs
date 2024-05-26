@@ -2,6 +2,7 @@ pub mod __tests__;
 pub mod macros;
 pub mod messages;
 pub mod models;
+pub mod semanalyzer;
 
 use crate::{
     binary_op,
@@ -10,7 +11,7 @@ use crate::{
     to_str, types,
 };
 
-use self::models::env::{Env, EnvRecord, EvalResult};
+use self::models::env::{Env, EnvRecord, EvalResult, FnDeclaration};
 
 fn eval(expr: &Expr, env: &mut Env) -> EvalResult {
     match &expr.kind {
@@ -253,10 +254,26 @@ fn eval_identifier(name: String, env: &Env) -> EvalResult {
 
 // ==========================
 
-fn bind(bindings: Vec<(String, EvalResult)>, env: &mut Env, mutable: bool, allow_rebind: bool) {
+/**
+*   
+* allow_rebind - allow identifiers to be redefined in the same environment
+* allow_deep_rebind - allow identifiers to be redefined in the same and in the parent environments
+*
+*/
+fn bind(
+    bindings: Vec<(String, EvalResult)>,
+    env: &mut Env,
+    mutable: bool,
+    allow_rebind: bool,
+    allow_deep_rebind: bool,
+) {
     for (identifier, value) in bindings {
         if !allow_rebind && env.has(&identifier) {
-            panic!("{}", messages::identifier_exists(&identifier));
+            panic!("{}", messages::identifier_exists_same_env(&identifier));
+        }
+
+        if !allow_deep_rebind && env.has_deep(&identifier) {
+            panic!("{}", messages::identifier_exists_parent_env(&identifier));
         }
 
         env.set(identifier, EnvRecord { value, mutable });
@@ -307,7 +324,7 @@ fn eval_fn_let_binding(expr: &Expr, env: &mut Env) -> EvalResult {
     let mut child_env = Env::new();
 
     child_env.attach_parent(env);
-    bind(bindings, &mut child_env, false, false);
+    bind(bindings, &mut child_env, false, false, false);
 
     let mut result = EvalResult::Nil;
 
@@ -546,36 +563,69 @@ fn eval_fn_is_nil(expr: &Expr, env: &mut Env) -> EvalResult {
 //
 //  ==========================
 
-fn eval_fn_definition(_expr: &Expr, _env: &mut Env) -> EvalResult {
-    // let name = unwrap_identifier(&expr.children.first().unwrap().kind);
-    //
-    // let args: Vec<String> = expr
-    //     .children
-    //     .get(1)
-    //     .unwrap()
-    //     .children
-    //     .iter()
-    //     .map(|x| unwrap_identifier(&x.kind))
-    //     .collect();
-    //
-    // let body: Vec<Expr> = expr.children.iter().skip(2).map(|x| *x.clone()).collect();
-    //
-    // let declaration = EvalResult::FnDeclaration(FnDeclaration { name, args, body });
-    //
-    // env.set(
-    //     name,
-    //     EnvRecord {
-    //         value: declaration,
-    //         mutable: false,
-    //     },
-    // );
-    //
-    // declaration
-    EvalResult::Nil
+fn eval_fn_definition(expr: &Expr, env: &mut Env) -> EvalResult {
+    let name = unwrap_identifier(&expr.children.first().unwrap().kind);
+
+    let args: Vec<String> = expr
+        .children
+        .get(1)
+        .unwrap()
+        .children
+        .iter()
+        .map(|x| unwrap_identifier(&x.kind))
+        .collect();
+
+    let body: Vec<Expr> = expr.children.iter().skip(2).map(|x| *x.clone()).collect();
+
+    let declaration = EvalResult::FnDeclaration(FnDeclaration {
+        name: name.clone(),
+        args,
+        body,
+    });
+
+    env.set(
+        name,
+        EnvRecord {
+            value: declaration.clone(),
+            mutable: false,
+        },
+    );
+
+    declaration
 }
 
-fn eval_fn_custom(_name: &str, _expr: &Expr, _env: &Env) -> EvalResult {
-    EvalResult::Nil
+fn eval_fn_custom(name: &str, expr: &Expr, env: &mut Env) -> EvalResult {
+    // TODO: Get rid of clone
+    if let Some(env_record) = env.clone().get(name) {
+        match &env_record.value {
+            EvalResult::FnDeclaration(fn_decl) => {
+                let expr =
+                    semanalyzer::analyze_fn_call_semantics(expr, &fn_decl.name, fn_decl.args.len());
+
+                let argument_bindings = fn_decl
+                    .args
+                    .iter()
+                    .zip(expr.children.iter())
+                    .map(|(x, y)| (x.clone(), eval(y, env)))
+                    .collect();
+
+                let mut child_env = Env::new();
+                child_env.attach_parent(&env);
+                bind(argument_bindings, &mut child_env, false, false, true);
+
+                let mut result = EvalResult::Nil;
+
+                for expr in &fn_decl.body {
+                    result = eval(expr, &mut child_env);
+                }
+
+                return result;
+            }
+            _ => panic!("{}", messages::not_callable(name)),
+        }
+    } else {
+        panic!("{}", messages::undefined_identifier(name));
+    }
 }
 
 // ==============================================

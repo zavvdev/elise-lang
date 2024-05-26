@@ -59,9 +59,20 @@ impl Env {
 
     pub fn has(&self, key: &str) -> bool {
         self.table.contains_key(key)
-            || match &self.parent_env {
-                Some(parent_env) => parent_env.has(key),
+    }
+
+    fn has_in_parent(parent: &Box<Env>, key: &str) -> bool {
+        parent.table.contains_key(key)
+            || match &parent.parent_env {
+                Some(parent_env) => Self::has_in_parent(&parent_env, key),
                 None => false,
             }
+    }
+
+    pub fn has_deep(&self, key: &str) -> bool {
+        match &self.parent_env {
+            Some(parent_env) => Self::has_in_parent(parent_env, key),
+            None => false,
+        }
     }
 }

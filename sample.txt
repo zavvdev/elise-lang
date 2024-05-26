@@ -1,4 +1,6 @@
-@fn (say-hello [name] 
-    @println ("hello " name))
+@fn (fact [n] 
+    @if (@eq (n, 0)
+      1
+      @mul(n, @fact(@sub(n 1)))))
 
-@say-hello("world")
+@println(@fact(3))
