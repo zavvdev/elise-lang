@@ -206,12 +206,12 @@ mod tests {
     }
 
     #[test]
-    fn test_custom_fn() {
+    fn test_define_fn() {
         assert_eq!(
             tokenize("@fn"),
             vec![Token {
-                kind: TokenKind::FnCustom,
-                span: TokenSpan::new(0, 3, fn_lexeme_to_string(lexemes::L_FN_CUSTOM))
+                kind: TokenKind::FnDefine,
+                span: TokenSpan::new(0, 3, fn_lexeme_to_string(lexemes::L_FN_DEFINE))
             }]
         )
     }

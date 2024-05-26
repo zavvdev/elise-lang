@@ -12,16 +12,16 @@ mod tests {
     fn test_args_amount() {
         assert_panic!(
             {
-                analyze_semantics(&vec![Expr::new(ExprKind::FnCustom, vec![])]);
+                analyze_semantics(&vec![Expr::new(ExprKind::FnDefine, vec![])]);
             },
             String,
-            messages::invalid_args_amount(to_str!(ExprKind::FnCustom), ">= 2", "0")
+            messages::invalid_args_amount(to_str!(ExprKind::FnDefine), ">= 2", "0")
         );
 
         assert_panic!(
             {
                 analyze_semantics(&vec![Expr::new(
-                    ExprKind::FnCustom,
+                    ExprKind::FnDefine,
                     vec![Box::new(Expr::new(
                         ExprKind::Identifier("hello".to_string()),
                         vec![],
@@ -29,7 +29,7 @@ mod tests {
                 )]);
             },
             String,
-            messages::invalid_args_amount(to_str!(ExprKind::FnCustom), ">= 2", "1")
+            messages::invalid_args_amount(to_str!(ExprKind::FnDefine), ">= 2", "1")
         );
     }
 
@@ -38,7 +38,7 @@ mod tests {
         assert_panic!(
             {
                 analyze_semantics(&vec![Expr::new(
-                    ExprKind::FnCustom,
+                    ExprKind::FnDefine,
                     vec![
                         Box::new(Expr::new(ExprKind::Nil, vec![])),
                         Box::new(Expr::new(ExprKind::List, vec![])),
@@ -47,7 +47,7 @@ mod tests {
             },
             String,
             messages::invalid_arg_type(
-                to_str!(ExprKind::FnCustom),
+                to_str!(ExprKind::FnDefine),
                 1,
                 "Identifier",
                 to_str!(ExprKind::Nil)
@@ -60,7 +60,7 @@ mod tests {
         assert_panic!(
             {
                 analyze_semantics(&vec![Expr::new(
-                    ExprKind::FnCustom,
+                    ExprKind::FnDefine,
                     vec![
                         Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
                         Box::new(Expr::new(ExprKind::Nil, vec![])),
@@ -81,14 +81,14 @@ mod tests {
     fn test_second_arg_empty_list() {
         assert_eq!(
             analyze_semantics(&vec![Expr::new(
-                ExprKind::FnCustom,
+                ExprKind::FnDefine,
                 vec![
                     Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
                     Box::new(Expr::new(ExprKind::List, vec![])),
                 ],
             )]),
             vec![&Expr::new(
-                ExprKind::FnCustom,
+                ExprKind::FnDefine,
                 vec![
                     Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
                     Box::new(Expr::new(ExprKind::List, vec![])),
@@ -101,7 +101,7 @@ mod tests {
     fn test_second_arg_valid_list() {
         assert_eq!(
             analyze_semantics(&vec![Expr::new(
-                ExprKind::FnCustom,
+                ExprKind::FnDefine,
                 vec![
                     Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
                     Box::new(Expr::new(
@@ -114,7 +114,7 @@ mod tests {
                 ],
             )]),
             vec![&Expr::new(
-                ExprKind::FnCustom,
+                ExprKind::FnDefine,
                 vec![
                     Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
                     Box::new(Expr::new(
@@ -134,7 +134,7 @@ mod tests {
         assert_panic!(
             {
                 analyze_semantics(&vec![Expr::new(
-                    ExprKind::FnCustom,
+                    ExprKind::FnDefine,
                     vec![
                         Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
                         Box::new(Expr::new(

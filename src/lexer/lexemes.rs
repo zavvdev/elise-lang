@@ -30,7 +30,7 @@ pub const L_FN_OR: (char, &str) = (L_FN, "or");
 pub const L_FN_BOOL: (char, &str) = (L_FN, "bool");
 pub const L_FN_IF: (char, &str) = (L_FN, "if");
 pub const L_FN_IS_NIL: (char, &str) = (L_FN, "nil?");
-pub const L_FN_CUSTOM: (char, &str) = (L_FN, "fn");
+pub const L_FN_DEFINE: (char, &str) = (L_FN, "fn");
 
 // Literals
 

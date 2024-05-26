@@ -21,7 +21,7 @@ fn analyze(expr: &Expr) -> &Expr {
         ExprKind::FnBool => one_children_expr(expr),
         ExprKind::FnIf => fn_if(expr),
         ExprKind::FnIsNil => one_children_expr(expr),
-        ExprKind::FnCustom => fn_custom(expr),
+        ExprKind::FnDefine => fn_define(expr),
         _ => expr,
     };
 
@@ -128,11 +128,11 @@ fn fn_if(expr: &Expr) -> &Expr {
 
 // ==========================
 //
-//       Custom function
+//       Define function
 //
 //  ==========================
 
-fn fn_custom(expr: &Expr) -> &Expr {
+fn fn_define(expr: &Expr) -> &Expr {
     if expr.children.len() < 2 {
         panic!(
             "{}",

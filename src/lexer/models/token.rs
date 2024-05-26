@@ -34,7 +34,7 @@ pub enum TokenKind {
     FnBool,
     FnIf,
     FnIsNil,
-    FnCustom,
+    FnDefine,
 }
 
 #[derive(Debug, PartialEq)]

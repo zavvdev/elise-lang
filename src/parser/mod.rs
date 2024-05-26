@@ -83,7 +83,7 @@ impl Parser {
             TokenKind::FnBool => self.consume_fn(ExprKind::FnBool),
             TokenKind::FnIf => self.consume_fn(ExprKind::FnIf),
             TokenKind::FnIsNil => self.consume_fn(ExprKind::FnIsNil),
-            TokenKind::FnCustom => self.consume_fn(ExprKind::FnCustom),
+            TokenKind::FnDefine => self.consume_fn(ExprKind::FnDefine),
             _ => None,
         }
     }
