@@ -10,7 +10,7 @@ mod tests {
     #[test]
     fn test_add() {
         assert_eq!(
-            tokenize("@add"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_ADD)),
             vec![Token {
                 kind: TokenKind::FnAdd,
                 span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_ADD))
@@ -21,7 +21,7 @@ mod tests {
     #[test]
     fn test_sub() {
         assert_eq!(
-            tokenize("@sub"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_SUB)),
             vec![Token {
                 kind: TokenKind::FnSub,
                 span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_SUB))
@@ -32,7 +32,7 @@ mod tests {
     #[test]
     fn test_mul() {
         assert_eq!(
-            tokenize("@mul"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_MUL)),
             vec![Token {
                 kind: TokenKind::FnMul,
                 span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_MUL))
@@ -43,7 +43,7 @@ mod tests {
     #[test]
     fn test_div() {
         assert_eq!(
-            tokenize("@div"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_DIV)),
             vec![Token {
                 kind: TokenKind::FnDiv,
                 span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_DIV))
@@ -54,7 +54,7 @@ mod tests {
     #[test]
     fn test_print() {
         assert_eq!(
-            tokenize("@print"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_PRINT)),
             vec![Token {
                 kind: TokenKind::FnPrint,
                 span: TokenSpan::new(0, 6, fn_lexeme_to_string(lexemes::L_FN_PRINT))
@@ -65,7 +65,7 @@ mod tests {
     #[test]
     fn test_let() {
         assert_eq!(
-            tokenize("@let"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_LET_BINDING)),
             vec![Token {
                 kind: TokenKind::FnLetBinding,
                 span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_LET_BINDING))
@@ -76,7 +76,7 @@ mod tests {
     #[test]
     fn test_greatr() {
         assert_eq!(
-            tokenize("@greatr"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_GREATR)),
             vec![Token {
                 kind: TokenKind::FnGreatr,
                 span: TokenSpan::new(0, 7, fn_lexeme_to_string(lexemes::L_FN_GREATR))
@@ -87,7 +87,7 @@ mod tests {
     #[test]
     fn test_greatr_eq() {
         assert_eq!(
-            tokenize("@greatr-eq"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_GREATR_EQ)),
             vec![Token {
                 kind: TokenKind::FnGreatrEq,
                 span: TokenSpan::new(0, 10, fn_lexeme_to_string(lexemes::L_FN_GREATR_EQ))
@@ -98,7 +98,7 @@ mod tests {
     #[test]
     fn test_less() {
         assert_eq!(
-            tokenize("@less"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_LESS)),
             vec![Token {
                 kind: TokenKind::FnLess,
                 span: TokenSpan::new(0, 5, fn_lexeme_to_string(lexemes::L_FN_LESS))
@@ -109,7 +109,7 @@ mod tests {
     #[test]
     fn test_less_eq() {
         assert_eq!(
-            tokenize("@less-eq"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_LESS_EQ)),
             vec![Token {
                 kind: TokenKind::FnLessEq,
                 span: TokenSpan::new(0, 8, fn_lexeme_to_string(lexemes::L_FN_LESS_EQ))
@@ -120,7 +120,7 @@ mod tests {
     #[test]
     fn test_eq() {
         assert_eq!(
-            tokenize("@eq"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_EQ)),
             vec![Token {
                 kind: TokenKind::FnEq,
                 span: TokenSpan::new(0, 3, fn_lexeme_to_string(lexemes::L_FN_EQ))
@@ -131,7 +131,7 @@ mod tests {
     #[test]
     fn test_not_eq() {
         assert_eq!(
-            tokenize("@not-eq"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_NOT_EQ)),
             vec![Token {
                 kind: TokenKind::FnNotEq,
                 span: TokenSpan::new(0, 7, fn_lexeme_to_string(lexemes::L_FN_NOT_EQ))
@@ -142,7 +142,7 @@ mod tests {
     #[test]
     fn test_not() {
         assert_eq!(
-            tokenize("@not"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_NOT)),
             vec![Token {
                 kind: TokenKind::FnNot,
                 span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_NOT))
@@ -153,7 +153,7 @@ mod tests {
     #[test]
     fn test_and() {
         assert_eq!(
-            tokenize("@and"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_AND)),
             vec![Token {
                 kind: TokenKind::FnAnd,
                 span: TokenSpan::new(0, 4, fn_lexeme_to_string(lexemes::L_FN_AND))
@@ -164,7 +164,7 @@ mod tests {
     #[test]
     fn test_or() {
         assert_eq!(
-            tokenize("@or"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_OR)),
             vec![Token {
                 kind: TokenKind::FnOr,
                 span: TokenSpan::new(0, 3, fn_lexeme_to_string(lexemes::L_FN_OR))
@@ -175,7 +175,7 @@ mod tests {
     #[test]
     fn test_bool() {
         assert_eq!(
-            tokenize("@bool"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_BOOL)),
             vec![Token {
                 kind: TokenKind::FnBool,
                 span: TokenSpan::new(0, 5, fn_lexeme_to_string(lexemes::L_FN_BOOL))
@@ -186,7 +186,7 @@ mod tests {
     #[test]
     fn test_if() {
         assert_eq!(
-            tokenize("@if"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_IF)),
             vec![Token {
                 kind: TokenKind::FnIf,
                 span: TokenSpan::new(0, 3, fn_lexeme_to_string(lexemes::L_FN_IF))
@@ -197,7 +197,7 @@ mod tests {
     #[test]
     fn test_is_nil() {
         assert_eq!(
-            tokenize("@nil?"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_IS_NIL)),
             vec![Token {
                 kind: TokenKind::FnIsNil,
                 span: TokenSpan::new(0, 5, fn_lexeme_to_string(lexemes::L_FN_IS_NIL))
@@ -208,7 +208,7 @@ mod tests {
     #[test]
     fn test_define_fn() {
         assert_eq!(
-            tokenize("@fn"),
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_DEFINE)),
             vec![Token {
                 kind: TokenKind::FnDefine,
                 span: TokenSpan::new(0, 3, fn_lexeme_to_string(lexemes::L_FN_DEFINE))

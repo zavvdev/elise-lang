@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::lexer::{
-        lexemes,
+        lexemes::{self, to_fn_string},
         models::token::{Token, TokenKind, TokenSpan},
         tokenize,
     };
@@ -9,7 +9,7 @@ mod tests {
     #[test]
     fn test_fn_custom() {
         assert_eq!(
-            tokenize("@custom"),
+            tokenize(&to_fn_string("custom")),
             vec![Token {
                 kind: TokenKind::FnCustom("custom".to_string()),
                 span: TokenSpan::new(

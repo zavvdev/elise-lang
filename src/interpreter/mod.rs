@@ -6,7 +6,7 @@ pub mod semanalyzer;
 
 use crate::{
     binary_op,
-    lexer::lexemes,
+    lexer::lexemes::{self, fn_lexeme_to_string},
     parser::models::expression::{Expr, ExprKind},
     to_str, types,
 };
@@ -93,7 +93,12 @@ pub fn eval_for_fn_print(expr: &Expr, env: &mut Env) -> PrintEvalResult {
             EvalResult::Boolean(x) => result.push(x.to_string()),
             EvalResult::String(x) => result.push(x),
             EvalResult::FnDeclaration(x) => {
-                result.push(format!("@fn {} [{}]", x.name, x.args.join(", ")));
+                result.push(format!(
+                    "{} {} [{}]",
+                    fn_lexeme_to_string(lexemes::L_FN_DEFINE),
+                    x.name,
+                    x.args.join(", ")
+                ));
             }
         }
     }

@@ -10,7 +10,7 @@ pub const L_WHITESPACE: char = ' ';
 
 // Funcitions
 
-pub const L_FN: char = '@';
+pub const L_FN: char = '.';
 pub const L_FN_ADD: (char, &str) = (L_FN, "add");
 pub const L_FN_SUB: (char, &str) = (L_FN, "sub");
 pub const L_FN_MUL: (char, &str) = (L_FN, "mul");
@@ -44,4 +44,8 @@ pub const L_STRING_LITERAL_ESCAPE: char = '\\';
 
 pub fn fn_lexeme_to_string(lexeme: (char, &str)) -> String {
     format!("{}{}", lexeme.0, lexeme.1)
+}
+
+pub fn to_fn_string(lexeme: &str) -> String {
+    format!("{}{}", L_FN, lexeme)
 }
