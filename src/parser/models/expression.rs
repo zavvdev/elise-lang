@@ -34,6 +34,7 @@ pub enum ExprKind {
     FnIf,
     FnIsNil,
     FnDefine,
+    FnCustom(String),
 }
 
 #[derive(Debug, PartialEq)]

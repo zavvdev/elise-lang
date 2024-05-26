@@ -57,11 +57,6 @@ impl Lexer {
 
             let end = self.char_pos;
             let lexeme = self.input[start..end].to_string();
-
-            if token_kind == TokenKind::Unknown {
-                panic!("{}", messages::unknown_lexeme(&lexeme));
-            }
-
             let token_span = TokenSpan { start, end, lexeme };
 
             Token {
@@ -325,7 +320,7 @@ impl Lexer {
             return TokenKind::FnDefine;
         }
 
-        TokenKind::Unknown
+        TokenKind::FnCustom(fn_name.to_string())
     }
 
     fn consume_fn(&mut self) -> TokenKind {

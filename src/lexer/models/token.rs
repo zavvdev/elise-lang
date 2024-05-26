@@ -2,7 +2,6 @@ use crate::types;
 
 #[derive(Debug, PartialEq)]
 pub enum TokenKind {
-    Unknown,
     Nil,
     Number(types::Number),
     Minus,
@@ -35,6 +34,7 @@ pub enum TokenKind {
     FnIf,
     FnIsNil,
     FnDefine,
+    FnCustom(String),
 }
 
 #[derive(Debug, PartialEq)]
