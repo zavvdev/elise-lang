@@ -11,7 +11,7 @@ mod tests {
 
     #[test]
     fn test_less() {
-        let env = Env::new();
+        let mut env = Env::new();
         let expr = Expr::new(
             ExprKind::FnLess,
             vec![
@@ -20,12 +20,12 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(false));
+        assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(false));
     }
 
     #[test]
     fn test_less_multiple() {
-        let env = Env::new();
+        let mut env = Env::new();
         let expr = Expr::new(
             ExprKind::FnLess,
             vec![
@@ -35,6 +35,6 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(false));
+        assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(false));
     }
 }

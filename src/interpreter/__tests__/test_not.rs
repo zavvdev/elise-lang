@@ -10,7 +10,7 @@ mod tests {
 
     #[test]
     fn test_not_bool() {
-        let env = Env::new();
+        let mut env = Env::new();
 
         assert_eq!(
             eval(
@@ -18,7 +18,7 @@ mod tests {
                     ExprKind::FnNot,
                     vec![Box::new(Expr::new(ExprKind::Boolean(true), vec![]))],
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Boolean(false)
         );
@@ -29,7 +29,7 @@ mod tests {
                     ExprKind::FnNot,
                     vec![Box::new(Expr::new(ExprKind::Boolean(false), vec![]))],
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Boolean(true)
         );
@@ -37,7 +37,7 @@ mod tests {
 
     #[test]
     fn test_not_nil() {
-        let env = Env::new();
+        let mut env = Env::new();
 
         assert_eq!(
             eval(
@@ -45,14 +45,14 @@ mod tests {
                     ExprKind::FnNot,
                     vec![Box::new(Expr::new(ExprKind::Nil, vec![]))],
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Boolean(true)
         );
     }
     #[test]
     fn test_not_other() {
-        let env = Env::new();
+        let mut env = Env::new();
 
         assert_eq!(
             eval(
@@ -63,7 +63,7 @@ mod tests {
                         vec![]
                     ))],
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Boolean(false)
         );
@@ -74,7 +74,7 @@ mod tests {
                     ExprKind::FnNot,
                     vec![Box::new(Expr::new(ExprKind::Number(0.0), vec![]))],
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Boolean(false)
         );

@@ -12,7 +12,7 @@ use crate::{
 
 use self::models::env::{Env, EnvRecord, EvalResult};
 
-fn eval(expr: &Expr, env: &Env) -> EvalResult {
+fn eval(expr: &Expr, env: &mut Env) -> EvalResult {
     match &expr.kind {
         ExprKind::Nil => EvalResult::Nil,
         ExprKind::Number(x) => EvalResult::Number(*x),
@@ -48,6 +48,9 @@ fn eval(expr: &Expr, env: &Env) -> EvalResult {
 
         ExprKind::FnIsNil => eval_fn_is_nil(expr, env),
 
+        ExprKind::FnDefine => eval_fn_definition(expr, env),
+        ExprKind::FnCustom(x) => eval_fn_custom(x, expr, env),
+
         _ => panic!("{}", messages::unknown_expression(to_str!(expr.kind))),
     }
 }
@@ -71,7 +74,7 @@ pub enum PrintEvalResult {
     Success(String),
 }
 
-pub fn eval_for_fn_print(expr: &Expr, env: &Env) -> PrintEvalResult {
+pub fn eval_for_fn_print(expr: &Expr, env: &mut Env) -> PrintEvalResult {
     if expr.children.len() == 0 {
         return PrintEvalResult::Empty;
     }
@@ -88,13 +91,16 @@ pub fn eval_for_fn_print(expr: &Expr, env: &Env) -> PrintEvalResult {
             EvalResult::Nil => result.push(lexemes::L_NIL.to_string()),
             EvalResult::Boolean(x) => result.push(x.to_string()),
             EvalResult::String(x) => result.push(x),
+            EvalResult::FnDeclaration(x) => {
+                result.push(format!("@fn {} [{}]", x.name, x.args.join(", ")));
+            }
         }
     }
 
     return PrintEvalResult::Success(result.join(" "));
 }
 
-fn eval_fn_print(expr: &Expr, new_line: bool, env: &Env) -> EvalResult {
+fn eval_fn_print(expr: &Expr, new_line: bool, env: &mut Env) -> EvalResult {
     match eval_for_fn_print(expr, env) {
         PrintEvalResult::Empty => EvalResult::Nil,
         PrintEvalResult::Success(result) => {
@@ -115,7 +121,7 @@ fn eval_fn_print(expr: &Expr, new_line: bool, env: &Env) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_add(expr: &Expr, env: &Env) -> EvalResult {
+fn eval_fn_add(expr: &Expr, env: &mut Env) -> EvalResult {
     if expr.children.len() == 0 {
         return EvalResult::Number(0 as types::Number);
     }
@@ -142,7 +148,7 @@ fn eval_fn_add(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_sub(expr: &Expr, env: &Env) -> EvalResult {
+fn eval_fn_sub(expr: &Expr, env: &mut Env) -> EvalResult {
     let mut result: types::Number = 0.0;
 
     for (i, child) in expr.children.iter().enumerate() {
@@ -171,7 +177,7 @@ fn eval_fn_sub(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_mul(expr: &Expr, env: &Env) -> EvalResult {
+fn eval_fn_mul(expr: &Expr, env: &mut Env) -> EvalResult {
     if expr.children.len() == 0 {
         return EvalResult::Number(1 as types::Number);
     }
@@ -198,7 +204,7 @@ fn eval_fn_mul(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_div(expr: &Expr, env: &Env) -> EvalResult {
+fn eval_fn_div(expr: &Expr, env: &mut Env) -> EvalResult {
     let mut result = 1 as types::Number;
 
     for (i, child) in expr.children.iter().enumerate() {
@@ -270,7 +276,7 @@ fn unwrap_identifier(expr_kind: &ExprKind) -> String {
 
 // ==========================
 
-fn collect_bindings(expr: &Box<Expr>, env: &Env) -> Vec<(String, EvalResult)> {
+fn collect_bindings(expr: &Box<Expr>, env: &mut Env) -> Vec<(String, EvalResult)> {
     let mut bindings = Vec::new();
 
     for (i, child) in expr.children.iter().enumerate() {
@@ -292,7 +298,7 @@ fn collect_bindings(expr: &Box<Expr>, env: &Env) -> Vec<(String, EvalResult)> {
     bindings
 }
 
-fn eval_fn_let_binding(expr: &Expr, env: &Env) -> EvalResult {
+fn eval_fn_let_binding(expr: &Expr, env: &mut Env) -> EvalResult {
     if expr.children.len() == 1 {
         return EvalResult::Nil;
     }
@@ -306,7 +312,7 @@ fn eval_fn_let_binding(expr: &Expr, env: &Env) -> EvalResult {
     let mut result = EvalResult::Nil;
 
     for child_expr in expr.children.iter().skip(1) {
-        result = eval(child_expr, &child_env);
+        result = eval(child_expr, &mut child_env);
     }
 
     result
@@ -318,7 +324,7 @@ fn eval_fn_let_binding(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-fn eval_number_comparison<P>(expr: &Expr, env: &Env, predicate: P) -> EvalResult
+fn eval_number_comparison<P>(expr: &Expr, env: &mut Env, predicate: P) -> EvalResult
 where
     P: Fn(types::Number, types::Number) -> bool,
 {
@@ -350,7 +356,7 @@ where
 
 // ==========================
 
-fn eval_fn_not(expr: &Expr, env: &Env) -> EvalResult {
+fn eval_fn_not(expr: &Expr, env: &mut Env) -> EvalResult {
     let child_res = eval(expr.children.first().unwrap(), env);
 
     match child_res {
@@ -366,7 +372,7 @@ fn eval_fn_not(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_eq(expr: &Expr, env: &Env) -> EvalResult {
+fn eval_fn_eq(expr: &Expr, env: &mut Env) -> EvalResult {
     let mut result = true;
 
     for (i, child) in expr.children.iter().enumerate() {
@@ -390,7 +396,7 @@ fn eval_fn_eq(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_not_eq(expr: &Expr, env: &Env) -> EvalResult {
+fn eval_fn_not_eq(expr: &Expr, env: &mut Env) -> EvalResult {
     let res = eval_fn_eq(expr, env);
 
     match res {
@@ -419,7 +425,7 @@ fn coerce_to_boolean(res: EvalResult) -> EvalResult {
     }
 }
 
-fn eval_fn_bool(expr: &Expr, env: &Env) -> EvalResult {
+fn eval_fn_bool(expr: &Expr, env: &mut Env) -> EvalResult {
     let child_res = eval(expr.children.first().unwrap(), env);
     coerce_to_boolean(child_res)
 }
@@ -430,7 +436,7 @@ fn eval_fn_bool(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_or(expr: &Expr, env: &Env) -> EvalResult {
+fn eval_fn_or(expr: &Expr, env: &mut Env) -> EvalResult {
     if expr.children.len() == 0 {
         return EvalResult::Nil;
     }
@@ -463,7 +469,7 @@ fn eval_fn_or(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_and(expr: &Expr, env: &Env) -> EvalResult {
+fn eval_fn_and(expr: &Expr, env: &mut Env) -> EvalResult {
     if expr.children.len() == 0 {
         return EvalResult::Boolean(true);
     }
@@ -496,7 +502,7 @@ fn eval_fn_and(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_if(expr: &Expr, env: &Env) -> EvalResult {
+fn eval_fn_if(expr: &Expr, env: &mut Env) -> EvalResult {
     let condition = expr.children.first().unwrap();
     let then_branch = expr.children.get(1).unwrap();
     let else_branch = expr.children.get(2);
@@ -525,7 +531,7 @@ fn eval_fn_if(expr: &Expr, env: &Env) -> EvalResult {
 
 // ==========================
 
-fn eval_fn_is_nil(expr: &Expr, env: &Env) -> EvalResult {
+fn eval_fn_is_nil(expr: &Expr, env: &mut Env) -> EvalResult {
     let child_res = eval(expr.children.first().unwrap(), env);
 
     match child_res {
@@ -534,10 +540,48 @@ fn eval_fn_is_nil(expr: &Expr, env: &Env) -> EvalResult {
     }
 }
 
+// ==========================
+//
+//       Custom function
+//
+//  ==========================
+
+fn eval_fn_definition(_expr: &Expr, _env: &mut Env) -> EvalResult {
+    // let name = unwrap_identifier(&expr.children.first().unwrap().kind);
+    //
+    // let args: Vec<String> = expr
+    //     .children
+    //     .get(1)
+    //     .unwrap()
+    //     .children
+    //     .iter()
+    //     .map(|x| unwrap_identifier(&x.kind))
+    //     .collect();
+    //
+    // let body: Vec<Expr> = expr.children.iter().skip(2).map(|x| *x.clone()).collect();
+    //
+    // let declaration = EvalResult::FnDeclaration(FnDeclaration { name, args, body });
+    //
+    // env.set(
+    //     name,
+    //     EnvRecord {
+    //         value: declaration,
+    //         mutable: false,
+    //     },
+    // );
+    //
+    // declaration
+    EvalResult::Nil
+}
+
+fn eval_fn_custom(_name: &str, _expr: &Expr, _env: &Env) -> EvalResult {
+    EvalResult::Nil
+}
+
 // ==============================================
 
-pub fn interpret(exprs: Vec<&Expr>, env: Env) {
+pub fn interpret(exprs: Vec<&Expr>, env: &mut Env) {
     for expr in exprs {
-        eval(expr, &env);
+        eval(expr, env);
     }
 }

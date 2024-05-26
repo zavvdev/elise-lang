@@ -10,10 +10,10 @@ mod tests {
 
     #[test]
     fn test_or() {
-        let env = Env::new();
+        let mut env = Env::new();
 
         assert_eq!(
-            eval(&Expr::new(ExprKind::FnOr, vec![],), &env),
+            eval(&Expr::new(ExprKind::FnOr, vec![],), &mut env),
             EvalResult::Nil
         );
 
@@ -23,7 +23,7 @@ mod tests {
                     ExprKind::FnOr,
                     vec![Box::new(Expr::new(ExprKind::Number(2.2), vec![])),],
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Number(2.2)
         );
@@ -34,7 +34,7 @@ mod tests {
                     ExprKind::FnOr,
                     vec![Box::new(Expr::new(ExprKind::Boolean(false), vec![])),],
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Boolean(false)
         );
@@ -48,7 +48,7 @@ mod tests {
                         Box::new(Expr::new(ExprKind::Nil, vec![]))
                     ],
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Nil
         );
@@ -63,7 +63,7 @@ mod tests {
                         Box::new(Expr::new(ExprKind::String("123".to_string()), vec![]))
                     ],
                 ),
-                &env
+                &mut env
             ),
             EvalResult::String("123".to_string())
         );
@@ -78,7 +78,7 @@ mod tests {
                         Box::new(Expr::new(ExprKind::Nil, vec![])),
                     ],
                 ),
-                &env
+                &mut env
             ),
             EvalResult::String("123".to_string())
         );

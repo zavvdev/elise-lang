@@ -10,9 +10,9 @@ mod tests {
 
     #[test]
     fn test_nil() {
-        let env = Env::new();
+        let mut env = Env::new();
         let expr = Expr::new(ExprKind::Nil, vec![]);
 
-        assert_eq!(eval(&expr, &env), EvalResult::Nil);
+        assert_eq!(eval(&expr, &mut env), EvalResult::Nil);
     }
 }

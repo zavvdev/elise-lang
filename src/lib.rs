@@ -11,7 +11,7 @@ use lexer::tokenize;
 use parser::parse;
 use semanalyzer::analyze_semantics;
 
-pub fn execute(content: String, env: Env) {
+pub fn execute(content: String, env: &mut Env) {
     let tokens = tokenize(&content);
     let expressions = parse(tokens);
     let expressions = analyze_semantics(&expressions);

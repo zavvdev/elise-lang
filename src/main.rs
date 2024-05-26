@@ -9,7 +9,7 @@ fn main() {
     let config = Config::new(&args);
 
     match fs::read_to_string(&config.filename) {
-        Ok(content) => elise::execute(content, Env::new()),
+        Ok(content) => elise::execute(content, &mut Env::new()),
         Err(e) => {
             println!("Cannot read {} file: {}", config.filename, e);
         }

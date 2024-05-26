@@ -18,7 +18,7 @@ mod tests {
         );
 
         assert_eq!(
-            eval_for_fn_print(&expr, &Env::new()),
+            eval_for_fn_print(&expr, &mut Env::new()),
             PrintEvalResult::Success("1 1.4".to_string())
         );
     }
@@ -27,7 +27,7 @@ mod tests {
     fn test_print_empty() {
         let expr = Expr::new(ExprKind::FnPrint, vec![]);
         assert_eq!(
-            eval_for_fn_print(&expr, &Env::new()),
+            eval_for_fn_print(&expr, &mut Env::new()),
             PrintEvalResult::Empty
         );
     }
@@ -45,7 +45,7 @@ mod tests {
             ))],
         );
         assert_eq!(
-            eval_for_fn_print(&expr, &Env::new()),
+            eval_for_fn_print(&expr, &mut Env::new()),
             PrintEvalResult::Success(lexemes::L_NIL.to_string())
         );
     }

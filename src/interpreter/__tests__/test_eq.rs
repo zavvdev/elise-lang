@@ -10,7 +10,7 @@ mod tests {
 
     #[test]
     fn test_eq() {
-        let env = Env::new();
+        let mut env = Env::new();
 
         assert_eq!(
             eval(
@@ -21,7 +21,7 @@ mod tests {
                         Box::new(Expr::new(ExprKind::String("2".to_string()), vec![]))
                     ],
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Boolean(true)
         );
@@ -35,7 +35,7 @@ mod tests {
                         Box::new(Expr::new(ExprKind::String("2".to_string()), vec![]))
                     ],
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Boolean(false)
         );

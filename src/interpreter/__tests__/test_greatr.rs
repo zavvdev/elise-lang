@@ -5,12 +5,13 @@ mod tests {
             eval,
             models::env::{Env, EvalResult},
         },
-        parser::models::expression::{Expr, ExprKind}, types,
+        parser::models::expression::{Expr, ExprKind},
+        types,
     };
 
     #[test]
     fn test_greatr() {
-        let env = Env::new();
+        let mut env = Env::new();
         let expr = Expr::new(
             ExprKind::FnGreatr,
             vec![
@@ -19,12 +20,12 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(true));
+        assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(true));
     }
 
     #[test]
     fn test_greatr_multiple() {
-        let env = Env::new();
+        let mut env = Env::new();
         let expr = Expr::new(
             ExprKind::FnGreatr,
             vec![
@@ -34,6 +35,6 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(false));
+        assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(false));
     }
 }

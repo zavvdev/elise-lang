@@ -22,14 +22,14 @@ mod tests {
 
         let expr = Expr::new(ExprKind::Identifier("x".to_string()), vec![]);
 
-        assert_eq!(eval(&expr, &env), EvalResult::Number(1.0));
+        assert_eq!(eval(&expr, &mut env), EvalResult::Number(1.0));
     }
 
     #[test]
     #[should_panic(expected = "Interpretation error. Undefined identifier \"x\".")]
     fn test_identifier_undefined() {
-        let env = Env::new();
+        let mut env = Env::new();
         let expr = Expr::new(ExprKind::Identifier("x".to_string()), vec![]);
-        eval(&expr, &env);
+        eval(&expr, &mut env);
     }
 }

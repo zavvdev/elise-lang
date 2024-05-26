@@ -11,7 +11,7 @@ mod tests {
 
     #[test]
     fn test_greatr_eq() {
-        let env = Env::new();
+        let mut env = Env::new();
         let expr = Expr::new(
             ExprKind::FnGreatrEq,
             vec![
@@ -20,12 +20,12 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(true));
+        assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(true));
     }
 
     #[test]
     fn test_greatr_eq_multiple() {
-        let env = Env::new();
+        let mut env = Env::new();
         let expr = Expr::new(
             ExprKind::FnGreatrEq,
             vec![
@@ -35,6 +35,6 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr, &env), EvalResult::Boolean(true));
+        assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(true));
     }
 }

@@ -1,6 +1,13 @@
 use std::collections::HashMap;
 
-use crate::types;
+use crate::{parser::models::expression::Expr, types};
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct FnDeclaration {
+    pub name: String,
+    pub args: Vec<String>,
+    pub body: Vec<Expr>,
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum EvalResult {
@@ -8,15 +15,16 @@ pub enum EvalResult {
     Number(types::Number),
     Boolean(bool),
     String(String),
+    FnDeclaration(FnDeclaration),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct EnvRecord {
     pub value: EvalResult,
     pub mutable: bool,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Env {
     table: HashMap<String, EnvRecord>,
     parent_env: Option<Box<Env>>,

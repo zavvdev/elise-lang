@@ -10,7 +10,7 @@ mod tests {
 
     #[test]
     fn test_if() {
-        let env = Env::new();
+        let mut env = Env::new();
 
         assert_eq!(
             eval(
@@ -22,7 +22,7 @@ mod tests {
                         Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
                     ]
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Number(1.0)
         );
@@ -37,7 +37,7 @@ mod tests {
                         Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
                     ]
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Number(2.0)
         );
@@ -51,7 +51,7 @@ mod tests {
                         Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
                     ]
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Number(1.0)
         );
@@ -65,7 +65,7 @@ mod tests {
                         Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
                     ]
                 ),
-                &env
+                &mut env
             ),
             EvalResult::Nil
         );

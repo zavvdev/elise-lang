@@ -10,7 +10,7 @@ mod tests {
 
     #[test]
     fn test_let() {
-        let env = Env::new();
+        let mut env = Env::new();
 
         let expr = Expr::new(
             ExprKind::FnLetBinding,
@@ -26,12 +26,12 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr, &env), EvalResult::Number(1.0));
+        assert_eq!(eval(&expr, &mut env), EvalResult::Number(1.0));
     }
 
     #[test]
     fn test_let_nested() {
-        let env = Env::new();
+        let mut env = Env::new();
 
         let expr = Expr::new(
             ExprKind::FnLetBinding,
@@ -65,12 +65,12 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr, &env), EvalResult::Number(3.0));
+        assert_eq!(eval(&expr, &mut env), EvalResult::Number(3.0));
     }
 
     #[test]
     fn test_let_empty() {
-        let env = Env::new();
+        let mut env = Env::new();
 
         let expr = Expr::new(
             ExprKind::FnLetBinding,
@@ -83,7 +83,7 @@ mod tests {
             ))],
         );
 
-        assert_eq!(eval(&expr, &env), EvalResult::Nil);
+        assert_eq!(eval(&expr, &mut env), EvalResult::Nil);
     }
 
     #[test]

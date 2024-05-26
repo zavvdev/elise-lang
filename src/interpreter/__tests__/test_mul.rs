@@ -20,7 +20,7 @@ mod tests {
         );
 
         assert_eq!(
-            eval(&expr, &Env::new()),
+            eval(&expr, &mut Env::new()),
             EvalResult::Number(6 as types::Number)
         );
     }
@@ -35,7 +35,7 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(2.75));
+        assert_eq!(eval(&expr, &mut Env::new()), EvalResult::Number(2.75));
     }
 
     #[test]
@@ -48,7 +48,7 @@ mod tests {
             ],
         );
 
-        assert_eq!(eval(&expr, &Env::new()), EvalResult::Number(-2.8));
+        assert_eq!(eval(&expr, &mut Env::new()), EvalResult::Number(-2.8));
     }
 
     #[test]
@@ -62,7 +62,7 @@ mod tests {
         );
 
         assert_eq!(
-            eval(&expr, &Env::new()),
+            eval(&expr, &mut Env::new()),
             EvalResult::Number(3 as types::Number)
         );
     }
@@ -70,7 +70,7 @@ mod tests {
     #[test]
     fn test_mul_empty() {
         assert_eq!(
-            eval(&Expr::new(ExprKind::FnMul, vec![]), &Env::new()),
+            eval(&Expr::new(ExprKind::FnMul, vec![]), &mut Env::new()),
             EvalResult::Number(1 as types::Number)
         );
     }
@@ -87,6 +87,6 @@ mod tests {
                 Box::new(Expr::new(ExprKind::FnPrint, vec![])),
             ],
         );
-        eval(&expr, &Env::new());
+        eval(&expr, &mut Env::new());
     }
 }

@@ -1,6 +1,6 @@
 use crate::types;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ExprKind {
     // Private. Only for internal usage
     _EndOfFn,
@@ -37,7 +37,7 @@ pub enum ExprKind {
     FnCustom(String),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Expr {
     pub kind: ExprKind,
     pub children: Vec<Box<Expr>>,
