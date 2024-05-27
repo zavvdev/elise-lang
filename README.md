@@ -11,7 +11,7 @@
 - [x] strings
 - [x] conditions
 - [x] nil? function
-- [ ] custom function
+- [x] custom function
 
 ## Boolean
 

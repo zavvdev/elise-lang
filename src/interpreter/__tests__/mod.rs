@@ -20,3 +20,4 @@ pub mod test_and;
 pub mod test_if;
 pub mod test_is_nil;
 pub mod test_declare_fn;
+pub mod test_call_custom_fn;
