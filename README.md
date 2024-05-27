@@ -93,20 +93,20 @@ If no denominators are supplied, returns result of `1/numerator`, else returns n
 Evaluates the exprs in a lexical context in which the symbols in the binding-forms are bound to their respective init-exprs 
 
 ```
-.let ([binding-form init-expr] exprs*)
+.let([binding-form init-expr] exprs*)
 ```
 
 Example:
 
 ```
-.let ([x 2, y 10]
-    .println (@add(x y)))
+.let([x 2, y 10]
+    .println(.add(x y)))
 ```
 
 Also, `.let` function returns the result of the last expression:
 
 ```
-.print (@let ([x 1] x))
+.print(.let([x 1] x))
 ```
 
 Result: `1`
@@ -114,7 +114,7 @@ Result: `1`
 Keep in mind that binding won't be performed if there are no further expressions found for `.let` function:
 
 ```
-.let ([x 1])
+.let([x 1])
 ```
 
 Result: `x` will not be bound to `1` because it makes no sense since there are no expressions found to use this binding.
@@ -220,8 +220,8 @@ Coerce to boolean. Everything except `false` and `nil` is true in boolean contex
 Evaluates the first argument and performs boolean coercion of the result. If it results to true evaluates the second argument and returns result. Otherwise, evaluates the third argument and returns the result. If the third argument is absent - returns `nil`.
 
 ```
-.if (condition then)
-.if (condition then else)
+.if(condition then)
+.if(condition then else)
 ```
 
 ## .nil?
