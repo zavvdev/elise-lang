@@ -238,7 +238,7 @@ Returns true if x is nil, false otherwise
 .fn (name [& args] body)
 ```
 
-Creates an identifier labeled with `name` that holds a function declaration record that can be invoked with `args` (if declared) to execute its `body`. Body has access to `args` identifiers that are bound to the values passed during invocation as well as identifiers in outer (parent) scope. Function can be invoked only after declaration.
+Creates an identifier labeled with `name` that holds a function declaration record that can be invoked with `args` (if declared) to execute its `body`. Body has access to `args` identifiers that are bound to the values passed during invocation as well as identifiers in outer (parent) scope where it's created. Function can be invoked only after declaration.
 
 Example:
 
