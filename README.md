@@ -88,9 +88,9 @@ If no denominators are supplied, returns result of `1/numerator`, else returns n
 .div(x y & more)
 ```
 
-## .let 
+## .let
 
-Evaluates the exprs in a lexical context in which the symbols in the binding-forms are bound to their respective init-exprs 
+Evaluates the exprs in a lexical context in which the symbols in the binding-forms are bound to their respective init-exprs
 
 ```
 .let([binding-form init-expr] exprs*)
@@ -207,7 +207,7 @@ Evaluates exprs one at a time, from left to right. If a form returns a logical t
 .or(x & next)
 ```
 
-## .bool 
+## .bool
 
 Coerce to boolean. Everything except `false` and `nil` is true in boolean context.
 
@@ -215,7 +215,7 @@ Coerce to boolean. Everything except `false` and `nil` is true in boolean contex
 .bool(x)
 ```
 
-## .if 
+## .if
 
 Evaluates the first argument and performs boolean coercion of the result. If it results to true evaluates the second argument and returns result. Otherwise, evaluates the third argument and returns the result. If the third argument is absent - returns `nil`.
 
@@ -230,4 +230,23 @@ Returns true if x is nil, false otherwise
 
 ```
 .nil?(x)
+```
+
+## .fn
+
+```
+.fn (name [& args] body)
+```
+
+Creates an identifier labeled with `name` that holds a function declaration record that can be invoked with `args` (if declared) to execute its `body`. Body has access to `args` identifiers that are bound to the values passed during invocation as well as identifiers in outer (parent) scope. Function can be invoked only after declaration.
+
+Example:
+
+```
+.fn (fact [n]
+    .if(.eq(n, 0)
+      1
+      .mul(n, .fact(.sub(n 1)))))
+
+.println(.fact(3))
 ```
