@@ -12,6 +12,7 @@
 - [x] conditions
 - [x] nil? function
 - [x] custom function
+- [ ] function closure (use data from lexical scope in moment of function creation)
 
 ## Boolean
 
