@@ -65,4 +65,31 @@ mod tests {
         #[deny(arithmetic_overflow)]
         tokenize(&format!("1.{}", overflowed));
     }
+
+    #[test]
+    fn test_negative() {
+        assert_eq!(
+            tokenize("-0.5"),
+            vec![Token {
+                kind: TokenKind::Number(-0.5),
+                span: TokenSpan::new(0, 4, "-0.5".to_string()),
+            }]
+        );
+
+        assert_eq!(
+            tokenize("-99.9999"),
+            vec![Token {
+                kind: TokenKind::Number(-99.9999),
+                span: TokenSpan::new(0, 8, "-99.9999".to_string()),
+            }]
+        );
+
+        assert_eq!(
+            tokenize("-99"),
+            vec![Token {
+                kind: TokenKind::Number(-99.0),
+                span: TokenSpan::new(0, 3, "-99".to_string()),
+            }]
+        );
+    }
 }

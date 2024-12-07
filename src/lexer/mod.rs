@@ -29,9 +29,9 @@ impl Lexer {
     }
 
     fn get_token_kind(&mut self, c: &char) -> TokenKind {
-        if Self::is_number(&c) {
-            self.consume_number()
-        } else if Self::is_whitespace(&c) {
+        if Self::number_is_start(&c) {
+            self.number_consume(false)
+        } else if Self::whitespace_is_match(&c) {
             self.consume_whitespace()
         } else if Self::is_fn_start(&c) {
             self.consume_fn()
@@ -79,6 +79,14 @@ impl Lexer {
         self.input.chars().nth(self.char_pos - 1)
     }
 
+    fn get_next_char(&self) -> Option<char> {
+        self.input.chars().nth(self.char_pos + 1)
+    }
+
+    fn is_whitespace_like(c: &char) -> bool {
+        c.is_whitespace()
+    }
+
     /**
      *
      * Should be used when current character is required but with
@@ -97,72 +105,112 @@ impl Lexer {
         current_char
     }
 
-    fn is_separator(c: &char) -> bool {
-        *c == lexemes::L_WHITESPACE || *c == lexemes::L_COMMA
+    /**
+     * ==========================
+     *
+     * NUMBER START
+     *
+     * 1. Can start with: Minus, Digit
+     * 2. Can contain: Digit, Dot, Minus
+     * 3. Can end with: Comma, Whitespace-like
+     *
+     * ==========================
+     */
+
+    fn number_is_start(char: &char) -> bool {
+        Self::number_is_digit(char) || Self::number_is_minus(char)
     }
 
-    // ==========================
+    fn number_is_end(char: &char) -> bool {
+        *char == lexemes::L_COMMA || Self::is_whitespace_like(char)
+    }
 
-    //          Numbers
-
-    // ==========================
-
-    fn is_number(char: &char) -> bool {
+    fn number_is_digit(char: &char) -> bool {
         char.is_digit(10)
     }
 
-    fn construct_number_token(&self, number: ConsumedNumber) -> TokenKind {
+    fn number_is_minus(char: &char) -> bool {
+        *char == lexemes::L_MINUS
+    }
+
+    fn number_append(prev: BaseNumber, next_char_digit: char) -> BaseNumber {
+        let mut res = prev.checked_mul(10).expect(&messages::number_overflow());
+
+        res = res
+            .checked_add(next_char_digit.to_digit(10).unwrap() as BaseNumber)
+            .expect(&messages::number_overflow());
+
+        res as BaseNumber
+    }
+
+    fn number_construct_token(number: ConsumedNumber) -> TokenKind {
+        let sig: types::Number = if number.is_negative { -1.0 } else { 1.0 };
+
         if number.is_int {
-            TokenKind::Number(number.int as types::Number)
+            TokenKind::Number((number.int * sig as BaseNumber) as types::Number)
         } else {
             TokenKind::Number(
                 format!("{}{}{}", number.int, FLOAT_SEPARATOR, number.precision)
                     .parse::<types::Number>()
-                    .unwrap(),
+                    .unwrap()
+                    * sig,
             )
         }
     }
 
-    fn consume_number(&mut self) -> TokenKind {
+    fn number_consume(&mut self, is_negative: bool) -> TokenKind {
         let mut int: BaseNumber = 0;
         let mut precision: BaseNumber = 0;
         let mut is_int = true;
 
         while let Some(c) = self.get_current_char() {
-            let is_digit = c.is_digit(10);
+            let is_digit = Self::number_is_digit(&c);
 
-            if is_digit && is_int {
-                int = int.checked_mul(10).expect(&messages::number_overflow());
-
-                int = int
-                    .checked_add(c.to_digit(10).unwrap() as BaseNumber)
-                    .expect(&messages::number_overflow());
-
+            if Self::number_is_minus(&c) {
+                return self.number_maybe_signed();
+            } else if is_digit && is_int {
+                int = Self::number_append(int, c);
                 self.consume();
             } else if is_digit && !is_int {
-                precision = precision
-                    .checked_mul(10)
-                    .expect(&messages::number_overflow());
-
-                precision = precision
-                    .checked_add(c.to_digit(10).unwrap() as BaseNumber)
-                    .expect(&messages::number_overflow());
-
+                precision = Self::number_append(precision, c);
                 self.consume();
             } else if c == FLOAT_SEPARATOR {
                 is_int = false;
                 self.consume();
-            } else {
+            } else if Self::number_is_end(&c) {
                 break;
+            } else {
+                panic!("{}", messages::invalid_number());
             }
         }
 
-        self.construct_number_token(ConsumedNumber {
+        Self::number_construct_token(ConsumedNumber {
             int,
             precision,
             is_int,
+            is_negative,
         })
     }
+
+    fn number_maybe_signed(&mut self) -> TokenKind {
+        let next = self.get_next_char();
+
+        match next {
+            Some(c) if Self::number_is_digit(&c) => {
+                self.consume();
+                self.number_consume(true)
+            }
+            _ => self.consume_punctuation().unwrap(),
+        }
+    }
+
+    /**
+     * ==========================
+     *
+     * NUMBER END
+     *
+     * ==========================
+     */
 
     // ==========================
 
@@ -170,7 +218,7 @@ impl Lexer {
 
     // ==========================
 
-    fn is_whitespace(c: &char) -> bool {
+    fn whitespace_is_match(c: &char) -> bool {
         c.is_whitespace()
     }
 
@@ -326,7 +374,10 @@ impl Lexer {
     // ==========================
 
     fn is_identifier_end(c: &char) -> bool {
-        Self::is_separator(c) || *c == lexemes::L_RIGHT_PAREN || *c == lexemes::L_RIGHT_SQR_BR
+        *c == lexemes::L_WHITESPACE
+            || *c == lexemes::L_COMMA
+            || *c == lexemes::L_RIGHT_PAREN
+            || *c == lexemes::L_RIGHT_SQR_BR
     }
 
     fn distinguish_identifier(&self, identifier: &str) -> TokenKind {
@@ -428,7 +479,11 @@ pub fn tokenize(input: &str) -> Vec<Token> {
     let mut lexer = Lexer::new(&input);
 
     while let Some(token) = lexer.next_token() {
-        if token.kind == TokenKind::Whitespace {
+        if token.kind == TokenKind::Whitespace
+            && tokens
+                .last()
+                .map_or(false, |t| t.kind == TokenKind::Whitespace)
+        {
             continue;
         }
         tokens.push(token);
