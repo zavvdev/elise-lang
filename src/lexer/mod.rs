@@ -23,7 +23,7 @@ struct Lexer {
 impl Lexer {
     fn new(input: &str) -> Self {
         Self {
-            input: Self::preprocess(input),
+            input: input.to_owned(),
             char_pos: 0,
         }
     }
@@ -64,16 +64,6 @@ impl Lexer {
                 span: token_span,
             }
         })
-    }
-
-    /**
-     *
-     * TODO: Benchmark it and find faster solution if possible
-     *
-     */
-    fn preprocess(input: &str) -> String {
-        let entries: Vec<&str> = input.split_whitespace().collect();
-        entries.join(&lexemes::L_WHITESPACE.to_string())
     }
 
     /**
