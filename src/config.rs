@@ -1,3 +1,5 @@
+const EXT: &str = "el";
+
 pub struct Config {
     pub filename: String,
 }
@@ -9,7 +11,19 @@ impl Config {
         }
 
         let filename = args[1].clone();
+        let ext = filename.split(".").last();
 
-        Self { filename }
+        match ext {
+            Some(x) => {
+                if x == EXT {
+                    return Self { filename };
+                } else {
+                    panic!("File extention should be \".{}\"", EXT);
+                }
+            }
+            None => {
+                panic!("Missing file extension");
+            }
+        }
     }
 }

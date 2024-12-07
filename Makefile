@@ -11,4 +11,4 @@ check:
 	cargo check
 
 run:
-	cargo run sample.txt	
+	cargo run sample.el
