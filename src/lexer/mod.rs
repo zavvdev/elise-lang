@@ -24,10 +24,10 @@ struct Lexer {
 //
 // - [x] Add newline lexeme and token
 // - [x] Move whitespace and newline to punctuation fallback group
-// - [ ] ? Remove whitespace and newline from the tokenizer result
+// - [x] ? Remove whitespace, newline and comma from the tokenizer result
+// - [ ] Update tests
 // - [ ] Add source code to error messages
 // - [ ] ? Add source code to tokenizer result
-// - [ ] Update tests
 
 impl Lexer {
     fn new(input: &str) -> Self {
@@ -568,20 +568,30 @@ impl Lexer {
     // ==========================
 }
 
-pub fn tokenize(input: &str) -> Vec<Token> {
+/**
+ * Tokenize the input string.
+ * Returns a vector of tokens.
+ * Each token should be present
+ * and no one should be ignored.
+ */
+fn collect_tokens(input: &str) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
     let mut lexer = Lexer::new(&input);
 
     while let Some(token) = lexer.next_token() {
-        if token.kind == TokenKind::Whitespace
-            && tokens
-                .last()
-                .map_or(false, |t| t.kind == TokenKind::Whitespace)
-        {
-            continue;
-        }
         tokens.push(token);
     }
 
     tokens
+}
+
+fn filter_tokens(tokens: Vec<Token>) -> Vec<Token> {
+    tokens
+        .into_iter()
+        .filter(|token| !config::IGNORED_TOKENS.contains(&token.kind))
+        .collect()
+}
+
+pub fn tokenize(input: &str) -> Vec<Token> {
+    filter_tokens(collect_tokens(input))
 }
