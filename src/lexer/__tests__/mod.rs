@@ -7,3 +7,4 @@ pub mod test_strings;
 pub mod test_functions;
 pub mod test_fn_custom;
 pub mod test_filter_tokens;
+pub mod test_collect_tokens;

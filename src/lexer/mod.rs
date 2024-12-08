@@ -27,7 +27,8 @@ struct Lexer {
 // - [x] ? Remove whitespace, newline and comma from the tokenizer result
 // - [ ] Update tests
 //    - [x] filter_tokens
-//    - [ ] collect_tokens
+//    - [x] collect_tokens
+//    - [ ] tokenize
 // - [ ] Add source code to error messages
 // - [ ] ? Add source code to tokenizer result
 
