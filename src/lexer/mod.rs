@@ -23,6 +23,7 @@ struct Lexer {
 // TODO:
 //
 // - [ ] Add newline lexeme and token
+// - [ ] Move whitespace and newline to punctuation fallback group
 // - [ ] ? Remove whitespace and newline from the tokenizer result
 // - [ ] Add source code to error messages
 // - [ ] ? Add source code to tokenizer result
