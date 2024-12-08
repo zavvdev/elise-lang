@@ -6,3 +6,4 @@ pub mod test_bool;
 pub mod test_strings;
 pub mod test_functions;
 pub mod test_fn_custom;
+pub mod test_filter_tokens;

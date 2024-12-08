@@ -26,6 +26,8 @@ struct Lexer {
 // - [x] Move whitespace and newline to punctuation fallback group
 // - [x] ? Remove whitespace, newline and comma from the tokenizer result
 // - [ ] Update tests
+//    - [x] filter_tokens
+//    - [ ] collect_tokens
 // - [ ] Add source code to error messages
 // - [ ] ? Add source code to tokenizer result
 
