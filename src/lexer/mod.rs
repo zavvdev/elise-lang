@@ -20,6 +20,14 @@ struct Lexer {
     char_pos: usize,
 }
 
+// TODO:
+//
+// - [ ] Add newline lexeme and token
+// - [ ] ? Remove whitespace and newline from the tokenizer result
+// - [ ] Add source code to error messages
+// - [ ] ? Add source code to tokenizer result
+// - [ ] Update tests
+
 impl Lexer {
     fn new(input: &str) -> Self {
         Self {
