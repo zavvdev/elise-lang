@@ -22,8 +22,8 @@ struct Lexer {
 
 // TODO:
 //
-// - [ ] Add newline lexeme and token
-// - [ ] Move whitespace and newline to punctuation fallback group
+// - [x] Add newline lexeme and token
+// - [x] Move whitespace and newline to punctuation fallback group
 // - [ ] ? Remove whitespace and newline from the tokenizer result
 // - [ ] Add source code to error messages
 // - [ ] ? Add source code to tokenizer result
@@ -63,9 +63,7 @@ impl Lexer {
         /*
          * Non-speculative
          */
-        if Self::whitespace_is_match(&c) {
-            self.whitespace_consume()
-        } else if Self::string_is_start(&c) {
+        if Self::string_is_start(&c) {
             self.string_consume()
         } else if Self::function_is_start(&c) {
             self.function_consume()
@@ -151,11 +149,6 @@ impl Lexer {
      */
     fn whitespace_is_match(c: &char) -> bool {
         c.is_whitespace()
-    }
-
-    fn whitespace_consume(&mut self) -> TokenKind {
-        self.consume();
-        TokenKind::Whitespace
     }
 
     // ==========================
@@ -427,7 +420,6 @@ impl Lexer {
         while let Some(c) = self.get_current_char() {
             let is_digit = Self::number_is_digit(&c);
 
-            println!("c: {}", c);
             if Self::number_is_minus(&c) {
                 // Speculation start. It can be a part of the number token
                 return self.number_maybe_signed();
@@ -496,10 +488,14 @@ impl Lexer {
             lexemes::L_LEFT_SQR_BR => Some(TokenKind::LeftSqrBr),
             lexemes::L_RIGHT_SQR_BR => Some(TokenKind::RightSqrBr),
             lexemes::L_COMMA => Some(TokenKind::Comma),
+            lexemes::L_NEWLINE => Some(TokenKind::Newline),
             _ => None,
         } {
             self.consume();
             Some(c)
+        } else if Self::whitespace_is_match(&char) {
+            self.consume();
+            Some(TokenKind::Whitespace)
         } else {
             None
         }

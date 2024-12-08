@@ -7,6 +7,7 @@ pub const L_LEFT_SQR_BR: char = '[';
 pub const L_RIGHT_SQR_BR: char = ']';
 pub const L_COMMA: char = ',';
 pub const L_WHITESPACE: char = ' ';
+pub const L_NEWLINE: char = '\n';
 
 // Funcitions
 

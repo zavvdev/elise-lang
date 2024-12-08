@@ -11,6 +11,7 @@ pub enum TokenKind {
     RightSqrBr,
     Comma,
     Whitespace,
+    Newline,
     Identifier(String),
     Boolean(bool),
     String(String),
