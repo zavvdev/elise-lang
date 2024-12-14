@@ -15,3 +15,7 @@ pub fn invalid_number() -> String {
 pub fn unexpected_end_of_string() -> String {
     format!("{}Unexpected end of string.", PREFIX)
 }
+
+pub fn invalid_fn_name(x: &str) -> String {
+    format!("{}Invalid function name \"{}\".", PREFIX, x)
+}

@@ -1,11 +1,15 @@
 #[cfg(test)]
 
 mod tests {
+    use assert_panic::assert_panic;
+
     use crate::lexer::{
         lexemes::{self, fn_lexeme_to_string, to_fn_string},
         models::token::{Token, TokenKind, TokenSpan},
         tokenize,
     };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_add() {
@@ -240,5 +244,56 @@ mod tests {
                 )
             }]
         )
+    }
+
+    // FAILURE CASES
+
+    #[test]
+    #[should_panic(expected = "Invalid function name \"\"")]
+    fn test_empty_name() {
+        tokenize(&to_fn_string(""));
+    }
+
+    #[test]
+    fn test_invalid_name() {
+        let invalid_names = vec![
+            ".",
+            "?hello",
+            "!hello",
+            "@hello",
+            "-hello",
+            ".hello",
+            "2hello",
+            "hello.",
+            "hello@world",
+            "hello.world",
+            "hello~world",
+            "hello#world",
+            "hello$world",
+            "hello%world",
+            "hello^world",
+            "hello&world",
+            "hello*world",
+            "hello+world",
+            "hello=world",
+            "hello/world",
+            "hello\\world",
+            "hello\"world",
+            "hello'world",
+            "hello>world",
+            "hello<world",
+            "hello;world",
+            "hello:world",
+        ];
+
+        for invalid_name in invalid_names {
+            assert_panic!(
+                {
+                    tokenize(&to_fn_string(&invalid_name));
+                },
+                String,
+                format!("Lexing error. Invalid function name \"{}\".", invalid_name)
+            );
+        }
     }
 }

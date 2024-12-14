@@ -27,7 +27,7 @@ struct Lexer {
 // - [x] ? Remove whitespace, newline and comma from the tokenizer result
 // - [ ] Update tests
 //    - [x] string
-//    - [ ] function
+//    - [x] function
 //    - [ ] number
 //    - [ ] punctuation
 //    - [ ] identifier
@@ -351,6 +351,12 @@ impl Lexer {
 
         if fn_name == lexemes::L_FN_DEFINE.1 {
             return TokenKind::FnDefine;
+        }
+
+        let re = Regex::new(config::IDENTIFIER_REGEX).unwrap();
+
+        if fn_name.is_empty() || !re.is_match(fn_name) {
+            panic!("{}", messages::invalid_fn_name(fn_name));
         }
 
         TokenKind::FnCustom(fn_name.to_string())

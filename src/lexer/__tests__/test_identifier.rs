@@ -92,7 +92,10 @@ mod tests {
         let invalid_identifiers = vec![
             "?hello",
             "!hello",
+            "@hello",
             "hello@world",
+            "hello.world",
+            "hello~world",
             "hello#world",
             "hello$world",
             "hello%world",
