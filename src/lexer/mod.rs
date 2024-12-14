@@ -26,11 +26,14 @@ struct Lexer {
 // - [x] Move whitespace and newline to punctuation fallback group
 // - [x] ? Remove whitespace, newline and comma from the tokenizer result
 // - [ ] Update tests
-//    - [x] filter_tokens
-//    - [x] collect_tokens
-//    - [ ] tokenize
+//    - [x] string
+//    - [ ] function
+//    - [ ] number
+//    - [ ] punctuation
+//    - [ ] identifier
+//    - [ ] nil
+//    - [ ] bool
 // - [ ] Add source code to error messages
-// - [ ] ? Add source code to tokenizer result
 
 impl Lexer {
     fn new(input: &str) -> Self {
@@ -207,16 +210,22 @@ impl Lexer {
     fn string_consume(&mut self) -> TokenKind {
         self.consume();
         let mut result = String::new();
+        let mut is_closed = false;
 
         while let Some(c) = self.get_current_char() {
             if c == lexemes::L_STRING_LITERAL && !Self::string_is_escape_char(self.get_prev_char())
             {
                 self.consume();
+                is_closed = true;
                 break;
             }
 
             result.push(c);
             self.consume();
+        }
+
+        if !is_closed {
+            panic!("{}", messages::unexpected_end_of_string());
         }
 
         TokenKind::String(Self::string_replace_escape_chars(&result).unwrap())
@@ -571,30 +580,23 @@ impl Lexer {
     // ==========================
 }
 
-/**
- * Tokenize the input string.
- * Returns a vector of tokens.
- * Each token should be present
- * and no one should be ignored.
- */
-fn collect_tokens(input: &str) -> Vec<Token> {
+pub fn tokenize(input: &str) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
     let mut lexer = Lexer::new(&input);
 
     while let Some(token) = lexer.next_token() {
+        let last = tokens.last();
+
+        if let Some(last_token) = last {
+            if config::REDUSEABLE_TOKENS.contains(&last_token.kind)
+                && config::REDUSEABLE_TOKENS.contains(&token.kind)
+            {
+                continue;
+            }
+        }
+
         tokens.push(token);
     }
 
     tokens
-}
-
-fn filter_tokens(tokens: Vec<Token>) -> Vec<Token> {
-    tokens
-        .into_iter()
-        .filter(|token| !config::IGNORED_TOKENS.contains(&token.kind))
-        .collect()
-}
-
-pub fn tokenize(input: &str) -> Vec<Token> {
-    filter_tokens(collect_tokens(input))
 }

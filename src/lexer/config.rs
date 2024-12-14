@@ -5,6 +5,5 @@ use super::models::token::TokenKind;
 // Not allowed: whitespace and all others
 pub const IDENTIFIER_REGEX: &str = r"^([^\d\-?!\.@\s+])([a-zA-Z\-\?!_\d])*$";
 
-// Set of tokens that should be removed from lexer output before parsing
-pub const IGNORED_TOKENS: [TokenKind; 3] =
-    [TokenKind::Whitespace, TokenKind::Newline, TokenKind::Comma];
+// Set of tokens that can be reduced to only one token if appear in sequence
+pub const REDUSEABLE_TOKENS: [TokenKind; 2] = [TokenKind::Whitespace, TokenKind::Newline];

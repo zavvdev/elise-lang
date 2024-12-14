@@ -2,7 +2,7 @@
 
 mod tests {
     use crate::lexer::{
-        lexemes::{self, fn_lexeme_to_string},
+        lexemes::{self, fn_lexeme_to_string, to_fn_string},
         models::token::{Token, TokenKind, TokenSpan},
         tokenize,
     };
@@ -58,6 +58,17 @@ mod tests {
             vec![Token {
                 kind: TokenKind::FnPrint,
                 span: TokenSpan::new(0, 6, fn_lexeme_to_string(lexemes::L_FN_PRINT))
+            }]
+        )
+    }
+
+    #[test]
+    fn test_println() {
+        assert_eq!(
+            tokenize(&fn_lexeme_to_string(lexemes::L_FN_PRINTLN)),
+            vec![Token {
+                kind: TokenKind::FnPrintLn,
+                span: TokenSpan::new(0, 8, fn_lexeme_to_string(lexemes::L_FN_PRINTLN))
             }]
         )
     }
@@ -212,6 +223,21 @@ mod tests {
             vec![Token {
                 kind: TokenKind::FnDefine,
                 span: TokenSpan::new(0, 3, fn_lexeme_to_string(lexemes::L_FN_DEFINE))
+            }]
+        )
+    }
+
+    #[test]
+    fn test_fn_custom() {
+        assert_eq!(
+            tokenize(&to_fn_string("custom")),
+            vec![Token {
+                kind: TokenKind::FnCustom("custom".to_string()),
+                span: TokenSpan::new(
+                    0,
+                    7,
+                    lexemes::fn_lexeme_to_string((lexemes::L_FN, "custom"))
+                )
             }]
         )
     }

@@ -11,3 +11,7 @@ pub fn invalid_identifier_name(x: &str) -> String {
 pub fn invalid_number() -> String {
     format!("{}Invalid number.", PREFIX)
 }
+
+pub fn unexpected_end_of_string() -> String {
+    format!("{}Unexpected end of string.", PREFIX)
+}
