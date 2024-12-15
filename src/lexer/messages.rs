@@ -1,21 +1,23 @@
-const PREFIX: &str = "Lexing error. ";
+pub fn get_panic_message() -> String {
+    "Lexing error!".to_string()
+}
 
 pub fn number_overflow() -> String {
-    format!("{}Number overflow.", PREFIX)
+    "Number overflow".to_string()
 }
 
 pub fn invalid_identifier_name(x: &str) -> String {
-    format!("{}Invalid identifier name \"{}\".", PREFIX, x)
+    format!("Invalid identifier name \"{}\"", x)
 }
 
 pub fn invalid_number() -> String {
-    format!("{}Invalid number.", PREFIX)
+    "Invalid number".to_string()
 }
 
 pub fn unexpected_end_of_string() -> String {
-    format!("{}Unexpected end of string.", PREFIX)
+    "Unexpected end of string".to_string()
 }
 
 pub fn invalid_fn_name(x: &str) -> String {
-    format!("{}Invalid function name \"{}\".", PREFIX, x)
+    format!("Invalid function name \"{}\"", x)
 }

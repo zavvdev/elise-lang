@@ -5,6 +5,7 @@ pub mod macros;
 pub mod parser;
 pub mod semanalyzer;
 pub mod types;
+pub mod messages;
 
 use interpreter::{interpret, models::env::Env};
 use lexer::tokenize;

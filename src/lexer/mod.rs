@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use regex::Regex;
 
-use crate::types;
+use crate::{messages::print_error_message, types};
 
 use self::models::{
     number::{BaseNumber, ConsumedNumber, FLOAT_SEPARATOR},
@@ -18,6 +18,7 @@ pub mod models;
 struct Lexer {
     input: String,
     char_pos: usize,
+    token_start: usize,
 }
 
 impl Lexer {
@@ -25,6 +26,7 @@ impl Lexer {
         Self {
             input: input.to_owned(),
             char_pos: 0,
+            token_start: 0,
         }
     }
 
@@ -90,6 +92,8 @@ impl Lexer {
             let lexeme = self.input[start..end].to_string();
             let token_span = TokenSpan { start, end, lexeme };
 
+            self.token_start = self.char_pos;
+
             Token {
                 kind: token_kind,
                 span: token_span,
@@ -125,6 +129,11 @@ impl Lexer {
         self.char_pos += 1;
 
         current_char
+    }
+
+    fn error(&self, message: &str) {
+        print_error_message(message, &self.input, self.token_start);
+        panic!("{}", messages::get_panic_message());
     }
 
     // ==========================
@@ -210,7 +219,7 @@ impl Lexer {
         }
 
         if !is_closed {
-            panic!("{}", messages::unexpected_end_of_string());
+            self.error(&messages::unexpected_end_of_string());
         }
 
         TokenKind::String(Self::string_replace_escape_chars(&result).unwrap())
@@ -257,7 +266,7 @@ impl Lexer {
         result
     }
 
-    fn function_distinguish_known(fn_name: &str) -> TokenKind {
+    fn function_distinguish_known(&self, fn_name: &str) -> TokenKind {
         if fn_name == lexemes::L_FN_ADD.1 {
             return TokenKind::FnAdd;
         }
@@ -341,7 +350,7 @@ impl Lexer {
         let re = Regex::new(config::IDENTIFIER_REGEX).unwrap();
 
         if fn_name.is_empty() || !re.is_match(fn_name) {
-            panic!("{}", messages::invalid_fn_name(fn_name));
+            self.error(&messages::invalid_fn_name(fn_name));
         }
 
         TokenKind::FnCustom(fn_name.to_string())
@@ -350,7 +359,7 @@ impl Lexer {
     fn function_consume(&mut self) -> TokenKind {
         self.consume();
         let fn_name = self.function_consume_name();
-        Self::function_distinguish_known(&fn_name)
+        self.function_distinguish_known(&fn_name)
     }
 
     // ==========================
@@ -400,12 +409,12 @@ impl Lexer {
         res as BaseNumber
     }
 
-    fn number_construct_token(number: ConsumedNumber) -> TokenKind {
+    fn number_construct_token(&self, number: ConsumedNumber) -> TokenKind {
         let sig: types::Number = if number.is_negative { -1.0 } else { 1.0 };
 
         if number.is_int {
             if number.lexeme.chars().nth(0).unwrap() == '0' && number.lexeme.len() > 1 {
-                panic!("{}", messages::invalid_number());
+                self.error(&messages::invalid_number());
             }
 
             TokenKind::Number((number.int * sig as BaseNumber) as types::Number)
@@ -413,7 +422,7 @@ impl Lexer {
             let mut chars = number.lexeme.chars();
 
             if chars.nth(0).unwrap() == '0' && chars.nth(0).unwrap() != FLOAT_SEPARATOR {
-                panic!("{}", messages::invalid_number());
+                self.error(&messages::invalid_number());
             }
 
             TokenKind::Number(
@@ -447,7 +456,7 @@ impl Lexer {
                 self.consume();
             } else if c == FLOAT_SEPARATOR {
                 if !is_int {
-                    panic!("{}", messages::invalid_number());
+                    self.error(&messages::invalid_number());
                 }
                 is_int = false;
                 lexeme.push(c);
@@ -455,11 +464,11 @@ impl Lexer {
             } else if Self::number_is_end(&c) {
                 break;
             } else {
-                panic!("{}", messages::invalid_number());
+                self.error(&messages::invalid_number());
             }
         }
 
-        Self::number_construct_token(ConsumedNumber {
+        self.number_construct_token(ConsumedNumber {
             int,
             precision,
             is_int,
@@ -577,7 +586,7 @@ impl Lexer {
         }
 
         if !re.is_match(&result) {
-            panic!("{}", messages::invalid_identifier_name(&result));
+            self.error(&messages::invalid_identifier_name(&result));
         }
 
         Self::identifier_distinguish_known(&result)
