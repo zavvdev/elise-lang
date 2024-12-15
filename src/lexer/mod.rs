@@ -29,7 +29,7 @@ struct Lexer {
 //    - [x] function
 //    - [x] number
 //    - [x] punctuation
-//    - [ ] identifier
+//    - [x] identifier
 //    - [ ] nil
 //    - [ ] bool
 // - [ ] Add source code to error messages

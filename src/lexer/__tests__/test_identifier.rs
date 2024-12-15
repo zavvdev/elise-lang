@@ -2,7 +2,12 @@
 mod tests {
     use assert_panic::assert_panic;
 
-    use crate::lexer::{models::token::{Token, TokenKind, TokenSpan}, tokenize};
+    use crate::lexer::{
+        models::token::{Token, TokenKind, TokenSpan},
+        tokenize,
+    };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_valid_identifiers() {
@@ -85,7 +90,105 @@ mod tests {
                 span: TokenSpan::new(0, 6, "_hello".to_string())
             }]
         );
+
+        assert_eq!(
+            tokenize("~hello"),
+            vec![Token {
+                kind: TokenKind::Identifier("~hello".to_string()),
+                span: TokenSpan::new(0, 6, "~hello".to_string())
+            }]
+        );
     }
+
+    #[test]
+    fn ends_with_whitespace() {
+        assert_eq!(
+            tokenize("hello "),
+            vec![
+                Token {
+                    kind: TokenKind::Identifier("hello".to_string()),
+                    span: TokenSpan::new(0, 5, "hello".to_string()),
+                },
+                Token {
+                    kind: TokenKind::Whitespace,
+                    span: TokenSpan::new(5, 6, " ".to_string()),
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn ends_with_newline() {
+        assert_eq!(
+            tokenize(
+                "hello
+"
+            ),
+            vec![
+                Token {
+                    kind: TokenKind::Identifier("hello".to_string()),
+                    span: TokenSpan::new(0, 5, "hello".to_string()),
+                },
+                Token {
+                    kind: TokenKind::Newline,
+                    span: TokenSpan::new(5, 6, "\n".to_string()),
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn ends_with_comma() {
+        assert_eq!(
+            tokenize("hello,"),
+            vec![
+                Token {
+                    kind: TokenKind::Identifier("hello".to_string()),
+                    span: TokenSpan::new(0, 5, "hello".to_string()),
+                },
+                Token {
+                    kind: TokenKind::Comma,
+                    span: TokenSpan::new(5, 6, ",".to_string()),
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn ends_with_right_paren() {
+        assert_eq!(
+            tokenize("hello)"),
+            vec![
+                Token {
+                    kind: TokenKind::Identifier("hello".to_string()),
+                    span: TokenSpan::new(0, 5, "hello".to_string()),
+                },
+                Token {
+                    kind: TokenKind::RightParen,
+                    span: TokenSpan::new(5, 6, ")".to_string()),
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn ends_with_right_sqr_br() {
+        assert_eq!(
+            tokenize("hello]"),
+            vec![
+                Token {
+                    kind: TokenKind::Identifier("hello".to_string()),
+                    span: TokenSpan::new(0, 5, "hello".to_string()),
+                },
+                Token {
+                    kind: TokenKind::RightSqrBr,
+                    span: TokenSpan::new(5, 6, "]".to_string()),
+                }
+            ]
+        );
+    }
+
+    // FAILURE CASES
 
     #[test]
     fn test_invalid_identifiers() {
