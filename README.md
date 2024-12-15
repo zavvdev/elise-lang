@@ -13,6 +13,10 @@
 - [x] nil? function
 - [x] custom function
 - [ ] add source code to error message with error highlighting
+    - [x] lexer
+    - [ ] parser
+    - [ ] semanalyzer
+    - [ ] interpreter
 - [ ] function closure (use data from lexical scope for function execution)
 
 ## Boolean
