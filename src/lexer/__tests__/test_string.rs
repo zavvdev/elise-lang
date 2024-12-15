@@ -1,7 +1,12 @@
 #[cfg(test)]
 
 mod tests {
-    use crate::lexer::{models::token::{Token, TokenKind, TokenSpan}, tokenize};
+    use crate::lexer::{
+        models::token::{Token, TokenKind, TokenSpan},
+        tokenize,
+    };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_string() {
@@ -74,5 +79,31 @@ mod tests {
                 span: TokenSpan::new(0, 14, r#""hello\0world""#.to_string())
             }]
         );
+    }
+
+    // FAILURE CASES
+
+    #[test]
+    #[should_panic(expected = "Invalid identifier name \"world\"\".")]
+    fn test_string_unescaped() {
+        tokenize(r#""hello "world""#);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unexpected end of string")]
+    fn test_string_unexpected_end() {
+        tokenize(r#""hello"#);
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid identifier name \"hello\"")]
+    fn test_string_not_opened() {
+        tokenize(r#"hello""#);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unexpected end of string")]
+    fn test_string_unexpected_end_empty() {
+        tokenize(r#"""""#);
     }
 }

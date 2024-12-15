@@ -1,6 +1,12 @@
 #[cfg(test)]
 mod tests {
-    use crate::lexer::{lexemes, models::token::{Token, TokenKind, TokenSpan}, tokenize};
+    use crate::lexer::{
+        lexemes,
+        models::token::{Token, TokenKind, TokenSpan},
+        tokenize,
+    };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_minus() {
@@ -64,6 +70,57 @@ mod tests {
             vec![Token {
                 kind: TokenKind::Comma,
                 span: TokenSpan::new(0, 1, lexemes::L_COMMA.to_string())
+            }]
+        )
+    }
+
+    #[test]
+    fn test_newline() {
+        assert_eq!(
+            tokenize(
+                "
+"
+            ),
+            vec![Token {
+                kind: TokenKind::Newline,
+                span: TokenSpan::new(0, 1, lexemes::L_NEWLINE.to_string())
+            }]
+        )
+    }
+
+    #[test]
+    fn test_whitespace() {
+        assert_eq!(
+            tokenize(" "),
+            vec![Token {
+                kind: TokenKind::Whitespace,
+                span: TokenSpan::new(0, 1, lexemes::L_WHITESPACE.to_string())
+            }]
+        )
+    }
+
+    #[test]
+    fn test_should_reduce_whitespaces() {
+        assert_eq!(
+            tokenize("        "),
+            vec![Token {
+                kind: TokenKind::Whitespace,
+                span: TokenSpan::new(0, 1, lexemes::L_WHITESPACE.to_string())
+            }]
+        )
+    }
+
+    #[test]
+    fn test_should_reduce_newlines() {
+        assert_eq!(
+            tokenize(
+                "
+
+"
+            ),
+            vec![Token {
+                kind: TokenKind::Newline,
+                span: TokenSpan::new(0, 1, lexemes::L_NEWLINE.to_string())
             }]
         )
     }

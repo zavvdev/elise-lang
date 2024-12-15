@@ -6,6 +6,8 @@ mod tests {
         tokenize,
     };
 
+    // SUCCESS CASES
+
     #[test]
     fn test_nil() {
         assert_eq!(
