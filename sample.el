@@ -1,2 +1,1 @@
-.let([x 1]
-     .print(23, x))
+.print("hello, world")

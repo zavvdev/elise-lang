@@ -380,8 +380,8 @@ impl Lexer {
     //
     // Speculative
     //
-    // 1. Starts with: Minus, Digit
-    // 2. Contains: Digit, Dot, Minus
+    // 1. Starts with: Minus, Digit, Single zero if float
+    // 2. Contains: Digit, Only one dot for float, Minus
     // 3. Ends with: Whitespace-like, Comma, Right Paren, Right Sqr Br
     //
     // ==========================
@@ -419,8 +419,18 @@ impl Lexer {
         let sig: types::Number = if number.is_negative { -1.0 } else { 1.0 };
 
         if number.is_int {
+            if number.lexeme.chars().nth(0).unwrap() == '0' && number.lexeme.len() > 1 {
+                panic!("{}", messages::invalid_number());
+            }
+
             TokenKind::Number((number.int * sig as BaseNumber) as types::Number)
         } else {
+            let mut chars = number.lexeme.chars();
+
+            if chars.nth(0).unwrap() == '0' && chars.nth(0).unwrap() != FLOAT_SEPARATOR {
+                panic!("{}", messages::invalid_number());
+            }
+
             TokenKind::Number(
                 format!("{}{}{}", number.int, FLOAT_SEPARATOR, number.precision)
                     .parse::<types::Number>()
@@ -434,6 +444,7 @@ impl Lexer {
         let mut int: BaseNumber = 0;
         let mut precision: BaseNumber = 0;
         let mut is_int = true;
+        let mut lexeme = String::new();
 
         while let Some(c) = self.get_current_char() {
             let is_digit = Self::number_is_digit(&c);
@@ -443,12 +454,18 @@ impl Lexer {
                 return self.number_maybe_signed();
             } else if is_digit && is_int {
                 int = Self::number_append(int, c);
+                lexeme.push(c);
                 self.consume();
             } else if is_digit && !is_int {
                 precision = Self::number_append(precision, c);
+                lexeme.push(c);
                 self.consume();
             } else if c == FLOAT_SEPARATOR {
+                if !is_int {
+                    panic!("{}", messages::invalid_number());
+                }
                 is_int = false;
+                lexeme.push(c);
                 self.consume();
             } else if Self::number_is_end(&c) {
                 break;
@@ -462,6 +479,7 @@ impl Lexer {
             precision,
             is_int,
             is_negative,
+            lexeme,
         })
     }
 
