@@ -24,11 +24,10 @@ struct Lexer {
 //
 // - [x] Add newline lexeme and token
 // - [x] Move whitespace and newline to punctuation fallback group
-// - [x] ? Remove whitespace, newline and comma from the tokenizer result
 // - [ ] Update tests
 //    - [x] string
 //    - [x] function
-//    - [ ] number
+//    - [x] number
 //    - [ ] punctuation
 //    - [ ] identifier
 //    - [ ] nil
