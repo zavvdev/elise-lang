@@ -2,7 +2,7 @@ release:
 	cargo build -r
 
 run-release:
-	cargo run -r sample.txt
+	cargo run -r sample.el
 
 test:
 	cargo test

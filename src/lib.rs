@@ -14,10 +14,8 @@ use semanalyzer::analyze_semantics;
 pub fn execute(content: String, env: &mut Env) {
     let tokens = tokenize(&content);
         
-    println!("{:#?}", tokens);
+    let expressions = parse(tokens);
+    let expressions = analyze_semantics(&expressions);
 
-    // let expressions = parse(tokens);
-    // let expressions = analyze_semantics(&expressions);
-    //
-    // interpret(expressions, env);
+    interpret(expressions, env);
 }

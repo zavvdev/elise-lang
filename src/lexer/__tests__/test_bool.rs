@@ -2,6 +2,8 @@
 mod tests {
     use crate::lexer::{lexemes, models::token::{Token, TokenKind, TokenSpan}, tokenize};
 
+    // SUCCESS CASES
+
     #[test]
     fn test_true() {
         assert_eq!(

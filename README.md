@@ -12,7 +12,8 @@
 - [x] conditions
 - [x] nil? function
 - [x] custom function
-- [ ] function closure (use data from lexical scope in moment of function creation)
+- [ ] add source code to error message with error highlighting
+- [ ] function closure (use data from lexical scope for function execution)
 
 ## Boolean
 

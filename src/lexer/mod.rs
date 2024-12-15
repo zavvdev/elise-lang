@@ -20,20 +20,6 @@ struct Lexer {
     char_pos: usize,
 }
 
-// TODO:
-//
-// - [x] Add newline lexeme and token
-// - [x] Move whitespace and newline to punctuation fallback group
-// - [ ] Update tests
-//    - [x] string
-//    - [x] function
-//    - [x] number
-//    - [x] punctuation
-//    - [x] identifier
-//    - [ ] nil
-//    - [ ] bool
-// - [ ] Add source code to error messages
-
 impl Lexer {
     fn new(input: &str) -> Self {
         Self {
