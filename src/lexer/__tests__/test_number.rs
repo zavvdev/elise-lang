@@ -152,4 +152,10 @@ mod tests {
     fn test_double_dot() {
         tokenize("0.12.3");
     }
+
+    #[test]
+    #[should_panic(expected = "Invalid number")]
+    fn test_number_with_next_identifier() {
+        tokenize("123x");
+    }
 }

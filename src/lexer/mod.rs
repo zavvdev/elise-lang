@@ -28,7 +28,7 @@ struct Lexer {
 //    - [x] string
 //    - [x] function
 //    - [x] number
-//    - [ ] punctuation
+//    - [x] punctuation
 //    - [ ] identifier
 //    - [ ] nil
 //    - [ ] bool
@@ -509,7 +509,8 @@ impl Lexer {
     // Fallback group
     //
     // 1. Consists of: Minus, Left Paren, Right Paren,
-    // Left Sqr Br, Right Sqr Br, Comma
+    // Left Sqr Br, Right Sqr Br, Comma, Newline,
+    // Whitespace
     //
     // ==========================
 
