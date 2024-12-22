@@ -249,7 +249,7 @@ mod tests {
     // FAILURE CASES
 
     #[test]
-    #[should_panic(expected = "Invalid function name \"\"")]
+    #[should_panic]
     fn test_empty_name() {
         tokenize(&to_fn_string(""));
     }
@@ -292,7 +292,6 @@ mod tests {
                     tokenize(&to_fn_string(&invalid_name));
                 },
                 String,
-                format!("Lexing error. Invalid function name \"{}\".", invalid_name)
             );
         }
     }

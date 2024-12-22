@@ -131,7 +131,7 @@ impl Lexer {
         current_char
     }
 
-    fn error(&self, message: &str) {
+    fn error(&self, message: &str) -> ! {
         print_error_message(message, &self.input, self.token_start);
         panic!("{}", messages::get_panic_message());
     }
@@ -399,12 +399,20 @@ impl Lexer {
         *char == lexemes::L_MINUS
     }
 
-    fn number_append(prev: BaseNumber, next_char_digit: char) -> BaseNumber {
-        let mut res = prev.checked_mul(10).expect(&messages::number_overflow());
+    fn number_append(&self, prev: BaseNumber, next_char_digit: char) -> BaseNumber {
+        let mut res = match prev.checked_mul(10) {
+            Some(v) => v,
+            None => {
+                self.error(&messages::number_overflow());
+            }
+        };
 
-        res = res
-            .checked_add(next_char_digit.to_digit(10).unwrap() as BaseNumber)
-            .expect(&messages::number_overflow());
+        res = match res.checked_add(next_char_digit.to_digit(10).unwrap() as BaseNumber) {
+            Some(v) => v,
+            None => {
+                self.error(&messages::number_overflow());
+            }
+        };
 
         res as BaseNumber
     }
@@ -447,11 +455,11 @@ impl Lexer {
                 // Speculation start. It can be a part of the number token
                 return self.number_maybe_signed();
             } else if is_digit && is_int {
-                int = Self::number_append(int, c);
+                int = self.number_append(int, c);
                 lexeme.push(c);
                 self.consume();
             } else if is_digit && !is_int {
-                precision = Self::number_append(precision, c);
+                precision = self.number_append(precision, c);
                 lexeme.push(c);
                 self.consume();
             } else if c == FLOAT_SEPARATOR {

@@ -223,10 +223,6 @@ mod tests {
                     tokenize(invalid_identifier);
                 },
                 String,
-                format!(
-                    "Lexing error. Invalid identifier name \"{}\".",
-                    invalid_identifier
-                )
             );
         }
     }

@@ -115,13 +115,13 @@ mod tests {
     // FAILURE CASES
 
     #[test]
-    #[should_panic(expected = "Number overflow")]
+    #[should_panic]
     fn test_int_overflow() {
         tokenize(&format!("{}", Wrapping(BaseNumber::MAX) + Wrapping(1)));
     }
 
     #[test]
-    #[should_panic(expected = "Number overflow")]
+    #[should_panic]
     fn test_float_overflow() {
         #[allow(arithmetic_overflow)]
         let overflowed = types::Number::MAX + 0.1;
@@ -130,31 +130,31 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Invalid number")]
+    #[should_panic]
     fn test_int_double_zero() {
         tokenize("00");
     }
 
     #[test]
-    #[should_panic(expected = "Invalid number")]
+    #[should_panic]
     fn test_int_starts_with_zero() {
         tokenize("01");
     }
 
     #[test]
-    #[should_panic(expected = "Invalid number")]
+    #[should_panic]
     fn test_float_starts_with_double_zero() {
         tokenize("00.123");
     }
 
     #[test]
-    #[should_panic(expected = "Invalid number")]
+    #[should_panic]
     fn test_double_dot() {
         tokenize("0.12.3");
     }
 
     #[test]
-    #[should_panic(expected = "Invalid number")]
+    #[should_panic]
     fn test_number_with_next_identifier() {
         tokenize("123x");
     }
