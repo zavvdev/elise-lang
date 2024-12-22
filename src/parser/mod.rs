@@ -10,6 +10,14 @@ pub mod __tests__;
 pub mod messages;
 pub mod models;
 
+/**
+* TODO:
+* - [] Treat whitespace and newline as an argument separator
+*   if sequence is being consumed. Otherwise - ignore
+* - [] If current token is ] or ) then check if sequence
+*   is being consumed. If not - throw an error
+*/
+
 struct Parser<'a> {
     source_code: &'a str,
     tokens: Vec<Token>,
@@ -60,8 +68,10 @@ impl<'a> Parser<'a> {
             // These tokens are used for internal parser purposes
             // and should not be exposed to the user
             TokenKind::RightParen => Some(Expr::new(ExprKind::_EndOfFn, vec![])),
-            TokenKind::Comma => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
             TokenKind::RightSqrBr => Some(Expr::new(ExprKind::_EndOfList, vec![])),
+            TokenKind::Comma => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
+            TokenKind::Whitespace => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
+            TokenKind::Newline => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
 
             // Public Tokens
             // These tokens are exposed to the user
@@ -98,9 +108,9 @@ impl<'a> Parser<'a> {
 
     /**
      *
-     * Should be used if you want to skip `offset` amount of tokens that are
-     * next to the current token. For example, if I'm at token 4 and I call
-     * `self.skip_tokens(1)` then the next token_pos will be 6. Useful in the case
+     * Should be used if you want to skip `offset` amount of tokens.
+     * For example, if I'm at token 4 and I call `self.skip_tokens(1)`
+     * then the next token_pos will be 5. Useful in the case
      * when you parsed a sequence of tokens at once.
      *
      */
@@ -108,7 +118,7 @@ impl<'a> Parser<'a> {
         let tokens_len = self.tokens.len();
 
         if self.token_pos < tokens_len {
-            self.token_pos += offset + 1;
+            self.token_pos += offset;
         }
     }
 
@@ -158,10 +168,7 @@ impl<'a> Parser<'a> {
 
     fn error_at_current(&self) -> ! {
         let token = self.get_current_token().unwrap();
-        self.error(
-            &messages::unexpected_token(&token.span.lexeme),
-            Some(token),
-        );
+        self.error(&messages::unexpected_token(&token.span.lexeme), Some(token));
     }
 
     // ==========================
@@ -177,6 +184,8 @@ impl<'a> Parser<'a> {
     // SEQUENCE START
     //
     // Generic
+    //
+    // Argument separator: Comma, Whitespace, Newline
     //
     // ==========================
 
@@ -358,8 +367,11 @@ impl<'a> Parser<'a> {
 
         let next = next.unwrap();
 
-        if next.kind == TokenKind::LeftParen {
+        if next.kind == TokenKind::Newline || next.kind == TokenKind::Whitespace {
             self.skip_tokens(1);
+            return self.fn_consume(fn_expr_kind);
+        } else if next.kind == TokenKind::LeftParen {
+            self.skip_tokens(2);
             self.seq_capture();
 
             return Some(Expr::new(
