@@ -15,7 +15,7 @@ use semanalyzer::analyze_semantics;
 pub fn execute(content: String, env: &mut Env) {
     let tokens = tokenize(&content);
         
-    let expressions = parse(tokens);
+    let expressions = parse(tokens, &content);
     let expressions = analyze_semantics(&expressions);
 
     interpret(expressions, env);
