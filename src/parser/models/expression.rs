@@ -5,7 +5,7 @@ pub enum ExprKind {
     // Private. Only for internal usage
     _EndOfFn,
     _EndOfList,
-    _ArgumentSeparator,
+    _Separator,
 
     // Public
     Number(types::Number),

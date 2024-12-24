@@ -10,14 +10,6 @@ pub mod __tests__;
 pub mod messages;
 pub mod models;
 
-/**
-* TODO:
-* - [] Treat whitespace and newline as an argument separator
-*   if sequence is being consumed. Otherwise - ignore
-* - [] If current token is ] or ) then check if sequence
-*   is being consumed. If not - throw an error
-*/
-
 struct Parser<'a> {
     source_code: &'a str,
     tokens: Vec<Token>,
@@ -45,15 +37,6 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn check_valid_eof(&mut self) {
-        if self.seq_start_count != self.seq_end_count && self.get_current_token().is_none() {
-            self.error(&messages::unexpected_end_of_input(), None);
-        } else if self.seq_start_count == self.seq_end_count && self.seq_start_count != 0 {
-            self.seq_start_count = 0;
-            self.seq_end_count = 0;
-        }
-    }
-
     fn next_expr(&mut self) -> Option<Expr> {
         self.check_valid_eof();
 
@@ -64,17 +47,17 @@ impl<'a> Parser<'a> {
         let current_token = self.get_current_token()?;
 
         match &current_token.kind {
-            // Private Tokens
-            // These tokens are used for internal parser purposes
+            // Private Expressions
+            // These exporessions are used for internal parser purposes
             // and should not be exposed to the user
-            TokenKind::RightParen => Some(Expr::new(ExprKind::_EndOfFn, vec![])),
-            TokenKind::RightSqrBr => Some(Expr::new(ExprKind::_EndOfList, vec![])),
-            TokenKind::Comma => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
-            TokenKind::Whitespace => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
-            TokenKind::Newline => Some(Expr::new(ExprKind::_ArgumentSeparator, vec![])),
+            TokenKind::RightParen => self.prv_end_of_fn_consume(),
+            TokenKind::RightSqrBr => self.prv_end_of_list_consume(),
+            TokenKind::Comma => self.prv_separator_consume(),
+            TokenKind::Whitespace => self.prv_separator_consume(),
+            TokenKind::Newline => self.prv_separator_consume(),
 
-            // Public Tokens
-            // These tokens are exposed to the user
+            // Public Expressions
+            // These expressions are exposed to the user
             TokenKind::Number(x) => self.number_consume(*x),
             TokenKind::String(x) => self.string_consume(x.to_string()),
             TokenKind::Boolean(x) => self.boolean_consume(*x),
@@ -106,6 +89,15 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn check_valid_eof(&mut self) {
+        if self.seq_start_count != self.seq_end_count && self.get_current_token().is_none() {
+            self.error(&messages::unexpected_end_of_input(), None);
+        } else if self.seq_start_count == self.seq_end_count && self.seq_start_count != 0 {
+            self.seq_start_count = 0;
+            self.seq_end_count = 0;
+        }
+    }
+
     /**
      *
      * Should be used if you want to skip `offset` amount of tokens.
@@ -122,12 +114,6 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /**
-     *
-     * Should be used when current token is required but with
-     * addition move to the next token
-     *
-     */
     fn consume(&mut self) -> Option<&Token> {
         if self.token_pos >= self.tokens.len() {
             return None;
@@ -217,13 +203,11 @@ impl<'a> Parser<'a> {
 
         while let Some(expr) = self.next_expr() {
             if expr.kind == seq_end_expr {
-                self.consume();
                 self.seq_end();
                 return arguments;
             }
 
-            if expr.kind == ExprKind::_ArgumentSeparator {
-                self.consume();
+            if expr.kind == ExprKind::_Separator {
                 continue;
             }
 
@@ -236,6 +220,65 @@ impl<'a> Parser<'a> {
     // ==========================
     //
     // SEQUENCE END
+    //
+    // ==========================
+
+    // ==========================
+    //
+    // END OF FUNCTION START
+    //
+    // Private
+    //
+    // ==========================
+
+    fn prv_end_of_fn_consume(&mut self) -> Option<Expr> {
+        self.consume();
+        self.seq_end();
+        Some(Expr::new(ExprKind::_EndOfFn, vec![]))
+    }
+
+    // ==========================
+    //
+    // END OF FUNCTION END
+    //
+    // ==========================
+
+    // ==========================
+    //
+    // END OF LIST START
+    //
+    // Private
+    //
+    // ==========================
+
+    fn prv_end_of_list_consume(&mut self) -> Option<Expr> {
+        self.consume();
+        self.seq_end();
+        Some(Expr::new(ExprKind::_EndOfList, vec![]))
+    }
+
+    // ==========================
+    //
+    // END OF LIST END
+    //
+    // ==========================
+
+    // ==========================
+    //
+    // SEPARATOR START
+    //
+    // Private
+    //
+    // ==========================
+
+    fn prv_separator_consume(&mut self) -> Option<Expr> {
+        self.consume();
+        Some(Expr::new(ExprKind::_Separator, vec![]))
+    }
+
+    // ==========================
+    //
+    // SEPARATOR END
     //
     // ==========================
 
