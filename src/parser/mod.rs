@@ -89,9 +89,18 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn is_private_expr(expr: &Expr) -> bool {
+        vec![
+            ExprKind::_EndOfFn,
+            ExprKind::_EndOfList,
+            ExprKind::_Separator,
+        ]
+        .contains(&expr.kind)
+    }
+
     fn check_valid_eof(&mut self) {
         if self.seq_start_count != self.seq_end_count && self.get_current_token().is_none() {
-            self.error(&messages::unexpected_end_of_input(), None);
+            self.error(&messages::unexpected_end_of_input(), self.tokens.last());
         } else if self.seq_start_count == self.seq_end_count && self.seq_start_count != 0 {
             self.seq_start_count = 0;
             self.seq_end_count = 0;
@@ -203,7 +212,6 @@ impl<'a> Parser<'a> {
 
         while let Some(expr) = self.next_expr() {
             if expr.kind == seq_end_expr {
-                self.seq_end();
                 return arguments;
             }
 
@@ -438,6 +446,9 @@ pub fn parse<'a>(tokens: Vec<Token>, source_code: &str) -> Vec<Expr> {
     let mut expressions: Vec<Expr> = Vec::new();
 
     while let Some(expr) = parser.next_expr() {
+        if Parser::is_private_expr(&expr) {
+            continue;
+        }
         expressions.push(expr);
     }
 
