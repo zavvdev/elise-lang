@@ -29,19 +29,13 @@ pub fn print_error_message(message: &str, source_code: &str, char_pos: usize) {
             if found {
                 break;
             }
-        } else {
+        } else if !found {
             col += 1;
         }
     }
 
-    let arrow = if col == 0 {
-        get_arrow(col)
-    } else {
-        get_arrow(col - 1)
-    };
-
     println!("\n{}", message);
-    println!("At {}:{}\n", row + 1, col);
+    println!("At {}:{}\n", row + 1, col + 1);
     println!("{}", &source_code[previous_row_start..preview_row_end]);
-    println!("{}\n", arrow);
+    println!("{}\n", get_arrow(col));
 }

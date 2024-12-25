@@ -62,3 +62,7 @@ impl Token {
         Token { kind, span }
     }
 }
+
+pub fn is_reduceable_token(token: &Token) -> bool {
+    vec![TokenKind::Whitespace, TokenKind::Newline].contains(&token.kind)
+}
