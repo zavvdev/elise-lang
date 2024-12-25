@@ -8,13 +8,18 @@ mod tests {
         },
     };
 
+    // SUCCESS CASES
+
     #[test]
     fn test_string() {
         assert_eq!(
-            parse(vec![Token {
-                kind: TokenKind::String("Hello, World!".to_string()),
-                span: TokenSpan::new(0, 15, "\"Hello, World!\"".to_string()),
-            }]),
+            parse(
+                vec![Token {
+                    kind: TokenKind::String("Hello, World!".to_string()),
+                    span: TokenSpan::new(0, 15, "\"Hello, World!\"".to_string()),
+                }],
+                "\"Hello, World!\""
+            ),
             vec![Expr {
                 kind: ExprKind::String("Hello, World!".to_string()),
                 children: vec![],

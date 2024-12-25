@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 
+use models::token::is_reduceable_token;
 use regex::Regex;
 
 use crate::{messages::print_error_message, types};
@@ -612,12 +613,8 @@ pub fn tokenize(input: &str) -> Vec<Token> {
     let mut lexer = Lexer::new(&input);
 
     while let Some(token) = lexer.next_token() {
-        let last = tokens.last();
-
-        if let Some(last_token) = last {
-            if config::REDUSEABLE_TOKENS.contains(&last_token.kind)
-                && config::REDUSEABLE_TOKENS.contains(&token.kind)
-            {
+        if let Some(last_token) = tokens.last() {
+            if is_reduceable_token(&last_token) && is_reduceable_token(&token) {
                 continue;
             }
         }

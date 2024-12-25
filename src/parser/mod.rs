@@ -1,3 +1,7 @@
+use std::collections::VecDeque;
+
+use models::expression::is_expr_internal;
+
 use crate::{
     lexer::models::token::{Token, TokenKind},
     messages::print_error_message,
@@ -14,16 +18,7 @@ struct Parser<'a> {
     source_code: &'a str,
     tokens: Vec<Token>,
     token_pos: usize,
-
-    /**
-     * Sequence counting. Sequence is something
-     * that has specific amount of elements within
-     * distinct bounds (start and end tokens).
-     * For example, function is a sequence of arguments,
-     * list is a sequence of elements, etc.
-     */
-    seq_start_count: usize,
-    seq_end_count: usize,
+    seq_stack: VecDeque<TokenKind>,
 }
 
 impl<'a> Parser<'a> {
@@ -32,81 +27,69 @@ impl<'a> Parser<'a> {
             source_code,
             tokens,
             token_pos: 0,
-            seq_start_count: 0,
-            seq_end_count: 0,
+            seq_stack: VecDeque::new(),
         }
     }
 
     fn next_expr(&mut self) -> Option<Expr> {
-        self.check_valid_eof();
-
         if self.token_pos > self.tokens.len() {
             return None;
         }
 
-        let current_token = self.get_current_token()?;
+        let token = self.token_current()?;
 
-        match &current_token.kind {
-            // Private Expressions
-            // These exporessions are used for internal parser purposes
-            // and should not be exposed to the user
-            TokenKind::RightParen => self.prv_end_of_fn_consume(),
-            TokenKind::RightSqrBr => self.prv_end_of_list_consume(),
-            TokenKind::Comma => self.prv_separator_consume(),
-            TokenKind::Whitespace => self.prv_separator_consume(),
-            TokenKind::Newline => self.prv_separator_consume(),
-
-            // Public Expressions
-            // These expressions are exposed to the user
+        match &token.kind {
             TokenKind::Number(x) => self.number_consume(*x),
             TokenKind::String(x) => self.string_consume(x.to_string()),
             TokenKind::Boolean(x) => self.boolean_consume(*x),
             TokenKind::Identifier(x) => self.identifier_consume(x.to_string()),
             TokenKind::Nil => self.nil_consume(),
-            TokenKind::LeftSqrBr => self.list_consume(),
-            TokenKind::FnAdd => self.fn_consume(ExprKind::FnAdd),
-            TokenKind::FnSub => self.fn_consume(ExprKind::FnSub),
-            TokenKind::FnMul => self.fn_consume(ExprKind::FnMul),
-            TokenKind::FnDiv => self.fn_consume(ExprKind::FnDiv),
-            TokenKind::FnPrint => self.fn_consume(ExprKind::FnPrint),
-            TokenKind::FnPrintLn => self.fn_consume(ExprKind::FnPrintLn),
-            TokenKind::FnLetBinding => self.fn_consume(ExprKind::FnLetBinding),
-            TokenKind::FnGreatr => self.fn_consume(ExprKind::FnGreatr),
-            TokenKind::FnGreatrEq => self.fn_consume(ExprKind::FnGreatrEq),
-            TokenKind::FnLess => self.fn_consume(ExprKind::FnLess),
-            TokenKind::FnLessEq => self.fn_consume(ExprKind::FnLessEq),
-            TokenKind::FnEq => self.fn_consume(ExprKind::FnEq),
-            TokenKind::FnNotEq => self.fn_consume(ExprKind::FnNotEq),
-            TokenKind::FnNot => self.fn_consume(ExprKind::FnNot),
-            TokenKind::FnAnd => self.fn_consume(ExprKind::FnAnd),
-            TokenKind::FnOr => self.fn_consume(ExprKind::FnOr),
-            TokenKind::FnBool => self.fn_consume(ExprKind::FnBool),
-            TokenKind::FnIf => self.fn_consume(ExprKind::FnIf),
-            TokenKind::FnIsNil => self.fn_consume(ExprKind::FnIsNil),
-            TokenKind::FnDefine => self.fn_consume(ExprKind::FnDefine),
-            TokenKind::FnCustom(x) => self.fn_consume(ExprKind::FnCustom(x.to_string())),
+
+            TokenKind::LeftSqrBr => self.list_consume_start(),
+            TokenKind::RightSqrBr => self.list_consume_end(),
+
+            TokenKind::FnAdd => self.fn_consume_start(ExprKind::FnAdd),
+            TokenKind::FnSub => self.fn_consume_start(ExprKind::FnSub),
+            TokenKind::FnMul => self.fn_consume_start(ExprKind::FnMul),
+            TokenKind::FnDiv => self.fn_consume_start(ExprKind::FnDiv),
+            TokenKind::FnPrint => self.fn_consume_start(ExprKind::FnPrint),
+            TokenKind::FnPrintLn => self.fn_consume_start(ExprKind::FnPrintLn),
+            TokenKind::FnLetBinding => self.fn_consume_start(ExprKind::FnLetBinding),
+            TokenKind::FnGreatr => self.fn_consume_start(ExprKind::FnGreatr),
+            TokenKind::FnGreatrEq => self.fn_consume_start(ExprKind::FnGreatrEq),
+            TokenKind::FnLess => self.fn_consume_start(ExprKind::FnLess),
+            TokenKind::FnLessEq => self.fn_consume_start(ExprKind::FnLessEq),
+            TokenKind::FnEq => self.fn_consume_start(ExprKind::FnEq),
+            TokenKind::FnNotEq => self.fn_consume_start(ExprKind::FnNotEq),
+            TokenKind::FnNot => self.fn_consume_start(ExprKind::FnNot),
+            TokenKind::FnAnd => self.fn_consume_start(ExprKind::FnAnd),
+            TokenKind::FnOr => self.fn_consume_start(ExprKind::FnOr),
+            TokenKind::FnBool => self.fn_consume_start(ExprKind::FnBool),
+            TokenKind::FnIf => self.fn_consume_start(ExprKind::FnIf),
+            TokenKind::FnIsNil => self.fn_consume_start(ExprKind::FnIsNil),
+            TokenKind::FnDefine => self.fn_consume_start(ExprKind::FnDefine),
+            TokenKind::FnCustom(x) => self.fn_consume_start(ExprKind::FnCustom(x.to_string())),
+            TokenKind::RightParen => self.fn_consume_end(),
+
+            TokenKind::Comma => self.separator_consume(),
+            TokenKind::Whitespace => self.separator_consume(),
+            TokenKind::Newline => self.separator_consume(),
+
             _ => None,
         }
     }
 
-    fn check_valid_eof(&mut self) {
-        if self.seq_start_count != self.seq_end_count && self.get_current_token().is_none() {
-            self.error(&messages::unexpected_end_of_input(), None);
-        } else if self.seq_start_count == self.seq_end_count && self.seq_start_count != 0 {
-            self.seq_start_count = 0;
-            self.seq_end_count = 0;
-        }
-    }
+    // ==========================
+    //
+    // TOKEN START
+    //
+    // ==========================
 
     /**
-     *
-     * Should be used if you want to skip `offset` amount of tokens.
-     * For example, if I'm at token 4 and I call `self.skip_tokens(1)`
-     * then the next token_pos will be 5. Useful in the case
-     * when you parsed a sequence of tokens at once.
-     *
+     * If I'm at token 4 and I call `self.token_skip(1)`
+     * then the next token_pos will be 5.
      */
-    fn skip_tokens(&mut self, offset: usize) {
+    fn token_skip(&mut self, offset: usize) {
         let tokens_len = self.tokens.len();
 
         if self.token_pos < tokens_len {
@@ -114,7 +97,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn consume(&mut self) -> Option<&Token> {
+    fn token_consume(&mut self) -> Option<&Token> {
         if self.token_pos >= self.tokens.len() {
             return None;
         }
@@ -126,42 +109,47 @@ impl<'a> Parser<'a> {
         current_token
     }
 
-    fn get_current_token(&self) -> Option<&Token> {
+    fn token_current(&self) -> Option<&Token> {
         self.tokens.get(self.token_pos)
     }
 
-    fn get_next_token(&self) -> Option<&Token> {
+    fn token_next(&self) -> Option<&Token> {
         self.tokens.get(self.token_pos + 1)
     }
 
     // ==========================
     //
-    // ERRORS START
+    // TOKEN END
+    //
+    // ==========================
+
+    // ==========================
+    //
+    // ERROR START
     //
     // ==========================
 
     fn error(&self, message: &str, token: Option<&Token>) -> ! {
         if let Some(token) = token {
             print_error_message(message, self.source_code, token.span.start);
-        } else if let Some(t) = self.get_current_token() {
-            print_error_message(message, self.source_code, t.span.start);
-        } else {
-            ();
+        } else if let Some(current) = self.token_current() {
+            print_error_message(message, self.source_code, current.span.start);
+        } else if self.tokens.len() > 0 {
+            let last = self.tokens.last().unwrap();
+            print_error_message(message, self.source_code, last.span.start);
         }
 
         panic!("{}", messages::get_panic_message());
     }
 
-    fn error_at_current(&self) -> ! {
-        let token = self.get_current_token().unwrap();
+    fn error_unexpected(&self) -> ! {
+        let token = self.token_current().unwrap();
         self.error(&messages::unexpected_token(&token.span.lexeme), Some(token));
     }
 
     // ==========================
     //
-    // ERRORS END
-    //
-    // Generic
+    // ERROR END
     //
     // ==========================
 
@@ -169,41 +157,13 @@ impl<'a> Parser<'a> {
     //
     // SEQUENCE START
     //
-    // Generic
-    //
-    // Argument separator: Comma, Whitespace, Newline
-    //
     // ==========================
 
-    /**
-     *
-     * Should be used for counting start of sequence
-     *
-     */
-    fn seq_capture(&mut self) {
-        self.seq_start_count += 1;
-    }
-
-    /**
-     *
-     * Should be used for counting end of sequence
-     *
-     */
-    fn seq_end(&mut self) {
-        self.seq_end_count += 1;
-    }
-
-    /**
-     *
-     * Can be used for consuming arguemnts of any sequentional entity
-     *
-     */
-    fn seq_consume_arguments(&mut self, seq_end_expr: ExprKind) -> Vec<Box<Expr>> {
+    fn seq_consume(&mut self, seq_end_expr: ExprKind) -> Vec<Box<Expr>> {
         let mut arguments: Vec<Box<Expr>> = Vec::new();
 
         while let Some(expr) = self.next_expr() {
             if expr.kind == seq_end_expr {
-                self.seq_end();
                 return arguments;
             }
 
@@ -217,68 +177,17 @@ impl<'a> Parser<'a> {
         arguments
     }
 
+    fn seq_capture(&mut self, token_kind: TokenKind) {
+        self.seq_stack.push_back(token_kind);
+    }
+
+    fn seq_match_end(&mut self, token_kind: TokenKind) -> bool {
+        self.seq_stack.pop_back() == Some(token_kind)
+    }
+
     // ==========================
     //
     // SEQUENCE END
-    //
-    // ==========================
-
-    // ==========================
-    //
-    // END OF FUNCTION START
-    //
-    // Private
-    //
-    // ==========================
-
-    fn prv_end_of_fn_consume(&mut self) -> Option<Expr> {
-        self.consume();
-        self.seq_end();
-        Some(Expr::new(ExprKind::_EndOfFn, vec![]))
-    }
-
-    // ==========================
-    //
-    // END OF FUNCTION END
-    //
-    // ==========================
-
-    // ==========================
-    //
-    // END OF LIST START
-    //
-    // Private
-    //
-    // ==========================
-
-    fn prv_end_of_list_consume(&mut self) -> Option<Expr> {
-        self.consume();
-        self.seq_end();
-        Some(Expr::new(ExprKind::_EndOfList, vec![]))
-    }
-
-    // ==========================
-    //
-    // END OF LIST END
-    //
-    // ==========================
-
-    // ==========================
-    //
-    // SEPARATOR START
-    //
-    // Private
-    //
-    // ==========================
-
-    fn prv_separator_consume(&mut self) -> Option<Expr> {
-        self.consume();
-        Some(Expr::new(ExprKind::_Separator, vec![]))
-    }
-
-    // ==========================
-    //
-    // SEPARATOR END
     //
     // ==========================
 
@@ -289,7 +198,7 @@ impl<'a> Parser<'a> {
     // ==========================
 
     fn number_consume(&mut self, x: types::Number) -> Option<Expr> {
-        self.consume();
+        self.token_consume();
         Some(Expr::new(ExprKind::Number(x), vec![]))
     }
 
@@ -306,7 +215,7 @@ impl<'a> Parser<'a> {
     // ==========================
 
     fn string_consume(&mut self, x: String) -> Option<Expr> {
-        self.consume();
+        self.token_consume();
         Some(Expr::new(ExprKind::String(x), vec![]))
     }
 
@@ -323,7 +232,7 @@ impl<'a> Parser<'a> {
     // ==========================
 
     fn boolean_consume(&mut self, x: bool) -> Option<Expr> {
-        self.consume();
+        self.token_consume();
         Some(Expr::new(ExprKind::Boolean(x), vec![]))
     }
 
@@ -340,7 +249,7 @@ impl<'a> Parser<'a> {
     // ==========================
 
     fn identifier_consume(&mut self, x: String) -> Option<Expr> {
-        self.consume();
+        self.token_consume();
         Some(Expr::new(ExprKind::Identifier(x), vec![]))
     }
 
@@ -357,7 +266,7 @@ impl<'a> Parser<'a> {
     // ==========================
 
     fn nil_consume(&mut self) -> Option<Expr> {
-        self.consume();
+        self.token_consume();
         Some(Expr::new(ExprKind::Nil, vec![]))
     }
 
@@ -373,20 +282,29 @@ impl<'a> Parser<'a> {
     //
     // ==========================
 
-    fn list_consume(&mut self) -> Option<Expr> {
-        let next = self.get_next_token();
+    fn list_consume_start(&mut self) -> Option<Expr> {
+        let next = self.token_consume();
 
         if next.is_none() {
-            self.error_at_current();
+            self.error_unexpected();
         }
 
-        self.consume();
-        self.seq_capture();
+        self.seq_capture(TokenKind::LeftSqrBr);
 
         Some(Expr::new(
             ExprKind::List,
-            self.seq_consume_arguments(ExprKind::_EndOfList),
+            self.seq_consume(ExprKind::_EndOfList),
         ))
+    }
+
+    fn list_consume_end(&mut self) -> Option<Expr> {
+        if !self.seq_match_end(TokenKind::LeftSqrBr) {
+            self.error(&messages::unmatched_sqr_bracket(), None);
+        }
+
+        self.token_consume();
+
+        Some(Expr::new(ExprKind::_EndOfList, vec![]))
     }
 
     // ==========================
@@ -401,34 +319,61 @@ impl<'a> Parser<'a> {
     //
     // ==========================
 
-    fn fn_consume(&mut self, fn_expr_kind: ExprKind) -> Option<Expr> {
-        let next = self.get_next_token();
+    fn fn_consume_start(&mut self, fn_expr_kind: ExprKind) -> Option<Expr> {
+        let next = self.token_next();
 
         if next.is_none() {
-            self.error_at_current();
+            self.error_unexpected();
         }
 
         let next = next.unwrap();
 
         if next.kind == TokenKind::Newline || next.kind == TokenKind::Whitespace {
-            self.skip_tokens(1);
-            return self.fn_consume(fn_expr_kind);
+            self.token_skip(1);
+            return self.fn_consume_start(fn_expr_kind);
         } else if next.kind == TokenKind::LeftParen {
-            self.skip_tokens(2);
-            self.seq_capture();
+            self.token_skip(2);
+            self.seq_capture(TokenKind::LeftParen);
 
-            return Some(Expr::new(
+            Some(Expr::new(
                 fn_expr_kind,
-                self.seq_consume_arguments(ExprKind::_EndOfFn),
-            ));
+                self.seq_consume(ExprKind::_EndOfFn),
+            ))
         } else {
-            self.error_at_current();
+            self.error_unexpected();
         }
+    }
+
+    fn fn_consume_end(&mut self) -> Option<Expr> {
+        if !self.seq_match_end(TokenKind::LeftParen) {
+            self.error(&messages::unmatched_parenthesis(), None);
+        }
+
+        self.token_consume();
+
+        Some(Expr::new(ExprKind::_EndOfFn, vec![]))
     }
 
     // ==========================
     //
     // FUNCTION END
+    //
+    // ==========================
+
+    // ==========================
+    //
+    // SEPARATOR START
+    //
+    // ==========================
+
+    fn separator_consume(&mut self) -> Option<Expr> {
+        self.token_consume();
+        Some(Expr::new(ExprKind::_Separator, vec![]))
+    }
+
+    // ==========================
+    //
+    // SEPARATOR END
     //
     // ==========================
 }
@@ -438,7 +383,14 @@ pub fn parse<'a>(tokens: Vec<Token>, source_code: &str) -> Vec<Expr> {
     let mut expressions: Vec<Expr> = Vec::new();
 
     while let Some(expr) = parser.next_expr() {
+        if is_expr_internal(&expr) {
+            continue;
+        }
         expressions.push(expr);
+    }
+
+    if parser.seq_stack.len() > 0 {
+        parser.error(&messages::unclosed_opening_symbols(), None);
     }
 
     expressions
