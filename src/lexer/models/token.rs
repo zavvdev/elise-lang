@@ -38,6 +38,8 @@ pub enum TokenKind {
     FnCustom(String),
 }
 
+const REDUCEABLE_TOKENS: [TokenKind; 2] = [TokenKind::Whitespace, TokenKind::Newline];
+
 #[derive(Debug, PartialEq)]
 pub struct TokenSpan {
     pub start: usize,
@@ -64,5 +66,5 @@ impl Token {
 }
 
 pub fn is_reduceable_token(token: &Token) -> bool {
-    vec![TokenKind::Whitespace, TokenKind::Newline].contains(&token.kind)
+    REDUCEABLE_TOKENS.contains(&token.kind)
 }

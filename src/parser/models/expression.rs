@@ -37,6 +37,12 @@ pub enum ExprKind {
     FnCustom(String),
 }
 
+const INTERNAL_EXPRESSIONS: [ExprKind; 3] = [
+    ExprKind::_EndOfFn,
+    ExprKind::_EndOfList,
+    ExprKind::_Separator,
+];
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Expr {
     pub kind: ExprKind,
@@ -50,10 +56,5 @@ impl Expr {
 }
 
 pub fn is_expr_internal(expr: &Expr) -> bool {
-    vec![
-        ExprKind::_EndOfFn,
-        ExprKind::_EndOfList,
-        ExprKind::_Separator,
-    ]
-    .contains(&expr.kind)
+    INTERNAL_EXPRESSIONS.contains(&expr.kind)
 }
