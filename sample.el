@@ -1,3 +1,1 @@
-.println (
-          "hello, 
-          world!"))
+.print([]])

@@ -1,32 +1,47 @@
-pub fn print_error_message(message: &str, source_code: &str, char_pos: usize) {
-    let lines = source_code.split("\n").collect::<Vec<&str>>();
+fn get_arrow(len: usize) -> String {
+    "-".repeat(len) + "^"
+}
 
+pub fn print_error_message(message: &str, source_code: &str, char_pos: usize) {
     let mut row = 0;
     let mut col = 0;
 
+    let mut previous_row_start = 0;
     let mut preview_row_start = 0;
     let mut preview_row_end = 0;
 
-    for (i, line) in lines.iter().enumerate() {
-        let next_col = col + line.len();
+    let mut found = false;
 
-        if next_col >= char_pos {
-            row = i;
-            col = line.len() - (next_col - char_pos);
-            preview_row_end = next_col;
-
-            break;
+    for char in source_code.chars() {
+        if preview_row_end == char_pos {
+            found = true;
         }
 
-        preview_row_start = col;
-        col = next_col;
-        continue;
+        preview_row_end += 1;
+
+        if char == '\n' {
+            previous_row_start = preview_row_start;
+            preview_row_start = preview_row_end;
+
+            row += 1;
+            col = 0;
+
+            if found {
+                break;
+            }
+        } else {
+            col += 1;
+        }
     }
 
-    let arrow = "-".repeat(col) + "^";
+    let arrow = if col == 0 {
+        get_arrow(col)
+    } else {
+        get_arrow(col - 1)
+    };
 
     println!("\n{}", message);
-    println!("At {}:{}\n", row + 1, col + 1);
-    println!("{}", &source_code[preview_row_start..preview_row_end]);
+    println!("At {}:{}\n", row + 1, col);
+    println!("{}", &source_code[previous_row_start..preview_row_end]);
     println!("{}\n", arrow);
 }

@@ -1,3 +1,5 @@
+use models::expression::is_expr_internal;
+
 use crate::{
     lexer::models::token::{Token, TokenKind},
     messages::print_error_message,
@@ -47,14 +49,14 @@ impl<'a> Parser<'a> {
         let current_token = self.get_current_token()?;
 
         match &current_token.kind {
-            // Private Expressions
+            // Internal Expressions
             // These exporessions are used for internal parser purposes
             // and should not be exposed to the user
-            TokenKind::RightParen => self.prv_end_of_fn_consume(),
-            TokenKind::RightSqrBr => self.prv_end_of_list_consume(),
-            TokenKind::Comma => self.prv_separator_consume(),
-            TokenKind::Whitespace => self.prv_separator_consume(),
-            TokenKind::Newline => self.prv_separator_consume(),
+            TokenKind::RightParen => self.internal_end_of_fn_consume(),
+            TokenKind::RightSqrBr => self.internal_end_of_list_consume(),
+            TokenKind::Comma => self.internal_separator_consume(),
+            TokenKind::Whitespace => self.internal_separator_consume(),
+            TokenKind::Newline => self.internal_separator_consume(),
 
             // Public Expressions
             // These expressions are exposed to the user
@@ -87,15 +89,6 @@ impl<'a> Parser<'a> {
             TokenKind::FnCustom(x) => self.fn_consume(ExprKind::FnCustom(x.to_string())),
             _ => None,
         }
-    }
-
-    fn is_private_expr(expr: &Expr) -> bool {
-        vec![
-            ExprKind::_EndOfFn,
-            ExprKind::_EndOfList,
-            ExprKind::_Separator,
-        ]
-        .contains(&expr.kind)
     }
 
     fn check_valid_eof(&mut self) {
@@ -235,11 +228,11 @@ impl<'a> Parser<'a> {
     //
     // END OF FUNCTION START
     //
-    // Private
+    // Internal
     //
     // ==========================
 
-    fn prv_end_of_fn_consume(&mut self) -> Option<Expr> {
+    fn internal_end_of_fn_consume(&mut self) -> Option<Expr> {
         self.consume();
         self.seq_end();
         Some(Expr::new(ExprKind::_EndOfFn, vec![]))
@@ -255,11 +248,11 @@ impl<'a> Parser<'a> {
     //
     // END OF LIST START
     //
-    // Private
+    // Internal
     //
     // ==========================
 
-    fn prv_end_of_list_consume(&mut self) -> Option<Expr> {
+    fn internal_end_of_list_consume(&mut self) -> Option<Expr> {
         self.consume();
         self.seq_end();
         Some(Expr::new(ExprKind::_EndOfList, vec![]))
@@ -275,11 +268,11 @@ impl<'a> Parser<'a> {
     //
     // SEPARATOR START
     //
-    // Private
+    // Internal
     //
     // ==========================
 
-    fn prv_separator_consume(&mut self) -> Option<Expr> {
+    fn internal_separator_consume(&mut self) -> Option<Expr> {
         self.consume();
         Some(Expr::new(ExprKind::_Separator, vec![]))
     }
@@ -446,7 +439,7 @@ pub fn parse<'a>(tokens: Vec<Token>, source_code: &str) -> Vec<Expr> {
     let mut expressions: Vec<Expr> = Vec::new();
 
     while let Some(expr) = parser.next_expr() {
-        if Parser::is_private_expr(&expr) {
+        if is_expr_internal(&expr) {
             continue;
         }
         expressions.push(expr);

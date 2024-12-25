@@ -2,7 +2,7 @@ use crate::types;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ExprKind {
-    // Private. Only for internal usage
+    // Internal
     _EndOfFn,
     _EndOfList,
     _Separator,
@@ -47,4 +47,13 @@ impl Expr {
     pub fn new(kind: ExprKind, children: Vec<Box<Expr>>) -> Self {
         Self { kind, children }
     }
+}
+
+pub fn is_expr_internal(expr: &Expr) -> bool {
+    vec![
+        ExprKind::_EndOfFn,
+        ExprKind::_EndOfList,
+        ExprKind::_Separator,
+    ]
+    .contains(&expr.kind)
 }
