@@ -20,15 +20,15 @@ pub fn print_error_message(message: &str, source_code: &str, char_pos: usize) {
         preview_row_end += 1;
 
         if char == '\n' {
+            if found {
+                break;
+            }
+
             previous_row_start = preview_row_start;
             preview_row_start = preview_row_end;
 
             row += 1;
             col = 0;
-
-            if found {
-                break;
-            }
         } else if !found {
             col += 1;
         }
