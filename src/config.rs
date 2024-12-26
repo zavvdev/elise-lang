@@ -1,4 +1,4 @@
-const EXT: &str = "el";
+const EXT: &str = "eli";
 
 pub struct Config {
     pub filename: String,
