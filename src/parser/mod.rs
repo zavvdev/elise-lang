@@ -14,15 +14,15 @@ pub mod __tests__;
 pub mod messages;
 pub mod models;
 
-struct Parser<'a> {
-    source_code: &'a str,
+struct Parser<'source_code> {
+    source_code: &'source_code str,
     tokens: Vec<Token>,
     token_pos: usize,
     seq_stack: VecDeque<TokenKind>,
 }
 
-impl<'a> Parser<'a> {
-    fn new(tokens: Vec<Token>, source_code: &'a str) -> Self {
+impl<'source_code> Parser<'source_code> {
+    fn new(tokens: Vec<Token>, source_code: &'source_code str) -> Self {
         Self {
             source_code,
             tokens,

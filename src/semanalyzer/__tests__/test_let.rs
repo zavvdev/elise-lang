@@ -15,7 +15,7 @@ mod tests {
                 analyze_semantics(&vec![Expr::new(ExprKind::FnLetBinding, vec![])]);
             },
             String,
-            messages::invalid_args_amount(to_str!(ExprKind::FnLetBinding), ">= 1", "0")
+            messages::args_invalid_amount(to_str!(ExprKind::FnLetBinding), ">= 1", "0")
         );
 
         assert_panic!(
@@ -26,12 +26,7 @@ mod tests {
                 )]);
             },
             String,
-            messages::invalid_arg_type(
-                to_str!(ExprKind::FnLetBinding),
-                1,
-                to_str!(ExprKind::List),
-                to_str!(ExprKind::Nil)
-            )
+            messages::type_expr_invalid(to_str!(ExprKind::List), to_str!(ExprKind::Nil))
         );
 
         assert_panic!(
@@ -45,7 +40,7 @@ mod tests {
                 )]);
             },
             String,
-            messages::invalid_args_amount(to_str!(ExprKind::FnLetBinding), "even", "1")
+            messages::args_invalid_amount(to_str!(ExprKind::FnLetBinding), "even", "1")
         );
 
         assert_panic!(
@@ -64,7 +59,7 @@ mod tests {
                 )]);
             },
             String,
-            messages::invalid_let_binding_form()
+            messages::let_invalid_binding_form()
         );
     }
 }

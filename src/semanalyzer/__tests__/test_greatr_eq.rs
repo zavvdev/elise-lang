@@ -15,7 +15,7 @@ mod tests {
                 analyze_semantics(&vec![Expr::new(ExprKind::FnGreatrEq, vec![])]);
             },
             String,
-            messages::invalid_args_amount(to_str!(ExprKind::FnGreatrEq), "> 0", "0")
+            messages::args_invalid_amount(to_str!(ExprKind::FnGreatrEq), "> 0", "0")
         );
     }
 }

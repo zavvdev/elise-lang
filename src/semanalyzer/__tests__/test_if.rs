@@ -15,7 +15,7 @@ mod tests {
                 analyze_semantics(&vec![Expr::new(ExprKind::FnIf, vec![])]);
             },
             String,
-            messages::invalid_args_amount(to_str!(ExprKind::FnIf), "2 or 3", "0")
+            messages::args_invalid_amount(to_str!(ExprKind::FnIf), "2 or 3", "0")
         );
 
         assert_panic!(
@@ -26,7 +26,7 @@ mod tests {
                 )]);
             },
             String,
-            messages::invalid_args_amount(to_str!(ExprKind::FnIf), "2 or 3", "1")
+            messages::args_invalid_amount(to_str!(ExprKind::FnIf), "2 or 3", "1")
         );
 
         assert_panic!(
@@ -42,7 +42,7 @@ mod tests {
                 )]);
             },
             String,
-            messages::invalid_args_amount(to_str!(ExprKind::FnIf), "2 or 3", "4")
+            messages::args_invalid_amount(to_str!(ExprKind::FnIf), "2 or 3", "4")
         );
     }
 }

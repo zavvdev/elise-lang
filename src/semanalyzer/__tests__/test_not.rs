@@ -15,7 +15,7 @@ mod tests {
                 analyze_semantics(&vec![Expr::new(ExprKind::FnNot, vec![])]);
             },
             String,
-            messages::invalid_args_amount(to_str!(ExprKind::FnNot), "1", "0")
+            messages::args_invalid_amount(to_str!(ExprKind::FnNot), "1", "0")
         );
 
         assert_panic!(
@@ -29,7 +29,7 @@ mod tests {
                 )]);
             },
             String,
-            messages::invalid_args_amount(to_str!(ExprKind::FnNot), "1", "2")
+            messages::args_invalid_amount(to_str!(ExprKind::FnNot), "1", "2")
         );
     }
 }
