@@ -37,6 +37,7 @@ impl<'expressions> Semanalyzer<'expressions> {
             ExprKind::FnIf => Self::fn_if(expr),
             ExprKind::FnIsNil => Self::args_n(expr, 1),
             ExprKind::FnDefine => Self::fn_define(expr),
+            // TODO: Add analysis for FnCustom
             _ => (),
         };
 
@@ -139,10 +140,14 @@ impl<'expressions> Semanalyzer<'expressions> {
     //
     // LET START
     //
+    // - 2 or more arguments
+    // - first arguments is a List
+    // - first argument has an even amount of items
+    // - first argument has Identifiers at non-event positions
     // ==========================
 
     fn let_binding(expr: &Expr) {
-        Self::args_n_or_more(&expr, 1);
+        Self::args_n_or_more(&expr, 2);
 
         let first_arg = expr.children.first().unwrap();
 
@@ -169,6 +174,7 @@ impl<'expressions> Semanalyzer<'expressions> {
     //
     // IF START
     //
+    // - has 2 or 3 arguments
     // ==========================
 
     fn fn_if(expr: &Expr) {
@@ -191,6 +197,9 @@ impl<'expressions> Semanalyzer<'expressions> {
     //
     // FN DEFINE START
     //
+    // - has 3 or more arguments
+    // - first arguments is an Identifier
+    // - second arguments is a List of Identifiers with unique names
     // ==========================
 
     fn fn_define(expr: &Expr) {
