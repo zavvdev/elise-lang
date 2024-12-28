@@ -24,6 +24,7 @@ mod tests {
             vec![Expr {
                 kind: ExprKind::Number(42 as types::Number),
                 children: vec![],
+                start_at: 0,
             }]
         );
     }
@@ -41,6 +42,7 @@ mod tests {
             vec![Expr {
                 kind: ExprKind::Number(-2 as types::Number),
                 children: vec![],
+                start_at: 0,
             }]
         );
     }
@@ -58,6 +60,7 @@ mod tests {
             vec![Expr {
                 kind: ExprKind::Number(4.2),
                 children: vec![],
+                start_at: 0,
             }]
         );
     }
@@ -75,6 +78,7 @@ mod tests {
             vec![Expr {
                 kind: ExprKind::Number(-5.6),
                 children: vec![],
+                start_at: 0,
             }]
         );
     }

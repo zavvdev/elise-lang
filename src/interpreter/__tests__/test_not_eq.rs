@@ -17,9 +17,10 @@ mod tests {
                 &Expr::new(
                     ExprKind::FnNotEq,
                     vec![
-                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![]))
+                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![], 0))
                     ],
+                    0
                 ),
                 &mut env
             ),
@@ -31,9 +32,10 @@ mod tests {
                 &Expr::new(
                     ExprKind::FnNotEq,
                     vec![
-                        Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
-                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![]))
+                        Box::new(Expr::new(ExprKind::Number(2.2), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::String("2".to_string()), vec![], 0))
                     ],
+                    0
                 ),
                 &mut env
             ),

@@ -15,9 +15,10 @@ mod tests {
         let expr = Expr::new(
             ExprKind::FnLess,
             vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![], 0)),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![], 0)),
             ],
+            0,
         );
 
         assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(false));
@@ -29,10 +30,11 @@ mod tests {
         let expr = Expr::new(
             ExprKind::FnLess,
             vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![], 0)),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![], 0)),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![], 0)),
             ],
+            0,
         );
 
         assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(false));

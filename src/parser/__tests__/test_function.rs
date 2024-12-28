@@ -37,6 +37,7 @@ mod tests {
             vec![Expr {
                 kind: ExprKind::FnAdd,
                 children: vec![],
+                start_at: 4,
             }]
         );
     }
@@ -75,12 +76,15 @@ mod tests {
                     Box::new(Expr {
                         kind: ExprKind::Number(2 as types::Number),
                         children: vec![],
+                        start_at: 5,
                     }),
                     Box::new(Expr {
                         kind: ExprKind::Number(3.4),
                         children: vec![],
+                        start_at: 8,
                     }),
                 ],
+                start_at: 4,
             }]
         );
     }
@@ -138,18 +142,23 @@ mod tests {
                             Box::new(Expr {
                                 kind: ExprKind::Number(3.4),
                                 children: vec![],
+                                start_at: 11,
                             }),
                             Box::new(Expr {
                                 kind: ExprKind::Number(1 as types::Number),
                                 children: vec![],
+                                start_at: 14,
                             }),
                         ],
+                        start_at: 10,
                     }),
                     Box::new(Expr {
                         kind: ExprKind::Number(2 as types::Number),
                         children: vec![],
+                        start_at: 16,
                     }),
                 ],
+                start_at: 5,
             }]
         );
     }

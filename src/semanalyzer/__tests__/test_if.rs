@@ -13,9 +13,10 @@ mod tests {
             analyze_semantics(&vec![Expr::new(
                 ExprKind::FnIf,
                 vec![
-                    Box::new(Expr::new(ExprKind::Nil, vec![])),
-                    Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
-                ]
+                    Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
+                    Box::new(Expr::new(ExprKind::Number(2.2), vec![], 0)),
+                ],
+                0
             )]),
             ()
         );
@@ -27,10 +28,11 @@ mod tests {
             analyze_semantics(&vec![Expr::new(
                 ExprKind::FnIf,
                 vec![
-                    Box::new(Expr::new(ExprKind::Nil, vec![])),
-                    Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
-                    Box::new(Expr::new(ExprKind::Number(-2.2), vec![])),
-                ]
+                    Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
+                    Box::new(Expr::new(ExprKind::Number(2.2), vec![], 0)),
+                    Box::new(Expr::new(ExprKind::Number(-2.2), vec![], 0)),
+                ],
+                0
             )]),
             ()
         );
@@ -41,7 +43,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_empty_args() {
-        analyze_semantics(&vec![Expr::new(ExprKind::FnIf, vec![])]);
+        analyze_semantics(&vec![Expr::new(ExprKind::FnIf, vec![], 0)]);
     }
 
     #[test]
@@ -49,7 +51,8 @@ mod tests {
     fn test_one_arg() {
         analyze_semantics(&vec![Expr::new(
             ExprKind::FnIf,
-            vec![Box::new(Expr::new(ExprKind::Nil, vec![]))],
+            vec![Box::new(Expr::new(ExprKind::Nil, vec![], 0))],
+            0,
         )]);
     }
 
@@ -59,11 +62,12 @@ mod tests {
         analyze_semantics(&vec![Expr::new(
             ExprKind::FnIf,
             vec![
-                Box::new(Expr::new(ExprKind::Nil, vec![])),
-                Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
-                Box::new(Expr::new(ExprKind::Number(2.3), vec![])),
-                Box::new(Expr::new(ExprKind::Number(2.4), vec![])),
+                Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
+                Box::new(Expr::new(ExprKind::Number(2.2), vec![], 0)),
+                Box::new(Expr::new(ExprKind::Number(2.3), vec![], 0)),
+                Box::new(Expr::new(ExprKind::Number(2.4), vec![], 0)),
             ],
+            0,
         )]);
     }
 }

@@ -12,9 +12,10 @@ mod tests {
         let expr = Expr::new(
             ExprKind::FnPrint,
             vec![
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1.4), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![], 0)),
+                Box::new(Expr::new(ExprKind::Number(1.4), vec![], 0)),
             ],
+            0,
         );
 
         assert_eq!(
@@ -25,7 +26,7 @@ mod tests {
 
     #[test]
     fn test_print_empty() {
-        let expr = Expr::new(ExprKind::FnPrint, vec![]);
+        let expr = Expr::new(ExprKind::FnPrint, vec![], 0);
         assert_eq!(
             eval_for_fn_print(&expr, &mut Env::new()),
             PrintEvalResult::Empty
@@ -41,8 +42,11 @@ mod tests {
                 vec![Box::new(Expr::new(
                     ExprKind::Number(1 as types::Number),
                     vec![],
+                    0,
                 ))],
+                0,
             ))],
+            0,
         );
         assert_eq!(
             eval_for_fn_print(&expr, &mut Env::new()),

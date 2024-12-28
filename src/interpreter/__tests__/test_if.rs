@@ -17,10 +17,11 @@ mod tests {
                 &Expr::new(
                     ExprKind::FnIf,
                     vec![
-                        Box::new(Expr::new(ExprKind::Boolean(true), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
-                    ]
+                        Box::new(Expr::new(ExprKind::Boolean(true), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(1.0), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(2.0), vec![], 0)),
+                    ],
+                    0
                 ),
                 &mut env
             ),
@@ -32,10 +33,11 @@ mod tests {
                 &Expr::new(
                     ExprKind::FnIf,
                     vec![
-                        Box::new(Expr::new(ExprKind::Boolean(false), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
-                    ]
+                        Box::new(Expr::new(ExprKind::Boolean(false), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(1.0), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(2.0), vec![], 0)),
+                    ],
+                    0
                 ),
                 &mut env
             ),
@@ -47,9 +49,10 @@ mod tests {
                 &Expr::new(
                     ExprKind::FnIf,
                     vec![
-                        Box::new(Expr::new(ExprKind::Boolean(true), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                    ]
+                        Box::new(Expr::new(ExprKind::Boolean(true), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(1.0), vec![], 0)),
+                    ],
+                    0
                 ),
                 &mut env
             ),
@@ -61,9 +64,10 @@ mod tests {
                 &Expr::new(
                     ExprKind::FnIf,
                     vec![
-                        Box::new(Expr::new(ExprKind::Boolean(false), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                    ]
+                        Box::new(Expr::new(ExprKind::Boolean(false), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(1.0), vec![], 0)),
+                    ],
+                    0
                 ),
                 &mut env
             ),

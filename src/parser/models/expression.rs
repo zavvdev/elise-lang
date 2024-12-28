@@ -47,11 +47,16 @@ const INTERNAL_EXPRESSIONS: [ExprKind; 3] = [
 pub struct Expr {
     pub kind: ExprKind,
     pub children: Vec<Box<Expr>>,
+    pub start_at: usize,
 }
 
 impl Expr {
-    pub fn new(kind: ExprKind, children: Vec<Box<Expr>>) -> Self {
-        Self { kind, children }
+    pub fn new(kind: ExprKind, children: Vec<Box<Expr>>, start_at: usize) -> Self {
+        Self {
+            kind,
+            children,
+            start_at,
+        }
     }
 }
 

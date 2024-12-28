@@ -26,6 +26,7 @@ mod tests {
             vec![Expr {
                 kind: ExprKind::Nil,
                 children: vec![],
+                start_at: 0,
             }]
         );
     }

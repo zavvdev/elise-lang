@@ -13,16 +13,23 @@ mod tests {
             analyze_semantics(&vec![Expr::new(
                 ExprKind::FnDefine,
                 vec![
-                    Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
-                    Box::new(Expr::new(ExprKind::List, vec![])),
+                    Box::new(Expr::new(
+                        ExprKind::Identifier("hello".to_string()),
+                        vec![],
+                        0
+                    )),
+                    Box::new(Expr::new(ExprKind::List, vec![], 0)),
                     Box::new(Expr::new(
                         ExprKind::FnPrintLn,
                         vec![Box::new(Expr::new(
                             ExprKind::String("Hello".to_string()),
-                            vec![]
-                        ))]
+                            vec![],
+                            0
+                        ))],
+                        0
                     )),
                 ],
+                0
             )]),
             ()
         );
@@ -34,22 +41,29 @@ mod tests {
             analyze_semantics(&vec![Expr::new(
                 ExprKind::FnDefine,
                 vec![
-                    Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
+                    Box::new(Expr::new(
+                        ExprKind::Identifier("hello".to_string()),
+                        vec![],
+                        0
+                    )),
                     Box::new(Expr::new(
                         ExprKind::List,
                         vec![
-                            Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                            Box::new(Expr::new(ExprKind::Identifier("y".to_string()), vec![]))
-                        ]
+                            Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0)),
+                            Box::new(Expr::new(ExprKind::Identifier("y".to_string()), vec![], 0))
+                        ],
+                        0
                     )),
                     Box::new(Expr::new(
                         ExprKind::FnPrintLn,
                         vec![
-                            Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                            Box::new(Expr::new(ExprKind::Identifier("y".to_string()), vec![]))
-                        ]
+                            Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0)),
+                            Box::new(Expr::new(ExprKind::Identifier("y".to_string()), vec![], 0))
+                        ],
+                        0
                     )),
                 ],
+                0
             )]),
             ()
         );
@@ -60,7 +74,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_0_args() {
-        analyze_semantics(&vec![Expr::new(ExprKind::FnDefine, vec![])]);
+        analyze_semantics(&vec![Expr::new(ExprKind::FnDefine, vec![], 0)]);
     }
 
     #[test]
@@ -71,7 +85,9 @@ mod tests {
             vec![Box::new(Expr::new(
                 ExprKind::Identifier("hello".to_string()),
                 vec![],
+                0,
             ))],
+            0,
         )]);
     }
 
@@ -82,9 +98,14 @@ mod tests {
             analyze_semantics(&vec![Expr::new(
                 ExprKind::FnDefine,
                 vec![
-                    Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
-                    Box::new(Expr::new(ExprKind::List, vec![])),
+                    Box::new(Expr::new(
+                        ExprKind::Identifier("hello".to_string()),
+                        vec![],
+                        0
+                    )),
+                    Box::new(Expr::new(ExprKind::List, vec![], 0)),
                 ],
+                0
             )]),
             ()
         );
@@ -96,9 +117,10 @@ mod tests {
         analyze_semantics(&vec![Expr::new(
             ExprKind::FnDefine,
             vec![
-                Box::new(Expr::new(ExprKind::Nil, vec![])),
-                Box::new(Expr::new(ExprKind::List, vec![])),
+                Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
+                Box::new(Expr::new(ExprKind::List, vec![], 0)),
             ],
+            0,
         )]);
     }
 
@@ -108,9 +130,14 @@ mod tests {
         analyze_semantics(&vec![Expr::new(
             ExprKind::FnDefine,
             vec![
-                Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
-                Box::new(Expr::new(ExprKind::Nil, vec![])),
+                Box::new(Expr::new(
+                    ExprKind::Identifier("hello".to_string()),
+                    vec![],
+                    0,
+                )),
+                Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
             ],
+            0,
         )]);
     }
 
@@ -120,15 +147,21 @@ mod tests {
         analyze_semantics(&vec![Expr::new(
             ExprKind::FnDefine,
             vec![
-                Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
+                Box::new(Expr::new(
+                    ExprKind::Identifier("hello".to_string()),
+                    vec![],
+                    0,
+                )),
                 Box::new(Expr::new(
                     ExprKind::List,
                     vec![
-                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
+                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0)),
                     ],
+                    0,
                 )),
             ],
+            0,
         )]);
     }
 }
