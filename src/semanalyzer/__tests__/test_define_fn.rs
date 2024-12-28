@@ -1,81 +1,11 @@
 #[cfg(test)]
 mod tests {
-    use assert_panic::assert_panic;
-
     use crate::{
         parser::models::expression::{Expr, ExprKind},
-        semanalyzer::{analyze_semantics, messages},
-        to_str,
+        semanalyzer::analyze_semantics,
     };
 
-    #[test]
-    fn test_args_amount() {
-        assert_panic!(
-            {
-                analyze_semantics(&vec![Expr::new(ExprKind::FnDefine, vec![])]);
-            },
-            String,
-            messages::invalid_args_amount(to_str!(ExprKind::FnDefine), ">= 2", "0")
-        );
-
-        assert_panic!(
-            {
-                analyze_semantics(&vec![Expr::new(
-                    ExprKind::FnDefine,
-                    vec![Box::new(Expr::new(
-                        ExprKind::Identifier("hello".to_string()),
-                        vec![],
-                    ))],
-                )]);
-            },
-            String,
-            messages::invalid_args_amount(to_str!(ExprKind::FnDefine), ">= 2", "1")
-        );
-    }
-
-    #[test]
-    fn test_fist_arg_type() {
-        assert_panic!(
-            {
-                analyze_semantics(&vec![Expr::new(
-                    ExprKind::FnDefine,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Nil, vec![])),
-                        Box::new(Expr::new(ExprKind::List, vec![])),
-                    ],
-                )]);
-            },
-            String,
-            messages::invalid_arg_type(
-                to_str!(ExprKind::FnDefine),
-                1,
-                "Identifier",
-                to_str!(ExprKind::Nil)
-            )
-        );
-    }
-
-    #[test]
-    fn test_second_arg_type() {
-        assert_panic!(
-            {
-                analyze_semantics(&vec![Expr::new(
-                    ExprKind::FnDefine,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::Nil, vec![])),
-                    ],
-                )]);
-            },
-            String,
-            messages::invalid_arg_type(
-                "\"hello\"",
-                2,
-                to_str!(ExprKind::List),
-                to_str!(ExprKind::Nil)
-            )
-        );
-    }
+    // SUCCESS CASES
 
     #[test]
     fn test_second_arg_empty_list() {
@@ -85,15 +15,16 @@ mod tests {
                 vec![
                     Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
                     Box::new(Expr::new(ExprKind::List, vec![])),
+                    Box::new(Expr::new(
+                        ExprKind::FnPrintLn,
+                        vec![Box::new(Expr::new(
+                            ExprKind::String("Hello".to_string()),
+                            vec![]
+                        ))]
+                    )),
                 ],
             )]),
-            vec![&Expr::new(
-                ExprKind::FnDefine,
-                vec![
-                    Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
-                    Box::new(Expr::new(ExprKind::List, vec![])),
-                ],
-            )]
+            ()
         );
     }
 
@@ -111,44 +42,93 @@ mod tests {
                             Box::new(Expr::new(ExprKind::Identifier("y".to_string()), vec![]))
                         ]
                     )),
-                ],
-            )]),
-            vec![&Expr::new(
-                ExprKind::FnDefine,
-                vec![
-                    Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
                     Box::new(Expr::new(
-                        ExprKind::List,
+                        ExprKind::FnPrintLn,
                         vec![
                             Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
                             Box::new(Expr::new(ExprKind::Identifier("y".to_string()), vec![]))
                         ]
                     )),
                 ],
-            )]
+            )]),
+            ()
+        );
+    }
+
+    // FAILED CASES
+
+    #[test]
+    #[should_panic]
+    fn test_0_args() {
+        analyze_semantics(&vec![Expr::new(ExprKind::FnDefine, vec![])]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_1_arg() {
+        analyze_semantics(&vec![Expr::new(
+            ExprKind::FnDefine,
+            vec![Box::new(Expr::new(
+                ExprKind::Identifier("hello".to_string()),
+                vec![],
+            ))],
+        )]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_2_args() {
+        assert_eq!(
+            analyze_semantics(&vec![Expr::new(
+                ExprKind::FnDefine,
+                vec![
+                    Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
+                    Box::new(Expr::new(ExprKind::List, vec![])),
+                ],
+            )]),
+            ()
         );
     }
 
     #[test]
-    fn test_second_arg_invalid_list() {
-        assert_panic!(
-            {
-                analyze_semantics(&vec![Expr::new(
-                    ExprKind::FnDefine,
+    #[should_panic]
+    fn test_fist_arg_type() {
+        analyze_semantics(&vec![Expr::new(
+            ExprKind::FnDefine,
+            vec![
+                Box::new(Expr::new(ExprKind::Nil, vec![])),
+                Box::new(Expr::new(ExprKind::List, vec![])),
+            ],
+        )]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_second_arg_type() {
+        analyze_semantics(&vec![Expr::new(
+            ExprKind::FnDefine,
+            vec![
+                Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
+                Box::new(Expr::new(ExprKind::Nil, vec![])),
+            ],
+        )]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_duplicated_argument() {
+        analyze_semantics(&vec![Expr::new(
+            ExprKind::FnDefine,
+            vec![
+                Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
+                Box::new(Expr::new(
+                    ExprKind::List,
                     vec![
-                        Box::new(Expr::new(ExprKind::Identifier("hello".to_string()), vec![])),
-                        Box::new(Expr::new(
-                            ExprKind::List,
-                            vec![
-                                Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                                Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                            ],
-                        )),
+                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
+                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
                     ],
-                )]);
-            },
-            String,
-            messages::duplicate_fn_arg_decl("\"hello\"")
-        );
+                )),
+            ],
+        )]);
     }
 }

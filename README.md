@@ -38,7 +38,7 @@ Number literals: `1`, `1.2`
 
 ## .print
 
-Prints result of expressions to console
+Prints result of expressions
 
 ```
 .print(& more)
@@ -54,7 +54,7 @@ Like `.print` but with `\n` at the end
 
 ## .add
 
-Returns the sum of numbers. `.add()` returns 0
+Returns the sum of numbers. `.add()` returns `0`
 
 ```
 .add()
@@ -65,7 +65,7 @@ Returns the sum of numbers. `.add()` returns 0
 
 ## .sub
 
-If no ys are supplied, returns the negation of x, else subtracts the ys from x and returns the result
+If no ys are supplied, returns the negation of `x`, else subtracts the ys from `x` and returns the result
 
 ```
 .sub(x)
@@ -75,7 +75,7 @@ If no ys are supplied, returns the negation of x, else subtracts the ys from x a
 
 ## .mul
 
-Returns the product of nums. `.mul()` returns 1
+Returns the product of nums. `.mul()` returns `1`
 
 ```
 .mul()
@@ -117,17 +117,9 @@ Also, `.let` function returns the result of the last expression:
 
 Result: `1`
 
-Keep in mind that binding won't be performed if there are no further expressions found for `.let` function:
-
-```
-.let([x 1])
-```
-
-Result: `x` will not be bound to `1` because it makes no sense since there are no expressions found to use this binding.
-
 ## .greatr
 
-Returns non-nil if nums are in monotonically decreasing order, otherwise false.
+Returns `true` if nums are in monotonically decreasing order, otherwise `false`.
 
 ```
 .greatr(x)
@@ -137,7 +129,7 @@ Returns non-nil if nums are in monotonically decreasing order, otherwise false.
 
 ## .greatr-eq
 
-Returns non-nil if nums are in monotonically non-increasing order, otherwise false.
+Returns `true` if nums are in monotonically non-increasing order, otherwise `false`.
 
 ```
 .greatr-eq(x)
@@ -147,7 +139,7 @@ Returns non-nil if nums are in monotonically non-increasing order, otherwise fal
 
 ## .less
 
-Returns non-nil if nums are in monotonically increasing order, otherwise false.
+Returns `true` if nums are in monotonically increasing order, otherwise `false`.
 
 ```
 .less(x)
@@ -157,7 +149,7 @@ Returns non-nil if nums are in monotonically increasing order, otherwise false.
 
 ## .less-eq
 
-Returns non-nil if nums are in monotonically non-decreasing order, otherwise false.
+Returns `true` if nums are in monotonically non-decreasing order, otherwise `false`.
 
 ```
 .less-eq(x)
@@ -167,7 +159,7 @@ Returns non-nil if nums are in monotonically non-decreasing order, otherwise fal
 
 ## .eq
 
-Equality. Returns true if x equals y, false if not.
+Equality. Returns `true` if `x` equals `y`, `false` if not.
 
 ```
 .eq(x)
@@ -177,7 +169,7 @@ Equality. Returns true if x equals y, false if not.
 
 ## .not
 
-Returns true if x is logical false, false otherwise.
+Returns `true` if `x` is logical `false`, `false` otherwise.
 
 ```
 .not(x)
@@ -195,7 +187,7 @@ Same as `.not(.eq(x))`.
 
 ## .and
 
-Evaluates exprs one at a time, from left to right. If a form returns logical false (nil or false), and returns that value and doesn't evaluate any of the other expressions, otherwise it returns the value of the last expr. `.and()` returns true.
+Evaluates exprs one at a time, from left to right. If a form returns logical `false` (`nil` or `false`), `.and` returns that value and doesn't evaluate any of the other expressions, otherwise it returns the value of the last expr. `.and()` returns `true`.
 
 ```
 .and()
@@ -205,7 +197,7 @@ Evaluates exprs one at a time, from left to right. If a form returns logical fal
 
 ## .or
 
-Evaluates exprs one at a time, from left to right. If a form returns a logical true value, or returns that value and doesn't evaluate any of the other expressions, otherwise it returns the value of the last expression. `.or()` returns nil.
+Evaluates exprs one at a time, from left to right. If a form returns a logical `true` value, `.or` returns that value and doesn't evaluate any of the other expressions, otherwise it returns the value of the last expression. `.or()` returns `nil`.
 
 ```
 .or()
@@ -215,7 +207,7 @@ Evaluates exprs one at a time, from left to right. If a form returns a logical t
 
 ## .bool
 
-Coerce to boolean. Everything except `false` and `nil` is true in boolean context.
+Coerce to boolean. Everything except `false` and `nil` is `true` in boolean context.
 
 ```
 .bool(x)
@@ -223,7 +215,7 @@ Coerce to boolean. Everything except `false` and `nil` is true in boolean contex
 
 ## .if
 
-Evaluates the first argument and performs boolean coercion of the result. If it results to true evaluates the second argument and returns result. Otherwise, evaluates the third argument and returns the result. If the third argument is absent - returns `nil`.
+Evaluates the first argument and performs boolean coercion of the result. If it results to `true` evaluates the second argument and returns result. Otherwise, evaluates the third argument and returns the result. If the third argument is absent - returns `nil`.
 
 ```
 .if(condition then)
@@ -232,7 +224,7 @@ Evaluates the first argument and performs boolean coercion of the result. If it 
 
 ## .nil?
 
-Returns true if x is nil, false otherwise
+Returns `true` if `x` is `nil`, false otherwise
 
 ```
 .nil?(x)

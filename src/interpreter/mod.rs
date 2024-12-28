@@ -635,8 +635,8 @@ fn eval_fn_custom(name: &str, expr: &Expr, env: &mut Env) -> EvalResult {
 
 // ==============================================
 
-pub fn interpret(exprs: Vec<&Expr>, env: &mut Env) {
+pub fn interpret(exprs: Vec<Expr>, env: &mut Env) {
     for expr in exprs {
-        eval(expr, env);
+        eval(&expr, env);
     }
 }
