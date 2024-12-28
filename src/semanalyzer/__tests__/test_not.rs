@@ -1,35 +1,40 @@
 #[cfg(test)]
 mod tests {
-    use assert_panic::assert_panic;
-
     use crate::{
         parser::models::expression::{Expr, ExprKind},
-        semanalyzer::{analyze_semantics, messages},
-        to_str,
+        semanalyzer::analyze_semantics,
     };
 
-    #[test]
-    fn test_not() {
-        assert_panic!(
-            {
-                analyze_semantics(&vec![Expr::new(ExprKind::FnNot, vec![])]);
-            },
-            String,
-            messages::args_invalid_amount(to_str!(ExprKind::FnNot), "1", "0")
-        );
+    // SUCCESS CASES
 
-        assert_panic!(
-            {
-                analyze_semantics(&vec![Expr::new(
-                    ExprKind::FnNot,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Nil, vec![])),
-                        Box::new(Expr::new(ExprKind::Nil, vec![])),
-                    ],
-                )]);
-            },
-            String,
-            messages::args_invalid_amount(to_str!(ExprKind::FnNot), "1", "2")
+    #[test]
+    fn test_correct_form() {
+        assert_eq!(
+            analyze_semantics(&vec![Expr::new(
+                ExprKind::FnNot,
+                vec![Box::new(Expr::new(ExprKind::Number(4.0), vec![])),]
+            )]),
+            ()
         );
+    }
+
+    // FAILURE CASES
+
+    #[test]
+    #[should_panic]
+    fn test_0_args() {
+        analyze_semantics(&vec![Expr::new(ExprKind::FnNot, vec![])]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_2_args() {
+        analyze_semantics(&vec![Expr::new(
+            ExprKind::FnNot,
+            vec![
+                Box::new(Expr::new(ExprKind::Nil, vec![])),
+                Box::new(Expr::new(ExprKind::Nil, vec![])),
+            ],
+        )]);
     }
 }

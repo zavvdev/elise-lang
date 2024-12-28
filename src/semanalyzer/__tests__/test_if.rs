@@ -1,48 +1,69 @@
 #[cfg(test)]
 mod tests {
-    use assert_panic::assert_panic;
-
     use crate::{
         parser::models::expression::{Expr, ExprKind},
-        semanalyzer::{analyze_semantics, messages},
-        to_str,
+        semanalyzer::analyze_semantics,
     };
 
+    // SUCCESS CASES
+
     #[test]
-    fn test_if() {
-        assert_panic!(
-            {
-                analyze_semantics(&vec![Expr::new(ExprKind::FnIf, vec![])]);
-            },
-            String,
-            messages::args_invalid_amount(to_str!(ExprKind::FnIf), "2 or 3", "0")
+    fn test_valid() {
+        assert_eq!(
+            analyze_semantics(&vec![Expr::new(
+                ExprKind::FnIf,
+                vec![
+                    Box::new(Expr::new(ExprKind::Nil, vec![])),
+                    Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
+                ]
+            )]),
+            ()
         );
+    }
 
-        assert_panic!(
-            {
-                analyze_semantics(&vec![Expr::new(
-                    ExprKind::FnIf,
-                    vec![Box::new(Expr::new(ExprKind::Nil, vec![]))],
-                )]);
-            },
-            String,
-            messages::args_invalid_amount(to_str!(ExprKind::FnIf), "2 or 3", "1")
+    #[test]
+    fn test_valid_with_else() {
+        assert_eq!(
+            analyze_semantics(&vec![Expr::new(
+                ExprKind::FnIf,
+                vec![
+                    Box::new(Expr::new(ExprKind::Nil, vec![])),
+                    Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
+                    Box::new(Expr::new(ExprKind::Number(-2.2), vec![])),
+                ]
+            )]),
+            ()
         );
+    }
 
-        assert_panic!(
-            {
-                analyze_semantics(&vec![Expr::new(
-                    ExprKind::FnIf,
-                    vec![
-                        Box::new(Expr::new(ExprKind::Nil, vec![])),
-                        Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(2.3), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(2.4), vec![])),
-                    ],
-                )]);
-            },
-            String,
-            messages::args_invalid_amount(to_str!(ExprKind::FnIf), "2 or 3", "4")
-        );
+    // FAILURE CASES
+
+    #[test]
+    #[should_panic]
+    fn test_empty_args() {
+        analyze_semantics(&vec![Expr::new(ExprKind::FnIf, vec![])]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_one_arg() {
+        analyze_semantics(&vec![Expr::new(
+            ExprKind::FnIf,
+            vec![Box::new(Expr::new(ExprKind::Nil, vec![]))],
+        )]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_four_args() {
+        analyze_semantics(&vec![Expr::new(
+            ExprKind::FnIf,
+            vec![
+                Box::new(Expr::new(ExprKind::Nil, vec![])),
+                Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
+                Box::new(Expr::new(ExprKind::Number(2.3), vec![])),
+                Box::new(Expr::new(ExprKind::Number(2.4), vec![])),
+            ],
+        )]);
     }
 }

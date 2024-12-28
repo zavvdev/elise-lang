@@ -212,16 +212,14 @@ impl<'expressions> Semanalyzer<'expressions> {
             Self::type_expr(second_arg, ExprKind::List);
 
             if second_arg.children.len() > 0 {
-                let non_ident = second_arg
-                    .children
-                    .iter()
-                    .find(|x| matches!(x.kind, ExprKind::Identifier(_)));
-
-                if non_ident.is_some() {
-                    Self::error(&messages::fn_def_invalid_args_decl(
-                        to_str!(fn_name),
-                        to_str!(non_ident.unwrap().kind),
-                    ))
+                for arg in second_arg.children.iter() {
+                    match arg.kind {
+                        ExprKind::Identifier(_) => (),
+                        _ => Self::error(&messages::fn_def_invalid_args_decl(
+                            to_str!(fn_name),
+                            to_str!(arg.kind),
+                        )),
+                    }
                 }
             }
 
