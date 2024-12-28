@@ -37,7 +37,6 @@ impl<'expressions> Semanalyzer<'expressions> {
             ExprKind::FnIf => Self::fn_if(expr),
             ExprKind::FnIsNil => Self::args_n(expr, 1),
             ExprKind::FnDefine => Self::fn_define(expr),
-            // TODO: Add analysis for FnCustom
             _ => (),
         };
 
