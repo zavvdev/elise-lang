@@ -10,11 +10,14 @@ mod tests {
     #[test]
     fn test_1_arg() {
         assert_eq!(
-            analyze_semantics(&vec![Expr::new(
-                ExprKind::FnGreatrEq,
-                vec![Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0))],
-                0
-            )]),
+            analyze_semantics(
+                &vec![Expr::new(
+                    ExprKind::FnGreatrEq,
+                    vec![Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0))],
+                    0
+                )],
+                ".greatr-eq(4)"
+            ),
             ()
         );
     }
@@ -22,14 +25,17 @@ mod tests {
     #[test]
     fn test_2_args() {
         assert_eq!(
-            analyze_semantics(&vec![Expr::new(
-                ExprKind::FnGreatrEq,
-                vec![
-                    Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0)),
-                    Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0))
-                ],
-                0
-            )]),
+            analyze_semantics(
+                &vec![Expr::new(
+                    ExprKind::FnGreatrEq,
+                    vec![
+                        Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0))
+                    ],
+                    0
+                )],
+                ".greatr-eq(4 4)"
+            ),
             ()
         );
     }
@@ -37,16 +43,19 @@ mod tests {
     #[test]
     fn test_many_args() {
         assert_eq!(
-            analyze_semantics(&vec![Expr::new(
-                ExprKind::FnGreatrEq,
-                vec![
-                    Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0)),
-                    Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0)),
-                    Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0)),
-                    Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0))
-                ],
-                0
-            )]),
+            analyze_semantics(
+                &vec![Expr::new(
+                    ExprKind::FnGreatrEq,
+                    vec![
+                        Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0))
+                    ],
+                    0
+                )],
+                ".greatr-eq(4 4 4 4)"
+            ),
             ()
         );
     }
@@ -56,6 +65,9 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_empty_args() {
-        analyze_semantics(&vec![Expr::new(ExprKind::FnGreatrEq, vec![], 0)]);
+        analyze_semantics(
+            &vec![Expr::new(ExprKind::FnGreatrEq, vec![], 0)],
+            ".greatr-eq()",
+        );
     }
 }
