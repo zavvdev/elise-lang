@@ -18,12 +18,14 @@ mod tests {
                 Box::new(Expr::new(
                     ExprKind::List,
                     vec![
-                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
+                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(1.0), vec![], 0)),
                     ],
+                    0,
                 )),
-                Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
+                Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0)),
             ],
+            0,
         );
 
         assert_eq!(eval(&expr, &mut env), EvalResult::Number(1.0));
@@ -39,9 +41,10 @@ mod tests {
                 Box::new(Expr::new(
                     ExprKind::List,
                     vec![
-                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
+                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(1.0), vec![], 0)),
                     ],
+                    0,
                 )),
                 Box::new(Expr::new(
                     ExprKind::FnLetBinding,
@@ -49,20 +52,36 @@ mod tests {
                         Box::new(Expr::new(
                             ExprKind::List,
                             vec![
-                                Box::new(Expr::new(ExprKind::Identifier("y".to_string()), vec![])),
-                                Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
+                                Box::new(Expr::new(
+                                    ExprKind::Identifier("y".to_string()),
+                                    vec![],
+                                    0,
+                                )),
+                                Box::new(Expr::new(ExprKind::Number(2.0), vec![], 0)),
                             ],
+                            0,
                         )),
                         Box::new(Expr::new(
                             ExprKind::FnAdd,
                             vec![
-                                Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                                Box::new(Expr::new(ExprKind::Identifier("y".to_string()), vec![])),
+                                Box::new(Expr::new(
+                                    ExprKind::Identifier("x".to_string()),
+                                    vec![],
+                                    0,
+                                )),
+                                Box::new(Expr::new(
+                                    ExprKind::Identifier("y".to_string()),
+                                    vec![],
+                                    0,
+                                )),
                             ],
+                            0,
                         )),
                     ],
+                    0,
                 )),
             ],
+            0,
         );
 
         assert_eq!(eval(&expr, &mut env), EvalResult::Number(3.0));
@@ -77,10 +96,12 @@ mod tests {
             vec![Box::new(Expr::new(
                 ExprKind::List,
                 vec![
-                    Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                    Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
+                    Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0)),
+                    Box::new(Expr::new(ExprKind::Number(1.0), vec![], 0)),
                 ],
+                0,
             ))],
+            0,
         );
 
         assert_eq!(eval(&expr, &mut env), EvalResult::Nil);
@@ -97,9 +118,10 @@ mod tests {
                 Box::new(Expr::new(
                     ExprKind::List,
                     vec![
-                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
+                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(1.0), vec![], 0)),
                     ],
+                    0,
                 )),
                 Box::new(Expr::new(
                     ExprKind::FnLetBinding,
@@ -107,14 +129,21 @@ mod tests {
                         Box::new(Expr::new(
                             ExprKind::List,
                             vec![
-                                Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
-                                Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
+                                Box::new(Expr::new(
+                                    ExprKind::Identifier("x".to_string()),
+                                    vec![],
+                                    0,
+                                )),
+                                Box::new(Expr::new(ExprKind::Number(2.0), vec![], 0)),
                             ],
+                            0,
                         )),
-                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![])),
+                        Box::new(Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0)),
                     ],
+                    0,
                 )),
             ],
+            0,
         );
 
         eval(&expr, &mut env);

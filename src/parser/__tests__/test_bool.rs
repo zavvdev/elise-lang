@@ -26,6 +26,7 @@ mod tests {
             vec![Expr {
                 kind: ExprKind::Boolean(true),
                 children: vec![],
+                start_at: 0,
             }]
         );
     }
@@ -43,6 +44,7 @@ mod tests {
             vec![Expr {
                 kind: ExprKind::Boolean(false),
                 children: vec![],
+                start_at: 0,
             }]
         );
     }

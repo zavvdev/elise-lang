@@ -10,10 +10,14 @@ mod tests {
     #[test]
     fn test_valid() {
         assert_eq!(
-            analyze_semantics(&vec![Expr::new(
-                ExprKind::FnBool,
-                vec![Box::new(Expr::new(ExprKind::Boolean(true), vec![]))]
-            )]),
+            analyze_semantics(
+                &vec![Expr::new(
+                    ExprKind::FnBool,
+                    vec![Box::new(Expr::new(ExprKind::Boolean(true), vec![], 0))],
+                    0
+                )],
+                ".bool(true)"
+            ),
             ()
         )
     }
@@ -23,18 +27,22 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_args_0_args() {
-        analyze_semantics(&vec![Expr::new(ExprKind::FnBool, vec![])]);
+        analyze_semantics(&vec![Expr::new(ExprKind::FnBool, vec![], 0)], ".bool()");
     }
 
     #[test]
     #[should_panic]
     fn test_args_more_than_one() {
-        analyze_semantics(&vec![Expr::new(
-            ExprKind::FnBool,
-            vec![
-                Box::new(Expr::new(ExprKind::Nil, vec![])),
-                Box::new(Expr::new(ExprKind::Nil, vec![])),
-            ],
-        )]);
+        analyze_semantics(
+            &vec![Expr::new(
+                ExprKind::FnBool,
+                vec![
+                    Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
+                    Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
+                ],
+                0,
+            )],
+            ".bool(nil nil)",
+        );
     }
 }

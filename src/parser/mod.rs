@@ -198,8 +198,8 @@ impl<'source_code> Parser<'source_code> {
     // ==========================
 
     fn number_consume(&mut self, x: types::Number) -> Option<Expr> {
-        self.token_consume();
-        Some(Expr::new(ExprKind::Number(x), vec![]))
+        let token = self.token_consume().unwrap();
+        Some(Expr::new(ExprKind::Number(x), vec![], token.span.start))
     }
 
     // ==========================
@@ -215,8 +215,8 @@ impl<'source_code> Parser<'source_code> {
     // ==========================
 
     fn string_consume(&mut self, x: String) -> Option<Expr> {
-        self.token_consume();
-        Some(Expr::new(ExprKind::String(x), vec![]))
+        let token = self.token_consume().unwrap();
+        Some(Expr::new(ExprKind::String(x), vec![], token.span.start))
     }
 
     // ==========================
@@ -232,8 +232,8 @@ impl<'source_code> Parser<'source_code> {
     // ==========================
 
     fn boolean_consume(&mut self, x: bool) -> Option<Expr> {
-        self.token_consume();
-        Some(Expr::new(ExprKind::Boolean(x), vec![]))
+        let token = self.token_consume().unwrap();
+        Some(Expr::new(ExprKind::Boolean(x), vec![], token.span.start))
     }
 
     // ==========================
@@ -249,8 +249,8 @@ impl<'source_code> Parser<'source_code> {
     // ==========================
 
     fn identifier_consume(&mut self, x: String) -> Option<Expr> {
-        self.token_consume();
-        Some(Expr::new(ExprKind::Identifier(x), vec![]))
+        let token = self.token_consume().unwrap();
+        Some(Expr::new(ExprKind::Identifier(x), vec![], token.span.start))
     }
 
     // ==========================
@@ -266,8 +266,8 @@ impl<'source_code> Parser<'source_code> {
     // ==========================
 
     fn nil_consume(&mut self) -> Option<Expr> {
-        self.token_consume();
-        Some(Expr::new(ExprKind::Nil, vec![]))
+        let token = self.token_consume().unwrap();
+        Some(Expr::new(ExprKind::Nil, vec![], token.span.start))
     }
 
     // ==========================
@@ -288,12 +288,14 @@ impl<'source_code> Parser<'source_code> {
         if next.is_none() {
             self.error_unexpected();
         }
-
+    
+        let token_start = next.unwrap().span.start;
         self.seq_capture(TokenKind::LeftSqrBr);
 
         Some(Expr::new(
             ExprKind::List,
             self.seq_consume(ExprKind::_EndOfList),
+            token_start,
         ))
     }
 
@@ -302,9 +304,9 @@ impl<'source_code> Parser<'source_code> {
             self.error(&messages::unmatched_sqr_bracket(), None);
         }
 
-        self.token_consume();
+        let token = self.token_consume().unwrap();
 
-        Some(Expr::new(ExprKind::_EndOfList, vec![]))
+        Some(Expr::new(ExprKind::_EndOfList, vec![], token.span.start))
     }
 
     // ==========================
@@ -327,6 +329,7 @@ impl<'source_code> Parser<'source_code> {
         }
 
         let next = next.unwrap();
+        let token_start = next.span.start;
 
         if next.kind == TokenKind::Newline || next.kind == TokenKind::Whitespace {
             self.token_skip(1);
@@ -338,6 +341,7 @@ impl<'source_code> Parser<'source_code> {
             Some(Expr::new(
                 fn_expr_kind,
                 self.seq_consume(ExprKind::_EndOfFn),
+                token_start,
             ))
         } else {
             self.error_unexpected();
@@ -349,9 +353,9 @@ impl<'source_code> Parser<'source_code> {
             self.error(&messages::unmatched_parenthesis(), None);
         }
 
-        self.token_consume();
+        let token = self.token_consume().unwrap();
 
-        Some(Expr::new(ExprKind::_EndOfFn, vec![]))
+        Some(Expr::new(ExprKind::_EndOfFn, vec![], token.span.start))
     }
 
     // ==========================
@@ -367,8 +371,8 @@ impl<'source_code> Parser<'source_code> {
     // ==========================
 
     fn separator_consume(&mut self) -> Option<Expr> {
-        self.token_consume();
-        Some(Expr::new(ExprKind::_Separator, vec![]))
+        let token = self.token_consume().unwrap();
+        Some(Expr::new(ExprKind::_Separator, vec![], token.span.start))
     }
 
     // ==========================

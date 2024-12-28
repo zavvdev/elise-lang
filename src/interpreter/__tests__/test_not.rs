@@ -16,7 +16,8 @@ mod tests {
             eval(
                 &Expr::new(
                     ExprKind::FnNot,
-                    vec![Box::new(Expr::new(ExprKind::Boolean(true), vec![]))],
+                    vec![Box::new(Expr::new(ExprKind::Boolean(true), vec![], 0))],
+                    0
                 ),
                 &mut env
             ),
@@ -27,7 +28,8 @@ mod tests {
             eval(
                 &Expr::new(
                     ExprKind::FnNot,
-                    vec![Box::new(Expr::new(ExprKind::Boolean(false), vec![]))],
+                    vec![Box::new(Expr::new(ExprKind::Boolean(false), vec![], 0))],
+                    0
                 ),
                 &mut env
             ),
@@ -43,7 +45,8 @@ mod tests {
             eval(
                 &Expr::new(
                     ExprKind::FnNot,
-                    vec![Box::new(Expr::new(ExprKind::Nil, vec![]))],
+                    vec![Box::new(Expr::new(ExprKind::Nil, vec![], 0))],
+                    0
                 ),
                 &mut env
             ),
@@ -60,8 +63,10 @@ mod tests {
                     ExprKind::FnNot,
                     vec![Box::new(Expr::new(
                         ExprKind::String("".to_string()),
-                        vec![]
+                        vec![],
+                        0
                     ))],
+                    0
                 ),
                 &mut env
             ),
@@ -72,7 +77,8 @@ mod tests {
             eval(
                 &Expr::new(
                     ExprKind::FnNot,
-                    vec![Box::new(Expr::new(ExprKind::Number(0.0), vec![]))],
+                    vec![Box::new(Expr::new(ExprKind::Number(0.0), vec![], 0))],
+                    0
                 ),
                 &mut env
             ),

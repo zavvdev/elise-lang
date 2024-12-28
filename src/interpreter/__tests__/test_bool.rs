@@ -11,7 +11,7 @@ mod tests {
     #[test]
     fn test_true() {
         let mut env = Env::new();
-        let expr = Expr::new(ExprKind::Boolean(true), vec![]);
+        let expr = Expr::new(ExprKind::Boolean(true), vec![], 0);
 
         assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(true));
     }
@@ -19,7 +19,7 @@ mod tests {
     #[test]
     fn test_false() {
         let mut env = Env::new();
-        let expr = Expr::new(ExprKind::Boolean(false), vec![]);
+        let expr = Expr::new(ExprKind::Boolean(false), vec![], 0);
 
         assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(false));
     }

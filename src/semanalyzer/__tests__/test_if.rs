@@ -10,13 +10,17 @@ mod tests {
     #[test]
     fn test_valid() {
         assert_eq!(
-            analyze_semantics(&vec![Expr::new(
-                ExprKind::FnIf,
-                vec![
-                    Box::new(Expr::new(ExprKind::Nil, vec![])),
-                    Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
-                ]
-            )]),
+            analyze_semantics(
+                &vec![Expr::new(
+                    ExprKind::FnIf,
+                    vec![
+                        Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(2.2), vec![], 0)),
+                    ],
+                    0
+                )],
+                ".if(nil 2.2)"
+            ),
             ()
         );
     }
@@ -24,14 +28,18 @@ mod tests {
     #[test]
     fn test_valid_with_else() {
         assert_eq!(
-            analyze_semantics(&vec![Expr::new(
-                ExprKind::FnIf,
-                vec![
-                    Box::new(Expr::new(ExprKind::Nil, vec![])),
-                    Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
-                    Box::new(Expr::new(ExprKind::Number(-2.2), vec![])),
-                ]
-            )]),
+            analyze_semantics(
+                &vec![Expr::new(
+                    ExprKind::FnIf,
+                    vec![
+                        Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(2.2), vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(-2.2), vec![], 0)),
+                    ],
+                    0
+                )],
+                ".if(nil 2.2 -2.2)"
+            ),
             ()
         );
     }
@@ -41,29 +49,37 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_empty_args() {
-        analyze_semantics(&vec![Expr::new(ExprKind::FnIf, vec![])]);
+        analyze_semantics(&vec![Expr::new(ExprKind::FnIf, vec![], 0)], ".if()");
     }
 
     #[test]
     #[should_panic]
     fn test_one_arg() {
-        analyze_semantics(&vec![Expr::new(
-            ExprKind::FnIf,
-            vec![Box::new(Expr::new(ExprKind::Nil, vec![]))],
-        )]);
+        analyze_semantics(
+            &vec![Expr::new(
+                ExprKind::FnIf,
+                vec![Box::new(Expr::new(ExprKind::Nil, vec![], 0))],
+                0,
+            )],
+            ".if(nil)",
+        );
     }
 
     #[test]
     #[should_panic]
     fn test_four_args() {
-        analyze_semantics(&vec![Expr::new(
-            ExprKind::FnIf,
-            vec![
-                Box::new(Expr::new(ExprKind::Nil, vec![])),
-                Box::new(Expr::new(ExprKind::Number(2.2), vec![])),
-                Box::new(Expr::new(ExprKind::Number(2.3), vec![])),
-                Box::new(Expr::new(ExprKind::Number(2.4), vec![])),
-            ],
-        )]);
+        analyze_semantics(
+            &vec![Expr::new(
+                ExprKind::FnIf,
+                vec![
+                    Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
+                    Box::new(Expr::new(ExprKind::Number(2.2), vec![], 0)),
+                    Box::new(Expr::new(ExprKind::Number(2.3), vec![], 0)),
+                    Box::new(Expr::new(ExprKind::Number(2.4), vec![], 0)),
+                ],
+                0,
+            )],
+            ".if(nil, 2.2, 2.3, 2.4)",
+        );
     }
 }

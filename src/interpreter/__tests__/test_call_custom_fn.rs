@@ -18,7 +18,7 @@ mod tests {
                 value: EvalResult::FnDeclaration(FnDeclaration {
                     name: "test".to_string(),
                     args: vec![],
-                    body: vec![Expr::new(ExprKind::Number(1.0), vec![])],
+                    body: vec![Expr::new(ExprKind::Number(1.0), vec![], 0)],
                 }),
                 mutable: false,
             },
@@ -26,7 +26,7 @@ mod tests {
 
         assert_eq!(
             eval(
-                &Expr::new(ExprKind::FnCustom("test".to_string()), vec![]),
+                &Expr::new(ExprKind::FnCustom("test".to_string()), vec![], 0),
                 &mut env
             ),
             EvalResult::Number(1.0)
@@ -43,7 +43,7 @@ mod tests {
                 value: EvalResult::FnDeclaration(FnDeclaration {
                     name: "test".to_string(),
                     args: vec!["a".to_string()],
-                    body: vec![Expr::new(ExprKind::Identifier("a".to_string()), vec![])],
+                    body: vec![Expr::new(ExprKind::Identifier("a".to_string()), vec![], 0)],
                 }),
                 mutable: false,
             },
@@ -53,7 +53,8 @@ mod tests {
             eval(
                 &Expr::new(
                     ExprKind::FnCustom("test".to_string()),
-                    vec![Box::new(Expr::new(ExprKind::Number(22.0), vec![]))]
+                    vec![Box::new(Expr::new(ExprKind::Number(22.0), vec![], 0))],
+                    0
                 ),
                 &mut env
             ),
@@ -74,14 +75,14 @@ mod tests {
                 value: EvalResult::FnDeclaration(FnDeclaration {
                     name: "test".to_string(),
                     args: vec!["a".to_string()],
-                    body: vec![Expr::new(ExprKind::Number(1.0), vec![])],
+                    body: vec![Expr::new(ExprKind::Number(1.0), vec![], 0)],
                 }),
                 mutable: false,
             },
         );
 
         eval(
-            &Expr::new(ExprKind::FnCustom("test".to_string()), vec![]),
+            &Expr::new(ExprKind::FnCustom("test".to_string()), vec![], 0),
             &mut env,
         );
     }
@@ -105,17 +106,20 @@ mod tests {
                                     Box::new(Expr::new(
                                         ExprKind::Identifier("n".to_string()),
                                         vec![],
+                                        0,
                                     )),
-                                    Box::new(Expr::new(ExprKind::Number(0.0), vec![])),
+                                    Box::new(Expr::new(ExprKind::Number(0.0), vec![], 0)),
                                 ],
+                                0,
                             )),
-                            Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
+                            Box::new(Expr::new(ExprKind::Number(1.0), vec![], 0)),
                             Box::new(Expr::new(
                                 ExprKind::FnMul,
                                 vec![
                                     Box::new(Expr::new(
                                         ExprKind::Identifier("n".to_string()),
                                         vec![],
+                                        0,
                                     )),
                                     Box::new(Expr::new(
                                         ExprKind::FnCustom("fact".to_string()),
@@ -125,14 +129,23 @@ mod tests {
                                                 Box::new(Expr::new(
                                                     ExprKind::Identifier("n".to_string()),
                                                     vec![],
+                                                    0,
                                                 )),
-                                                Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
+                                                Box::new(Expr::new(
+                                                    ExprKind::Number(1.0),
+                                                    vec![],
+                                                    0,
+                                                )),
                                             ],
+                                            0,
                                         ))],
+                                        0,
                                     )),
                                 ],
+                                0,
                             )),
                         ],
+                        0,
                     )],
                 }),
                 mutable: false,
@@ -143,7 +156,8 @@ mod tests {
             eval(
                 &Expr::new(
                     ExprKind::FnCustom("fact".to_string()),
-                    vec![Box::new(Expr::new(ExprKind::Number(3.0), vec![]))]
+                    vec![Box::new(Expr::new(ExprKind::Number(3.0), vec![], 0))],
+                    0
                 ),
                 &mut env
             ),

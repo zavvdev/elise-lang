@@ -11,7 +11,7 @@ mod tests {
     #[test]
     fn test_nil() {
         let mut env = Env::new();
-        let expr = Expr::new(ExprKind::Nil, vec![]);
+        let expr = Expr::new(ExprKind::Nil, vec![], 0);
 
         assert_eq!(eval(&expr, &mut env), EvalResult::Nil);
     }

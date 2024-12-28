@@ -10,10 +10,14 @@ mod tests {
     #[test]
     fn test_valid() {
         assert_eq!(
-            analyze_semantics(&vec![Expr::new(
-                ExprKind::FnIsNil,
-                vec![Box::new(Expr::new(ExprKind::Nil, vec![]))]
-            )]),
+            analyze_semantics(
+                &vec![Expr::new(
+                    ExprKind::FnIsNil,
+                    vec![Box::new(Expr::new(ExprKind::Nil, vec![], 0))],
+                    0
+                )],
+                ".nil?(nil)"
+            ),
             ()
         )
     }
@@ -23,18 +27,22 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_0_args() {
-        analyze_semantics(&vec![Expr::new(ExprKind::FnIsNil, vec![])]);
+        analyze_semantics(&vec![Expr::new(ExprKind::FnIsNil, vec![], 0)], ".nil?()");
     }
 
     #[test]
     #[should_panic]
     fn test_2_args() {
-        analyze_semantics(&vec![Expr::new(
-            ExprKind::FnIsNil,
-            vec![
-                Box::new(Expr::new(ExprKind::Nil, vec![])),
-                Box::new(Expr::new(ExprKind::Nil, vec![])),
-            ],
-        )]);
+        analyze_semantics(
+            &vec![Expr::new(
+                ExprKind::FnIsNil,
+                vec![
+                    Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
+                    Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
+                ],
+                0,
+            )],
+            ".nil?(nil nil)",
+        );
     }
 }

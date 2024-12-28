@@ -23,6 +23,7 @@ mod tests {
             vec![Expr {
                 kind: ExprKind::String("Hello, World!".to_string()),
                 children: vec![],
+                start_at: 0,
             }]
         );
     }

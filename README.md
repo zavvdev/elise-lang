@@ -15,7 +15,7 @@
 - [ ] add source code to error message with error highlighting
     - [x] lexer
     - [x] parser
-    - [ ] semanalyzer
+    - [x] semanalyzer (static)
     - [ ] interpreter
 - [ ] function closure (use data from lexical scope for function execution)
 

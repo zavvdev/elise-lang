@@ -14,9 +14,10 @@ mod tests {
         let expr = Expr::new(
             ExprKind::FnSub,
             vec![
-                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
+                Box::new(Expr::new(ExprKind::Number(2 as types::Number), vec![], 0)),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![], 0)),
             ],
+            0,
         );
 
         assert_eq!(
@@ -30,9 +31,10 @@ mod tests {
         let expr = Expr::new(
             ExprKind::FnSub,
             vec![
-                Box::new(Expr::new(ExprKind::Number(2.5), vec![])),
-                Box::new(Expr::new(ExprKind::Number(1.1), vec![])),
+                Box::new(Expr::new(ExprKind::Number(2.5), vec![], 0)),
+                Box::new(Expr::new(ExprKind::Number(1.1), vec![], 0)),
             ],
+            0,
         );
 
         assert_eq!(eval(&expr, &mut Env::new()), EvalResult::Number(1.4));
@@ -43,9 +45,10 @@ mod tests {
         let expr = Expr::new(
             ExprKind::FnSub,
             vec![
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::Number(-1.4), vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![], 0)),
+                Box::new(Expr::new(ExprKind::Number(-1.4), vec![], 0)),
             ],
+            0,
         );
 
         assert_eq!(eval(&expr, &mut Env::new()), EvalResult::Number(2.4));
@@ -58,7 +61,9 @@ mod tests {
             vec![Box::new(Expr::new(
                 ExprKind::Number(1 as types::Number),
                 vec![],
+                0,
             ))],
+            0,
         );
 
         assert_eq!(
@@ -75,9 +80,10 @@ mod tests {
         let expr = Expr::new(
             ExprKind::FnSub,
             vec![
-                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![])),
-                Box::new(Expr::new(ExprKind::FnPrint, vec![])),
+                Box::new(Expr::new(ExprKind::Number(1 as types::Number), vec![], 0)),
+                Box::new(Expr::new(ExprKind::FnPrint, vec![], 0)),
             ],
+            0,
         );
         eval(&expr, &mut Env::new());
     }

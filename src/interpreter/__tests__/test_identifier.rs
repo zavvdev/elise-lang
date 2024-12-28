@@ -20,7 +20,7 @@ mod tests {
             },
         );
 
-        let expr = Expr::new(ExprKind::Identifier("x".to_string()), vec![]);
+        let expr = Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0);
 
         assert_eq!(eval(&expr, &mut env), EvalResult::Number(1.0));
     }
@@ -29,7 +29,7 @@ mod tests {
     #[should_panic(expected = "Interpretation error. Undefined identifier \"x\".")]
     fn test_identifier_undefined() {
         let mut env = Env::new();
-        let expr = Expr::new(ExprKind::Identifier("x".to_string()), vec![]);
+        let expr = Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0);
         eval(&expr, &mut env);
     }
 }

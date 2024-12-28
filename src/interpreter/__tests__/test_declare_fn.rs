@@ -17,17 +17,22 @@ mod tests {
                 &Expr::new(
                     ExprKind::FnDefine,
                     vec![
-                        Box::new(Expr::new(ExprKind::Identifier("test".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::List, vec![])),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                    ]
+                        Box::new(Expr::new(
+                            ExprKind::Identifier("test".to_string()),
+                            vec![],
+                            0
+                        )),
+                        Box::new(Expr::new(ExprKind::List, vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(1.0), vec![], 0)),
+                    ],
+                    0
                 ),
                 &mut env
             ),
             EvalResult::FnDeclaration(FnDeclaration {
                 name: "test".to_string(),
                 args: vec![],
-                body: vec![Expr::new(ExprKind::Number(1.0), vec![])],
+                body: vec![Expr::new(ExprKind::Number(1.0), vec![], 0)],
             })
         );
     }
@@ -41,23 +46,37 @@ mod tests {
                 &Expr::new(
                     ExprKind::FnDefine,
                     vec![
-                        Box::new(Expr::new(ExprKind::Identifier("test".to_string()), vec![])),
+                        Box::new(Expr::new(
+                            ExprKind::Identifier("test".to_string()),
+                            vec![],
+                            0
+                        )),
                         Box::new(Expr::new(
                             ExprKind::List,
                             vec![
-                                Box::new(Expr::new(ExprKind::Identifier("a".to_string()), vec![])),
-                                Box::new(Expr::new(ExprKind::Identifier("b".to_string()), vec![])),
-                            ]
+                                Box::new(Expr::new(
+                                    ExprKind::Identifier("a".to_string()),
+                                    vec![],
+                                    0
+                                )),
+                                Box::new(Expr::new(
+                                    ExprKind::Identifier("b".to_string()),
+                                    vec![],
+                                    0
+                                )),
+                            ],
+                            0
                         )),
-                        Box::new(Expr::new(ExprKind::Number(1.0), vec![])),
-                    ]
+                        Box::new(Expr::new(ExprKind::Number(1.0), vec![], 0)),
+                    ],
+                    0
                 ),
                 &mut env
             ),
             EvalResult::FnDeclaration(FnDeclaration {
                 name: "test".to_string(),
                 args: vec!["a".to_string(), "b".to_string()],
-                body: vec![Expr::new(ExprKind::Number(1.0), vec![])],
+                body: vec![Expr::new(ExprKind::Number(1.0), vec![], 0)],
             })
         );
     }
@@ -71,20 +90,27 @@ mod tests {
                 &Expr::new(
                     ExprKind::FnDefine,
                     vec![
-                        Box::new(Expr::new(ExprKind::Identifier("test".to_string()), vec![])),
-                        Box::new(Expr::new(ExprKind::List, vec![])),
+                        Box::new(Expr::new(
+                            ExprKind::Identifier("test".to_string()),
+                            vec![],
+                            0
+                        )),
+                        Box::new(Expr::new(ExprKind::List, vec![], 0)),
                         Box::new(Expr::new(
                             ExprKind::FnDefine,
                             vec![
                                 Box::new(Expr::new(
                                     ExprKind::Identifier("test-nested".to_string()),
-                                    vec![]
+                                    vec![],
+                                    0
                                 )),
-                                Box::new(Expr::new(ExprKind::List, vec![])),
-                                Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
-                            ]
+                                Box::new(Expr::new(ExprKind::List, vec![], 0)),
+                                Box::new(Expr::new(ExprKind::Number(2.0), vec![], 0)),
+                            ],
+                            0
                         )),
-                    ]
+                    ],
+                    0
                 ),
                 &mut env
             ),
@@ -96,11 +122,13 @@ mod tests {
                     vec![
                         Box::new(Expr::new(
                             ExprKind::Identifier("test-nested".to_string()),
-                            vec![]
+                            vec![],
+                            0
                         )),
-                        Box::new(Expr::new(ExprKind::List, vec![])),
-                        Box::new(Expr::new(ExprKind::Number(2.0), vec![])),
-                    ]
+                        Box::new(Expr::new(ExprKind::List, vec![], 0)),
+                        Box::new(Expr::new(ExprKind::Number(2.0), vec![], 0)),
+                    ],
+                    0
                 )],
             })
         );

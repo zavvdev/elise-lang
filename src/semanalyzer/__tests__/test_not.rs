@@ -10,10 +10,14 @@ mod tests {
     #[test]
     fn test_correct_form() {
         assert_eq!(
-            analyze_semantics(&vec![Expr::new(
-                ExprKind::FnNot,
-                vec![Box::new(Expr::new(ExprKind::Number(4.0), vec![])),]
-            )]),
+            analyze_semantics(
+                &vec![Expr::new(
+                    ExprKind::FnNot,
+                    vec![Box::new(Expr::new(ExprKind::Number(4.0), vec![], 0))],
+                    0
+                )],
+                ".not(4)"
+            ),
             ()
         );
     }
@@ -23,18 +27,22 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_0_args() {
-        analyze_semantics(&vec![Expr::new(ExprKind::FnNot, vec![])]);
+        analyze_semantics(&vec![Expr::new(ExprKind::FnNot, vec![], 0)], ".not()");
     }
 
     #[test]
     #[should_panic]
     fn test_2_args() {
-        analyze_semantics(&vec![Expr::new(
-            ExprKind::FnNot,
-            vec![
-                Box::new(Expr::new(ExprKind::Nil, vec![])),
-                Box::new(Expr::new(ExprKind::Nil, vec![])),
-            ],
-        )]);
+        analyze_semantics(
+            &vec![Expr::new(
+                ExprKind::FnNot,
+                vec![
+                    Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
+                    Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
+                ],
+                0,
+            )],
+            ".not(nil nil)",
+        );
     }
 }
