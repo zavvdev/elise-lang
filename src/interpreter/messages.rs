@@ -1,3 +1,7 @@
+pub fn get_panic_message() -> String {
+    format!("Interpretation error.")
+}
+
 pub fn invalid_expression(x: &str) -> String {
     format!("Interpretation error. Invalid use of expression \"{}\".", x)
 }
@@ -34,11 +38,17 @@ pub fn non_identifier(x: &str) -> String {
 }
 
 pub fn identifier_exists_same_env(x: &str) -> String {
-    format!("Interpretation error. Identifier \"{}\" already exists in the same scope.", x)
+    format!(
+        "Interpretation error. Identifier \"{}\" already exists in the same scope.",
+        x
+    )
 }
 
 pub fn identifier_exists_parent_env(x: &str) -> String {
-    format!("Interpretation error. Identifier \"{}\" already exists in the parent scope.", x)
+    format!(
+        "Interpretation error. Identifier \"{}\" already exists in the parent scope.",
+        x
+    )
 }
 
 pub fn expected_boolean(x: &str) -> String {
