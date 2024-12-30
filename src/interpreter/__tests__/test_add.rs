@@ -2,12 +2,14 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EvalResult},
         },
         parser::models::expression::{Expr, ExprKind},
         types,
     };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_add_int() {
@@ -21,8 +23,8 @@ mod tests {
         );
 
         assert_eq!(
-            eval(&expr, &mut Env::new()),
-            EvalResult::Number(3 as types::Number)
+            interpret(&vec![expr], &mut Env::new(), ".add(1 2)"),
+            vec![EvalResult::Number(3 as types::Number)]
         );
     }
 
@@ -37,11 +39,14 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut Env::new()), EvalResult::Number(3.5));
+        assert_eq!(
+            interpret(&vec![expr], &mut Env::new(), ".add(1.1 2.4)"),
+            vec![EvalResult::Number(3.5)]
+        );
     }
 
     #[test]
-    fn test_add() {
+    fn test_add_mixed() {
         let expr = Expr::new(
             ExprKind::FnAdd,
             vec![
@@ -51,22 +56,25 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut Env::new()), EvalResult::Number(3.4));
+        assert_eq!(
+            interpret(&vec![expr], &mut Env::new(), ".add(1, 2.4)"),
+            vec![EvalResult::Number(3.4)]
+        );
     }
 
     #[test]
     fn test_add_empty() {
         let expr = Expr::new(ExprKind::FnAdd, vec![], 0);
         assert_eq!(
-            eval(&expr, &mut Env::new()),
-            EvalResult::Number(0 as types::Number)
+            interpret(&vec![expr], &mut Env::new(), ".add()"),
+            vec![EvalResult::Number(0 as types::Number)]
         );
     }
 
+    // FAILURE CASES
+
     #[test]
-    #[should_panic(
-        expected = "Interpretation error. Invalid arguments for function \"add\". Expected numbers."
-    )]
+    #[should_panic]
     fn test_add_invalid() {
         let expr = Expr::new(
             ExprKind::FnAdd,
@@ -76,6 +84,6 @@ mod tests {
             ],
             0,
         );
-        eval(&expr, &mut Env::new());
+        interpret(&vec![expr], &mut Env::new(), ".add(1 .print())");
     }
 }

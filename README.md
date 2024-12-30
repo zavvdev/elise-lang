@@ -16,7 +16,7 @@
     - [x] lexer
     - [x] parser
     - [x] semanalyzer (static)
-    - [ ] interpreter
+    - [x] interpreter
 - [ ] function closure (use data from lexical scope for function execution)
 
 ## Boolean

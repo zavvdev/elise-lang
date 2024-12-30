@@ -1,8 +1,11 @@
 pub mod __tests__;
+pub mod enums;
 pub mod macros;
 pub mod messages;
 pub mod models;
 pub mod semanalyzer;
+
+use enums::PrintEvalResult;
 
 use crate::{
     binary_op,
@@ -14,12 +17,6 @@ use crate::{
 
 use self::models::binding::Binding;
 use self::models::env::{Env, EnvRecord, EvalResult, FnDeclaration};
-
-#[derive(Debug, PartialEq)]
-pub enum PrintEvalResult {
-    Empty,
-    Success(String),
-}
 
 struct Interpreter<'a> {
     expressions: &'a Vec<Expr>,
@@ -34,10 +31,14 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    fn interpret(&self, env: &mut Env) {
+    fn interpret(&self, env: &mut Env) -> Vec<EvalResult> {
+        let mut res = Vec::new();
+
         for expr in self.expressions.iter() {
-            self.eval(&expr, env);
+            res.push(self.eval(&expr, env));
         }
+
+        res
     }
 
     fn eval(&self, expr: &Expr, env: &mut Env) -> EvalResult {
@@ -826,7 +827,7 @@ impl<'a> Interpreter<'a> {
     // ==========================
 }
 
-pub fn interpret(exprs: &Vec<Expr>, env: &mut Env, source_code: &str) {
+pub fn interpret(exprs: &Vec<Expr>, env: &mut Env, source_code: &str) -> Vec<EvalResult> {
     let interpreter = Interpreter::new(&exprs, source_code);
-    interpreter.interpret(env);
+    interpreter.interpret(env)
 }
