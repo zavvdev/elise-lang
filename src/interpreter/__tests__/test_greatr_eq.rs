@@ -2,12 +2,14 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EvalResult},
         },
         parser::models::expression::{Expr, ExprKind},
         types,
     };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_greatr_eq() {
@@ -21,7 +23,10 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(true));
+        assert_eq!(
+            interpret(&vec![expr], &mut env, ".greatr-eq(2 1)"),
+            vec![EvalResult::Boolean(true)]
+        );
     }
 
     #[test]
@@ -37,6 +42,9 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(true));
+        assert_eq!(
+            interpret(&vec![expr], &mut env, ".greatr-eq(2 1 1)"),
+            vec![EvalResult::Boolean(true)]
+        );
     }
 }

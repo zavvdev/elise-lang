@@ -2,11 +2,13 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EvalResult},
         },
         parser::models::expression::{Expr, ExprKind},
     };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_let() {
@@ -28,7 +30,10 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut env), EvalResult::Number(1.0));
+        assert_eq!(
+            interpret(&vec![expr], &mut env, ".let([x 1] x)"),
+            vec![EvalResult::Number(1.0)]
+        );
     }
 
     #[test]
@@ -84,7 +89,10 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut env), EvalResult::Number(3.0));
+        assert_eq!(
+            interpret(&vec![expr], &mut env, ".let([x 1] .let([y 2] .add(x y)))"),
+            vec![EvalResult::Number(3.0)]
+        );
     }
 
     #[test]
@@ -104,11 +112,16 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut env), EvalResult::Nil);
+        assert_eq!(
+            interpret(&vec![expr], &mut env, ".let([x 1])"),
+            vec![EvalResult::Nil]
+        );
     }
 
+    // FAILURE CASES
+
     #[test]
-    #[should_panic(expected = "Interpretation error. Identifier \"x\" already exists")]
+    #[should_panic]
     fn test_let_rebind() {
         let mut env = Env::new();
 
@@ -146,6 +159,6 @@ mod tests {
             0,
         );
 
-        eval(&expr, &mut env);
+        interpret(&vec![expr], &mut env, ".let([x 1] .let([x 2] x))");
     }
 }

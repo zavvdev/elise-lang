@@ -2,38 +2,42 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EvalResult},
         },
         parser::models::expression::{Expr, ExprKind},
     };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_not_bool() {
         let mut env = Env::new();
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnNot,
                     vec![Box::new(Expr::new(ExprKind::Boolean(true), vec![], 0))],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".not(true)"
             ),
-            EvalResult::Boolean(false)
+            vec![EvalResult::Boolean(false)]
         );
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnNot,
                     vec![Box::new(Expr::new(ExprKind::Boolean(false), vec![], 0))],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".not(false)"
             ),
-            EvalResult::Boolean(true)
+            vec![EvalResult::Boolean(true)]
         );
     }
 
@@ -42,15 +46,16 @@ mod tests {
         let mut env = Env::new();
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnNot,
                     vec![Box::new(Expr::new(ExprKind::Nil, vec![], 0))],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".not(nil)"
             ),
-            EvalResult::Boolean(true)
+            vec![EvalResult::Boolean(true)]
         );
     }
     #[test]
@@ -58,8 +63,8 @@ mod tests {
         let mut env = Env::new();
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnNot,
                     vec![Box::new(Expr::new(
                         ExprKind::String("".to_string()),
@@ -67,22 +72,24 @@ mod tests {
                         0
                     ))],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".not(\"\")"
             ),
-            EvalResult::Boolean(false)
+            vec![EvalResult::Boolean(false)]
         );
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnNot,
                     vec![Box::new(Expr::new(ExprKind::Number(0.0), vec![], 0))],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".not(0)"
             ),
-            EvalResult::Boolean(false)
+            vec![EvalResult::Boolean(false)]
         );
     }
 }

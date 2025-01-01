@@ -2,12 +2,14 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EvalResult},
         },
         parser::models::expression::{Expr, ExprKind},
         types,
     };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_less_eq() {
@@ -21,7 +23,10 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(false));
+        assert_eq!(
+            interpret(&vec![expr], &mut env, ".less-eq(2 1)"),
+            vec![EvalResult::Boolean(false)]
+        );
     }
 
     #[test]
@@ -37,6 +42,9 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(true));
+        assert_eq!(
+            interpret(&vec![expr], &mut env, ".less-eq(1 2 2)"),
+            vec![EvalResult::Boolean(true)]
+        );
     }
 }

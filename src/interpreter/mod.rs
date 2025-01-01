@@ -247,7 +247,7 @@ impl<'a> Interpreter<'a> {
     //
     // ==========================
 
-    pub fn print_eval_exec(&self, expr: &Expr, env: &mut Env) -> PrintEvalResult {
+    fn print_eval_exec(&self, expr: &Expr, env: &mut Env) -> PrintEvalResult {
         if expr.children.len() == 0 {
             return PrintEvalResult::Empty;
         }
