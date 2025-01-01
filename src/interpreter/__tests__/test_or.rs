@@ -2,63 +2,82 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EvalResult},
         },
         parser::models::expression::{Expr, ExprKind},
     };
 
+    // SUCCESS CASES
+
     #[test]
-    fn test_or() {
+    fn test_empty() {
         let mut env = Env::new();
 
         assert_eq!(
-            eval(&Expr::new(ExprKind::FnOr, vec![], 0), &mut env),
-            EvalResult::Nil
+            interpret(
+                &vec![Expr::new(ExprKind::FnOr, vec![], 0)],
+                &mut env,
+                ".or()"
+            ),
+            vec![EvalResult::Nil]
         );
+    }
+
+    #[test]
+    fn test_one_arg() {
+        let mut env = Env::new();
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnOr,
                     vec![Box::new(Expr::new(ExprKind::Number(2.2), vec![], 0))],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".or(2.2)"
             ),
-            EvalResult::Number(2.2)
+            vec![EvalResult::Number(2.2)]
         );
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnOr,
                     vec![Box::new(Expr::new(ExprKind::Boolean(false), vec![], 0))],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".or(false)"
             ),
-            EvalResult::Boolean(false)
+            vec![EvalResult::Boolean(false)]
         );
+    }
+
+    #[test]
+    fn test_many_args() {
+        let mut env = Env::new();
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnOr,
                     vec![
                         Box::new(Expr::new(ExprKind::Boolean(false), vec![], 0)),
                         Box::new(Expr::new(ExprKind::Nil, vec![], 0))
                     ],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".or(false nil)"
             ),
-            EvalResult::Nil
+            vec![EvalResult::Nil]
         );
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnOr,
                     vec![
                         Box::new(Expr::new(ExprKind::Boolean(false), vec![], 0)),
@@ -66,15 +85,16 @@ mod tests {
                         Box::new(Expr::new(ExprKind::String("123".to_string()), vec![], 0))
                     ],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".or(false nil \"123\")"
             ),
-            EvalResult::String("123".to_string())
+            vec![EvalResult::String("123".to_string())]
         );
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnOr,
                     vec![
                         Box::new(Expr::new(ExprKind::Boolean(false), vec![], 0)),
@@ -82,10 +102,11 @@ mod tests {
                         Box::new(Expr::new(ExprKind::Nil, vec![], 0)),
                     ],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".or(false \"123\" nil)"
             ),
-            EvalResult::String("123".to_string())
+            vec![EvalResult::String("123".to_string())]
         );
     }
 }

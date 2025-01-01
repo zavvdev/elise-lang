@@ -2,19 +2,21 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EvalResult, FnDeclaration},
         },
         parser::models::expression::{Expr, ExprKind},
     };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_define_no_arguments() {
         let mut env = Env::new();
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnDefine,
                     vec![
                         Box::new(Expr::new(
@@ -26,14 +28,15 @@ mod tests {
                         Box::new(Expr::new(ExprKind::Number(1.0), vec![], 0)),
                     ],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".fn(test [] 1)"
             ),
-            EvalResult::FnDeclaration(FnDeclaration {
+            vec![EvalResult::FnDeclaration(FnDeclaration {
                 name: "test".to_string(),
                 args: vec![],
                 body: vec![Expr::new(ExprKind::Number(1.0), vec![], 0)],
-            })
+            })]
         );
     }
 
@@ -42,8 +45,8 @@ mod tests {
         let mut env = Env::new();
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnDefine,
                     vec![
                         Box::new(Expr::new(
@@ -70,14 +73,15 @@ mod tests {
                         Box::new(Expr::new(ExprKind::Number(1.0), vec![], 0)),
                     ],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".fn(test [a b] 1)"
             ),
-            EvalResult::FnDeclaration(FnDeclaration {
+            vec![EvalResult::FnDeclaration(FnDeclaration {
                 name: "test".to_string(),
                 args: vec!["a".to_string(), "b".to_string()],
                 body: vec![Expr::new(ExprKind::Number(1.0), vec![], 0)],
-            })
+            })]
         );
     }
 
@@ -86,8 +90,8 @@ mod tests {
         let mut env = Env::new();
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnDefine,
                     vec![
                         Box::new(Expr::new(
@@ -111,10 +115,11 @@ mod tests {
                         )),
                     ],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".fn(test [] .fn(test-nested [] 2))"
             ),
-            EvalResult::FnDeclaration(FnDeclaration {
+            vec![EvalResult::FnDeclaration(FnDeclaration {
                 name: "test".to_string(),
                 args: vec![],
                 body: vec![Expr::new(
@@ -130,7 +135,7 @@ mod tests {
                     ],
                     0
                 )],
-            })
+            })]
         );
     }
 }

@@ -12,11 +12,11 @@
 - [x] conditions
 - [x] nil? function
 - [x] custom function
-- [ ] add source code to error message with error highlighting
+- [x] add source code to error message with error highlighting
     - [x] lexer
     - [x] parser
     - [x] semanalyzer (static)
-    - [ ] interpreter
+    - [x] interpreter
 - [ ] function closure (use data from lexical scope for function execution)
 
 ## Boolean

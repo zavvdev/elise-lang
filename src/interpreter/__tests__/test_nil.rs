@@ -2,17 +2,22 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EvalResult},
         },
         parser::models::expression::{Expr, ExprKind},
     };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_nil() {
         let mut env = Env::new();
         let expr = Expr::new(ExprKind::Nil, vec![], 0);
 
-        assert_eq!(eval(&expr, &mut env), EvalResult::Nil);
+        assert_eq!(
+            interpret(&vec![expr], &mut env, "nil"),
+            vec![EvalResult::Nil]
+        );
     }
 }

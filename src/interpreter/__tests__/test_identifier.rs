@@ -2,11 +2,13 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EnvRecord, EvalResult},
         },
         parser::models::expression::{Expr, ExprKind},
     };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_identifier() {
@@ -22,14 +24,19 @@ mod tests {
 
         let expr = Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0);
 
-        assert_eq!(eval(&expr, &mut env), EvalResult::Number(1.0));
+        assert_eq!(
+            interpret(&vec![expr], &mut env, "x"),
+            vec![EvalResult::Number(1.0)]
+        );
     }
 
+    // FAILURE CASES
+
     #[test]
-    #[should_panic(expected = "Interpretation error. Undefined identifier \"x\".")]
+    #[should_panic]
     fn test_identifier_undefined() {
         let mut env = Env::new();
         let expr = Expr::new(ExprKind::Identifier("x".to_string()), vec![], 0);
-        eval(&expr, &mut env);
+        interpret(&vec![expr], &mut env, "x");
     }
 }

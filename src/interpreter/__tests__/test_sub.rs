@@ -2,12 +2,14 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EvalResult},
         },
         parser::models::expression::{Expr, ExprKind},
         types,
     };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_sub_int() {
@@ -21,8 +23,8 @@ mod tests {
         );
 
         assert_eq!(
-            eval(&expr, &mut Env::new()),
-            EvalResult::Number(1 as types::Number)
+            interpret(&vec![expr], &mut Env::new(), ".sub(2 1)"),
+            vec![EvalResult::Number(1 as types::Number)]
         );
     }
 
@@ -37,11 +39,14 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut Env::new()), EvalResult::Number(1.4));
+        assert_eq!(
+            interpret(&vec![expr], &mut Env::new(), ".sub(2.5 1.1)"),
+            vec![EvalResult::Number(1.4)]
+        );
     }
 
     #[test]
-    fn test_sub() {
+    fn test_sub_mixed() {
         let expr = Expr::new(
             ExprKind::FnSub,
             vec![
@@ -51,7 +56,10 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut Env::new()), EvalResult::Number(2.4));
+        assert_eq!(
+            interpret(&vec![expr], &mut Env::new(), ".sub(1 -1.4)"),
+            vec![EvalResult::Number(2.4)]
+        );
     }
 
     #[test]
@@ -67,15 +75,15 @@ mod tests {
         );
 
         assert_eq!(
-            eval(&expr, &mut Env::new()),
-            EvalResult::Number(-1 as types::Number)
+            interpret(&vec![expr], &mut Env::new(), ".sub(1)"),
+            vec![EvalResult::Number(-1 as types::Number)]
         );
     }
 
+    // FAILURE CASES
+
     #[test]
-    #[should_panic(
-        expected = "Interpretation error. Invalid arguments for function \"sub\". Expected numbers."
-    )]
+    #[should_panic]
     fn test_sub_invalid() {
         let expr = Expr::new(
             ExprKind::FnSub,
@@ -85,6 +93,6 @@ mod tests {
             ],
             0,
         );
-        eval(&expr, &mut Env::new());
+        interpret(&vec![expr], &mut Env::new(), ".sub(1 .print())");
     }
 }

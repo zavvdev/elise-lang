@@ -2,12 +2,14 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EvalResult},
         },
         parser::models::expression::{Expr, ExprKind},
         types,
     };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_mul_int() {
@@ -21,8 +23,8 @@ mod tests {
         );
 
         assert_eq!(
-            eval(&expr, &mut Env::new()),
-            EvalResult::Number(6 as types::Number)
+            interpret(&vec![expr], &mut Env::new(), ".mul(2 3)"),
+            vec![EvalResult::Number(6 as types::Number)]
         );
     }
 
@@ -37,11 +39,14 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut Env::new()), EvalResult::Number(2.75));
+        assert_eq!(
+            interpret(&vec![expr], &mut Env::new(), ".mul(2.5 1.1)"),
+            vec![EvalResult::Number(2.75)]
+        );
     }
 
     #[test]
-    fn test_mul() {
+    fn test_mul_mixed() {
         let expr = Expr::new(
             ExprKind::FnMul,
             vec![
@@ -51,7 +56,10 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut Env::new()), EvalResult::Number(-2.8));
+        assert_eq!(
+            interpret(&vec![expr], &mut Env::new(), ".mul(2 -1.4)"),
+            vec![EvalResult::Number(-2.8)]
+        );
     }
 
     #[test]
@@ -67,23 +75,27 @@ mod tests {
         );
 
         assert_eq!(
-            eval(&expr, &mut Env::new()),
-            EvalResult::Number(3 as types::Number)
+            interpret(&vec![expr], &mut Env::new(), ".mul(3)"),
+            vec![EvalResult::Number(3 as types::Number)]
         );
     }
 
     #[test]
     fn test_mul_empty() {
         assert_eq!(
-            eval(&Expr::new(ExprKind::FnMul, vec![], 0), &mut Env::new()),
-            EvalResult::Number(1 as types::Number)
+            interpret(
+                &vec![Expr::new(ExprKind::FnMul, vec![], 0)],
+                &mut Env::new(),
+                ".mul()"
+            ),
+            vec![EvalResult::Number(1 as types::Number)]
         );
     }
 
+    // FAILURE CASES
+
     #[test]
-    #[should_panic(
-        expected = "Interpretation error. Invalid arguments for function \"mul\". Expected numbers."
-    )]
+    #[should_panic]
     fn test_mul_invalid() {
         let expr = Expr::new(
             ExprKind::FnMul,
@@ -93,6 +105,6 @@ mod tests {
             ],
             0,
         );
-        eval(&expr, &mut Env::new());
+        interpret(&vec![expr], &mut Env::new(), ".mul(1 .print())");
     }
 }

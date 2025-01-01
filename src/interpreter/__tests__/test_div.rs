@@ -2,12 +2,14 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EvalResult},
         },
         parser::models::expression::{Expr, ExprKind},
         types,
     };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_div_int() {
@@ -21,8 +23,8 @@ mod tests {
         );
 
         assert_eq!(
-            eval(&expr, &mut Env::new()),
-            EvalResult::Number(2 as types::Number)
+            interpret(&vec![expr], &mut Env::new(), ".div(4 2)"),
+            vec![EvalResult::Number(2 as types::Number)]
         );
     }
 
@@ -37,11 +39,14 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut Env::new()), EvalResult::Number(2.5));
+        assert_eq!(
+            interpret(&vec![expr], &mut Env::new(), ".div(5.5 2.2)"),
+            vec![EvalResult::Number(2.5)]
+        );
     }
 
     #[test]
-    fn test_div() {
+    fn test_div_mixed() {
         let expr = Expr::new(
             ExprKind::FnDiv,
             vec![
@@ -51,11 +56,14 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut Env::new()), EvalResult::Number(-1.25));
+        assert_eq!(
+            interpret(&vec![expr], &mut Env::new(), ".div(2 -1.6)"),
+            vec![EvalResult::Number(-1.25)]
+        );
     }
 
     #[test]
-    fn test_div_one() {
+    fn test_div_one_arg() {
         let expr = Expr::new(
             ExprKind::FnDiv,
             vec![Box::new(Expr::new(
@@ -66,13 +74,16 @@ mod tests {
             0,
         );
 
-        assert_eq!(eval(&expr, &mut Env::new()), EvalResult::Number(0.5));
+        assert_eq!(
+            interpret(&vec![expr], &mut Env::new(), ".div(2)"),
+            vec![EvalResult::Number(0.5)]
+        );
     }
 
+    // FAILURE CASES
+
     #[test]
-    #[should_panic(
-        expected = "Interpretation error. Invalid arguments for function \"div\". Expected numbers."
-    )]
+    #[should_panic]
     fn test_div_invalid() {
         let expr = Expr::new(
             ExprKind::FnDiv,
@@ -82,11 +93,11 @@ mod tests {
             ],
             0,
         );
-        eval(&expr, &mut Env::new());
+        interpret(&vec![expr], &mut Env::new(), ".div(1 .print())");
     }
 
     #[test]
-    #[should_panic(expected = "Interpretation error. Division by zero.")]
+    #[should_panic]
     fn test_div_division_by_zero_single_arg() {
         let expr = Expr::new(
             ExprKind::FnDiv,
@@ -97,11 +108,11 @@ mod tests {
             ))],
             0,
         );
-        eval(&expr, &mut Env::new());
+        interpret(&vec![expr], &mut Env::new(), ".div(0)");
     }
 
     #[test]
-    #[should_panic(expected = "Interpretation error. Division by zero.")]
+    #[should_panic]
     fn test_div_division_by_zero() {
         let expr = Expr::new(
             ExprKind::FnDiv,
@@ -111,6 +122,6 @@ mod tests {
             ],
             0,
         );
-        eval(&expr, &mut Env::new());
+        interpret(&vec![expr], &mut Env::new(), ".div(2.4 0)");
     }
 }

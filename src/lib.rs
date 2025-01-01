@@ -17,8 +17,8 @@ pub fn execute(content: String, env: &mut Env) {
 
     let tokens = tokenize(&content);
     let expressions = parse(tokens, &content);
-    
+
     analyze_semantics(&expressions, &content);
 
-    interpret(expressions, env);
+    interpret(&expressions, env, &content);
 }
