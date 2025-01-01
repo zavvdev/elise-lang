@@ -52,3 +52,12 @@ pub fn expected_boolean(x: &str) -> String {
 pub fn not_callable(x: &str) -> String {
     format!("\"{}\" is not callable", x)
 }
+
+pub fn invalid_args_amount(fn_name: &str, expected: &str, got: &str) -> String {
+    format!(
+        "Invalid amount of arguments for function: {}. Expected: {}, Got: {}",
+        fn_name.to_string(),
+        expected,
+        got
+    )
+}

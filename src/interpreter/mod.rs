@@ -3,7 +3,6 @@ pub mod enums;
 pub mod macros;
 pub mod messages;
 pub mod models;
-pub mod semanalyzer;
 
 use enums::PrintEvalResult;
 
@@ -788,11 +787,16 @@ impl<'a> Interpreter<'a> {
         if let Some(env_record) = env.clone().get(name) {
             match &env_record.value {
                 EvalResult::FnDeclaration(fn_decl) => {
-                    let expr = semanalyzer::analyze_fn_call_semantics(
-                        expr,
-                        &fn_decl.name,
-                        fn_decl.args.len(),
-                    );
+                    if fn_decl.args.len() != expr.children.len() {
+                        self.error(
+                            &messages::invalid_args_amount(
+                                to_str!(&fn_decl.name),
+                                to_str!(fn_decl.args.len()),
+                                to_str!(expr.children.len()),
+                            ),
+                            expr.start_at,
+                        );
+                    }
 
                     let argument_bindings = fn_decl
                         .args
