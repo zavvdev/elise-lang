@@ -2,7 +2,7 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EvalResult},
         },
         parser::models::expression::{Expr, ExprKind},
@@ -13,7 +13,10 @@ mod tests {
         let mut env = Env::new();
         let expr = Expr::new(ExprKind::Boolean(true), vec![], 0);
 
-        assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(true));
+        assert_eq!(
+            interpret(&vec![expr], &mut env, "true"),
+            vec![EvalResult::Boolean(true)]
+        );
     }
 
     #[test]
@@ -21,6 +24,9 @@ mod tests {
         let mut env = Env::new();
         let expr = Expr::new(ExprKind::Boolean(false), vec![], 0);
 
-        assert_eq!(eval(&expr, &mut env), EvalResult::Boolean(false));
+        assert_eq!(
+            interpret(&vec![expr], &mut env, "false"),
+            vec![EvalResult::Boolean(false)]
+        );
     }
 }
