@@ -1,6 +1,10 @@
-.fn (fact [n]
-    .if(.eq(n, 0)
-      1
-      .mul(n, .fact(.sub(n 1)))))
+.fn (add [] 1)
 
-.println(.fact(3))
+.println(.add())
+
+.fn (get-plus-random [] 
+          .let ([y 1] 
+              .fn (plus-random [x] .add(x y))))
+
+.let ([plus-random .get-plus-random()]
+    .println(.plus-random(2)))

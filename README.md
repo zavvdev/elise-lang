@@ -17,7 +17,8 @@
     - [x] parser
     - [x] semanalyzer (static)
     - [x] interpreter
-- [ ] function closure (use data from lexical scope for function execution)
+- [ ] throw an error if user defines a function with the name of known function (add, sum, nil? etc.)
+- [ ] function closure (use data from lexical scope during function execution)
 
 ## Boolean
 
