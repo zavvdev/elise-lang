@@ -8,6 +8,8 @@ mod tests {
         parser::models::expression::{Expr, ExprKind},
     };
 
+    // SUCCESS CASES
+
     #[test]
     fn test_true() {
         let mut env = Env::new();

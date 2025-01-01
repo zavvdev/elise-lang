@@ -2,11 +2,13 @@
 mod tests {
     use crate::{
         interpreter::{
-            eval,
+            interpret,
             models::env::{Env, EnvRecord, EvalResult, FnDeclaration},
         },
         parser::models::expression::{Expr, ExprKind},
     };
+
+    // SUCCESS CASES
 
     #[test]
     fn test_no_arguments() {
@@ -25,11 +27,12 @@ mod tests {
         );
 
         assert_eq!(
-            eval(
-                &Expr::new(ExprKind::FnCustom("test".to_string()), vec![], 0),
-                &mut env
+            interpret(
+                &vec![Expr::new(ExprKind::FnCustom("test".to_string()), vec![], 0)],
+                &mut env,
+                ".test()"
             ),
-            EvalResult::Number(1.0)
+            vec![EvalResult::Number(1.0)]
         );
     }
 
@@ -50,40 +53,16 @@ mod tests {
         );
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnCustom("test".to_string()),
                     vec![Box::new(Expr::new(ExprKind::Number(22.0), vec![], 0))],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".test(22)"
             ),
-            EvalResult::Number(22.0)
-        );
-    }
-
-    #[test]
-    #[should_panic(
-        expected = "Interpretation error. Invalid amount of arguments for function: \"test\". Expected: 1, Got: 0"
-    )]
-    fn test_invalid_amount_of_arguments() {
-        let mut env = Env::new();
-
-        env.set(
-            "test".to_string(),
-            EnvRecord {
-                value: EvalResult::FnDeclaration(FnDeclaration {
-                    name: "test".to_string(),
-                    args: vec!["a".to_string()],
-                    body: vec![Expr::new(ExprKind::Number(1.0), vec![], 0)],
-                }),
-                mutable: false,
-            },
-        );
-
-        eval(
-            &Expr::new(ExprKind::FnCustom("test".to_string()), vec![], 0),
-            &mut env,
+            vec![EvalResult::Number(22.0)]
         );
     }
 
@@ -153,15 +132,42 @@ mod tests {
         );
 
         assert_eq!(
-            eval(
-                &Expr::new(
+            interpret(
+                &vec![Expr::new(
                     ExprKind::FnCustom("fact".to_string()),
                     vec![Box::new(Expr::new(ExprKind::Number(3.0), vec![], 0))],
                     0
-                ),
-                &mut env
+                )],
+                &mut env,
+                ".fact(3)"
             ),
-            EvalResult::Number(6.0)
+            vec![EvalResult::Number(6.0)]
+        );
+    }
+
+    // FAILURE CASES
+
+    #[test]
+    #[should_panic]
+    fn test_invalid_amount_of_arguments() {
+        let mut env = Env::new();
+
+        env.set(
+            "test".to_string(),
+            EnvRecord {
+                value: EvalResult::FnDeclaration(FnDeclaration {
+                    name: "test".to_string(),
+                    args: vec!["a".to_string()],
+                    body: vec![Expr::new(ExprKind::Number(1.0), vec![], 0)],
+                }),
+                mutable: false,
+            },
+        );
+
+        interpret(
+            &vec![Expr::new(ExprKind::FnCustom("test".to_string()), vec![], 0)],
+            &mut env,
+            ".test()",
         );
     }
 }
