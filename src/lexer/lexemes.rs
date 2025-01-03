@@ -41,6 +41,29 @@ pub const L_FALSE: &str = "false";
 pub const L_STRING_LITERAL: char = '"';
 pub const L_STRING_LITERAL_ESCAPE: char = '\\';
 
+pub const FORBIDDEN_IDENTIFIER_NAMES: [&str; 20] = [
+    L_FN_ADD.1,
+    L_FN_SUB.1,
+    L_FN_MUL.1,
+    L_FN_DIV.1,
+    L_FN_PRINT.1,
+    L_FN_PRINTLN.1,
+    L_FN_LET_BINDING.1,
+    L_FN_GREATR.1,
+    L_FN_GREATR_EQ.1,
+    L_FN_LESS.1,
+    L_FN_LESS_EQ.1,
+    L_FN_EQ.1,
+    L_FN_NOT_EQ.1,
+    L_FN_NOT.1,
+    L_FN_AND.1,
+    L_FN_OR.1,
+    L_FN_BOOL.1,
+    L_FN_IF.1,
+    L_FN_IS_NIL.1,
+    L_FN_DEFINE.1,
+];
+
 // ================
 
 pub fn fn_lexeme_to_string(lexeme: (char, &str)) -> String {
@@ -49,4 +72,8 @@ pub fn fn_lexeme_to_string(lexeme: (char, &str)) -> String {
 
 pub fn to_fn_string(lexeme: &str) -> String {
     format!("{}{}", L_FN, lexeme)
+}
+
+pub fn is_forbidden_identifier_name(name: &str) -> bool {
+    FORBIDDEN_IDENTIFIER_NAMES.contains(&name)
 }

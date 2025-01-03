@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 
+use lexemes::is_forbidden_identifier_name;
 use models::token::is_reduceable_token;
 use regex::Regex;
 
@@ -594,7 +595,7 @@ impl Lexer {
             self.consume();
         }
 
-        if !re.is_match(&result) {
+        if !re.is_match(&result) || is_forbidden_identifier_name(&result) {
             self.error(&messages::invalid_identifier_name(&result));
         }
 

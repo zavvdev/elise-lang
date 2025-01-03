@@ -3,6 +3,7 @@ mod tests {
     use assert_panic::assert_panic;
 
     use crate::lexer::{
+        lexemes::FORBIDDEN_IDENTIFIER_NAMES,
         models::token::{Token, TokenKind, TokenSpan},
         tokenize,
     };
@@ -221,6 +222,18 @@ mod tests {
             assert_panic!(
                 {
                     tokenize(invalid_identifier);
+                },
+                String,
+            );
+        }
+    }
+
+    #[test]
+    fn test_forbidden_identifier_names() {
+        for forbidden_name in FORBIDDEN_IDENTIFIER_NAMES.iter() {
+            assert_panic!(
+                {
+                    tokenize(format!(".let ([{} 42])", forbidden_name).as_str());
                 },
                 String,
             );
