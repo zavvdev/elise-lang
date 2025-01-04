@@ -129,10 +129,8 @@ impl<'a> Interpreter<'a> {
     // ==========================
 
     /**
-     *   
      * allow_rebind - allow identifiers to be redefined in the same environment
      * allow_deep_rebind - allow identifiers to be redefined in the same and in the parent environments
-     *
      */
     fn identifiers_bind(
         &self,
@@ -143,6 +141,7 @@ impl<'a> Interpreter<'a> {
         allow_deep_rebind: bool,
     ) {
         for binding in bindings {
+            // If identifier already exists in the table and rebind in this table is not allowed
             if !allow_rebind && env.has(&binding.name) {
                 self.error(
                     &messages::identifier_exists_same_env(&binding.name),
@@ -150,6 +149,8 @@ impl<'a> Interpreter<'a> {
                 );
             }
 
+            // If identifier already exists anythere in the parent and we disallow rebind those
+            // identifiers in the table
             if !allow_deep_rebind && env.has_deep(&binding.name) {
                 self.error(
                     &messages::identifier_exists_parent_env(&binding.name),
@@ -157,6 +158,7 @@ impl<'a> Interpreter<'a> {
                 );
             }
 
+            // Add identifier to table
             env.set(
                 binding.name,
                 EnvRecord {
@@ -223,6 +225,12 @@ impl<'a> Interpreter<'a> {
         let mut child_env = Env::new();
 
         child_env.attach_parent(env);
+
+        // mutable=false because we don't want to allow rebind of identifiers
+        //
+        // allow_rebind=false because we don't want duplicated identifiers
+        //
+        // allow_deep_rebind=false because we don't want collision with parent env identifiers
         self.identifiers_bind(bindings, &mut child_env, false, false, false);
 
         let mut result = EvalResult::Nil;
@@ -757,6 +765,7 @@ impl<'a> Interpreter<'a> {
             name: name.clone(),
             args,
             body,
+            lexical_env: env.clone(),
         });
 
         env.set(
@@ -806,7 +815,16 @@ impl<'a> Interpreter<'a> {
                         .collect();
 
                     let mut child_env = Env::new();
+
+                    child_env.attach_lexical(&fn_decl.lexical_env);
                     child_env.attach_parent(&env);
+
+                    // mutable=false because we don't want to allow rebind of arguments
+                    //
+                    // allow_rebind=false because we don't want duplicated argument names
+                    //
+                    // allow_deep_rebind=true because we want arguments priority over any parent env
+                    // identifiers with the same name
                     self.identifiers_bind(argument_bindings, &mut child_env, false, false, true);
 
                     let mut result = EvalResult::Nil;

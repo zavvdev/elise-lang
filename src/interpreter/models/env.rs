@@ -7,6 +7,7 @@ pub struct FnDeclaration {
     pub name: String,
     pub args: Vec<String>,
     pub body: Vec<Expr>,
+    pub lexical_env: Env,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -18,16 +19,19 @@ pub enum EvalResult {
     FnDeclaration(FnDeclaration),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct EnvRecord {
     pub value: EvalResult,
     pub mutable: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Env {
     table: HashMap<String, EnvRecord>,
     parent_env: Option<Box<Env>>,
+
+    // Closure environment. Prioritizes over parent_env.
+    lexical_env: Option<Box<Env>>,
 }
 
 impl Env {
@@ -35,6 +39,7 @@ impl Env {
         Self {
             table: HashMap::new(),
             parent_env: None,
+            lexical_env: None,
         }
     }
 
@@ -43,14 +48,31 @@ impl Env {
         self.parent_env = Some(Box::new(parent_env.clone()));
     }
 
+    pub fn attach_lexical(&mut self, lexical_env: &Env) {
+        // TODO: Get rid of clone
+        self.lexical_env = Some(Box::new(lexical_env.clone()));
+    }
+
     pub fn get(&self, key: &str) -> Option<&EnvRecord> {
-        match self.table.get(key) {
-            Some(value) => Some(value),
-            None => match &self.parent_env {
-                Some(parent_env) => parent_env.get(key),
-                None => None,
-            },
+        if let Some(record) = self.table.get(key) {
+            return Some(record);
         }
+    
+        // Lexical environment has higher priority
+
+        if let Some(lexical) = &self.lexical_env {
+            if let Some(record) = lexical.get(key) {
+                return Some(record);
+            }
+        }
+
+        if let Some(parent) = &self.parent_env {
+            if let Some(record) = parent.get(key) {
+                return Some(record);
+            }
+        }
+
+        None
     }
 
     pub fn set(&mut self, key: String, value: EnvRecord) {
@@ -61,18 +83,18 @@ impl Env {
         self.table.contains_key(key)
     }
 
+    pub fn has_deep(&self, key: &str) -> bool {
+        match &self.parent_env {
+            Some(parent_env) => Self::has_in_parent(parent_env, key),
+            None => false,
+        }
+    }
+
     fn has_in_parent(parent: &Box<Env>, key: &str) -> bool {
         parent.table.contains_key(key)
             || match &parent.parent_env {
                 Some(parent_env) => Self::has_in_parent(&parent_env, key),
                 None => false,
             }
-    }
-
-    pub fn has_deep(&self, key: &str) -> bool {
-        match &self.parent_env {
-            Some(parent_env) => Self::has_in_parent(parent_env, key),
-            None => false,
-        }
     }
 }

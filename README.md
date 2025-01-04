@@ -18,7 +18,8 @@
     - [x] semanalyzer (static)
     - [x] interpreter
 - [x] disallow to define identifiers with the name of known function (add, sum, nil? etc.)
-- [ ] function closure (use data from lexical scope during function execution)
+- [x] function closure (use data from lexical scope during function execution)
+- [ ] runtime optimizations (get rid of redundant allocations)
 
 ## Boolean
 

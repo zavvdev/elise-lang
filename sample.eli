@@ -1,10 +1,15 @@
-.fn (add [] 1)
-
-.println(.add())
-
-.fn (get-plus-random [] 
+.fn (get-plus-random [k] 
+          .fn (add-k [] .add(1 k))
           .let ([y 1] 
-              .fn (plus-random [x] .add(x y))))
+              .fn (plus-random [x] .add(x y .add-k()))))
 
-.let ([plus-random .get-plus-random()]
-    .println(.plus-random(2)))
+.let ([plus-random .get-plus-random(2)
+       r 10]
+    .println("Function closure. Expect 14:", .plus-random(r)))
+
+.fn (fact [n]
+    .if(.eq(n, 0)
+      1
+      .mul(n, .fact(.sub(n 1)))))
+
+.println("Factorial:", .fact(3))

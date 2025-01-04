@@ -36,6 +36,7 @@ mod tests {
                 name: "test".to_string(),
                 args: vec![],
                 body: vec![Expr::new(ExprKind::Number(1.0), vec![], 0)],
+                lexical_env: Env::new(),
             })]
         );
     }
@@ -81,6 +82,7 @@ mod tests {
                 name: "test".to_string(),
                 args: vec!["a".to_string(), "b".to_string()],
                 body: vec![Expr::new(ExprKind::Number(1.0), vec![], 0)],
+                lexical_env: Env::new(),
             })]
         );
     }
@@ -135,6 +137,7 @@ mod tests {
                     ],
                     0
                 )],
+                lexical_env: Env::new(),
             })]
         );
     }
