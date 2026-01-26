@@ -1,16 +1,6 @@
 [package]
 name = "elise-lang"
 version = "0.1.0"
-edition = "2021"
-
-[[bin]]
-name = "elise"
-path = "src/main.rs"
-
-[lib]
-name = "elise"
-path = "src/lib.rs"
+edition = "2024"
 
 [dependencies]
-assert-panic = "1.0.1"
-regex = "1.10.4"

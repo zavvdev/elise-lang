@@ -1,14 +1,19 @@
-release:
-	cargo build -r
+build:
+	cargo build
 
-run-release:
-	cargo run -r sample.eli
+release-build:
+	cargo build --release
+
+# DEV PURPOSE START
+run:
+	./target/debug/elise-lang --file=sample.eli --print-bytecode
+
+release-run:
+	./target/release/elise-lang --file=sample.eli --print-bytecode
+# DEV PURPOSE END
 
 test:
 	cargo test
 
 check:
 	cargo check
-
-run:
-	cargo run sample.eli

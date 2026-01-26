@@ -1,15 +1,3 @@
-.fn (get-plus-random [k] 
-          .fn (add-k [] .add(1 k))
-          .let ([y 1] 
-              .fn (plus-random [x] .add(x y .add-k()))))
+.declare(PI 3.14)
 
-.let ([plus-random .get-plus-random(2)
-       r 10]
-    .println("Function closure. Expect 14:", .plus-random(r)))
-
-.fn (fact [n]
-    .if(.eq(n, 0)
-      1
-      .mul(n, .fact(.sub(n 1)))))
-
-.println("Factorial:", .fact(3))
+.add(2 + PI)
