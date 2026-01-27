@@ -6,10 +6,10 @@ release-build:
 
 # DEV PURPOSE START
 run:
-	./target/debug/elise-lang --file=sample.eli --print-bytecode
+	./target/debug/elise --file-path=sample.eli --print-bytecode
 
 release-run:
-	./target/release/elise-lang --file=sample.eli --print-bytecode
+	./target/release/elise --file-path=sample.eli --print-bytecode
 # DEV PURPOSE END
 
 test:
