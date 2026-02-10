@@ -1,9 +1,10 @@
+pub mod input;
+
+use input::input::parse_args;
+
 const DEFAULT_PRINT_BYTECODE: bool = false;
-
 const FILE_EXT: &str = "eli";
-
 const ARG_FILE_PATH: &str = "file-path";
-
 const ARG_PRINT_BYTECODE: &str = "print-bytecode";
 
 /**
@@ -17,18 +18,29 @@ pub enum ExecResultCode {
 
 // ===============================
 
-#[derive(Debug)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Conf {
     pub file_path: String,
     pub print_bytecode: bool,
 }
 
 impl Conf {
-    pub fn from_args(_args: &Vec<String>) -> Self {
+    pub fn from_args(args: &Vec<String>) -> Self {
+        let parsed_args = parse_args(
+            &args.iter().skip(1).collect(),
+            &vec![ARG_FILE_PATH, ARG_PRINT_BYTECODE],
+        );
+
+        if parsed_args.len() == 0 {
+            panic!("No arguments provided. Please provide a file path.");
+        }
+
         Self {
-            file_path: "123".to_string(),
-            print_bytecode: false,
+            file_path: parsed_args[0].value.clone(),
+            print_bytecode: parsed_args[1]
+                .value
+                .parse::<bool>()
+                .unwrap_or(DEFAULT_PRINT_BYTECODE),
         }
     }
 }
