@@ -4,10 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [[bin]]
+# name = name of the compiled executable.
+# The output binary will be: target/debug/elise
 name = "elise"
 path = "src/main.rs"
 
 [lib]
+# name = crate name used for extern crate / use.
+# It defines how other crates import this library.
+# use elise::something;
 name = "elise"
 path = "src/lib.rs"
 

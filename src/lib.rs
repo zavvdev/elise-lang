@@ -1,3 +1,7 @@
+// This file is an entry point for all modules in this project.
+// If main.ts needs to import something, it needs to import it
+// from this file by using use elise::something;
+
 pub mod conf;
 pub mod fsys;
 
