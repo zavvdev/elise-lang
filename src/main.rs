@@ -58,9 +58,7 @@ fn main() {
     // reference args variable in this scope anymore.
     let config = Conf::from_cli(args);
 
-    // STOPPED HERE 22/02/2026
-
-    match file_reader::read_file(&config.file_path) {
+    match file_reader::read_file(&config.file_path()) {
         Ok(file_descriptor) => {
             let exec_res = exec(file_descriptor.content, &config);
             handle_exec_result(&exec_res, &config);
@@ -71,3 +69,11 @@ fn main() {
         }
     }
 }
+
+// TODO FOR PRE-EXECUTION STAGE:
+// - [x] Add config builder
+// - [ ] Add cli args parsing in conf/input
+// - [ ] Add tests for conf/input
+// - [ ] Add tests for Conf struct
+// - [ ] Add tests for file reader
+// - [ ] Add tests for handle_exec_result
