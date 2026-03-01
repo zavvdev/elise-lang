@@ -1,6 +1,6 @@
 pub mod input;
 
-use input::input::parse_args;
+use input::input::parse_cli_args;
 
 const DEFAULT_PRINT_BYTECODE: bool = false;
 const FILE_EXT: &str = "eli";
@@ -26,24 +26,24 @@ pub struct Conf {
 
 impl Conf {
     pub fn from_cli(args: Vec<String>) -> Self {
+        if args.len() == 0 {
+            panic!("No arguments provided. Please provide a file path.");
+        }
+
         println!("args: {:?}", args);
-        return Self { file_path: "".to_string(), print_bytecode: false }
-        // let parsed_args = parse_args(
-        //     &args.iter().skip(1).collect(),
-        //     &vec![ARG_FILE_PATH, ARG_PRINT_BYTECODE],
-        // );
-        //
-        // if parsed_args.len() == 0 {
-        //     panic!("No arguments provided. Please provide a file path.");
-        // }
-        //
-        // Self {
-        //     file_path: parsed_args[0].value.clone(),
-        //     print_bytecode: parsed_args[1]
-        //         .value
-        //         .parse::<bool>()
-        //         .unwrap_or(DEFAULT_PRINT_BYTECODE),
-        // }
+        let parsed_args = parse_cli_args(&args, &vec![ARG_FILE_PATH, ARG_PRINT_BYTECODE]);
+
+        if parsed_args.len() == 0 {
+            panic!("No valid arguments provided.");
+        }
+
+        Self {
+            file_path: parsed_args[0].value.clone(),
+            print_bytecode: parsed_args[1]
+                .value
+                .parse::<bool>()
+                .unwrap_or(DEFAULT_PRINT_BYTECODE),
+        }
     }
 }
 
