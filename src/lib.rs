@@ -4,24 +4,26 @@
 
 pub mod conf;
 pub mod fsys;
+pub mod out;
 
 use conf::Conf;
 
-pub enum ExecResultCode {
+pub enum ExecStatus {
     Success,
     Error(String),
 }
 
 pub struct ExecResult {
-    pub code: ExecResultCode,
+    pub code: ExecStatus,
     pub output: String,
     pub bytecode: Option<String>,
     pub config: Conf,
 }
 
+// TODO
 pub fn exec(_content: String, config: &Conf) -> ExecResult {
     ExecResult {
-        code: ExecResultCode::Success,
+        code: ExecStatus::Success,
         output: String::from("123"),
         bytecode: Some(String::from("CALL a [1] [0]")),
         config: config.clone(), // TODO: remove clone
@@ -30,18 +32,16 @@ pub fn exec(_content: String, config: &Conf) -> ExecResult {
 
 pub fn handle_exec_result(res: &ExecResult, config: &Conf) {
     match &res.code {
-        ExecResultCode::Success => {
-            println!("{}", res.output);
+        ExecStatus::Success => {
+            out::print_execution_output(&res.output);
             if let Some(bytecode) = &res.bytecode {
                 if config.print_bytecode {
-                    println!("--- bytecode start ---");
-                    println!("{}", bytecode);
-                    println!("--- bytecode end ---");
+                    out::print_bytecode(bytecode);
                 }
             }
         }
-        ExecResultCode::Error(reason) => {
-            println!("Error during execution: {}", reason);
+        ExecStatus::Error(reason) => {
+            out::error(reason, None);
         }
     }
 }

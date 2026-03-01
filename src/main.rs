@@ -5,10 +5,12 @@ use elise::conf::Conf;
 use elise::exec;
 use elise::fsys::file_reader;
 use elise::handle_exec_result;
+use elise::out;
 
 // Rust ecosystem imports
 
 use std::env;
+use std::panic;
 
 // This function is the entry point for our program
 // that is executed with binary from CLI.
@@ -29,6 +31,10 @@ use std::env;
 // want to run the program with custom configuration outside the CLI, you can
 // handle the result of execution in any way you want by just using the ExecResult struct.
 fn main() {
+    if !cfg!(debug_assertions) {
+        panic::set_hook(Box::new(out::panic_hook));
+    }
+
     // env::args() returns back an Iterator:
     //
     // https://doc.rust-lang.org/book/ch13-02-iterators.html
@@ -58,16 +64,13 @@ fn main() {
     // reference args variable in this scope anymore.
     let config = Conf::from_cli(args);
 
-    println!("config {:?}", config);
-
-    match file_reader::read_file(&config.file_path()) {
+    match file_reader::read_file(&config.file_path) {
         Ok(file_descriptor) => {
             let exec_res = exec(file_descriptor.content, &config);
             handle_exec_result(&exec_res, &config);
         }
         Err(error) => {
-            println!("Error reading file.");
-            println!("{}", error.message);
+            out::error(&error.message, Some("Error reading file"));
         }
     }
 }
@@ -75,6 +78,9 @@ fn main() {
 // TODO FOR PRE-EXECUTION STAGE:
 // - [x] Add config builder
 // - [x] Add cli args parsing in conf/input
+// - [x] Add custom panic hook
+// - [ ] Improve args parsing in conf/input.
+//       Add support for more flexible configuration (continue in conf.rs)
 // - [ ] Add tests for conf/input
 // - [ ] Add tests for Conf struct
 // - [ ] Add tests for file reader
