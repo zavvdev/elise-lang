@@ -13,6 +13,8 @@ pub mod input {
     // and the list of argument names that we want to parse (names).
     // Return the list of parsed argument values in the same order as names.
     // TODO: Replace Vec<ParsedArg> with HashMap<String, String>.
+    // This function should not validate the arguments, just parse them.
+    // Validation should be done by caller.
     pub fn parse_cli_args(_args: &Vec<String>, names: &Vec<&str>) -> Vec<ParsedArg> {
         let res: Vec<ParsedArg> = Vec::new();
 
