@@ -10,7 +10,6 @@ const ARG_K_PRINT_BYTECODE: &str = "print-bytecode";
 
 // Argument values
 const ARG_V_TRUE: &str = "true";
-const ARG_V_FALSE: &str = "false";
 
 // ===============================
 
@@ -35,17 +34,21 @@ impl Conf {
         path.ends_with(FILE_EXT)
     }
 
-    fn unwrap_arg<'a, F>(name: &'a str, getter: F, default_value: Option<&str>) -> String
+    fn boolean(value: &str) -> bool {
+        if value.is_empty() {
+            return true;
+        }
+        value == ARG_V_TRUE
+    }
+
+    fn unwrap_arg<'a, F>(name: &'a str, getter: F) -> String
     where
         F: Fn() -> Option<&'a String>,
     {
         return match getter() {
-            Some(path) => path.to_string(),
+            Some(value) => value.to_string(),
             None => {
-                return match default_value {
-                    Some(def) => def.to_string(),
-                    None => panic!("\"{}\" argument is required", name),
-                };
+                panic!("\"{}\" argument is required", name);
             }
         };
     }
@@ -61,14 +64,13 @@ impl Conf {
             panic!("No valid arguments provided.");
         }
 
-        Self::new(
-            Self::unwrap_arg(&ARG_K_FILE_PATH, || parsed_args.get(ARG_K_FILE_PATH), None),
-            Self::unwrap_arg(
-                &ARG_K_PRINT_BYTECODE,
-                || parsed_args.get(ARG_K_PRINT_BYTECODE),
-                Some(ARG_V_FALSE),
-            ) == ARG_V_TRUE,
-        )
+        let file_path = Self::unwrap_arg(&ARG_K_FILE_PATH, || parsed_args.get(ARG_K_FILE_PATH));
+
+        let print_bytecode = Self::unwrap_arg(&ARG_K_PRINT_BYTECODE, || {
+            parsed_args.get(ARG_K_PRINT_BYTECODE)
+        });
+
+        Self::new(file_path, Self::boolean(&print_bytecode))
     }
 
     pub fn file_path(&self) -> String {
