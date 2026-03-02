@@ -2,6 +2,8 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
 
+use crate::out;
+
 // ===============================
 // Constants
 // ===============================
@@ -14,17 +16,22 @@ const ARG_K_PRINT_BYTECODE: &str = "print-bytecode";
 
 const ARG_V_TRUE: &str = "true";
 
+const ARG_V_FALSE: &str = "false";
+
 // ==============================
 
+#[derive(Clone)]
 enum AType {
     SourceFile(&'static str),
     Boolean,
 }
 
+#[derive(Clone)] // TODO: Remove clone
 struct Arg {
     name: &'static str,
     t: AType,
     req: bool,
+    def: Option<String>,
 }
 
 // We use lazy evaluation for static variables in order to keep
@@ -42,6 +49,7 @@ lazy_static! {
                 name: ARG_K_FILE_PATH,
                 t: AType::SourceFile(FILE_EXT),
                 req: true,
+                def: None,
             },
         );
 
@@ -51,6 +59,7 @@ lazy_static! {
                 name: ARG_K_PRINT_BYTECODE,
                 t: AType::Boolean,
                 req: false,
+                def: Some(ARG_V_FALSE.to_string()),
             },
         );
 
@@ -69,11 +78,11 @@ pub struct Conf {
 impl Conf {
     // Validators. Must be used for argument validation in build_cli_args function.
 
-    fn validate_source_file(path: &str) -> &str {
-        if path.ends_with(FILE_EXT) {
+    fn validate_source_file(path: String, ext: &str) -> String {
+        if path.ends_with(ext) {
             return path;
         } else {
-            panic!("File must have {} extension", FILE_EXT);
+            out::crash(&format!("File must have {} extension", ext));
         }
     }
 
@@ -114,8 +123,43 @@ impl Conf {
     // If any argument is provided but has invalid value, this function must panic.
     // If any argument is not provided and not required it must be set to
     // the respective default value.
-    pub fn build_cli_args(_args: &HashMap<String, String>) -> HashMap<String, String> {
-        let res: HashMap<String, String> = HashMap::new();
+    pub fn build_cli_args(args: &HashMap<String, String>) -> HashMap<String, String> {
+        let mut res: HashMap<String, String> = HashMap::new();
+
+        // TODO: remove clone
+        for (key, value) in ARGS_MAP.clone().into_iter() {
+            let mut arg: Option<String> = None;
+
+            if args.contains_key(key) {
+                let arg_value = args.get(key).unwrap();
+                arg = Some(arg_value.to_string());
+            }
+
+            let key = key.to_string();
+
+            if arg.is_none() && value.req {
+                out::crash(&format!("\"{}\" argument is required.", value.name));
+            }
+
+            if arg.is_none() && value.def.is_some() {
+                res.insert(key, value.def.unwrap());
+            } else {
+                let arg = arg.unwrap();
+                match value.t {
+                    AType::SourceFile(ext) => {
+                        res.insert(key, Self::validate_source_file(arg, ext));
+                    }
+                    AType::Boolean => {
+                        if arg.is_empty() {
+                            res.insert(key, ARG_V_TRUE.to_string());
+                        } else {
+                            res.insert(key, (ARG_V_TRUE == arg).to_string());
+                        }
+                    }
+                }
+            }
+        }
+
         return res;
     }
 

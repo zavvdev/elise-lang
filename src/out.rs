@@ -2,7 +2,7 @@ pub fn panic_hook(info: &std::panic::PanicHookInfo) {
     println!("ERR: {}", info.payload_as_str().unwrap_or("UNEXPECTED"));
 }
 
-pub fn crash(message: &str) {
+pub fn crash(message: &str) -> ! {
     panic!("{}", message);
 }
 
