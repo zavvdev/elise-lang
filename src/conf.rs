@@ -1,16 +1,17 @@
 use regex::Regex;
 use std::collections::HashMap;
+use std::path::Path;
 
 use crate::out;
 
 // ===============================
-// #SourceFile
+// #source_file
 // ===============================
 
 const FILE_EXT: &str = ".eli";
 
 // ===============================
-// #ArgumentNames
+// #argument_names
 // ===============================
 
 const ARG_K_FILE_PATH: &str = "file-path";
@@ -18,7 +19,7 @@ const ARG_K_FILE_PATH: &str = "file-path";
 const ARG_K_PRINT_BYTECODE: &str = "print-bytecode";
 
 // ===============================
-// #ArgumentValues
+// #argument_values
 // ===============================
 
 const ARG_V_TRUE: &str = "true";
@@ -26,7 +27,7 @@ const ARG_V_TRUE: &str = "true";
 const ARG_V_FALSE: &str = "false";
 
 // ===============================
-// #ArgumentTypes
+// #argument_types
 // ===============================
 
 enum AType {
@@ -37,12 +38,12 @@ enum AType {
 struct Arg {
     name: &'static str,
     t: AType,
-    req: bool, // required or not
+    req: bool,                 // required or not
     def: Option<&'static str>, // default argument value
 }
 
 // ===============================
-// #AvailableArguments
+// #available_arguments
 // ===============================
 
 const ARGS: [Arg; 2] = [
@@ -61,7 +62,7 @@ const ARGS: [Arg; 2] = [
 ];
 
 // ===============================
-// #ConfigStruct
+// #config_struct
 // ===============================
 
 #[derive(Debug)]
@@ -74,11 +75,13 @@ impl Conf {
     // Validators. Must be used for argument validation in build_cli_args function.
 
     fn validate_source_file(path: String, ext: &str) -> String {
-        if path.ends_with(ext) {
-            return path;
-        } else {
-            out::crash(&format!("File must have {} extension", ext));
+        if !Path::new(&path).exists() {
+            out::crash(&format!("Path does not exist: \"{}\"", path));
         }
+        if !path.ends_with(ext) {
+            out::crash(&format!("File must have \"{}\" extension", ext));
+        }
+        path
     }
 
     // Adapters. Must be used for adapting argument values
@@ -94,7 +97,7 @@ impl Conf {
     // and values are Option<String>.
     // This function should not perform any validation. It just
     // extract values from the input.
-    pub fn parse_cli_args(args: &Vec<String>, names: &[&str]) -> HashMap<String, String> {
+    fn parse_cli_args(args: &Vec<String>, names: &[&str]) -> HashMap<String, String> {
         let mut res: HashMap<String, String> = HashMap::new();
 
         let args = format!("{} ", args.join(" "));
@@ -118,7 +121,7 @@ impl Conf {
     // If any argument is provided but has invalid value, this function must panic.
     // If any argument is not provided and not required it must be set to
     // the respective default value.
-    pub fn build_cli_args(user_args: &HashMap<String, String>) -> HashMap<String, String> {
+    fn build_cli_args(user_args: &HashMap<String, String>) -> HashMap<String, String> {
         let mut res: HashMap<String, String> = HashMap::new();
 
         for arg in ARGS {
@@ -178,39 +181,80 @@ impl Conf {
     }
 }
 
-/**
- * ===============================
- * Tests
- * ===============================
- */
+// ===============================
+// #tests
+// ===============================
 
 #[cfg(test)]
 mod tests {
+    use crate::conf::Conf;
+
+    // ===============================
+    // #file_path
+    // ===============================
+
     #[test]
+    #[should_panic(expected = "\"file-path\" argument is required.")]
     fn should_require_filepath_arg_if_nothing_provided() {
-        panic!("TODO");
+        Conf::from_cli(vec![]);
     }
 
     #[test]
+    #[should_panic(expected = "Path does not exist: \"some/path/file.eli\"")]
+    fn should_reject_if_path_to_file_does_not_exist() {
+        Conf::from_cli(vec!["--file-path=some/path/file.eli".to_string()]);
+    }
+
+    #[test]
+    #[should_panic(expected = "File must have \".eli\" extension")]
     fn should_reject_files_with_invalid_ext() {
-        panic!("TODO");
+        Conf::from_cli(vec!["--file-path=test.rs".to_string()]);
     }
 
     #[test]
-    fn should_not_accept_invalid_path() {}
+    fn should_not_panic_if_path_exists_and_file_has_correct_ext() {
+        let file_path = "test.eli";
+        let config = Conf::from_cli(vec![format!("--file-path={}", file_path)]);
+        assert_eq!(config.file_path, file_path);
+    }
+
+    // ===============================
+    // #print_bytecode
+    // ===============================
 
     #[test]
     fn should_set_print_bytecode_to_true_if_no_value_provided() {
-        panic!("TODO");
+        let config = Conf::from_cli(vec![
+            "--file-path=test.eli".to_string(),
+            "--print-bytecode".to_string(),
+        ]);
+        assert_eq!(config.print_bytecode, true);
     }
 
     #[test]
     fn should_set_print_bytecode_to_true_if_explicitly_provided() {
-        panic!("TODO");
+        let config = Conf::from_cli(vec![
+            "--file-path=test.eli".to_string(),
+            "--print-bytecode=true".to_string(),
+        ]);
+        assert_eq!(config.print_bytecode, true);
     }
 
     #[test]
     fn should_set_print_bytecode_to_false_if_explicitly_provided() {
-        panic!("TODO");
+        let config = Conf::from_cli(vec![
+            "--file-path=test.eli".to_string(),
+            "--print-bytecode=false".to_string(),
+        ]);
+        assert_eq!(config.print_bytecode, false);
+    }
+
+    #[test]
+    fn should_set_print_bytecode_to_false_if_invalid_value_provided() {
+        let config = Conf::from_cli(vec![
+            "--file-path=test.eli".to_string(),
+            "--print-bytecode=123".to_string(),
+        ]);
+        assert_eq!(config.print_bytecode, false);
     }
 }

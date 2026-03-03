@@ -84,6 +84,6 @@ fn main() {
 // - [ ] Improve args parsing in conf/input.
 //       Add support for more flexible configuration (continue in conf.rs)
 // - [ ] Add tests for conf/input
-// - [ ] Add tests for Conf struct
+// - [x] Add tests for Conf struct
 // - [ ] Add tests for file reader
 // - [ ] Add tests for handle_exec_result
