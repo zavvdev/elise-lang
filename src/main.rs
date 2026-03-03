@@ -59,12 +59,15 @@ fn main() {
     // let my_chars: Vec<char> = "Hello, World!".chars().collect();
     // or
     // let my_chars: Vec<_> = "Hello, World!".chars().collect();
-    let args = env::args().skip(1).collect::<Vec<String>>();
-    // Moving ownership of args to from_cli since we don't need to
-    // reference args variable in this scope anymore.
-    let config = Conf::from_cli(args);
 
-    println!("{}", format!("{:?}", config));
+    // Accept user input into Vec<Strings> for centralized ownership
+    // which starts here.
+    let args: Vec<String> = env::args().skip(1).collect();
+
+    // Pass the reference to the args so we can re-use our owned data
+    // without copying.
+    // Check from_cli for more details.
+    let config = Conf::from_cli(&args);
 
     match file_reader::read_file(&config.file_path) {
         Ok(file_descriptor) => {

@@ -15,6 +15,3 @@ path = "src/main.rs"
 # use elise::something;
 name = "elise"
 path = "src/lib.rs"
-
-[dependencies]
-regex = "1.12.3"
