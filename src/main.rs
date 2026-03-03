@@ -64,6 +64,8 @@ fn main() {
     // reference args variable in this scope anymore.
     let config = Conf::from_cli(args);
 
+    println!("{}", format!("{:?}", config));
+
     match file_reader::read_file(&config.file_path) {
         Ok(file_descriptor) => {
             let exec_res = exec(file_descriptor.content, &config);

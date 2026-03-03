@@ -13,20 +13,20 @@ pub enum ExecStatus {
     Error(String),
 }
 
-pub struct ExecResult {
+pub struct ExecResult<'a> {
     pub code: ExecStatus,
     pub output: String,
     pub bytecode: Option<String>,
-    pub config: Conf,
+    pub config: &'a Conf,
 }
 
 // TODO
-pub fn exec(_content: String, config: &Conf) -> ExecResult {
+pub fn exec<'a>(_content: String, config: &'a Conf) -> ExecResult<'a> {
     ExecResult {
         code: ExecStatus::Success,
         output: String::from("123"),
         bytecode: Some(String::from("CALL a [1] [0]")),
-        config: config.clone(), // TODO: remove clone
+        config: config,
     }
 }
 

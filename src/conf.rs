@@ -1,75 +1,70 @@
-use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
 
 use crate::out;
 
 // ===============================
-// Constants
+// #SourceFile
 // ===============================
 
 const FILE_EXT: &str = ".eli";
+
+// ===============================
+// #ArgumentNames
+// ===============================
 
 const ARG_K_FILE_PATH: &str = "file-path";
 
 const ARG_K_PRINT_BYTECODE: &str = "print-bytecode";
 
+// ===============================
+// #ArgumentValues
+// ===============================
+
 const ARG_V_TRUE: &str = "true";
 
 const ARG_V_FALSE: &str = "false";
 
-// ==============================
+// ===============================
+// #ArgumentTypes
+// ===============================
 
-#[derive(Clone)]
 enum AType {
     SourceFile(&'static str),
     Boolean,
 }
 
-#[derive(Clone)] // TODO: Remove clone
 struct Arg {
     name: &'static str,
     t: AType,
-    req: bool,
-    def: Option<String>,
-}
-
-// We use lazy evaluation for static variables in order to keep
-// all arguments in a since data structure, so we can easily use
-// keys and values.
-lazy_static! {
-    // List of all possible arguments that we want to parse from CLI.
-
-    static ref ARGS_MAP: HashMap<&'static str, Arg> = {
-        let mut m = HashMap::new();
-
-        m.insert(
-            ARG_K_FILE_PATH,
-            Arg {
-                name: ARG_K_FILE_PATH,
-                t: AType::SourceFile(FILE_EXT),
-                req: true,
-                def: None,
-            },
-        );
-
-        m.insert(
-            ARG_K_PRINT_BYTECODE,
-            Arg {
-                name: ARG_K_PRINT_BYTECODE,
-                t: AType::Boolean,
-                req: false,
-                def: Some(ARG_V_FALSE.to_string()),
-            },
-        );
-
-        m
-    };
+    req: bool, // required or not
+    def: Option<&'static str>, // default argument value
 }
 
 // ===============================
+// #AvailableArguments
+// ===============================
 
-#[derive(Debug, Clone)]
+const ARGS: [Arg; 2] = [
+    Arg {
+        name: ARG_K_FILE_PATH,
+        t: AType::SourceFile(FILE_EXT),
+        req: true,
+        def: None,
+    },
+    Arg {
+        name: ARG_K_PRINT_BYTECODE,
+        t: AType::Boolean,
+        req: false,
+        def: Some(ARG_V_FALSE),
+    },
+];
+
+// ===============================
+// #ConfigStruct
+// ===============================
+
+#[derive(Debug)]
 pub struct Conf {
     pub file_path: String,
     pub print_bytecode: bool,
@@ -99,7 +94,7 @@ impl Conf {
     // and values are Option<String>.
     // This function should not perform any validation. It just
     // extract values from the input.
-    pub fn parse_cli_args(args: &Vec<String>, names: &Vec<&str>) -> HashMap<String, String> {
+    pub fn parse_cli_args(args: &Vec<String>, names: &[&str]) -> HashMap<String, String> {
         let mut res: HashMap<String, String> = HashMap::new();
 
         let args = format!("{} ", args.join(" "));
@@ -123,37 +118,37 @@ impl Conf {
     // If any argument is provided but has invalid value, this function must panic.
     // If any argument is not provided and not required it must be set to
     // the respective default value.
-    pub fn build_cli_args(args: &HashMap<String, String>) -> HashMap<String, String> {
+    pub fn build_cli_args(user_args: &HashMap<String, String>) -> HashMap<String, String> {
         let mut res: HashMap<String, String> = HashMap::new();
 
-        // TODO: remove clone
-        for (key, value) in ARGS_MAP.clone().into_iter() {
-            let mut arg: Option<String> = None;
+        for arg in ARGS {
+            let mut user_arg: Option<String> = None;
 
-            if args.contains_key(key) {
-                let arg_value = args.get(key).unwrap();
-                arg = Some(arg_value.to_string());
+            if user_args.contains_key(arg.name) {
+                let value = user_args.get(arg.name).unwrap();
+                user_arg = Some(value.to_string());
             }
 
-            let key = key.to_string();
-
-            if arg.is_none() && value.req {
-                out::crash(&format!("\"{}\" argument is required.", value.name));
+            if user_arg.is_none() && arg.req {
+                out::crash(&format!("\"{}\" argument is required.", arg.name));
             }
 
-            if arg.is_none() && value.def.is_some() {
-                res.insert(key, value.def.unwrap());
-            } else {
-                let arg = arg.unwrap();
-                match value.t {
+            if user_arg.is_none() && arg.def.is_some() {
+                res.insert(arg.name.to_string(), arg.def.unwrap().to_string());
+            } else if user_arg.is_some() {
+                let user_arg = user_arg.unwrap();
+                match arg.t {
                     AType::SourceFile(ext) => {
-                        res.insert(key, Self::validate_source_file(arg, ext));
+                        res.insert(
+                            arg.name.to_string(),
+                            Self::validate_source_file(user_arg, ext),
+                        );
                     }
                     AType::Boolean => {
-                        if arg.is_empty() {
-                            res.insert(key, ARG_V_TRUE.to_string());
+                        if user_arg.is_empty() {
+                            res.insert(arg.name.to_string(), ARG_V_TRUE.to_string());
                         } else {
-                            res.insert(key, (ARG_V_TRUE == arg).to_string());
+                            res.insert(arg.name.to_string(), (ARG_V_TRUE == user_arg).to_string());
                         }
                     }
                 }
@@ -168,7 +163,7 @@ impl Conf {
     pub fn from_cli(args: Vec<String>) -> Self {
         // Parse raw CLI arguments. This variable contains only arguments that were provided by
         // user. So if some argument is not provided, it won't be present in this variable.
-        let parsed_args = Self::parse_cli_args(&args, &ARGS_MAP.keys().cloned().collect());
+        let parsed_args = Self::parse_cli_args(&args, &ARGS.map(|arg| arg.name));
 
         // At this point we have the full list of arguments with their values.
         // If some argument was not provided by user, it must be present in this variable with
