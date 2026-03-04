@@ -277,6 +277,7 @@ mod tests {
 
 // TODO:
 // - [ ] Move messages to separate module
+// - [ ] Move message pring to a separate module
 // - [ ] Review number parsing
 // - [ ] Fix an issue with message print
 // - [ ] Write tests for number parsing
