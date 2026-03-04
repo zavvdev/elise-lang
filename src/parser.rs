@@ -244,6 +244,13 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn should_panic_if_we_start_from_minus_and_nothing_follows() {
+        // -
+        panic!("TODO");
+    }
+
+    #[test]
     fn should_parse_positive_numbers() {
         // 2, 33, 444, 9999
         panic!("TODO");
