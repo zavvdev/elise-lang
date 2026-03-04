@@ -4,13 +4,13 @@ Dynamically typed, functional programming language with ugly syntax.
 
 ## TODO
 
-- [ ] Add foundation for executing binary with arguments:
-    - [ ] --file=<file> - specify file to execute
-    - [ ] --print-bytecode - print bytecode of the executed file
+- [x] Add foundation for executing binary with arguments:
+    - [x] --file=<file> - specify file to execute
+    - [x] --print-bytecode - print bytecode of the executed file
 
-- [ ] Add library crate which exposes interpreter entry point
+- [x] Add library crate which exposes interpreter entry point
 
-- [ ] Use library crate in the binary crate
+- [x] Use library crate in the binary crate
 
 - [ ] Create parser for parsing simple `.add` and `.declare` expression and producing AST. Tokenization is skipped because of the language syntax which is already a valid AST (Code is Data)
 
