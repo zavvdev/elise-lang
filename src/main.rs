@@ -84,9 +84,8 @@ fn main() {
 // - [x] Add config builder
 // - [x] Add cli args parsing in conf/input
 // - [x] Add custom panic hook
-// - [ ] Improve args parsing in conf/input.
+// - [x] Improve args parsing in conf/input.
 //       Add support for more flexible configuration (continue in conf.rs)
-// - [ ] Add tests for conf/input
 // - [x] Add tests for Conf struct
-// - [ ] Add tests for file reader
+// - [x] Add tests for file reader
 // - [ ] Add tests for handle_exec_result
