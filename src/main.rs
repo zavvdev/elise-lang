@@ -71,7 +71,7 @@ fn main() {
 
     match file_reader::read_file(&config.file_path) {
         Ok(file_descriptor) => {
-            let exec_res = exec(file_descriptor.content, &config);
+            let exec_res = exec(&file_descriptor.content, &config);
             handle_exec_result(&exec_res, &config);
         }
         Err(error) => {
@@ -79,13 +79,3 @@ fn main() {
         }
     }
 }
-
-// TODO FOR PRE-EXECUTION STAGE:
-// - [x] Add config builder
-// - [x] Add cli args parsing in conf/input
-// - [x] Add custom panic hook
-// - [x] Improve args parsing in conf/input.
-//       Add support for more flexible configuration (continue in conf.rs)
-// - [x] Add tests for Conf struct
-// - [x] Add tests for file reader
-// - [ ] Add tests for handle_exec_result

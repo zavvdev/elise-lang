@@ -14,24 +14,30 @@ pub enum ExecStatus {
 }
 
 pub struct ExecResult<'a> {
-    pub code: ExecStatus,
+    pub status: ExecStatus,
     pub output: String,
     pub bytecode: Option<String>,
     pub config: &'a Conf,
 }
 
+#[derive(PartialEq, Debug)]
+pub enum HandleExecResultOperationStatus {
+    Success,
+    Error,
+}
+
 // TODO
-pub fn exec<'a>(_content: String, config: &'a Conf) -> ExecResult<'a> {
+pub fn exec<'a>(_content: &str, config: &'a Conf) -> ExecResult<'a> {
     ExecResult {
-        code: ExecStatus::Success,
+        status: ExecStatus::Success,
         output: String::from("123"),
         bytecode: Some(String::from("CALL a [1] [0]")),
         config: config,
     }
 }
 
-pub fn handle_exec_result(res: &ExecResult, config: &Conf) {
-    match &res.code {
+pub fn handle_exec_result(res: &ExecResult, config: &Conf) -> HandleExecResultOperationStatus {
+    match &res.status {
         ExecStatus::Success => {
             out::print_execution_output(&res.output);
             if let Some(bytecode) = &res.bytecode {
@@ -39,9 +45,52 @@ pub fn handle_exec_result(res: &ExecResult, config: &Conf) {
                     out::print_bytecode(bytecode);
                 }
             }
+            HandleExecResultOperationStatus::Success
         }
         ExecStatus::Error(reason) => {
             out::error(reason, None);
+            HandleExecResultOperationStatus::Error
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{ExecStatus, HandleExecResultOperationStatus, conf::Conf, handle_exec_result};
+
+    #[test]
+    fn should_handle_error_exec_result() {
+        let config = Conf {
+            file_path: "test.eli".to_string(),
+            print_bytecode: true,
+        };
+        let result = handle_exec_result(
+            &crate::ExecResult {
+                status: ExecStatus::Error("Something went wrong".to_string()),
+                output: "hello".to_string(),
+                bytecode: Some("SOME [1]".to_string()),
+                config: &config,
+            },
+            &config,
+        );
+        assert_eq!(result, HandleExecResultOperationStatus::Error);
+    }
+
+    #[test]
+    fn should_handle_success_exec_result() {
+        let config = Conf {
+            file_path: "test.eli".to_string(),
+            print_bytecode: true,
+        };
+        let result = handle_exec_result(
+            &crate::ExecResult {
+                status: ExecStatus::Success,
+                output: "hello".to_string(),
+                bytecode: Some("SOME [1]".to_string()),
+                config: &config,
+            },
+            &config,
+        );
+        assert_eq!(result, HandleExecResultOperationStatus::Success);
     }
 }
