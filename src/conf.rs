@@ -4,13 +4,13 @@ use std::path::Path;
 use crate::out;
 
 // ===============================
-// #source_file
+// Source file
 // ===============================
 
 const FILE_EXT: &str = ".eli";
 
 // ===============================
-// #argument_names
+// Argument names
 // ===============================
 
 const ARG_K_FILE_PATH: &str = "file-path";
@@ -18,7 +18,7 @@ const ARG_K_FILE_PATH: &str = "file-path";
 const ARG_K_PRINT_BYTECODE: &str = "print-bytecode";
 
 // ===============================
-// #argument_values
+// Argument values
 // ===============================
 
 const ARG_V_TRUE: &str = "true";
@@ -26,7 +26,7 @@ const ARG_V_TRUE: &str = "true";
 const ARG_V_FALSE: &str = "false";
 
 // ===============================
-// #argument_types
+// Argument types
 // ===============================
 
 enum AType {
@@ -42,7 +42,7 @@ struct Arg {
 }
 
 // ===============================
-// #available_arguments
+// Available arguments
 // ===============================
 
 const ARGS: [Arg; 2] = [
@@ -61,7 +61,7 @@ const ARGS: [Arg; 2] = [
 ];
 
 // ===============================
-// #config_struct
+// Config struct
 // ===============================
 
 #[derive(Debug)]
@@ -192,16 +192,14 @@ impl Conf {
 }
 
 // ===============================
-// #tests
+// Tests
 // ===============================
 
 #[cfg(test)]
 mod tests {
     use crate::conf::Conf;
 
-    // ===============================
-    // #file_path
-    // ===============================
+    // File path
 
     #[test]
     #[should_panic(expected = "\"file-path\" argument is required.")]
@@ -228,9 +226,7 @@ mod tests {
         assert_eq!(config.file_path, file_path);
     }
 
-    // ===============================
-    // #print_bytecode
-    // ===============================
+    // Print bytecode 
 
     #[test]
     fn should_set_print_bytecode_to_true_if_no_value_provided() {

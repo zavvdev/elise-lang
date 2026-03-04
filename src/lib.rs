@@ -61,16 +61,14 @@ pub fn handle_exec_result(res: &ExecResult, config: &Conf) -> HandleExecResultOp
 }
 
 // ===============================
-// #tests
+// Tests
 // ===============================
 
 #[cfg(test)]
 mod tests {
     use crate::{ExecStatus, HandleExecResultOperationStatus, conf::Conf, handle_exec_result};
 
-    // ===============================
-    // #handle_exec_result
-    // ===============================
+    // Handle exec result
 
     #[test]
     fn should_handle_error_exec_result() {

@@ -70,9 +70,7 @@ impl<'a> Parser<'a> {
         ast
     }
 
-    // =======================
     // Token
-    // =======================
 
     fn tok_consume(&mut self) -> Option<char> {
         let tok = self.tok_get_at(self.tok_pos);
@@ -87,9 +85,7 @@ impl<'a> Parser<'a> {
         self.source_code.chars().nth(pos)
     }
 
-    // =======================
     // Error message
-    // =======================
 
     fn error_arrow(len: usize) -> String {
         "-".repeat(len) + "^"
@@ -134,9 +130,7 @@ impl<'a> Parser<'a> {
         out::crash("Parsing error");
     }
 
-    // =======================
     // Number
-    // =======================
 
     fn number_is_digit(c: &char) -> bool {
         c.is_digit(10)
