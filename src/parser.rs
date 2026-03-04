@@ -60,3 +60,32 @@ impl<'a> Parser<'a> {
         self.source_code.chars().nth(pos)
     }
 }
+
+// num()
+// accum = ""
+// negative = false
+// float = false
+// if n is number:
+//    accum()
+// else if n is "-" 
+//    if nothing in accumulator:
+//       set is negative
+//       accum()
+//    else:
+//       error
+// else if n is "." 
+//    if something in accumulator && !track period
+//        track pediod
+//        accum()
+//    else error
+// if accum is number:
+//    ret accum
+// error
+//
+// 
+// 1
+// -1
+// 1.2
+// -1.2
+// 0.1
+// -0.1
