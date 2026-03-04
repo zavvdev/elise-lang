@@ -20,3 +20,7 @@ pub fn print_bytecode(bytecode: &str) {
 pub fn print_execution_output(output: &str) {
     println!("{}", output);
 }
+
+pub fn msg(message: &str) {
+    println!("{}", message);
+}
