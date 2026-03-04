@@ -41,16 +41,16 @@ pub struct AstNode {
     children: Vec<Box<AstNode>>,
 }
 
-pub struct Parser<'a> {
-    source_code: &'a str,
+pub struct Parser {
+    source_code: Vec<char>,
     tok_pos: usize,
     depth_stack: Vec<char>,
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(source_code: &'a str) -> Self {
+impl Parser {
+    pub fn new(source_code: &str) -> Self {
         Self {
-            source_code,
+            source_code: source_code.chars().collect(),
             tok_pos: 0,
             depth_stack: vec![],
         }
@@ -82,7 +82,7 @@ impl<'a> Parser<'a> {
         if pos >= self.source_code.len() {
             return None;
         }
-        self.source_code.chars().nth(pos)
+        self.source_code.get(pos).copied()
     }
 
     // Error message
@@ -101,14 +101,14 @@ impl<'a> Parser<'a> {
 
         let mut found = false;
 
-        for char in self.source_code.chars() {
+        for char in &self.source_code {
             if preview_row_end == char_pos {
                 found = true;
             }
 
             preview_row_end += 1;
 
-            if char == '\n' {
+            if *char == '\n' {
                 if found {
                     break;
                 }
@@ -153,12 +153,18 @@ impl<'a> Parser<'a> {
         let tok_start = self.tok_pos;
 
         while let Some(c) = self.tok_get_at(self.tok_pos) {
+            let next_tok = self.tok_get_at(self.tok_pos + 1);
+
             if Self::number_is_end(&c) {
                 break;
             } else if Self::number_is_digit(&c) {
                 value.push(c);
                 self.tok_consume();
-            } else if c == T_MINUS && value.is_empty() {
+            } else if c == T_MINUS
+                && value.is_empty()
+                && next_tok.is_some()
+                && Self::number_is_digit(&next_tok.unwrap())
+            {
                 value.push(c);
                 self.tok_consume();
             } else if c == T_PERIOD && !value.is_empty() && !float {
