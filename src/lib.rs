@@ -5,8 +5,11 @@
 pub mod conf;
 pub mod fsys;
 pub mod out;
+pub mod parser;
 
 use conf::Conf;
+
+use crate::parser::Parser;
 
 pub enum ExecStatus {
     Success,
@@ -26,8 +29,11 @@ pub enum HandleExecResultOperationStatus {
     Error,
 }
 
-// TODO
-pub fn exec<'a>(_content: &str, config: &'a Conf) -> ExecResult<'a> {
+pub fn exec<'a>(source_code: &'a str, config: &'a Conf) -> ExecResult<'a> {
+    let ast = Parser::new(&source_code).parse();
+
+    println!("ast: {:?}", ast);
+
     ExecResult {
         status: ExecStatus::Success,
         output: String::from("123"),
