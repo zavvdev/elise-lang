@@ -113,7 +113,7 @@ impl<'a> Parser<'a> {
         tok
     }
 
-    fn peek_at(&mut self, pos: usize) -> Option<u8> {
+    fn peek_at(&self, pos: usize) -> Option<u8> {
         if pos >= self.source_code.len() {
             return None;
         }
@@ -400,3 +400,9 @@ mod tests {
 //  TESTS END
 //
 // ==========================
+
+// TODO:
+// - [ ] Add Span for AstNode instead of tok_start
+// - [ ] Remove vec! allocation for number parsing and use slice
+// - [ ] Store number as string in AST instead of f64
+// - [ ] Review AstNode design
