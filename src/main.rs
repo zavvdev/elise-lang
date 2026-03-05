@@ -10,7 +10,6 @@ use elise::out;
 // Rust ecosystem imports
 
 use std::env;
-use std::panic;
 
 // This function is the entry point for our program
 // that is executed with binary from CLI.
@@ -31,33 +30,6 @@ use std::panic;
 // want to run the program with custom configuration outside the CLI, you can
 // handle the result of execution in any way you want by just using the ExecResult struct.
 fn main() {
-    // Size of char is 4 bytes despite it fits into ASCII (1 byte each).
-    // We need to store source code as vec![u8] (bytes) and compare tokens as
-    // bytes with char (byte) in source code: byte == b')'
-    // For language internal strings we just slice bytes from " to " and
-    // convert that exclusive slice into utf8 preserving utf8 symbols.
-    // Everything else stays in ascii.
-
-    println!("Size of char: {}", std::mem::size_of::<char>());
-    println!("Size of u8: {}", std::mem::size_of::<u8>());
-
-    let a: char = 'a';
-    let emoji: char = '😃';
-
-    println!("Memory for 'a': {:?}", std::mem::size_of_val(&a));
-    println!("Memory for '😃': {:?}", std::mem::size_of_val(&emoji));
-
-    let a = "a";
-    let emoji = "😃";
-
-    println!("Bytes for 'a': {:?}", a.as_bytes()); // [97] → 1 byte
-    println!("Bytes for '😃': {:?}", emoji.as_bytes()); // [0xF0,0x9F,0x98,0x83] → 4 bytes
-    println!("Comp: {:?}", a.as_bytes()[0] == b'a'); // [0xF0,0x9F,0x98,0x83] → 4 bytes
-
-    if !cfg!(debug_assertions) {
-        panic::set_hook(Box::new(out::panic_hook));
-    }
-
     // env::args() returns back an Iterator:
     //
     // https://doc.rust-lang.org/book/ch13-02-iterators.html
@@ -91,8 +63,6 @@ fn main() {
     // without copying.
     // Check from_cli for more details.
     let config = Conf::from_cli(&args);
-
-    println!("{:?}", "😃asd".chars());
 
     // TODO: Consider reading file in chunks since reading the
     // whole file at once can be slow

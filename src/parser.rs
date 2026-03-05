@@ -1,27 +1,30 @@
+use std::str::from_utf8;
+
 use crate::out;
 
 // =======================
 // Token Definitions
 // =======================
 
-const T_FN_PREFIX: char = '.';
+const T_FN_PREFIX: u8 = b'.';
 const T_FN_DECLARE: &str = "declare";
 
-const T_LEFT_PAREN: char = '(';
-const T_RIGHT_PAREN: char = ')';
+const T_LEFT_PAREN: u8 = b'(';
+const T_RIGHT_PAREN: u8 = b')';
 
-const T_LEFT_SQR_BRACKET: char = '[';
-const T_RIGHT_SQR_BRACKET: char = ']';
+const T_LEFT_SQR_BRACKET: u8 = b'[';
+const T_RIGHT_SQR_BRACKET: u8 = b']';
 
-const T_MINUS: char = '-';
-const T_PERIOD: char = '.';
-const T_COMMA: char = ',';
+const T_MINUS: u8 = b'-';
+const T_PERIOD: u8 = b'.';
+const T_COMMA: u8 = b',';
 
 // =======================
 // Custom Types
 // =======================
 
 type TNumber = f64;
+type TString = String;
 
 // =======================
 // Parser
@@ -29,9 +32,10 @@ type TNumber = f64;
 
 #[derive(Debug)]
 enum AstNodeValue {
-    // Function,
-    // Identifier,
+    Function,
+    Identifier,
     Number(TNumber),
+    String(TString),
 }
 
 #[derive(Debug)]
@@ -41,16 +45,25 @@ pub struct AstNode {
     children: Vec<Box<AstNode>>,
 }
 
-pub struct Parser {
-    source_code: Vec<char>,
+// Since strings and chars in Rust are UTF-8 encoded,
+// which means that even if our char fits into 1 byte (ASCII)
+// we still have 4 bytes allocated for it. So we split our
+// source code input into raw bytes which takes less memory
+// space and compare tokens as bytes.
+// For preserving UTF-8 encodings for Elise Strings we just
+// slice string bytes and convert to UTF-8 that particular
+// slice of bytes.
+
+pub struct Parser<'a> {
+    source_code: &'a [u8],
     tok_pos: usize,
-    depth_stack: Vec<char>,
+    depth_stack: Vec<u8>,
 }
 
-impl Parser {
-    pub fn new(source_code: &str) -> Self {
+impl<'a> Parser<'a> {
+    pub fn new(source_code: &'a str) -> Self {
         Self {
-            source_code: source_code.chars().collect(),
+            source_code: &source_code.as_bytes(),
             tok_pos: 0,
             depth_stack: vec![],
         }
@@ -59,9 +72,9 @@ impl Parser {
     pub fn parse(&mut self) -> Vec<AstNode> {
         let mut ast: Vec<AstNode> = vec![];
 
-        while let Some(current_char) = self.tok_get_at(self.tok_pos) {
-            if current_char.is_whitespace() {
-                self.tok_consume();
+        while let Some(current_char) = self.peek_at(self.tok_pos) {
+            if Self::is_whitespace(&current_char) {
+                self.advance();
             } else if Self::number_is_start(&current_char) {
                 ast.push(self.number_consume());
             }
@@ -72,118 +85,85 @@ impl Parser {
 
     // Token
 
-    fn tok_consume(&mut self) -> Option<char> {
-        let tok = self.tok_get_at(self.tok_pos);
+    fn advance(&mut self) -> Option<u8> {
+        let tok = self.peek_at(self.tok_pos);
         self.tok_pos += 1;
         tok
     }
 
-    fn tok_get_at(&mut self, pos: usize) -> Option<char> {
+    fn peek_at(&mut self, pos: usize) -> Option<u8> {
         if pos >= self.source_code.len() {
             return None;
         }
         self.source_code.get(pos).copied()
     }
 
-    // Error message
+    // Utilities
 
-    fn error_arrow(len: usize) -> String {
-        "-".repeat(len) + "^"
-    }
-
-    fn error_print(&self, message: &str, char_pos: usize) -> ! {
-        let mut row = 0;
-        let mut col = 0;
-
-        let mut previous_row_start = 0;
-        let mut preview_row_start = 0;
-        let mut preview_row_end = 0;
-
-        let mut found = false;
-
-        for char in &self.source_code {
-            if preview_row_end == char_pos {
-                found = true;
-            }
-
-            preview_row_end += 1;
-
-            if *char == '\n' {
-                if found {
-                    break;
-                }
-
-                previous_row_start = preview_row_start;
-                preview_row_start = preview_row_end;
-
-                row += 1;
-                col = 0;
-            } else if !found {
-                col += 1;
-            }
-        }
-
-        out::msg(&format!("\n{}", message));
-        out::msg(&format!("At {}:{}\n", row + 1, col + 1));
-        // out::msg(&format!("{}", self.source_code[previous_row_start..preview_row_end]));
-        out::msg(&format!("{}\n", Self::error_arrow(col)));
-        out::crash("Parsing error");
+    fn is_whitespace(c: &u8) -> bool {
+        matches!(c, b' ' | b'\n' | b'\t' | b'\r')
     }
 
     // Number
 
-    fn number_is_digit(c: &char) -> bool {
-        c.is_digit(10)
+    fn number_is_digit(c: &u8) -> bool {
+        (b'0'..=b'9').contains(c)
     }
 
-    fn number_is_start(char: &char) -> bool {
-        Self::number_is_digit(char) || *char == T_MINUS
+    fn number_is_start(c: &u8) -> bool {
+        Self::number_is_digit(c) || *c == T_MINUS
     }
 
-    fn number_is_end(char: &char) -> bool {
-        char.is_whitespace()
-            || *char == T_COMMA
-            || *char == T_RIGHT_PAREN
-            || *char == T_RIGHT_SQR_BRACKET
+    fn number_is_end(c: &u8) -> bool {
+        Self::is_whitespace(c) || *c == T_COMMA || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
     }
 
     fn number_consume(&mut self) -> AstNode {
-        let mut value = String::new();
+        let mut value: Vec<u8> = vec![];
         let mut float = false;
         let tok_start = self.tok_pos;
 
-        while let Some(c) = self.tok_get_at(self.tok_pos) {
-            let next_tok = self.tok_get_at(self.tok_pos + 1);
+        while let Some(c) = self.peek_at(self.tok_pos) {
+            let next_tok = self.peek_at(self.tok_pos + 1);
 
             if Self::number_is_end(&c) {
                 break;
             } else if Self::number_is_digit(&c) {
                 value.push(c);
-                self.tok_consume();
+                self.advance();
             } else if c == T_MINUS
                 && value.is_empty()
                 && next_tok.is_some()
                 && Self::number_is_digit(&next_tok.unwrap())
             {
                 value.push(c);
-                self.tok_consume();
+                self.advance();
             } else if c == T_PERIOD && !value.is_empty() && !float {
                 float = true;
                 value.push(c);
-                self.tok_consume();
+                self.advance();
             } else {
-                self.error_print("Invalid Number", self.tok_pos);
+                // TODO: Add message with source code
+                out::crash("Invalid Number");
             }
         }
 
-        let value = value.parse::<TNumber>();
+        let value = from_utf8(&value);
 
-        if !value.is_ok() {
-            self.error_print("Invalid number", self.tok_pos)
+        if value.is_err() {
+            // TODO: Add message with source code
+            out::crash("Invalid Number");
+        }
+
+        let numeric = value.unwrap().parse::<TNumber>();
+
+        if numeric.is_err() {
+            // TODO: Add message with source code
+            out::crash("Invalid Number");
         }
 
         AstNode {
-            value: AstNodeValue::Number(value.unwrap()),
+            value: AstNodeValue::Number(numeric.unwrap()),
             tok_start,
             children: vec![],
         }
@@ -282,6 +262,7 @@ mod tests {
 }
 
 // TODO:
+// - [x] Migrate source code to vec<u8>
 // - [ ] Move messages to separate module
 // - [ ] Move message pring to a separate module
 // - [ ] Review number parsing

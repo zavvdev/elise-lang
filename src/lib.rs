@@ -6,6 +6,7 @@ pub mod conf;
 pub mod fsys;
 pub mod out;
 pub mod parser;
+pub mod messages;
 
 use conf::Conf;
 
