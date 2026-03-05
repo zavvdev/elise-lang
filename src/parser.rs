@@ -21,6 +21,9 @@ const T_MINUS: u8 = b'-';
 const T_PERIOD: u8 = b'.';
 const T_COMMA: u8 = b',';
 
+const T_EXPON_MARKER: u8 = b'e';
+const T_EXPON_MARKER_UPP: u8 = b'E';
+
 // ==========================
 //
 // TOKEN DEFINITIONS END
@@ -161,10 +164,6 @@ impl<'a> Parser<'a> {
     //
     // NUMBER START
     //
-    // 1. Can start with: minus or digit
-    // 2. Can contain: digit, only one dot if float, only one minus at the start
-    // 3. Ends with: Whitespace-like, Comma, Right Paren, Right Sqr Br
-    //
     // ==========================
 
     fn number_is_digit(c: &u8) -> bool {
@@ -179,6 +178,10 @@ impl<'a> Parser<'a> {
         Self::is_whitespace(c) || *c == T_COMMA || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
     }
 
+    fn number_is_expon_marker(c: &u8) -> bool {
+        *c == T_EXPON_MARKER || *c == T_EXPON_MARKER_UPP
+    }
+
     fn number_invalid(&self) -> ! {
         out::crash_at_token_pos(
             messages::M_INVALID_NUMBER,
@@ -191,6 +194,8 @@ impl<'a> Parser<'a> {
     fn number_consume(&mut self) -> AstNode {
         let mut float = false;
         let mut negative = false;
+        let mut is_start = true;
+        let mut is_scientific = false;
         let tok_start = self.tok_pos;
 
         while let Some(c) = self.peek() {
@@ -199,23 +204,54 @@ impl<'a> Parser<'a> {
 
             if Self::number_is_end(&c) {
                 break;
-            } else if c == b'0' && next_tok.is_some() && next_tok.unwrap() != T_PERIOD {
+            // Do not allow 0 at the beginning
+            } else if c == b'0'
+                && is_start
+                && next_tok.is_some()
+                && Self::number_is_digit(&next_tok.unwrap())
+            {
                 self.number_invalid();
+            // Always consume numeric value
             } else if Self::number_is_digit(&c) {
+                is_start = false;
                 self.advance();
+            // Allow exponent if it's not a beginning and
+            // next char is either digit or minus
+            } else if Self::number_is_expon_marker(&c)
+                && !is_start
+                && !is_scientific
+                && next_tok.is_some()
+                && (Self::number_is_digit(&next_tok.unwrap()) || next_tok.unwrap() == T_MINUS)
+            {
+                is_scientific = true;
+                self.advance();
+            // Allow minus for negative numbers
             } else if c == T_MINUS
                 && !negative
+                && is_start
                 && next_tok.is_some()
                 && Self::number_is_digit(&next_tok.unwrap())
             {
                 negative = true;
+                is_start = false;
                 self.advance();
+            // Allow minus for scientific notation
+            } else if c == T_MINUS
+                && is_scientific
+                && next_tok.is_some()
+                && Self::number_is_digit(&next_tok.unwrap())
+            {
+                is_start = false;
+                self.advance();
+            // Allow period for floats
             } else if c == T_PERIOD
                 && prev_tok.is_some()
                 && Self::number_is_digit(&prev_tok.unwrap())
+                && !is_scientific
                 && !float
             {
                 float = true;
+                is_start = false;
                 self.advance();
             } else {
                 self.number_invalid();
@@ -266,7 +302,9 @@ mod tests {
         parser::{AstNode, AstNodeSpan, AstNodeValue, Parser},
     };
 
-    // Number
+    // ==========================
+    // NUMBER TESTS START
+    // ==========================
 
     #[test]
     fn should_panic_if_number_contains_non_numeric_token() {
@@ -339,12 +377,14 @@ mod tests {
     fn should_parse_positive_numbers() {
         let numbers = vec![
             ("2", 1),
+            ("0", 1),
             ("123", 3),
             ("999999", 6),
             ("2.3", 3),
             ("23.23", 5),
             ("0.23", 4),
             ("9999.9999", 9),
+            ("101", 3),
         ];
         for (number, end) in numbers {
             let ast = Parser::new(number).parse();
@@ -363,12 +403,14 @@ mod tests {
     fn should_parse_negative_numbers() {
         let numbers = vec![
             ("-2", 2),
+            ("-0", 2),
             ("-123", 4),
             ("-999999", 7),
             ("-2.3", 4),
             ("-23.23", 6),
             ("-0.23", 5),
             ("-9999.9999", 10),
+            ("-101", 4),
         ];
         for (number, end) in numbers {
             let ast = Parser::new(number).parse();
@@ -416,6 +458,53 @@ mod tests {
             ]
         );
     }
+
+    #[test]
+    fn should_panic_if_scientific_notation_number_is_invalid() {
+        let forbidded_tokens = vec!["1e1.2", "1e-", "1e"];
+
+        for token in forbidded_tokens {
+            assert_panic!(
+                {
+                    Parser::new(token).parse();
+                },
+                String,
+                messages::M_PARSING_ERROR
+            );
+        }
+    }
+
+    #[test]
+    fn should_parse_scientific_numbers_correctly() {
+        let numbers = vec![
+            ("1e3", 3),
+            ("10e3", 4),
+            ("102e302", 7),
+            ("1E3", 3),
+            ("1e-3", 4),
+            ("10e-30", 6),
+            ("102e-304", 8),
+            ("1.5e10", 6),
+            ("1.504e101", 9),
+            ("-2.3e-5", 7),
+            ("-2.30e-502", 10),
+        ];
+        for (number, end) in numbers {
+            let ast = Parser::new(number).parse();
+            assert_eq!(
+                *ast.get(0).unwrap(),
+                AstNode {
+                    value: AstNodeValue::Number(number.to_string()),
+                    span: AstNodeSpan { start: 0, end },
+                    children: vec![],
+                }
+            );
+        }
+    }
+
+    // ==========================
+    // NUMBER TESTS FINISH
+    // ==========================
 }
 
 // ==========================
@@ -428,7 +517,9 @@ mod tests {
 // - [x] Add Span for AstNode instead of tok_start
 // - [x] Remove vec! allocation for number parsing and use slice
 // - [x] Store number as string in AST instead of f64
-// - [ ] Add support for numbers with scientific notation (1e10, 2e-10)
+// - [x] Add support for numbers with scientific notation (1e10, 2e-10)
 //      Valid: 1e3, 1E3, 1e-3, 1.5e10, -2.3e-5
 //      Invalid: 1e1.2, 1e-, 1e
+// - [x] Add tests for scientific number notation parsing
+// - [ ] Improve number parsing function
 // - [ ] Review AstNode design
