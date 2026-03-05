@@ -15,3 +15,6 @@ path = "src/main.rs"
 # use elise::something;
 name = "elise"
 path = "src/lib.rs"
+
+[dependencies]
+assert-panic = "1.0.1"

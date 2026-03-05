@@ -61,9 +61,11 @@ pub fn handle_exec_result(res: &ExecResult, config: &Conf) -> HandleExecResultOp
     }
 }
 
-// ===============================
-// Tests
-// ===============================
+// ==========================
+//
+// TESTS START
+//
+// ==========================
 
 #[cfg(test)]
 mod tests {
@@ -107,3 +109,9 @@ mod tests {
         assert_eq!(result, HandleExecResultOperationStatus::Success);
     }
 }
+
+// ==========================
+//
+// TESTS END
+//
+// ==========================

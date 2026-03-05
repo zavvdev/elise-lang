@@ -23,12 +23,55 @@ pub fn print_execution_output(output: &str) {
     println!("{}", output);
 }
 
-pub fn print_error_source_code(message: &str, row: usize, col: usize, source_code: &[u8]) {
-    let source_code = from_utf8(source_code);
-    println!("\n{}", message);
-    println!("At {}:{}\n", row, col);
-    if source_code.is_ok() {
-        println!("{}", source_code.unwrap());
+pub fn crash_at_token_pos(
+    message: &str,
+    source_code: &[u8],
+    char_pos: usize,
+    panic_message: &str,
+) -> ! {
+    let mut row = 0;
+    let mut col = 0;
+
+    let mut previous_row_start = 0;
+    let mut preview_row_start = 0;
+    let mut preview_row_end = 0;
+
+    let mut found = false;
+
+    for char in source_code {
+        if preview_row_end == char_pos {
+            found = true;
+        }
+
+        preview_row_end += 1;
+
+        if *char == b'\n' {
+            if found {
+                break;
+            }
+
+            previous_row_start = preview_row_start;
+            preview_row_start = preview_row_end;
+
+            row += 1;
+            col = 0;
+        } else if !found {
+            col += 1;
+        }
     }
-    println!("{}\n", "-".repeat(col) + "^");
+
+    let source_code = from_utf8(source_code);
+
+    println!("\n{}", message);
+    println!("At {}:{}\n", row + 1, col + 1);
+
+    if source_code.is_ok() {
+        println!(
+            "{}",
+            &source_code.unwrap()[previous_row_start..preview_row_end]
+        );
+        println!("{}\n", "-".repeat(col) + "^");
+    }
+
+    panic!("{}", panic_message)
 }
