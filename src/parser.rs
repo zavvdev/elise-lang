@@ -29,21 +29,6 @@ const T_COMMA: u8 = b',';
 
 // ==========================
 //
-// CUSTOM TYPES START
-//
-// ==========================
-
-type TNumber = f64;
-type TString = String;
-
-// ==========================
-//
-// CUSTOM TYPES END
-//
-// ==========================
-
-// ==========================
-//
 //  PARSER START
 //
 // ==========================
@@ -52,14 +37,24 @@ type TString = String;
 enum AstNodeValue {
     Function,
     Identifier,
-    Number(TNumber),
-    String(TString),
+    // Storing numbers as string in order to not
+    // care about overflows at this stage. We can
+    // then decide which type is better for specific
+    // numeric value at the bytecole level.
+    Number(String),
+    String(String),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct AstNodeSpan {
+    start: usize,
+    end: usize,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct AstNode {
     value: AstNodeValue,
-    tok_start: usize,
+    span: AstNodeSpan,
     children: Vec<Box<AstNode>>,
 }
 
@@ -90,7 +85,7 @@ impl<'a> Parser<'a> {
     pub fn parse(&mut self) -> Vec<AstNode> {
         let mut ast: Vec<AstNode> = vec![];
 
-        while let Some(current_char) = self.peek_at(self.tok_pos) {
+        while let Some(current_char) = self.peek() {
             if Self::is_whitespace(&current_char) {
                 self.advance();
             } else if Self::number_is_start(&current_char) {
@@ -108,16 +103,36 @@ impl<'a> Parser<'a> {
     // ==========================
 
     fn advance(&mut self) -> Option<u8> {
-        let tok = self.peek_at(self.tok_pos);
+        let tok = self.peek();
         self.tok_pos += 1;
         tok
     }
 
-    fn peek_at(&self, pos: usize) -> Option<u8> {
-        if pos >= self.source_code.len() {
+    fn peek(&self) -> Option<u8> {
+        if self.tok_pos >= self.source_code.len() {
             return None;
         }
-        self.source_code.get(pos).copied()
+        self.source_code.get(self.tok_pos).copied()
+    }
+
+    fn peek_next(&self) -> Option<u8> {
+        let next_pos = self.tok_pos + 1;
+        if next_pos >= self.source_code.len() {
+            return None;
+        }
+        self.source_code.get(next_pos).copied()
+    }
+
+    fn peek_prev(&self) -> Option<u8> {
+        if self.tok_pos > 0 {
+            let next_pos = self.tok_pos - 1;
+            if next_pos >= self.source_code.len() {
+                return None;
+            }
+            return self.source_code.get(next_pos).copied();
+        } else {
+            return None;
+        }
     }
 
     // ==========================
@@ -174,51 +189,51 @@ impl<'a> Parser<'a> {
     }
 
     fn number_consume(&mut self) -> AstNode {
-        let mut value: Vec<u8> = vec![];
         let mut float = false;
+        let mut negative = false;
         let tok_start = self.tok_pos;
 
-        while let Some(c) = self.peek_at(self.tok_pos) {
-            let next_tok = self.peek_at(self.tok_pos + 1);
+        while let Some(c) = self.peek() {
+            let next_tok = self.peek_next();
+            let prev_tok = self.peek_prev();
 
             if Self::number_is_end(&c) {
                 break;
             } else if c == b'0' && next_tok.is_some() && next_tok.unwrap() != T_PERIOD {
                 self.number_invalid();
             } else if Self::number_is_digit(&c) {
-                value.push(c);
                 self.advance();
             } else if c == T_MINUS
-                && value.is_empty()
+                && !negative
                 && next_tok.is_some()
                 && Self::number_is_digit(&next_tok.unwrap())
             {
-                value.push(c);
+                negative = true;
                 self.advance();
-            } else if c == T_PERIOD && !value.is_empty() && !float {
+            } else if c == T_PERIOD
+                && prev_tok.is_some()
+                && Self::number_is_digit(&prev_tok.unwrap())
+                && !float
+            {
                 float = true;
-                value.push(c);
                 self.advance();
             } else {
                 self.number_invalid();
             }
         }
 
-        let value = from_utf8(&value);
+        let tok_end = self.tok_pos;
 
-        if value.is_err() {
-            self.number_invalid();
-        }
-
-        let numeric = value.unwrap().parse::<TNumber>();
-
-        if numeric.is_err() {
-            self.number_invalid();
-        }
+        let value = from_utf8(&self.source_code[tok_start..tok_end])
+            .unwrap_or_else(|_| self.number_invalid());
 
         AstNode {
-            value: AstNodeValue::Number(numeric.unwrap()),
-            tok_start,
+            // allocate string in order to own value in AstNode
+            value: AstNodeValue::Number(value.to_string()),
+            span: AstNodeSpan {
+                start: tok_start,
+                end: tok_end,
+            },
             children: vec![],
         }
     }
@@ -248,7 +263,7 @@ mod tests {
 
     use crate::{
         messages,
-        parser::{AstNode, AstNodeValue, Parser, TNumber},
+        parser::{AstNode, AstNodeSpan, AstNodeValue, Parser},
     };
 
     // Number
@@ -322,14 +337,22 @@ mod tests {
 
     #[test]
     fn should_parse_positive_numbers() {
-        let numbers = vec!["2", "123", "999999", "2.3", "23.23", "0.23", "9999.9999"];
-        for number in numbers {
+        let numbers = vec![
+            ("2", 1),
+            ("123", 3),
+            ("999999", 6),
+            ("2.3", 3),
+            ("23.23", 5),
+            ("0.23", 4),
+            ("9999.9999", 9),
+        ];
+        for (number, end) in numbers {
             let ast = Parser::new(number).parse();
             assert_eq!(
                 *ast.get(0).unwrap(),
                 AstNode {
-                    value: AstNodeValue::Number(number.parse::<TNumber>().unwrap()),
-                    tok_start: 0,
+                    value: AstNodeValue::Number(number.to_string()),
+                    span: AstNodeSpan { start: 0, end },
                     children: vec![],
                 }
             );
@@ -339,21 +362,21 @@ mod tests {
     #[test]
     fn should_parse_negative_numbers() {
         let numbers = vec![
-            "-2",
-            "-123",
-            "-999999",
-            "-2.3",
-            "-23.23",
-            "-0.23",
-            "-9999.9999",
+            ("-2", 2),
+            ("-123", 4),
+            ("-999999", 7),
+            ("-2.3", 4),
+            ("-23.23", 6),
+            ("-0.23", 5),
+            ("-9999.9999", 10),
         ];
-        for number in numbers {
+        for (number, end) in numbers {
             let ast = Parser::new(number).parse();
             assert_eq!(
                 *ast.get(0).unwrap(),
                 AstNode {
-                    value: AstNodeValue::Number(number.parse::<TNumber>().unwrap()),
-                    tok_start: 0,
+                    value: AstNodeValue::Number(number.to_string()),
+                    span: AstNodeSpan { start: 0, end },
                     children: vec![],
                 }
             );
@@ -371,23 +394,23 @@ mod tests {
             *ast,
             vec![
                 AstNode {
-                    value: AstNodeValue::Number(3 as TNumber),
-                    tok_start: 0,
+                    value: AstNodeValue::Number("3".to_string()),
+                    span: AstNodeSpan { start: 0, end: 1 },
                     children: vec![],
                 },
                 AstNode {
-                    value: AstNodeValue::Number(56 as TNumber),
-                    tok_start: 2,
+                    value: AstNodeValue::Number("56".to_string()),
+                    span: AstNodeSpan { start: 2, end: 4 },
                     children: vec![],
                 },
                 AstNode {
-                    value: AstNodeValue::Number(-9 as TNumber),
-                    tok_start: 6,
+                    value: AstNodeValue::Number("-9".to_string()),
+                    span: AstNodeSpan { start: 6, end: 8 },
                     children: vec![],
                 },
                 AstNode {
-                    value: AstNodeValue::Number(3.2 as TNumber),
-                    tok_start: 11,
+                    value: AstNodeValue::Number("3.2".to_string()),
+                    span: AstNodeSpan { start: 11, end: 14 },
                     children: vec![],
                 }
             ]
@@ -402,7 +425,10 @@ mod tests {
 // ==========================
 
 // TODO:
-// - [ ] Add Span for AstNode instead of tok_start
-// - [ ] Remove vec! allocation for number parsing and use slice
-// - [ ] Store number as string in AST instead of f64
+// - [x] Add Span for AstNode instead of tok_start
+// - [x] Remove vec! allocation for number parsing and use slice
+// - [x] Store number as string in AST instead of f64
+// - [ ] Add support for numbers with scientific notation (1e10, 2e-10)
+//      Valid: 1e3, 1E3, 1e-3, 1.5e10, -2.3e-5
+//      Invalid: 1e1.2, 1e-, 1e
 // - [ ] Review AstNode design

@@ -12,11 +12,11 @@ Dynamically typed, functional programming language with ugly syntax.
 
 - [x] Use library crate in the binary crate
 
-- [x] Add number parsing
+- [ ] Add number parsing (positive, negative, float, scientific notation)
 
-- [ ] Add support for scientific number notation and prevent overflow
+- [ ] Add string parsing ("<UTF-8 string>")
 
-- [ ] Create parser for parsing simple `.add` and `.declare` expression and producing AST. Tokenization is skipped because of the language syntax which is already a valid AST (Code is Data)
+- [ ] Add parsing function calls
 
 - [ ] Add static analysis module
 
