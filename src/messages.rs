@@ -1,8 +1,12 @@
-fn get_arrow(len: usize) -> String {
-    "-".repeat(len) + "^"
-}
+// Messages
 
-pub fn print_error_message(message: &str, source_code: &str, char_pos: usize) {
+use crate::out;
+
+pub const M_INVALID_NUMBER: &str = "Invalid Number";
+
+// Message formatter
+
+pub fn error_at_char_pos(message: &str, source_code: &[u8], char_pos: usize) -> ! {
     let mut row = 0;
     let mut col = 0;
 
@@ -12,14 +16,14 @@ pub fn print_error_message(message: &str, source_code: &str, char_pos: usize) {
 
     let mut found = false;
 
-    for char in source_code.chars() {
+    for char in source_code {
         if preview_row_end == char_pos {
             found = true;
         }
 
         preview_row_end += 1;
 
-        if char == '\n' {
+        if *char == b'\n' {
             if found {
                 break;
             }
@@ -34,8 +38,12 @@ pub fn print_error_message(message: &str, source_code: &str, char_pos: usize) {
         }
     }
 
-    println!("\n{}", message);
-    println!("At {}:{}\n", row + 1, col + 1);
-    println!("{}", &source_code[previous_row_start..preview_row_end]);
-    println!("{}\n", get_arrow(col));
+    out::print_error_source_code(
+        message,
+        row + 1,
+        col + 1,
+        &source_code[previous_row_start..preview_row_end],
+    );
+
+    panic!()
 }

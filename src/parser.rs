@@ -1,6 +1,6 @@
 use std::str::from_utf8;
 
-use crate::out;
+use crate::messages;
 
 // =======================
 // Token Definitions
@@ -143,23 +143,24 @@ impl<'a> Parser<'a> {
                 value.push(c);
                 self.advance();
             } else {
-                // TODO: Add message with source code
-                out::crash("Invalid Number");
+                messages::error_at_char_pos(
+                    messages::M_INVALID_NUMBER,
+                    self.source_code,
+                    self.tok_pos,
+                );
             }
         }
 
         let value = from_utf8(&value);
 
         if value.is_err() {
-            // TODO: Add message with source code
-            out::crash("Invalid Number");
+            messages::error_at_char_pos(messages::M_INVALID_NUMBER, self.source_code, self.tok_pos);
         }
 
         let numeric = value.unwrap().parse::<TNumber>();
 
         if numeric.is_err() {
-            // TODO: Add message with source code
-            out::crash("Invalid Number");
+            messages::error_at_char_pos(messages::M_INVALID_NUMBER, self.source_code, self.tok_pos);
         }
 
         AstNode {
@@ -263,8 +264,8 @@ mod tests {
 
 // TODO:
 // - [x] Migrate source code to vec<u8>
-// - [ ] Move messages to separate module
-// - [ ] Move message pring to a separate module
-// - [ ] Review number parsing
-// - [ ] Fix an issue with message print
+// - [x] Move messages to separate module
+// - [x] Move message pring to a separate module
+// - [x] Review number parsing
+// - [x] Fix an issue with message print
 // - [ ] Write tests for number parsing
