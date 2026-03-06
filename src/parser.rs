@@ -18,11 +18,7 @@ const T_LEFT_SQR_BRACKET: u8 = b'[';
 const T_RIGHT_SQR_BRACKET: u8 = b']';
 
 const T_MINUS: u8 = b'-';
-const T_PERIOD: u8 = b'.';
 const T_COMMA: u8 = b',';
-
-const T_EXPON_MARKER: u8 = b'e';
-const T_EXPON_MARKER_UPP: u8 = b'E';
 
 // ==========================
 //
@@ -35,6 +31,19 @@ const T_EXPON_MARKER_UPP: u8 = b'E';
 //  PARSER START
 //
 // ==========================
+
+#[derive(Debug)]
+enum NumState {
+    Start,
+    Sign,
+    Zero,
+    Int,
+    Frac,
+    Dot,
+    Scient,
+    ScientMinus,
+    Expon,
+}
 
 #[derive(Debug, PartialEq)]
 enum AstNodeValue {
@@ -118,26 +127,6 @@ impl<'a> Parser<'a> {
         self.source_code.get(self.tok_pos).copied()
     }
 
-    fn peek_next(&self) -> Option<u8> {
-        let next_pos = self.tok_pos + 1;
-        if next_pos >= self.source_code.len() {
-            return None;
-        }
-        self.source_code.get(next_pos).copied()
-    }
-
-    fn peek_prev(&self) -> Option<u8> {
-        if self.tok_pos > 0 {
-            let next_pos = self.tok_pos - 1;
-            if next_pos >= self.source_code.len() {
-                return None;
-            }
-            return self.source_code.get(next_pos).copied();
-        } else {
-            return None;
-        }
-    }
-
     // ==========================
     //
     // TOKEN UTILITIES END
@@ -178,10 +167,6 @@ impl<'a> Parser<'a> {
         Self::is_whitespace(c) || *c == T_COMMA || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
     }
 
-    fn number_is_expon_marker(c: &u8) -> bool {
-        *c == T_EXPON_MARKER || *c == T_EXPON_MARKER_UPP
-    }
-
     fn number_invalid(&self) -> ! {
         out::crash_at_token_pos(
             messages::M_INVALID_NUMBER,
@@ -192,70 +177,62 @@ impl<'a> Parser<'a> {
     }
 
     fn number_consume(&mut self) -> AstNode {
-        let mut float = false;
-        let mut negative = false;
-        let mut is_start = true;
-        let mut is_scientific = false;
+        let mut state = NumState::Start;
         let tok_start = self.tok_pos;
 
         while let Some(c) = self.peek() {
-            let next_tok = self.peek_next();
-            let prev_tok = self.peek_prev();
+            use NumState::*;
 
-            if Self::number_is_end(&c) {
-                break;
-            // Do not allow 0 at the beginning
-            } else if c == b'0'
-                && is_start
-                && next_tok.is_some()
-                && Self::number_is_digit(&next_tok.unwrap())
-            {
-                self.number_invalid();
-            // Always consume numeric value
-            } else if Self::number_is_digit(&c) {
-                is_start = false;
-                self.advance();
-            // Allow exponent if it's not a beginning and
-            // next char is either digit or minus
-            } else if Self::number_is_expon_marker(&c)
-                && !is_start
-                && !is_scientific
-                && next_tok.is_some()
-                && (Self::number_is_digit(&next_tok.unwrap()) || next_tok.unwrap() == T_MINUS)
-            {
-                is_scientific = true;
-                self.advance();
-            // Allow minus for negative numbers
-            } else if c == T_MINUS
-                && !negative
-                && is_start
-                && next_tok.is_some()
-                && Self::number_is_digit(&next_tok.unwrap())
-            {
-                negative = true;
-                is_start = false;
-                self.advance();
-            // Allow minus for scientific notation
-            } else if c == T_MINUS
-                && is_scientific
-                && next_tok.is_some()
-                && Self::number_is_digit(&next_tok.unwrap())
-            {
-                is_start = false;
-                self.advance();
-            // Allow period for floats
-            } else if c == T_PERIOD
-                && prev_tok.is_some()
-                && Self::number_is_digit(&prev_tok.unwrap())
-                && !is_scientific
-                && !float
-            {
-                float = true;
-                is_start = false;
-                self.advance();
-            } else {
-                self.number_invalid();
-            }
+            state = match (&state, c) {
+                (Start, T_MINUS) => {
+                    self.advance();
+                    Sign
+                }
+                (Sign | Start, b'0') => {
+                    self.advance();
+                    Zero
+                }
+                (Sign | Start, b'1'..=b'9') => {
+                    self.advance();
+                    Int
+                }
+                (Int, b'0'..=b'9') => {
+                    self.advance();
+                    Int
+                }
+                (Zero | Int, b'.') => {
+                    self.advance();
+                    Dot
+                }
+                (Dot | Frac, b'0'..=b'9') => {
+                    self.advance();
+                    Frac
+                }
+                (Zero | Int | Frac, b'e' | b'E') => {
+                    self.advance();
+                    Expon
+                }
+                (Expon, b'0'..=b'9') => {
+                    self.advance();
+                    Scient
+                }
+                (Expon, T_MINUS) => {
+                    self.advance();
+                    ScientMinus
+                }
+                (ScientMinus | Scient, b'0'..=b'9') => {
+                    self.advance();
+                    Scient
+                }
+                (_, c) if Self::number_is_end(&c) => break,
+                _ => self.number_invalid(),
+            };
+        }
+
+        // Panic if we ended up with invalid state
+        match state {
+            NumState::Zero | NumState::Int | NumState::Frac | NumState::Scient => {}
+            _ => self.number_invalid(),
         }
 
         let tok_end = self.tok_pos;
@@ -308,7 +285,9 @@ mod tests {
 
     #[test]
     fn should_panic_if_number_contains_non_numeric_token() {
-        let forbidded_tokens = vec!["1a", "12a2", "0.2a", "-1a"];
+        let forbidded_tokens = vec![
+            "0a", "-0a", "0.a", "-0.a", "1a", "1.a", "-1a", "-1.a", "12a2", "0.2a",
+        ];
 
         for token in forbidded_tokens {
             assert_panic!(
@@ -353,13 +332,17 @@ mod tests {
 
     #[test]
     fn should_panic_if_number_starts_with_zero_and_not_float() {
-        assert_panic!(
-            {
-                Parser::new("02").parse();
-            },
-            String,
-            messages::M_PARSING_ERROR
-        );
+        let forbidded_tokens = vec!["02", "00"];
+
+        for token in forbidded_tokens {
+            assert_panic!(
+                {
+                    Parser::new(token).parse();
+                },
+                String,
+                messages::M_PARSING_ERROR
+            );
+        }
     }
 
     #[test]
@@ -376,10 +359,13 @@ mod tests {
     #[test]
     fn should_parse_positive_numbers() {
         let numbers = vec![
-            ("2", 1),
             ("0", 1),
+            ("1", 1),
+            ("2", 1),
+            ("9", 1),
             ("123", 3),
             ("999999", 6),
+            ("0.1", 3),
             ("2.3", 3),
             ("23.23", 5),
             ("0.23", 4),
@@ -402,8 +388,14 @@ mod tests {
     #[test]
     fn should_parse_negative_numbers() {
         let numbers = vec![
-            ("-2", 2),
             ("-0", 2),
+            ("-0.0", 4),
+            ("-0.1", 4),
+            ("-0.101", 6),
+            ("-2", 2),
+            ("-2.0", 4),
+            ("-2.01", 5),
+            ("-2.101", 6),
             ("-123", 4),
             ("-999999", 7),
             ("-2.3", 4),
@@ -477,6 +469,12 @@ mod tests {
     #[test]
     fn should_parse_scientific_numbers_correctly() {
         let numbers = vec![
+            ("0e0", 3),
+            ("-0e0", 4),
+            ("-0e-0", 5),
+            ("0e-0", 4),
+            ("1e0", 3),
+            ("1e-0", 4),
             ("1e3", 3),
             ("10e3", 4),
             ("102e302", 7),
@@ -521,5 +519,5 @@ mod tests {
 //      Valid: 1e3, 1E3, 1e-3, 1.5e10, -2.3e-5
 //      Invalid: 1e1.2, 1e-, 1e
 // - [x] Add tests for scientific number notation parsing
-// - [ ] Improve number parsing function
+// - [x] Improve number parsing function
 // - [ ] Review AstNode design

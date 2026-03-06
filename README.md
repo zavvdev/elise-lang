@@ -12,7 +12,7 @@ Dynamically typed, functional programming language with ugly syntax.
 
 - [x] Use library crate in the binary crate
 
-- [ ] Add number parsing (positive, negative, float, scientific notation)
+- [x] Add number parsing (positive, negative, float, scientific notation)
 
 - [ ] Add string parsing ("<UTF-8 string>")
 
