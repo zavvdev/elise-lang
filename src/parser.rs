@@ -33,7 +33,7 @@ const T_COMMA: u8 = b',';
 // ==========================
 
 #[derive(Debug)]
-enum NumState {
+enum FstNumState {
     Start,
     Sign,
     Zero,
@@ -46,28 +46,25 @@ enum NumState {
 }
 
 #[derive(Debug, PartialEq)]
-enum AstNodeValue {
-    Function,
-    Identifier,
-    // Storing numbers as string in order to not
-    // care about overflows at this stage. We can
-    // then decide which type is better for specific
-    // numeric value at the bytecole level.
-    Number(String),
-    String(String),
-}
-
-#[derive(Debug, PartialEq)]
-pub struct AstNodeSpan {
+pub struct TokSpan {
     start: usize,
     end: usize,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct AstNode {
-    value: AstNodeValue,
-    span: AstNodeSpan,
-    children: Vec<Box<AstNode>>,
+pub struct Primitive {
+    value: String,
+    span: TokSpan,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum AstNode {
+    Call {
+        name: &'static str,
+        span: TokSpan,
+        arguments: Vec<Box<AstNode>>,
+    },
+    Number(Primitive),
 }
 
 // Since strings and chars in Rust are UTF-8 encoded,
@@ -177,11 +174,11 @@ impl<'a> Parser<'a> {
     }
 
     fn number_consume(&mut self) -> AstNode {
-        let mut state = NumState::Start;
+        let mut state = FstNumState::Start;
         let tok_start = self.tok_pos;
 
         while let Some(c) = self.peek() {
-            use NumState::*;
+            use FstNumState::*;
 
             state = match (&state, c) {
                 (Start, T_MINUS) => {
@@ -231,7 +228,7 @@ impl<'a> Parser<'a> {
 
         // Panic if we ended up with invalid state
         match state {
-            NumState::Zero | NumState::Int | NumState::Frac | NumState::Scient => {}
+            FstNumState::Zero | FstNumState::Int | FstNumState::Frac | FstNumState::Scient => {}
             _ => self.number_invalid(),
         }
 
@@ -240,15 +237,13 @@ impl<'a> Parser<'a> {
         let value = from_utf8(&self.source_code[tok_start..tok_end])
             .unwrap_or_else(|_| self.number_invalid());
 
-        AstNode {
-            // allocate string in order to own value in AstNode
-            value: AstNodeValue::Number(value.to_string()),
-            span: AstNodeSpan {
+        AstNode::Number(Primitive {
+            value: value.to_string(),
+            span: TokSpan {
                 start: tok_start,
                 end: tok_end,
             },
-            children: vec![],
-        }
+        })
     }
 
     // ==========================
@@ -276,7 +271,7 @@ mod tests {
 
     use crate::{
         messages,
-        parser::{AstNode, AstNodeSpan, AstNodeValue, Parser},
+        parser::{AstNode, Parser, Primitive, TokSpan},
     };
 
     // ==========================
@@ -376,11 +371,10 @@ mod tests {
             let ast = Parser::new(number).parse();
             assert_eq!(
                 *ast.get(0).unwrap(),
-                AstNode {
-                    value: AstNodeValue::Number(number.to_string()),
-                    span: AstNodeSpan { start: 0, end },
-                    children: vec![],
-                }
+                AstNode::Number(Primitive {
+                    value: number.to_string(),
+                    span: TokSpan { start: 0, end },
+                })
             );
         }
     }
@@ -408,11 +402,10 @@ mod tests {
             let ast = Parser::new(number).parse();
             assert_eq!(
                 *ast.get(0).unwrap(),
-                AstNode {
-                    value: AstNodeValue::Number(number.to_string()),
-                    span: AstNodeSpan { start: 0, end },
-                    children: vec![],
-                }
+                AstNode::Number(Primitive {
+                    value: number.to_string(),
+                    span: TokSpan { start: 0, end },
+                })
             );
         }
     }
@@ -427,26 +420,22 @@ mod tests {
         assert_eq!(
             *ast,
             vec![
-                AstNode {
-                    value: AstNodeValue::Number("3".to_string()),
-                    span: AstNodeSpan { start: 0, end: 1 },
-                    children: vec![],
-                },
-                AstNode {
-                    value: AstNodeValue::Number("56".to_string()),
-                    span: AstNodeSpan { start: 2, end: 4 },
-                    children: vec![],
-                },
-                AstNode {
-                    value: AstNodeValue::Number("-9".to_string()),
-                    span: AstNodeSpan { start: 6, end: 8 },
-                    children: vec![],
-                },
-                AstNode {
-                    value: AstNodeValue::Number("3.2".to_string()),
-                    span: AstNodeSpan { start: 11, end: 14 },
-                    children: vec![],
-                }
+                AstNode::Number(Primitive {
+                    value: "3".to_string(),
+                    span: TokSpan { start: 0, end: 1 },
+                }),
+                AstNode::Number(Primitive {
+                    value: "56".to_string(),
+                    span: TokSpan { start: 2, end: 4 },
+                }),
+                AstNode::Number(Primitive {
+                    value: "-9".to_string(),
+                    span: TokSpan { start: 6, end: 8 },
+                }),
+                AstNode::Number(Primitive {
+                    value: "3.2".to_string(),
+                    span: TokSpan { start: 11, end: 14 },
+                }),
             ]
         );
     }
@@ -491,11 +480,10 @@ mod tests {
             let ast = Parser::new(number).parse();
             assert_eq!(
                 *ast.get(0).unwrap(),
-                AstNode {
-                    value: AstNodeValue::Number(number.to_string()),
-                    span: AstNodeSpan { start: 0, end },
-                    children: vec![],
-                }
+                AstNode::Number(Primitive {
+                    value: number.to_string(),
+                    span: TokSpan { start: 0, end },
+                })
             );
         }
     }
@@ -510,14 +498,3 @@ mod tests {
 //  TESTS END
 //
 // ==========================
-
-// TODO:
-// - [x] Add Span for AstNode instead of tok_start
-// - [x] Remove vec! allocation for number parsing and use slice
-// - [x] Store number as string in AST instead of f64
-// - [x] Add support for numbers with scientific notation (1e10, 2e-10)
-//      Valid: 1e3, 1E3, 1e-3, 1.5e10, -2.3e-5
-//      Invalid: 1e1.2, 1e-, 1e
-// - [x] Add tests for scientific number notation parsing
-// - [x] Improve number parsing function
-// - [ ] Review AstNode design
