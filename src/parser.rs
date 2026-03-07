@@ -19,6 +19,7 @@ const T_RIGHT_SQR_BRACKET: u8 = b']';
 
 const T_MINUS: u8 = b'-';
 const T_COMMA: u8 = b',';
+const T_DOUBLE_QT: u8 = b'"';
 
 // ==========================
 //
@@ -65,6 +66,7 @@ pub enum AstNode {
         arguments: Vec<Box<AstNode>>,
     },
     Number(Primitive),
+    String(Primitive),
 }
 
 // Since strings and chars in Rust are UTF-8 encoded,
@@ -99,6 +101,8 @@ impl<'a> Parser<'a> {
                 self.advance();
             } else if Self::number_is_start(&current_char) {
                 ast.push(self.number_consume());
+            } else if Self::string_is_start(&current_char) {
+                ast.push(self.string_consume());
             }
         }
 
@@ -164,9 +168,9 @@ impl<'a> Parser<'a> {
         Self::is_whitespace(c) || *c == T_COMMA || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
     }
 
-    fn number_invalid(&self) -> ! {
+    fn number_crash_invalid(&self) -> ! {
         out::crash_at_token_pos(
-            messages::M_INVALID_NUMBER,
+            messages::M_NUMBER_INVALID,
             self.source_code,
             self.tok_pos,
             messages::M_PARSING_ERROR,
@@ -222,20 +226,20 @@ impl<'a> Parser<'a> {
                     Scient
                 }
                 (_, c) if Self::number_is_end(&c) => break,
-                _ => self.number_invalid(),
+                _ => self.number_crash_invalid(),
             };
         }
 
         // Panic if we ended up with invalid state
         match state {
             FstNumState::Zero | FstNumState::Int | FstNumState::Frac | FstNumState::Scient => {}
-            _ => self.number_invalid(),
+            _ => self.number_crash_invalid(),
         }
 
         let tok_end = self.tok_pos;
 
         let value = from_utf8(&self.source_code[tok_start..tok_end])
-            .unwrap_or_else(|_| self.number_invalid());
+            .unwrap_or_else(|_| self.number_crash_invalid());
 
         AstNode::Number(Primitive {
             value: value.to_string(),
@@ -249,6 +253,71 @@ impl<'a> Parser<'a> {
     // ==========================
     //
     // NUMBER END
+    //
+    // ==========================
+
+    // ==========================
+    //
+    // STRING START
+    //
+    // ==========================
+
+    fn string_is_start(char: &u8) -> bool {
+        *char == T_DOUBLE_QT
+    }
+
+    fn string_is_end(char: &u8) -> bool {
+        *char == T_DOUBLE_QT
+    }
+
+    fn string_is_forbidden_char(char: &u8) -> bool {
+        *char == b'\n'
+    }
+
+    fn string_crash_invalid(&self) -> ! {
+        out::crash_at_token_pos(
+            messages::M_STRING_INVALID,
+            self.source_code,
+            self.tok_pos,
+            messages::M_PARSING_ERROR,
+        );
+    }
+
+    fn string_consume(&mut self) -> AstNode {
+        let tok_start = self.tok_pos;
+        self.advance();
+
+        while let Some(c) = self.peek() {
+            if Self::string_is_end(&c) {
+                self.advance();
+                break;
+            }
+            if Self::string_is_forbidden_char(&c) {
+                self.string_crash_invalid();
+            }
+            self.advance();
+        }
+
+        let value = from_utf8(&self.source_code[tok_start + 1..self.tok_pos - 1])
+            .unwrap_or_else(|_| self.string_crash_invalid());
+  
+        // Taking surrogate pairs and other code points
+        // that represent one lexeme into account.
+        // We add 2 that represents quote start and end.
+        let tok_end = tok_start + value.chars().count() + 2;
+
+        AstNode::String(Primitive {
+            value: value.to_string(),
+            span: TokSpan {
+                start: tok_start,
+                end: tok_end,
+            },
+        })
+    }
+
+    // ==========================
+    //
+    // STRING END
     //
     // ==========================
 }
@@ -490,6 +559,55 @@ mod tests {
 
     // ==========================
     // NUMBER TESTS FINISH
+    // ==========================
+
+    // ==========================
+    // STRING TESTS START
+    // ==========================
+
+    #[test]
+    fn should_panic_if_string_contains_new_line() {
+        assert_panic!(
+            {
+                Parser::new(
+                    "\"Hello
+                    World\"",
+                )
+                .parse();
+            },
+            String,
+            messages::M_PARSING_ERROR
+        );
+    }
+
+    #[test]
+    fn should_parse_string_correctly() {
+        let strings = vec![
+            ("\"Hello\"", 7),
+            ("\"Hello World\"", 13),
+            ("\"Hello       world!\"", 20),
+            ("\"123 2323 😄😄\"", 13),
+        ];
+        for (string, end) in strings {
+            let ast = Parser::new(string).parse();
+            assert_eq!(
+                *ast.get(0).unwrap(),
+                AstNode::String(Primitive {
+                    value: string
+                        .split("\"")
+                        .into_iter()
+                        .collect::<Vec<&str>>()
+                        .get(1)
+                        .unwrap()
+                        .to_string(),
+                    span: TokSpan { start: 0, end },
+                })
+            );
+        }
+    }
+
+    // ==========================
+    // STRING TESTS END
     // ==========================
 }
 

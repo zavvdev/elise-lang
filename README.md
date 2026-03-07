@@ -14,7 +14,7 @@ Dynamically typed, functional programming language with ugly syntax.
 
 - [x] Add number parsing (positive, negative, float, scientific notation)
 
-- [ ] Add string parsing ("<UTF-8 string>")
+- [x] Add string parsing ("<UTF-8 string>")
 
 - [ ] Add parsing function calls
 
