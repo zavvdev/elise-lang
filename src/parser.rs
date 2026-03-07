@@ -583,6 +583,7 @@ mod tests {
     #[test]
     fn should_parse_string_correctly() {
         let strings = vec![
+            ("\"\"", 2),
             ("\"Hello\"", 7),
             ("\"Hello World\"", 13),
             ("\"Hello       world!\"", 20),
