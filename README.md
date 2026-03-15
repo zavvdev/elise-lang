@@ -16,6 +16,14 @@ A deterministic dataflow pipeline programming language with compile-time optimiz
 
 - [x] Add string parsing ("<UTF-8 string>")
 
+- [ ] Add parsing lists
+
+- [ ] Add parsing bool
+
+- [ ] Add parsing identifiers
+
+- [ ] Add parsing nil
+
 - [ ] Add parsing function calls
 
 - [ ] Add static analysis module
