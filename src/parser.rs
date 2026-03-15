@@ -8,8 +8,9 @@ use crate::{messages, out};
 //
 // ==========================
 
-const T_FN_PREFIX: u8 = b'.';
-const T_FN_DECLARE: &str = "declare";
+const T_CALL_PREFIX: u8 = b'.';
+const T_CALL_DECLARE: &'static str = "declare";
+const T_CALL_CUSTOM: &'static str = "__CUSTOM";
 
 const T_LEFT_PAREN: u8 = b'(';
 const T_RIGHT_PAREN: u8 = b')';
@@ -67,6 +68,7 @@ pub enum AstNode {
     },
     Number(Primitive),
     String(Primitive),
+    Identifier(Primitive),
 }
 
 // Since strings and chars in Rust are UTF-8 encoded,
@@ -94,6 +96,8 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(&mut self) -> Vec<AstNode> {
+        // TODO: Rewrite to finite state machine approach
+
         let mut ast: Vec<AstNode> = vec![];
 
         while let Some(current_char) = self.peek() {
@@ -103,6 +107,14 @@ impl<'a> Parser<'a> {
                 ast.push(self.number_consume());
             } else if Self::string_is_start(&current_char) {
                 ast.push(self.string_consume());
+            } else if Self::call_is_start(&current_char) {
+                ast.push(self.call_consume());
+            } else {
+                ast.push(AstNode::Identifier(Primitive {
+                    value: "TODO".to_string(),
+                    span: TokSpan { start: 1, end: 2 },
+                }));
+                break;
             }
         }
 
@@ -121,11 +133,15 @@ impl<'a> Parser<'a> {
         tok
     }
 
-    fn peek(&self) -> Option<u8> {
-        if self.tok_pos >= self.source_code.len() {
+    fn peek_at(&self, pos: usize) -> Option<u8> {
+        if pos >= self.source_code.len() {
             return None;
         }
-        self.source_code.get(self.tok_pos).copied()
+        self.source_code.get(pos).copied()
+    }
+
+    fn peek(&self) -> Option<u8> {
+        self.peek_at(self.tok_pos)
     }
 
     // ==========================
@@ -300,7 +316,7 @@ impl<'a> Parser<'a> {
 
         let value = from_utf8(&self.source_code[tok_start + 1..self.tok_pos - 1])
             .unwrap_or_else(|_| self.string_crash_invalid());
-  
+
         // Taking surrogate pairs and other code points
         // that represent one lexeme into account.
         // We add 2 that represents quote start and end.
@@ -318,6 +334,81 @@ impl<'a> Parser<'a> {
     // ==========================
     //
     // STRING END
+    //
+    // ==========================
+
+    // ==========================
+    //
+    // CALL START
+    //
+    // ==========================
+
+    fn call_is_start(char: &u8) -> bool {
+        *char == T_CALL_PREFIX
+    }
+
+    fn call_crash_name(&self) -> ! {
+        out::crash_at_token_pos(
+            messages::M_CALL_NAME_INVALID,
+            self.source_code,
+            self.tok_pos + 1,
+            messages::M_PARSING_ERROR,
+        );
+    }
+
+    fn call_consume_name(&mut self) -> String {
+        let mut call_name = String::new();
+
+        while let Some(c) = self.advance() {
+            if c == T_LEFT_PAREN {
+                self.depth_stack.push(c);
+                break;
+            } else {
+                call_name.push_str(from_utf8(&vec![c]).unwrap());
+            }
+        }
+
+        call_name
+    }
+
+    fn call_name_start_check(&self) {
+        match self.peek_at(self.tok_pos + 1) {
+            Some(next) => {
+                if Self::is_whitespace(&next) {
+                    self.call_crash_name();
+                }
+            }
+            None => {}
+        }
+    }
+
+    fn call_match_name(name: &str) -> &'static str {
+        match name {
+            T_CALL_DECLARE => {
+                return T_CALL_DECLARE;
+            }
+            _ => T_CALL_CUSTOM,
+        }
+    }
+
+    fn call_consume(&mut self) -> AstNode {
+        self.call_name_start_check();
+        let start = self.tok_pos;
+        self.advance();
+        let name = self.call_consume_name();
+        let name = Self::call_match_name(&name);
+        let end = self.tok_pos;
+
+        AstNode::Call {
+            name,
+            span: TokSpan { start, end },
+            arguments: vec![],
+        }
+    }
+
+    // ==========================
+    //
+    // CALL END
     //
     // ==========================
 }
