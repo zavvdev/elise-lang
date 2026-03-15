@@ -1,5 +1,8 @@
-use std::str::from_utf8;
 use crate::{messages, out};
+use regex::Regex;
+use std::str::from_utf8;
+
+const IDENTIFIER_REGEX: &str = r"^([^\d\-?!\.@\s+])([a-zA-Z\-\?!_\d])*$";
 
 // ==========================
 //
@@ -9,6 +12,10 @@ use crate::{messages, out};
 
 const T_CALL_PREFIX: u8 = b'.';
 const T_CALL_DECLARE: &'static str = "declare";
+const T_CALL_ADD: &'static str = "add";
+const T_CALL_SUB: &'static str = "sub";
+const T_CALL_MUL: &'static str = "mul";
+const T_CALL_DIV: &'static str = "div";
 const T_CALL_CUSTOM: &'static str = "__CUSTOM";
 
 const T_LEFT_PAREN: u8 = b'(';
@@ -95,25 +102,26 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(&mut self) -> Vec<AstNode> {
-        // TODO: Rewrite to finite state machine approach
-
         let mut ast: Vec<AstNode> = vec![];
 
         while let Some(current_char) = self.peek() {
-            if Self::is_whitespace(&current_char) {
-                self.advance();
-            } else if Self::number_is_start(&current_char) {
-                ast.push(self.number_consume());
-            } else if Self::string_is_start(&current_char) {
-                ast.push(self.string_consume());
-            } else if Self::call_is_start(&current_char) {
-                ast.push(self.call_consume());
-            } else {
-                ast.push(AstNode::Identifier(Primitive {
-                    value: "TODO".to_string(),
-                    span: TokSpan { start: 1, end: 2 },
-                }));
-                break;
+            match current_char {
+                c if Self::is_whitespace(&c) => {
+                    self.advance();
+                }
+                c if Self::number_is_start(&c) => ast.push(self.number_consume()),
+                c if Self::string_is_start(&c) => ast.push(self.string_consume()),
+                c if Self::call_is_start(&c) => ast.push(self.call_consume()),
+                _ => {
+                    ast.push(AstNode::Identifier(Primitive {
+                        value: "TODO".to_string(),
+                        span: TokSpan {
+                            start: 1,
+                            end: self.tok_pos,
+                        },
+                    }));
+                    self.advance();
+                }
             }
         }
 
@@ -355,53 +363,57 @@ impl<'a> Parser<'a> {
         );
     }
 
-    fn call_consume_name(&mut self) -> String {
-        let mut call_name = String::new();
+    fn call_is_name_valid(name: &str) -> bool {
+        println!("name to parse: {}", name);
+        let re = Regex::new(IDENTIFIER_REGEX).unwrap();
+        !name.is_empty() && re.is_match(name)
+    }
 
-        while let Some(c) = self.advance() {
+    fn call_consume_name(&mut self) -> &'static str {
+        let start = self.tok_pos;
+
+        while let Some(c) = self.peek() {
             if c == T_LEFT_PAREN {
-                self.depth_stack.push(c);
+                self.depth_stack.push(T_LEFT_PAREN);
                 break;
             } else {
-                call_name.push_str(from_utf8(&vec![c]).unwrap());
+                self.advance();
             }
         }
 
-        call_name
-    }
+        println!("start: {}, end: {}", start, self.tok_pos);
 
-    fn call_name_start_check(&self) {
-        match self.peek_at(self.tok_pos + 1) {
-            Some(next) => {
-                if Self::is_whitespace(&next) {
-                    self.call_crash_name();
+        let name = from_utf8(&self.source_code[start..self.tok_pos]).unwrap();
+
+        println!("name: {}", name);
+
+        match name {
+            T_CALL_DECLARE => T_CALL_DECLARE,
+            T_CALL_ADD => T_CALL_ADD,
+            T_CALL_SUB => T_CALL_SUB,
+            T_CALL_MUL => T_CALL_MUL,
+            T_CALL_DIV => T_CALL_DIV,
+            _ => {
+                if Self::call_is_name_valid(name) {
+                    return T_CALL_CUSTOM;
+                } else {
+                    self.call_crash_name()
                 }
             }
-            None => {}
-        }
-    }
-
-    fn call_match_name(name: &str) -> &'static str {
-        match name {
-            T_CALL_DECLARE => {
-                return T_CALL_DECLARE;
-            }
-            _ => T_CALL_CUSTOM,
         }
     }
 
     fn call_consume(&mut self) -> AstNode {
-        self.call_name_start_check();
         let start = self.tok_pos;
         self.advance();
         let name = self.call_consume_name();
-        let name = Self::call_match_name(&name);
+        let arguments = vec![];
         let end = self.tok_pos;
 
         AstNode::Call {
             name,
             span: TokSpan { start, end },
-            arguments: vec![],
+            arguments,
         }
     }
 

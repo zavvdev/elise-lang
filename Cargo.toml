@@ -18,3 +18,4 @@ path = "src/lib.rs"
 
 [dependencies]
 assert-panic = "1.0.1"
+regex = "1.12.3"

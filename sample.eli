@@ -1,3 +1,1 @@
-.declare([
-  PI 3.14
-])
+.some-custom(
