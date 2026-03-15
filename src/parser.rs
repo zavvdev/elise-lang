@@ -16,6 +16,7 @@ const T_CALL_ADD: &'static str = "add";
 const T_CALL_SUB: &'static str = "sub";
 const T_CALL_MUL: &'static str = "mul";
 const T_CALL_DIV: &'static str = "div";
+// TODO: Remove this. We need to use function name itself instead of this.
 const T_CALL_CUSTOM: &'static str = "__CUSTOM";
 
 const T_LEFT_PAREN: u8 = b'(';
@@ -77,6 +78,12 @@ pub enum AstNode {
     Identifier(Primitive),
 }
 
+pub enum RequestedAstNodeResult {
+    Some(AstNode),
+    Ignored,
+    None,
+}
+
 // Since strings and chars in Rust are UTF-8 encoded,
 // which means that even if our char fits into 1 byte (ASCII)
 // we still have 4 bytes allocated for it. So we split our
@@ -101,27 +108,37 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub fn request_ast_node(&mut self) -> RequestedAstNodeResult {
+        use RequestedAstNodeResult::*;
+
+        let current_char = self.peek();
+
+        if current_char.is_none() {
+            return None;
+        }
+
+        let current_char = current_char.unwrap();
+
+        match current_char {
+            c if Self::should_ignore(&current_char) => {
+                self.advance();
+                Ignored
+            }
+            c if Self::number_is_start(&c) => Some(self.number_consume()),
+            c if Self::string_is_start(&c) => Some(self.string_consume()),
+            c if Self::call_is_start(&c) => Some(self.call_consume()),
+            _ => None,
+        }
+    }
+
     pub fn parse(&mut self) -> Vec<AstNode> {
         let mut ast: Vec<AstNode> = vec![];
 
-        while let Some(current_char) = self.peek() {
-            match current_char {
-                c if Self::is_whitespace(&c) => {
-                    self.advance();
-                }
-                c if Self::number_is_start(&c) => ast.push(self.number_consume()),
-                c if Self::string_is_start(&c) => ast.push(self.string_consume()),
-                c if Self::call_is_start(&c) => ast.push(self.call_consume()),
-                _ => {
-                    ast.push(AstNode::Identifier(Primitive {
-                        value: "TODO".to_string(),
-                        span: TokSpan {
-                            start: 1,
-                            end: self.tok_pos,
-                        },
-                    }));
-                    self.advance();
-                }
+        loop {
+            match self.request_ast_node() {
+                RequestedAstNodeResult::Some(ast_node) => ast.push(ast_node),
+                RequestedAstNodeResult::Ignored => continue,
+                RequestedAstNodeResult::None => break,
             }
         }
 
@@ -149,6 +166,10 @@ impl<'a> Parser<'a> {
 
     fn peek(&self) -> Option<u8> {
         self.peek_at(self.tok_pos)
+    }
+
+    fn should_ignore(c: &u8) -> bool {
+        Self::is_whitespace(c)
     }
 
     // ==========================
@@ -364,7 +385,6 @@ impl<'a> Parser<'a> {
     }
 
     fn call_is_name_valid(name: &str) -> bool {
-        println!("name to parse: {}", name);
         let re = Regex::new(IDENTIFIER_REGEX).unwrap();
         !name.is_empty() && re.is_match(name)
     }
@@ -381,11 +401,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        println!("start: {}, end: {}", start, self.tok_pos);
-
         let name = from_utf8(&self.source_code[start..self.tok_pos]).unwrap();
-
-        println!("name: {}", name);
 
         match name {
             T_CALL_DECLARE => T_CALL_DECLARE,
@@ -408,6 +424,7 @@ impl<'a> Parser<'a> {
         self.advance();
         let name = self.call_consume_name();
         let arguments = vec![];
+        // TODO: Capture bracket, consume arguments recursively
         let end = self.tok_pos;
 
         AstNode::Call {
