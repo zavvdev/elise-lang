@@ -10,6 +10,8 @@ const IDENTIFIER_REGEX: &str = r"^([^\d\-?!\.@\s+])([a-zA-Z\-\?!_\d])*$";
 //
 // ==========================
 
+// Known functions
+
 const T_CALL_PREFIX: u8 = b'.';
 const T_CALL_DECLARE: &'static str = "declare";
 const T_CALL_ADD: &'static str = "add";
@@ -18,6 +20,13 @@ const T_CALL_MUL: &'static str = "mul";
 const T_CALL_DIV: &'static str = "div";
 // TODO: Remove this. We need to use function name itself instead of this.
 const T_CALL_CUSTOM: &'static str = "__CUSTOM";
+
+// Boolean
+
+const T_TRUE: &'static str = "true";
+const T_FALSE: &'static str = "false";
+
+// Punctuation
 
 const T_LEFT_PAREN: u8 = b'(';
 const T_RIGHT_PAREN: u8 = b')';
@@ -67,14 +76,19 @@ pub struct Primitive {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct Compound {
+    span: TokSpan,
+    children: Vec<Box<AstNode>>,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum AstNode {
-    Call {
-        name: &'static str,
-        span: TokSpan,
-        arguments: Vec<Box<AstNode>>,
-    },
+    Call((&'static str, Compound)),
     Number(Primitive),
     String(Primitive),
+    Bool(Primitive),
+    List(Compound),
+    Dict(Compound),
     Identifier(Primitive),
 }
 
@@ -126,6 +140,8 @@ impl<'a> Parser<'a> {
             }
             c if Self::number_is_start(&c) => Some(self.number_consume()),
             c if Self::string_is_start(&c) => Some(self.string_consume()),
+            c if self.list_is_start(&c) => Some(self.list_consume()),
+            c if self.list_is_end(&c) => Ignored,
             c if Self::call_is_start(&c) => Some(self.call_consume()),
             _ => None,
         }
@@ -367,6 +383,94 @@ impl<'a> Parser<'a> {
 
     // ==========================
     //
+    // LIST START
+    //
+    // ==========================
+
+    fn list_crash_depth(&self) -> ! {
+        out::crash_at_token_pos(
+            messages::M_UNEXPECTED_LIST_END,
+            self.source_code,
+            self.tok_pos,
+            messages::M_PARSING_ERROR,
+        );
+    }
+
+    fn list_is_start(&mut self, c: &u8) -> bool {
+        if *c == T_LEFT_SQR_BRACKET {
+            self.depth_stack.push(T_LEFT_SQR_BRACKET);
+            self.advance();
+            return true;
+        }
+        false
+    }
+
+    fn list_is_end(&mut self, c: &u8) -> bool {
+        if *c == T_RIGHT_SQR_BRACKET {
+            let last_entry = self.depth_stack.pop();
+            if last_entry.is_none() || last_entry.unwrap() != T_LEFT_SQR_BRACKET {
+                self.list_crash_depth();
+            }
+            self.advance();
+            return true;
+        }
+        false
+    }
+
+    fn list_is_allowed_child(ast_node: &AstNode) -> bool {
+        use AstNode::*;
+
+        match ast_node {
+            Number(_) | String(_) | Bool(_) | List(_) | Dict(_) => true,
+            _ => false,
+        }
+    }
+
+    fn list_crash_not_allowed_child(&self) -> ! {
+        out::crash_at_token_pos(
+            messages::M_NOT_ALLOWED_LIST_CHILD,
+            self.source_code,
+            self.tok_pos,
+            messages::M_PARSING_ERROR,
+        );
+    }
+
+    fn list_consume(&mut self) -> AstNode {
+        let start = self.tok_pos;
+        let mut children = vec![];
+
+        loop {
+            // TODO: Handle comma parsing
+            match self.request_ast_node() {
+                RequestedAstNodeResult::Some(ast_node) => {
+                    if Self::list_is_allowed_child(&ast_node) {
+                        children.push(Box::new(ast_node));
+                    } else {
+                        self.list_crash_not_allowed_child();
+                    }
+                }
+                RequestedAstNodeResult::Ignored => continue,
+                RequestedAstNodeResult::None => break,
+            }
+        }
+
+        AstNode::List(Compound {
+            span: TokSpan {
+                start,
+                end: self.tok_pos,
+            },
+            children,
+        })
+    }
+
+    // ==========================
+    //
+    // LIST END
+    //
+    // ==========================
+
+    // ==========================
+    //
     // CALL START
     //
     // ==========================
@@ -423,15 +527,17 @@ impl<'a> Parser<'a> {
         let start = self.tok_pos;
         self.advance();
         let name = self.call_consume_name();
-        let arguments = vec![];
+        let children = vec![];
         // TODO: Capture bracket, consume arguments recursively
         let end = self.tok_pos;
 
-        AstNode::Call {
+        AstNode::Call((
             name,
-            span: TokSpan { start, end },
-            arguments,
-        }
+            Compound {
+                span: TokSpan { start, end },
+                children,
+            },
+        ))
     }
 
     // ==========================

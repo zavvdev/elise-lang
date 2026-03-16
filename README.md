@@ -18,11 +18,13 @@ A deterministic dataflow pipeline programming language with compile-time optimiz
 
 - [ ] Add parsing lists
 
-- [ ] Add parsing bool
+- [ ] Add parsing dictionaries
 
 - [ ] Add parsing identifiers
 
-- [ ] Add parsing nil
+    - [ ] Add parsing bool
+
+    - [ ] Add parsing nil
 
 - [ ] Add parsing function calls
 
@@ -150,7 +152,7 @@ No intermediate arrays. This technique is called loop fusion or stream fusion. T
 
 Possible modes:
 
-- Single thread 
+- Single thread
 
 ```
 for item in data
