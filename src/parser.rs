@@ -185,7 +185,7 @@ impl<'a> Parser<'a> {
     }
 
     fn should_ignore(c: &u8) -> bool {
-        Self::is_whitespace(c)
+        Self::is_whitespace(c) || *c == T_COMMA
     }
 
     // ==========================
@@ -440,7 +440,6 @@ impl<'a> Parser<'a> {
         let mut children = vec![];
 
         loop {
-            // TODO: Handle comma parsing
             match self.request_ast_node() {
                 RequestedAstNodeResult::Some(ast_node) => {
                     if Self::list_is_allowed_child(&ast_node) {
