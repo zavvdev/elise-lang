@@ -436,20 +436,22 @@ impl<'a> Parser<'a> {
     }
 
     fn list_consume(&mut self) -> AstNode {
+        use RequestedAstNodeResult::*;
+
         let start = self.tok_pos;
         let mut children = vec![];
 
         loop {
             match self.request_ast_node() {
-                RequestedAstNodeResult::Some(ast_node) => {
+                Some(ast_node) => {
                     if Self::list_is_allowed_child(&ast_node) {
                         children.push(Box::new(ast_node));
                     } else {
                         self.list_crash_not_allowed_child();
                     }
                 }
-                RequestedAstNodeResult::Ignored => continue,
-                RequestedAstNodeResult::None => break,
+                Ignored => continue,
+                None => break,
             }
         }
 
