@@ -26,6 +26,10 @@ const T_CALL_CUSTOM: &'static str = "__CUSTOM";
 const T_TRUE: &'static str = "true";
 const T_FALSE: &'static str = "false";
 
+// Null
+
+const T_NULL: &'static str = "null";
+
 // Punctuation
 
 const T_LEFT_PAREN: u8 = b'(';
@@ -87,15 +91,11 @@ pub enum AstNode {
     Number(Primitive),
     String(Primitive),
     Bool(Primitive),
+    Null(Primitive),
     List(Compound),
     Dict(Compound),
+    DictPair((String, Box<AstNode>)),
     Identifier(Primitive),
-}
-
-pub enum RequestedAstNodeResult {
-    Some(AstNode),
-    Ignored,
-    None,
 }
 
 // Since strings and chars in Rust are UTF-8 encoded,
@@ -122,39 +122,34 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn request_ast_node(&mut self) -> RequestedAstNodeResult {
-        use RequestedAstNodeResult::*;
-
-        let current_char = self.peek();
-
-        if current_char.is_none() {
-            return None;
-        }
-
-        let current_char = current_char.unwrap();
-
-        match current_char {
-            c if Self::should_ignore(&current_char) => {
-                self.advance();
-                Ignored
-            }
-            c if Self::number_is_start(&c) => Some(self.number_consume()),
-            c if Self::string_is_start(&c) => Some(self.string_consume()),
-            c if self.list_is_start(&c) => Some(self.list_consume()),
-            c if self.list_is_end(&c) => Ignored,
-            c if Self::call_is_start(&c) => Some(self.call_consume()),
-            _ => None,
-        }
-    }
-
+    /**
+     * Parse dispatcher. Match the beginning of each non-terminal
+     * and dispatch dedicated function for AstNode consumption.
+     * Each function for parsing dedicated AstNode adheres to
+     * grammar rules described in GRAMMAR.md
+     */
     pub fn parse(&mut self) -> Vec<AstNode> {
         let mut ast: Vec<AstNode> = vec![];
 
-        loop {
-            match self.request_ast_node() {
-                RequestedAstNodeResult::Some(ast_node) => ast.push(ast_node),
-                RequestedAstNodeResult::Ignored => continue,
-                RequestedAstNodeResult::None => break,
+        while let Some(c) = self.peek() {
+            if Self::call_is_start(&c) {
+                ast.push(self.call_consume());
+            } else if Self::number_is_start(&c) {
+                ast.push(self.number_consume());
+            } else if Self::string_is_start(&c) {
+                ast.push(self.string_consume());
+            } else if self.list_is_start(&c) {
+                ast.push(self.list_consume());
+
+            // Matching identifier should be at the very end
+            // since it matches any character.
+            } else if Self::identifier_is_start(&c) {
+                ast.push(self.identifier_consume());
+
+            // Advance if nothing is matched.
+            // This will skip spaces and commas.
+            } else {
+                self.advance();
             }
         }
 
@@ -182,10 +177,6 @@ impl<'a> Parser<'a> {
 
     fn peek(&self) -> Option<u8> {
         self.peek_at(self.tok_pos)
-    }
-
-    fn should_ignore(c: &u8) -> bool {
-        Self::is_whitespace(c) || *c == T_COMMA
     }
 
     // ==========================
@@ -383,6 +374,56 @@ impl<'a> Parser<'a> {
 
     // ==========================
     //
+    // IDENTIFIER START
+    //
+    // ==========================
+
+    fn identifier_is_start(c: &u8) -> bool {
+        (*c >= b'a' && *c <= b'z') || (*c >= b'A' && *c <= b'Z')
+    }
+
+    fn identifier_is_end(c: &u8) -> bool {
+        Self::is_whitespace(c) || *c == T_COMMA || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
+    }
+
+    fn identifier_consume(&mut self) -> AstNode {
+        let start = self.tok_pos;
+
+        while let Some(c) = self.peek() {
+            if Self::identifier_is_end(&c) {
+                break;
+            } else {
+                self.advance();
+            }
+        }
+
+        let value = from_utf8(&self.source_code[start..self.tok_pos])
+            .unwrap()
+            .to_string();
+
+        let primitive = Primitive {
+            value,
+            span: TokSpan {
+                start,
+                end: self.tok_pos,
+            },
+        };
+
+        match primitive.value.as_str() {
+            T_TRUE | T_FALSE => AstNode::Bool(primitive),
+            T_NULL => AstNode::Null(primitive),
+            _ => AstNode::Identifier(primitive),
+        }
+    }
+
+    // ==========================
+    //
+    // IDENTIFIER END
+    //
+    // ==========================
+
+    // ==========================
+    //
     // LIST START
     //
     // ==========================
@@ -436,31 +477,31 @@ impl<'a> Parser<'a> {
     }
 
     fn list_consume(&mut self) -> AstNode {
-        use RequestedAstNodeResult::*;
+        //use RequestedAstNodeResult::*;
 
-        let start = self.tok_pos;
-        let mut children = vec![];
+        //let start = self.tok_pos;
+        //let mut children = vec![];
 
-        loop {
-            match self.request_ast_node() {
-                Some(ast_node) => {
-                    if Self::list_is_allowed_child(&ast_node) {
-                        children.push(Box::new(ast_node));
-                    } else {
-                        self.list_crash_not_allowed_child();
-                    }
-                }
-                Ignored => continue,
-                None => break,
-            }
-        }
+        //loop {
+        //    match self.request_ast_node() {
+        //        Some(ast_node) => {
+        //            if Self::list_is_allowed_child(&ast_node) {
+        //                children.push(Box::new(ast_node));
+        //            } else {
+        //                self.list_crash_not_allowed_child();
+        //            }
+        //        }
+        //        Ignored => continue,
+        //        None => break,
+        //    }
+        //}
 
         AstNode::List(Compound {
             span: TokSpan {
-                start,
+                start: 0,
                 end: self.tok_pos,
             },
-            children,
+            children: vec![],
         })
     }
 
