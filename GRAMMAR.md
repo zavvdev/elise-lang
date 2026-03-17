@@ -49,7 +49,7 @@ _/* ... */_ - semantic description (not a part of EBNF)
 
 ## Examples
 
-1. **<call>**
+### 1. call
 
 Call is a main part of the language and it represents an expression that should run
 a specific amount of code written in this language in order to evaluate to some value.
@@ -61,7 +61,7 @@ In other words, it's a function call.
 
 - You can pass anything as argument.
 
-2. **<primitive>** and **<compound>**
+### 2. primitive and compound
 
 These are 2 main data types that the language can operate with.
 
@@ -100,7 +100,7 @@ Example of the **dictionary** data structure:
 
 - Trailing comma is allowed.
 
-3. **<identifier>**
+### 3. identifier
 
 It's a single value that can be evaluated to another value that has been bound to that identifier.
 Can be also called an "alias" because we just labeling another value.
