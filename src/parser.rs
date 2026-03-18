@@ -2,7 +2,7 @@ use crate::{messages, out};
 use regex::Regex;
 use std::str::from_utf8;
 
-const IDENTIFIER_REGEX: &str = r"^([^\d\-?!\.@\s+])([a-zA-Z\-\?!_\d])*$";
+const IDENTIFIER_REGEX: &str = r"^[A-Za-z][A-Za-z0-9\-?!_]*$";
 
 // ==========================
 //
@@ -386,6 +386,15 @@ impl<'a> Parser<'a> {
         Self::is_whitespace(c) || *c == T_COMMA || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
     }
 
+    fn identifier_crash_invalid(&self) -> ! {
+        out::crash_at_token_pos(
+            messages::M_UNEXPECTED_TOKEN,
+            self.source_code,
+            self.tok_pos,
+            messages::M_PARSING_ERROR,
+        );
+    }
+
     fn identifier_consume(&mut self) -> AstNode {
         let start = self.tok_pos;
 
@@ -412,7 +421,14 @@ impl<'a> Parser<'a> {
         match primitive.value.as_str() {
             T_TRUE | T_FALSE => AstNode::Bool(primitive),
             T_NULL => AstNode::Null(primitive),
-            _ => AstNode::Identifier(primitive),
+            _ => {
+                let re = Regex::new(IDENTIFIER_REGEX).unwrap();
+                if re.is_match(&primitive.value) {
+                    return AstNode::Identifier(primitive);
+                } else {
+                    self.identifier_crash_invalid();
+                }
+            }
         }
     }
 

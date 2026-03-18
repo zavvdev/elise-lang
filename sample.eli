@@ -1,1 +1,4 @@
-"false"
+.let ([name "Ihor",
+       address { street "Wallstreet"
+                 house-number "42"}]
+      .join(", " name .get(address "street")))
