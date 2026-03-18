@@ -909,6 +909,26 @@ mod tests {
     // ==========================
     // BOOL TESTS END
     // ==========================
+
+    // ==========================
+    // NULL TESTS START
+    // ==========================
+
+    #[test]
+    fn should_parse_null_correctly() {
+        let ast = Parser::new("null").parse();
+        assert_eq!(
+            *ast.get(0).unwrap(),
+            AstNode::Null(Primitive {
+                value: "null".to_string(),
+                span: TokSpan { start: 0, end: 4 }
+            })
+        )
+    }
+
+    // ==========================
+    // NULL TESTS END
+    // ==========================
 }
 
 // ==========================

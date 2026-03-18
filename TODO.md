@@ -20,7 +20,7 @@
 
         - [x] Add parsing bool
 
-        - [ ] Add parsing nil
+        - [x] Add parsing null
 
         - [ ] Custom with identifier rule check
 
