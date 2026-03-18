@@ -18,7 +18,7 @@
 
     - [ ] Add parsing identifiers
 
-        - [ ] Add parsing bool
+        - [x] Add parsing bool
 
         - [ ] Add parsing nil
 

@@ -877,6 +877,38 @@ mod tests {
     // ==========================
     // STRING TESTS END
     // ==========================
+
+    // ==========================
+    // BOOL TESTS START
+    // ==========================
+
+    #[test]
+    fn should_parse_true_correctly() {
+        let ast = Parser::new("true").parse();
+        assert_eq!(
+            *ast.get(0).unwrap(),
+            AstNode::Bool(Primitive {
+                value: "true".to_string(),
+                span: TokSpan { start: 0, end: 4 }
+            })
+        )
+    }
+
+    #[test]
+    fn should_parse_false_correctly() {
+        let ast = Parser::new("false").parse();
+        assert_eq!(
+            *ast.get(0).unwrap(),
+            AstNode::Bool(Primitive {
+                value: "false".to_string(),
+                span: TokSpan { start: 0, end: 5 }
+            })
+        )
+    }
+
+    // ==========================
+    // BOOL TESTS END
+    // ==========================
 }
 
 // ==========================
