@@ -38,7 +38,9 @@
 
     - [ ] Add tests for function calls
 
-    - [ ] Review parser for improvements
+    - [ ] Review tests and add more test cases where possible
+
+    - [ ] Review parser for improvements (including messages)
 
 - [ ] Add semantic analysis module
 

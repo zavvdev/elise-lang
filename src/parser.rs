@@ -1,4 +1,7 @@
-use crate::{messages, out};
+use crate::{
+    messages::{self, M_PARSING_ERROR, M_UNEXPECTED_TOKEN},
+    out,
+};
 use regex::Regex;
 use std::str::from_utf8;
 
@@ -132,7 +135,9 @@ impl<'a> Parser<'a> {
         let mut ast: Vec<AstNode> = vec![];
 
         while let Some(c) = self.peek() {
-            if Self::call_is_start(&c) {
+            if Self::is_separator(&c) {
+                self.advance();
+            } else if Self::call_is_start(&c) {
                 ast.push(self.call_consume());
             } else if Self::number_is_start(&c) {
                 ast.push(self.number_consume());
@@ -149,7 +154,12 @@ impl<'a> Parser<'a> {
             // Advance if nothing is matched.
             // This will skip spaces and commas.
             } else {
-                self.advance();
+                out::crash_at_token_pos(
+                    M_UNEXPECTED_TOKEN,
+                    &self.source_code,
+                    self.tok_pos,
+                    M_PARSING_ERROR,
+                );
             }
         }
 
@@ -179,25 +189,13 @@ impl<'a> Parser<'a> {
         self.peek_at(self.tok_pos)
     }
 
-    // ==========================
-    //
-    // TOKEN UTILITIES END
-    //
-    // ==========================
-
-    // ==========================
-    //
-    // COMMON UTILITIES START
-    //
-    // ==========================
-
-    fn is_whitespace(c: &u8) -> bool {
-        matches!(c, b' ' | b'\n' | b'\t' | b'\r')
+    fn is_separator(c: &u8) -> bool {
+        matches!(c, b' ' | b'\n' | b'\t' | b'\r') || *c == T_COMMA
     }
 
     // ==========================
     //
-    // COMMON UTILITIES END
+    // TOKEN UTILITIES END
     //
     // ==========================
 
@@ -216,7 +214,7 @@ impl<'a> Parser<'a> {
     }
 
     fn number_is_end(c: &u8) -> bool {
-        Self::is_whitespace(c) || *c == T_COMMA || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
+        Self::is_separator(c) || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
     }
 
     fn number_crash_invalid(&self) -> ! {
@@ -383,7 +381,7 @@ impl<'a> Parser<'a> {
     }
 
     fn identifier_is_end(c: &u8) -> bool {
-        Self::is_whitespace(c) || *c == T_COMMA || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
+        Self::is_separator(c) || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
     }
 
     fn identifier_crash_invalid(&self) -> ! {
