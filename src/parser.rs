@@ -125,6 +125,33 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn get_node_from_char(&mut self, c: &u8) -> Option<AstNode> {
+        if Self::is_separator(c) {
+            self.advance();
+            return None;
+        } else if Self::call_is_start(c) {
+            return Some(self.call_consume());
+        } else if Self::number_is_start(c) {
+            return Some(self.number_consume());
+        } else if Self::string_is_start(c) {
+            return Some(self.string_consume());
+        } else if self.list_is_start(c) {
+            return Some(self.list_consume());
+
+        // Matching identifier should be at the very end
+        // since it matches any character.
+        } else if Self::identifier_is_start(c) {
+            return Some(self.identifier_consume());
+        } else {
+            out::crash_at_token_pos(
+                M_UNEXPECTED_TOKEN,
+                &self.source_code,
+                self.tok_pos,
+                M_PARSING_ERROR,
+            );
+        }
+    }
+
     /**
      * Parse dispatcher. Match the beginning of each non-terminal
      * and dispatch dedicated function for AstNode consumption.
@@ -135,32 +162,18 @@ impl<'a> Parser<'a> {
         let mut ast: Vec<AstNode> = vec![];
 
         while let Some(c) = self.peek() {
-            if Self::is_separator(&c) {
-                self.advance();
-            } else if Self::call_is_start(&c) {
-                ast.push(self.call_consume());
-            } else if Self::number_is_start(&c) {
-                ast.push(self.number_consume());
-            } else if Self::string_is_start(&c) {
-                ast.push(self.string_consume());
-            } else if self.list_is_start(&c) {
-                ast.push(self.list_consume());
-
-            // Matching identifier should be at the very end
-            // since it matches any character.
-            } else if Self::identifier_is_start(&c) {
-                ast.push(self.identifier_consume());
-
-            // Advance if nothing is matched.
-            // This will skip spaces and commas.
-            } else {
-                out::crash_at_token_pos(
-                    M_UNEXPECTED_TOKEN,
-                    &self.source_code,
-                    self.tok_pos,
-                    M_PARSING_ERROR,
-                );
+            if let Some(node) = self.get_node_from_char(&c) {
+                ast.push(node);
             }
+        }
+
+        if self.depth_stack.len() > 0 {
+            out::crash_at_token_pos(
+                messages::M_UNDEXPECTED_EOF,
+                &self.source_code,
+                self.source_code.len(),
+                M_PARSING_ERROR,
+            );
         }
 
         ast
@@ -454,7 +467,6 @@ impl<'a> Parser<'a> {
     fn list_is_start(&mut self, c: &u8) -> bool {
         if *c == T_LEFT_SQR_BRACKET {
             self.depth_stack.push(T_LEFT_SQR_BRACKET);
-            self.advance();
             return true;
         }
         false
@@ -466,56 +478,32 @@ impl<'a> Parser<'a> {
             if last_entry.is_none() || last_entry.unwrap() != T_LEFT_SQR_BRACKET {
                 self.list_crash_depth();
             }
-            self.advance();
             return true;
         }
         false
     }
 
-    fn list_is_allowed_child(ast_node: &AstNode) -> bool {
-        use AstNode::*;
-
-        match ast_node {
-            Number(_) | String(_) | Bool(_) | List(_) | Dict(_) => true,
-            _ => false,
-        }
-    }
-
-    fn list_crash_not_allowed_child(&self) -> ! {
-        out::crash_at_token_pos(
-            messages::M_NOT_ALLOWED_LIST_CHILD,
-            self.source_code,
-            self.tok_pos,
-            messages::M_PARSING_ERROR,
-        );
-    }
-
     fn list_consume(&mut self) -> AstNode {
-        //use RequestedAstNodeResult::*;
+        let start = self.tok_pos;
+        self.advance();
+        let mut children: Vec<Box<AstNode>> = vec![];
 
-        //let start = self.tok_pos;
-        //let mut children = vec![];
-
-        //loop {
-        //    match self.request_ast_node() {
-        //        Some(ast_node) => {
-        //            if Self::list_is_allowed_child(&ast_node) {
-        //                children.push(Box::new(ast_node));
-        //            } else {
-        //                self.list_crash_not_allowed_child();
-        //            }
-        //        }
-        //        Ignored => continue,
-        //        None => break,
-        //    }
-        //}
+        while let Some(c) = self.peek() {
+            if self.list_is_end(&c) {
+                self.advance();
+                break;
+            }
+            if let Some(node) = self.get_node_from_char(&c) {
+                children.push(Box::new(node));
+            }
+        }
 
         AstNode::List(Compound {
             span: TokSpan {
-                start: 0,
+                start,
                 end: self.tok_pos,
             },
-            children: vec![],
+            children,
         })
     }
 
@@ -621,7 +609,7 @@ mod tests {
 
     use crate::{
         messages,
-        parser::{AstNode, Parser, Primitive, TokSpan},
+        parser::{AstNode, Compound, Parser, Primitive, TokSpan},
     };
 
     // ==========================
@@ -942,6 +930,131 @@ mod tests {
 
     // ==========================
     // NULL TESTS END
+    // ==========================
+
+    // ==========================
+    // IDENTIFIER TESTS START
+    // ==========================
+
+    #[test]
+    fn should_reject_invalid_custom_identifiers() {
+        let identifiers = vec![
+            "1asd", "!asd", "@asd", "#asd", "$asd", "%asd", "^asd", "&asd", "*asd", "-asd", "_asd",
+            "=asd", "+asd", "?asd", "?asd", ">asd", "<asd", "/asd",
+        ];
+        for identifier in identifiers {
+            assert_panic!(
+                {
+                    Parser::new(identifier).parse();
+                },
+                String,
+                messages::M_PARSING_ERROR
+            );
+        }
+    }
+
+    #[test]
+    fn should_parse_identifiers_correctly() {
+        let identifiers = vec![
+            ("asd", 3),
+            ("asd?", 4),
+            ("as?d", 4),
+            ("as5?d", 5),
+            ("asd-", 4),
+            ("as-d", 4),
+            ("asd!", 4),
+            ("as!d", 4),
+            ("asd_", 4),
+        ];
+        for (identifier, end) in identifiers {
+            let ast = Parser::new(identifier).parse();
+            assert_eq!(
+                *ast.get(0).unwrap(),
+                AstNode::Identifier(Primitive {
+                    value: identifier.to_string(),
+                    span: TokSpan { start: 0, end },
+                })
+            );
+        }
+    }
+
+    // ==========================
+    // IDENTIFIER TESTS END
+    // ==========================
+
+    // ==========================
+    // LIST TESTS START
+    // ==========================
+
+    #[test]
+    fn should_parse_empty_list() {
+        let ast = Parser::new("[]").parse();
+        assert_eq!(
+            *ast.get(0).unwrap(),
+            AstNode::List(Compound {
+                span: TokSpan { start: 0, end: 2 },
+                children: vec![],
+            })
+        );
+    }
+
+    #[test]
+    fn should_parse_nested_empty_list() {
+        let ast = Parser::new("[[]]").parse();
+        assert_eq!(
+            *ast.get(0).unwrap(),
+            AstNode::List(Compound {
+                span: TokSpan { start: 0, end: 4 },
+                children: vec![Box::new(AstNode::List(Compound {
+                    span: TokSpan { start: 1, end: 3 },
+                    children: vec![],
+                }))],
+            })
+        );
+    }
+
+    #[test]
+    fn should_parse_non_empty_list() {
+        let ast = Parser::new("[1, \"hello\", null, false]").parse();
+        assert_eq!(
+            *ast.get(0).unwrap(),
+            AstNode::List(Compound {
+                span: TokSpan { start: 0, end: 25 },
+                children: vec![
+                    Box::new(AstNode::Number(Primitive {
+                        value: "1".to_string(),
+                        span: TokSpan { start: 1, end: 2 },
+                    })),
+                    Box::new(AstNode::String(Primitive {
+                        value: "hello".to_string(),
+                        span: TokSpan { start: 4, end: 11 },
+                    })),
+                    Box::new(AstNode::Null(Primitive {
+                        value: "null".to_string(),
+                        span: TokSpan { start: 13, end: 17 },
+                    })),
+                    Box::new(AstNode::Bool(Primitive {
+                        value: "false".to_string(),
+                        span: TokSpan { start: 19, end: 24 },
+                    }))
+                ],
+            })
+        );
+    }
+
+    #[test]
+    fn should_panic_if_list_is_not_closed() {
+        assert_panic!(
+            {
+                Parser::new("[[1, 3]").parse();
+            },
+            String,
+            messages::M_PARSING_ERROR
+        );
+    }
+
+    // ==========================
+    // LIST TESTS END
     // ==========================
 }
 

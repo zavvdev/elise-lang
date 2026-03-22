@@ -16,27 +16,27 @@
 
     - [x] Add string parsing ("<UTF-8 string>")
 
-    - [ ] Add parsing identifiers
+    - [x] Add parsing identifiers
 
         - [x] Add parsing bool
 
         - [x] Add parsing null
 
-        - [ ] Custom with identifier rule check
+        - [x] Custom with identifier rule check
 
-    - [ ] Add tests for identifiers 
+        - [x] Add tests for identifiers
 
-    - [ ] Add parsing lists
+    - [x] Add parsing lists
 
-    - [ ] Add tests for lists
+        - [x] Add tests for lists
 
     - [ ] Add parsing dictionaries
 
-    - [ ] Add tests for dictionaries
+        - [ ] Add tests for dictionaries
 
     - [ ] Add parsing function calls
 
-    - [ ] Add tests for function calls
+        - [ ] Add tests for function calls
 
     - [ ] Review tests and add more test cases where possible
 

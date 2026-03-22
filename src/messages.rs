@@ -11,3 +11,5 @@ pub const M_UNEXPECTED_TOKEN: &str = "Unexpected Token";
 pub const M_UNEXPECTED_LIST_END: &str = "Unexpected End of List";
 
 pub const M_NOT_ALLOWED_LIST_CHILD: &str = "Unexpected list child data type";
+
+pub const M_UNDEXPECTED_EOF: &str = "Unexpected end of file";
