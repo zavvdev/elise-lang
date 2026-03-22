@@ -171,7 +171,7 @@ impl<'a> Parser<'a> {
             out::crash_at_token_pos(
                 messages::M_UNDEXPECTED_EOF,
                 &self.source_code,
-                self.source_code.len(),
+                self.source_code.len() - 1,
                 M_PARSING_ERROR,
             );
         }
