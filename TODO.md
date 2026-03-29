@@ -38,7 +38,7 @@
 
         - [x] Add tests for function calls
 
-    - [ ] Review tests and add more test cases where possible
+    - [x] Review tests and add more test cases where possible
 
     - [ ] Review parser for improvements (including messages)
 

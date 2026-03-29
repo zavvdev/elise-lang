@@ -673,6 +673,8 @@ impl<'a> Parser<'a> {
         }
 
         let call_name = from_utf8(&self.source_code[call_name_start..self.tok_pos]).unwrap();
+        // Allow separators at the end for user preferences.
+        let call_name = call_name.trim_end();
 
         if !Self::call_is_name_valid(call_name) {
             self.call_crash_name();
@@ -745,7 +747,7 @@ mod tests {
     // ==========================
 
     #[test]
-    fn should_panic_if_number_contains_non_numeric_token() {
+    fn number_test_should_panic_if_contains_non_numeric_token() {
         let forbidded_tokens = vec![
             "0a", "-0a", "0.a", "-0.a", "1a", "1.a", "-1a", "-1.a", "12a2", "0.2a",
         ];
@@ -762,7 +764,7 @@ mod tests {
     }
 
     #[test]
-    fn should_panic_if_number_contains_more_than_one_minus_token() {
+    fn number_test_should_panic_if_contains_more_than_one_minus_token() {
         let forbidded_tokens = vec!["--1", "-1-2", "-2-3-"];
 
         for token in forbidded_tokens {
@@ -777,7 +779,7 @@ mod tests {
     }
 
     #[test]
-    fn should_panic_if_number_contains_more_than_one_period_token() {
+    fn number_test_should_panic_if_contains_more_than_one_period_token() {
         let forbidded_tokens = vec!["0.2.3", "0.3."];
 
         for token in forbidded_tokens {
@@ -792,7 +794,7 @@ mod tests {
     }
 
     #[test]
-    fn should_panic_if_number_starts_with_zero_and_not_float() {
+    fn number_test_should_panic_if_starts_with_zero_and_not_float() {
         let forbidded_tokens = vec!["02", "00"];
 
         for token in forbidded_tokens {
@@ -807,7 +809,7 @@ mod tests {
     }
 
     #[test]
-    fn should_panic_if_we_start_from_minus_and_nothing_follows() {
+    fn number_test_should_panic_if_we_start_from_minus_and_nothing_follows() {
         assert_panic!(
             {
                 Parser::new("-").parse();
@@ -818,7 +820,7 @@ mod tests {
     }
 
     #[test]
-    fn should_parse_positive_numbers() {
+    fn number_test_should_parse_positive_numbers() {
         let numbers = vec![
             ("0", 1),
             ("1", 1),
@@ -846,7 +848,7 @@ mod tests {
     }
 
     #[test]
-    fn should_parse_negative_numbers() {
+    fn number_test_should_parse_negative_numbers() {
         let numbers = vec![
             ("-0", 2),
             ("-0.0", 4),
@@ -877,7 +879,7 @@ mod tests {
     }
 
     #[test]
-    fn should_parse_numbers_correctly_that_are_separated() {
+    fn number_test_should_parse_numbers_correctly_that_are_separated() {
         let ast = Parser::new(
             "3
 56  -9   3.2",
@@ -907,7 +909,7 @@ mod tests {
     }
 
     #[test]
-    fn should_panic_if_scientific_notation_number_is_invalid() {
+    fn number_test_should_panic_if_scientific_notation_number_is_invalid() {
         let forbidded_tokens = vec!["1e1.2", "1e-", "1e"];
 
         for token in forbidded_tokens {
@@ -922,7 +924,7 @@ mod tests {
     }
 
     #[test]
-    fn should_parse_scientific_numbers_correctly() {
+    fn number_test_should_parse_scientific_numbers_correctly() {
         let numbers = vec![
             ("0e0", 3),
             ("-0e0", 4),
@@ -955,7 +957,7 @@ mod tests {
     }
 
     // ==========================
-    // NUMBER TESTS FINISH
+    // NUMBER TESTS END
     // ==========================
 
     // ==========================
@@ -963,7 +965,7 @@ mod tests {
     // ==========================
 
     #[test]
-    fn should_panic_if_string_contains_new_line() {
+    fn string_test_should_panic_if_contains_new_line() {
         assert_panic!(
             {
                 Parser::new(
@@ -978,7 +980,7 @@ mod tests {
     }
 
     #[test]
-    fn should_parse_string_correctly() {
+    fn string_test_should_parse_correctly() {
         let strings = vec![
             ("\"\"", 2),
             ("\"Hello\"", 7),
@@ -1013,7 +1015,7 @@ mod tests {
     // ==========================
 
     #[test]
-    fn should_parse_true_correctly() {
+    fn bool_test_should_parse_true_correctly() {
         let ast = Parser::new("true").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
@@ -1025,7 +1027,7 @@ mod tests {
     }
 
     #[test]
-    fn should_parse_false_correctly() {
+    fn bool_test_should_parse_false_correctly() {
         let ast = Parser::new("false").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
@@ -1045,7 +1047,7 @@ mod tests {
     // ==========================
 
     #[test]
-    fn should_parse_null_correctly() {
+    fn null_test_should_parse_null_correctly() {
         let ast = Parser::new("null").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
@@ -1065,7 +1067,7 @@ mod tests {
     // ==========================
 
     #[test]
-    fn should_reject_invalid_custom_identifiers() {
+    fn identifier_test_should_reject_invalid_names() {
         let identifiers = vec![
             "1asd", "!asd", "@asd", "#asd", "$asd", "%asd", "^asd", "&asd", "*asd", "-asd", "_asd",
             "=asd", "+asd", "?asd", "?asd", ">asd", "<asd", "/asd",
@@ -1082,7 +1084,7 @@ mod tests {
     }
 
     #[test]
-    fn should_parse_identifiers_correctly() {
+    fn identifier_test_should_parse_correctly() {
         let identifiers = vec![
             ("asd", 3),
             ("asd?", 4),
@@ -1115,7 +1117,7 @@ mod tests {
     // ==========================
 
     #[test]
-    fn should_parse_empty_list() {
+    fn list_test_should_parse_empty() {
         let ast = Parser::new("[]").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
@@ -1127,7 +1129,7 @@ mod tests {
     }
 
     #[test]
-    fn should_parse_nested_empty_list() {
+    fn list_test_should_parse_nested_empty() {
         let ast = Parser::new("[[]]").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
@@ -1142,7 +1144,7 @@ mod tests {
     }
 
     #[test]
-    fn should_parse_non_empty_list() {
+    fn list_test_should_parse_non_empty() {
         let ast = Parser::new("[1, \"hello\", null, false]").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
@@ -1171,7 +1173,7 @@ mod tests {
     }
 
     #[test]
-    fn should_panic_if_list_is_not_closed() {
+    fn list_test_should_panic_if_not_closed() {
         assert_panic!(
             {
                 Parser::new("[[1, 3]").parse();
@@ -1190,7 +1192,7 @@ mod tests {
     // ==========================
 
     #[test]
-    fn should_parse_empty_dict() {
+    fn dict_test_should_parse_empty() {
         let ast = Parser::new("{}").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
@@ -1202,7 +1204,7 @@ mod tests {
     }
 
     #[test]
-    fn should_parse_non_empty_dict() {
+    fn dict_test_should_parse_non_empty() {
         let ast = Parser::new(
             "{ \"a\" 1, \"b\" \"2\", \"c\" false, \"d\" null, \"e\" [1, 2, 3], \"f\" { \"a2\" some_value } }",
         )
@@ -1280,12 +1282,12 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "Parsing Error")]
-    fn should_panic_if_dict_pair_is_invalid() {
+    fn dict_test_should_panic_if_pair_is_invalid() {
         Parser::new("{ \"a\" 1, \"b\" }").parse();
     }
 
     #[test]
-    fn should_panic_if_dict_key_is_invalid() {
+    fn dict_test_should_panic_if_key_is_invalid() {
         let inputs = vec![
             "{ a 1 }",
             "{ 1 \"2\" }",
@@ -1306,7 +1308,7 @@ mod tests {
     }
 
     #[test]
-    fn should_panic_if_dict_is_not_closed_correctly() {
+    fn dict_test_should_panic_if_not_closed_correctly() {
         let inputs = vec!["{ \"a\" 1 }}", "{{ \"1\" \"2\" }"];
         for input in inputs {
             assert_panic!(
@@ -1328,7 +1330,7 @@ mod tests {
     // ==========================
 
     #[test]
-    fn should_parse_empty_function() {
+    fn call_test_should_parse_with_no_arguments() {
         let ast = Parser::new(".some-fn()").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
@@ -1343,7 +1345,7 @@ mod tests {
     }
 
     #[test]
-    fn should_parse_non_empty_function() {
+    fn call_test_should_parse_with_arguments() {
         let ast = Parser::new(".add(2 .div(4 2))").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
@@ -1379,13 +1381,106 @@ mod tests {
     }
 
     #[test]
+    fn call_test_should_parse_with_separators_after_name() {
+        let inputs = vec![
+            (".test ()", 8),
+            (".test  ()", 9),
+            (
+                ".test
+            ()",
+                20,
+            ),
+            (
+                ".test
+                        ()",
+                32,
+            ),
+        ];
+        for (input, end) in inputs {
+            assert_eq!(
+                Parser::new(input).parse(),
+                vec![AstNode::Call((
+                    "test".to_string(),
+                    Compound {
+                        span: TokSpan { start: 0, end },
+                        children: vec![],
+                    }
+                ))]
+            );
+        }
+    }
+
+    #[test]
     #[should_panic(expected = "Parsing Error")]
-    fn should_panic_if_not_closed_correctly() {
+    fn call_test_should_panic_if_not_closed_correctly() {
         Parser::new(".some-fn(2 2 3))").parse();
+    }
+
+    #[test]
+    #[should_panic(expected = "Parsing Error")]
+    fn call_test_should_panic_if_separator_after_call_symbol() {
+        Parser::new(". some-fn()").parse();
+    }
+
+    #[test]
+    fn call_test_should_reject_invalid_names() {
+        let identifiers = vec![
+            "1asd", "!asd", "@asd", "#asd", "$asd", "%asd", "^asd", "&asd", "*asd", "-asd", "_asd",
+            "=asd", "+asd", "?asd", "?asd", ">asd", "<asd", "/asd",
+        ];
+        for identifier in identifiers {
+            assert_panic!(
+                {
+                    Parser::new(&format!(".{}()", identifier)).parse();
+                },
+                String,
+                messages::M_PARSING_ERROR
+            );
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "Parsing Error")]
+    fn call_test_should_panic_if_parens_are_standalone() {
+        Parser::new("()").parse();
     }
 
     // ==========================
     // CALL TESTS END
+    // ==========================
+
+    // ==========================
+    // DEPTH TESTS START
+    // ==========================
+
+    #[test]
+    fn depth_test_should_reject_invalid_depth() {
+        let depth_cases = vec![
+            ".a())",
+            ".a(()",
+            ".a().a()))",
+            "()()))",
+            "())",
+            "(()",
+            "[]]",
+            "[][[][][]]][[",
+            "[{}}]",
+            "[{{{{}]",
+            "[{{}]",
+        ];
+        for depth_case in depth_cases {
+            assert_panic!(
+                {
+                    Parser::new(depth_case).parse();
+                },
+                String,
+                messages::M_PARSING_ERROR
+            );
+        }
+    }
+
+    // ==========================
+    // DEPTH TESTS END
     // ==========================
 }
 

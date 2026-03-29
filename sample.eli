@@ -1,5 +1,1 @@
-.fn(say-hi [name]
-    .println(
-        .concat("Hello " name)))
-
-.say-hi("World")
+.say-hi ("World")

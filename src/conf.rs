@@ -276,7 +276,7 @@ mod tests {
         assert_eq!(config.file_path, file_path);
     }
 
-    // Print bytecode 
+    // Print bytecode
 
     #[test]
     fn should_set_print_bytecode_to_true_if_no_value_provided() {
