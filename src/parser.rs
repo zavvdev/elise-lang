@@ -40,6 +40,8 @@ const T_RIGHT_PAREN: u8 = b')';
 
 const T_LEFT_SQR_BRACKET: u8 = b'[';
 const T_RIGHT_SQR_BRACKET: u8 = b']';
+const T_LEFT_CUR_BRACKET: u8 = b'{';
+const T_RIGHT_CUR_BRACKET: u8 = b'}';
 
 const T_MINUS: u8 = b'-';
 const T_COMMA: u8 = b',';
@@ -137,6 +139,8 @@ impl<'a> Parser<'a> {
             return Some(self.string_consume());
         } else if self.list_is_start(c) {
             return Some(self.list_consume());
+        } else if self.dict_is_start(c) {
+            return Some(self.dict_consume());
 
         // Matching identifier should be at the very end
         // since it matches any character.
@@ -510,6 +514,108 @@ impl<'a> Parser<'a> {
     // ==========================
     //
     // LIST END
+    //
+    // ==========================
+
+    // ==========================
+    //
+    // DICT START
+    //
+    // ==========================
+
+    fn dict_crash_depth(&self) -> ! {
+        out::crash_at_token_pos(
+            messages::M_UNEXPECTED_DICT_END,
+            self.source_code,
+            self.tok_pos,
+            messages::M_PARSING_ERROR,
+        );
+    }
+
+    fn dict_crash_invalid_key(&self) -> ! {
+        out::crash_at_token_pos(
+            messages::M_UNEXPECTED_DICT_KEY,
+            self.source_code,
+            self.tok_pos,
+            messages::M_PARSING_ERROR,
+        );
+    }
+
+    fn dict_crash_invalid_pair(&self) -> ! {
+        out::crash_at_token_pos(
+            messages::M_DICT_INVALID_PAIR,
+            self.source_code,
+            self.tok_pos,
+            messages::M_PARSING_ERROR,
+        );
+    }
+
+    fn dict_is_start(&mut self, c: &u8) -> bool {
+        if *c == T_LEFT_CUR_BRACKET {
+            self.depth_stack.push(T_LEFT_CUR_BRACKET);
+            return true;
+        }
+        false
+    }
+
+    fn dict_is_end(&mut self, c: &u8) -> bool {
+        if *c == T_RIGHT_CUR_BRACKET {
+            let last_entry = self.depth_stack.pop();
+            if last_entry.is_none() || last_entry.unwrap() != T_LEFT_CUR_BRACKET {
+                self.dict_crash_depth();
+            }
+            return true;
+        }
+        false
+    }
+
+    fn dict_consume(&mut self) -> AstNode {
+        let start = self.tok_pos;
+        self.advance();
+
+        let mut children: Vec<Box<AstNode>> = vec![];
+        let mut key: Option<String> = None;
+
+        while let Some(c) = self.peek() {
+            if self.dict_is_end(&c) {
+                if key.is_some() {
+                    self.dict_crash_invalid_pair();
+                }
+                self.advance();
+                break;
+            }
+            if let Some(node) = self.get_node_from_char(&c) {
+                if key.is_none() {
+                    match node {
+                        AstNode::String(primitive) => {
+                            key = Some(primitive.value);
+                        }
+                        _ => {
+                            self.dict_crash_invalid_key();
+                        }
+                    }
+                } else {
+                    children.push(Box::new(AstNode::DictPair((
+                        key.clone().unwrap(),
+                        Box::new(node),
+                    ))));
+                    key = None;
+                }
+            }
+        }
+
+        AstNode::Dict(Compound {
+            span: TokSpan {
+                start,
+                end: self.tok_pos,
+            },
+            children,
+        })
+    }
+
+    // ==========================
+    //
+    // DICT END
     //
     // ==========================
 
@@ -1055,6 +1161,144 @@ mod tests {
 
     // ==========================
     // LIST TESTS END
+    // ==========================
+
+    // ==========================
+    // DICT TESTS START
+    // ==========================
+
+    #[test]
+    fn should_parse_empty_dict() {
+        let ast = Parser::new("{}").parse();
+        assert_eq!(
+            *ast.get(0).unwrap(),
+            AstNode::Dict(Compound {
+                span: TokSpan { start: 0, end: 2 },
+                children: vec![],
+            })
+        );
+    }
+
+    #[test]
+    fn should_parse_non_empty_dict() {
+        let ast = Parser::new(
+            "{ \"a\" 1, \"b\" \"2\", \"c\" false, \"d\" null, \"e\" [1, 2, 3], \"f\" { \"a2\" some_value } }",
+        )
+        .parse();
+        assert_eq!(
+            *ast.get(0).unwrap(),
+            AstNode::Dict(Compound {
+                span: TokSpan { start: 0, end: 79 },
+                children: vec![
+                    Box::new(AstNode::DictPair((
+                        "a".to_string(),
+                        Box::new(AstNode::Number(Primitive {
+                            value: "1".to_string(),
+                            span: TokSpan { start: 6, end: 7 }
+                        }))
+                    ))),
+                    Box::new(AstNode::DictPair((
+                        "b".to_string(),
+                        Box::new(AstNode::String(Primitive {
+                            value: "2".to_string(),
+                            span: TokSpan { start: 13, end: 16 }
+                        }))
+                    ))),
+                    Box::new(AstNode::DictPair((
+                        "c".to_string(),
+                        Box::new(AstNode::Bool(Primitive {
+                            value: "false".to_string(),
+                            span: TokSpan { start: 22, end: 27 }
+                        }))
+                    ))),
+                    Box::new(AstNode::DictPair((
+                        "d".to_string(),
+                        Box::new(AstNode::Null(Primitive {
+                            value: "null".to_string(),
+                            span: TokSpan { start: 33, end: 37 }
+                        }))
+                    ))),
+                    Box::new(AstNode::DictPair((
+                        "e".to_string(),
+                        Box::new(AstNode::List(Compound {
+                            span: TokSpan { start: 43, end: 52 },
+                            children: vec![
+                                Box::new(AstNode::Number(Primitive {
+                                    value: "1".to_string(),
+                                    span: TokSpan { start: 44, end: 45 }
+                                })),
+                                Box::new(AstNode::Number(Primitive {
+                                    value: "2".to_string(),
+                                    span: TokSpan { start: 47, end: 48 }
+                                })),
+                                Box::new(AstNode::Number(Primitive {
+                                    value: "3".to_string(),
+                                    span: TokSpan { start: 50, end: 51 }
+                                }))
+                            ]
+                        }))
+                    ))),
+                    Box::new(AstNode::DictPair((
+                        "f".to_string(),
+                        Box::new(AstNode::Dict(Compound {
+                            span: TokSpan { start: 58, end: 77 },
+                            children: vec![Box::new(AstNode::DictPair((
+                                "a2".to_string(),
+                                Box::new(AstNode::Identifier(Primitive {
+                                    value: "some_value".to_string(),
+                                    span: TokSpan { start: 65, end: 75 }
+                                }))
+                            )))]
+                        }))
+                    )))
+                ],
+            })
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "Parsing Error")]
+    fn should_panic_if_dict_pair_is_invalid() {
+        Parser::new("{ \"a\" 1, \"b\" }").parse();
+    }
+
+    #[test]
+    fn should_panic_if_dict_key_is_invalid() {
+        let inputs = vec![
+            "{ a 1 }",
+            "{ 1 \"2\" }",
+            "{ null false }",
+            "{ false true }",
+            "{ [] \"`\" }",
+            "{ {} a }",
+        ];
+        for input in inputs {
+            assert_panic!(
+                {
+                    Parser::new(input).parse();
+                },
+                String,
+                messages::M_PARSING_ERROR
+            );
+        }
+    }
+
+    #[test]
+    fn should_panic_if_dict_is_not_closed_correctly() {
+        let inputs = vec!["{ \"a\" 1 }}", "{{ \"1\" \"2\" }"];
+        for input in inputs {
+            assert_panic!(
+                {
+                    Parser::new(input).parse();
+                },
+                String,
+                messages::M_PARSING_ERROR
+            );
+        }
+    }
+
+    // ==========================
+    // DICT TESTS END
     // ==========================
 }
 

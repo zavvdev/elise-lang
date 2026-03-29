@@ -33,7 +33,7 @@ pub enum HandleExecResultOperationStatus {
 pub fn exec<'a>(source_code: &'a str, config: &'a Conf) -> ExecResult<'a> {
     let ast = Parser::new(&source_code).parse();
 
-    println!("ast: {:?}", ast);
+    println!("ast: {:#?}", ast);
 
     ExecResult {
         status: ExecStatus::Success,

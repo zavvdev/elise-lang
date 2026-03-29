@@ -30,9 +30,9 @@
 
         - [x] Add tests for lists
 
-    - [ ] Add parsing dictionaries
+    - [x] Add parsing dictionaries
 
-        - [ ] Add tests for dictionaries
+        - [x] Add tests for dictionaries
 
     - [ ] Add parsing function calls
 
