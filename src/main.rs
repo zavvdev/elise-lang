@@ -64,8 +64,6 @@ fn main() {
     // Check from_cli for more details.
     let config = Conf::from_cli(&args);
 
-    // TODO: Consider reading file in chunks since reading the
-    // whole file at once can be slow
     match file_reader::read_file(&config.file_path) {
         Ok(file_descriptor) => {
             let exec_res = exec(&file_descriptor.content, &config);

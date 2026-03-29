@@ -12,7 +12,6 @@ pub mod file_reader {
         pub message: String,
     }
 
-    // TODO: Maybe it's better to read file in chunks
     pub fn read_file(path: &str) -> Result<FileReaderDescriptor, FileReaderError> {
         match fs::read_to_string(path) {
             Ok(content) => Ok(FileReaderDescriptor {

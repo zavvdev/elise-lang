@@ -59,3 +59,7 @@
 - [ ] Create a virtual machine for bytecode interpretation
 
     - [ ] ...
+
+- [ ] Optimizations
+
+    - [ ] Read source code file in chunks
