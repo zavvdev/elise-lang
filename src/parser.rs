@@ -5,39 +5,16 @@ use crate::{
 use regex::Regex;
 use std::str::from_utf8;
 
+// <identifier> ::= <letter> (<letter> | <digit> | '-' | '?' | '!' | '_')*
 const IDENTIFIER_REGEX: &str = r"^[A-Za-z][A-Za-z0-9\-?!_]*$";
 
-// ==========================
-//
-// TOKEN DEFINITIONS START
-//
-// ==========================
-
-// Known functions
-
 const T_CALL_PREFIX: u8 = b'.';
-const T_CALL_DECLARE: &'static str = "declare";
-const T_CALL_ADD: &'static str = "add";
-const T_CALL_SUB: &'static str = "sub";
-const T_CALL_MUL: &'static str = "mul";
-const T_CALL_DIV: &'static str = "div";
-// TODO: Remove this. We need to use function name itself instead of this.
-const T_CALL_CUSTOM: &'static str = "__CUSTOM";
-
-// Boolean
-
 const T_TRUE: &'static str = "true";
 const T_FALSE: &'static str = "false";
-
-// Null
-
 const T_NULL: &'static str = "null";
-
-// Punctuation
 
 const T_LEFT_PAREN: u8 = b'(';
 const T_RIGHT_PAREN: u8 = b')';
-
 const T_LEFT_SQR_BRACKET: u8 = b'[';
 const T_RIGHT_SQR_BRACKET: u8 = b']';
 const T_LEFT_CUR_BRACKET: u8 = b'{';
@@ -49,16 +26,13 @@ const T_DOUBLE_QT: u8 = b'"';
 
 // ==========================
 //
-// TOKEN DEFINITIONS END
-//
-// ==========================
-
-// ==========================
-//
 //  PARSER START
 //
 // ==========================
 
+/**
+ * Finite automata states for parsing numbers.
+ */
 #[derive(Debug)]
 enum FstNumState {
     Start,
@@ -72,27 +46,40 @@ enum FstNumState {
     Expon,
 }
 
+/**
+ * Defines where specific token starts and ends.
+ */
 #[derive(Debug, PartialEq)]
 pub struct TokSpan {
     start: usize,
     end: usize,
 }
 
+/**
+ * Primitive values cannot have children.
+ */
 #[derive(Debug, PartialEq)]
 pub struct Primitive {
     value: String,
     span: TokSpan,
 }
 
+/**
+ * Any other value that needs to have nested values.
+ */
 #[derive(Debug, PartialEq)]
 pub struct Compound {
     span: TokSpan,
     children: Vec<Box<AstNode>>,
 }
 
+/**
+ * We treat DictPair as an AstNode in order to be consistent
+ * and always provide ast nodes as children for compound values.
+ */
 #[derive(Debug, PartialEq)]
 pub enum AstNode {
-    Call((&'static str, Compound)),
+    Call((String, Compound)),
     Number(Primitive),
     String(Primitive),
     Bool(Primitive),
@@ -103,18 +90,20 @@ pub enum AstNode {
     Identifier(Primitive),
 }
 
-// Since strings and chars in Rust are UTF-8 encoded,
-// which means that even if our char fits into 1 byte (ASCII)
-// we still have 4 bytes allocated for it. So we split our
-// source code input into raw bytes which takes less memory
-// space and compare tokens as bytes.
-// For preserving UTF-8 encodings for Elise Strings we just
-// slice string bytes and convert to UTF-8 that particular
-// slice of bytes.
-
+/**
+ * Since strings and chars in Rust are UTF-8 encoded,
+ * which means that even if our char fits into 1 byte (ASCII)
+ * we still have 4 bytes allocated for it. So we split our
+ * source code input into raw bytes which takes less memory
+ * space and compare tokens as bytes.
+ * For preserving UTF-8 encodings for Elise Strings we just
+ * slice string bytes and convert to UTF-8 that particular
+ * slice of bytes.
+ */
 pub struct Parser<'a> {
     source_code: &'a [u8],
     tok_pos: usize,
+    // Track open and closed brackets via stack.
     depth_stack: Vec<u8>,
 }
 
@@ -127,11 +116,21 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /**
+     * We decomposed this function from parse method in order
+     * to be able to parse recursively in a more convenient way
+     * when we do not want to get Vec<AstNode> but we need
+     * Vec<Box<AstNode>>. So we can loop, get node and compose
+     * them in a way that we need.
+     * For example, if we need to parse list of values, we can't
+     * use parse method since it returns an array of nodes but
+     * we need an array of pointers to the nodes.
+     */
     fn get_node_from_char(&mut self, c: &u8) -> Option<AstNode> {
         if Self::is_separator(c) {
             self.advance();
             return None;
-        } else if Self::call_is_start(c) {
+        } else if self.call_is_start(c) {
             return Some(self.call_consume());
         } else if Self::number_is_start(c) {
             return Some(self.number_consume());
@@ -157,10 +156,8 @@ impl<'a> Parser<'a> {
     }
 
     /**
-     * Parse dispatcher. Match the beginning of each non-terminal
-     * and dispatch dedicated function for AstNode consumption.
-     * Each function for parsing dedicated AstNode adheres to
-     * grammar rules described in GRAMMAR.md
+     * We do not use this method for recursive parsing. It should only
+     * be used by the end user that wants to get the whole parsing result.
      */
     pub fn parse(&mut self) -> Vec<AstNode> {
         let mut ast: Vec<AstNode> = vec![];
@@ -189,12 +186,6 @@ impl<'a> Parser<'a> {
     //
     // ==========================
 
-    fn advance(&mut self) -> Option<u8> {
-        let tok = self.peek();
-        self.tok_pos += 1;
-        tok
-    }
-
     fn peek_at(&self, pos: usize) -> Option<u8> {
         if pos >= self.source_code.len() {
             return None;
@@ -204,6 +195,12 @@ impl<'a> Parser<'a> {
 
     fn peek(&self) -> Option<u8> {
         self.peek_at(self.tok_pos)
+    }
+
+    fn advance(&mut self) -> Option<u8> {
+        let tok = self.peek();
+        self.tok_pos += 1;
+        tok
     }
 
     fn is_separator(c: &u8) -> bool {
@@ -296,7 +293,7 @@ impl<'a> Parser<'a> {
             };
         }
 
-        // Panic if we ended up with invalid state
+        // Panic if we ended up with invalid state.
         match state {
             FstNumState::Zero | FstNumState::Int | FstNumState::Frac | FstNumState::Scient => {}
             _ => self.number_crash_invalid(),
@@ -369,7 +366,7 @@ impl<'a> Parser<'a> {
 
         // Taking surrogate pairs and other code points
         // that represent one lexeme into account.
-        // We add 2 that represents quote start and end.
+        // We add 2 in order to include quote start and end.
         let tok_end = tok_start + value.chars().count() + 2;
 
         AstNode::String(Primitive {
@@ -434,6 +431,7 @@ impl<'a> Parser<'a> {
         };
 
         match primitive.value.as_str() {
+            // Identify known identifiers.
             T_TRUE | T_FALSE => AstNode::Bool(primitive),
             T_NULL => AstNode::Null(primitive),
             _ => {
@@ -625,8 +623,13 @@ impl<'a> Parser<'a> {
     //
     // ==========================
 
-    fn call_is_start(char: &u8) -> bool {
-        *char == T_CALL_PREFIX
+    fn call_is_start(&self, char: &u8) -> bool {
+        let next_char = self.peek_at(self.tok_pos);
+        *char == T_CALL_PREFIX && next_char.is_some() && !Self::is_separator(&next_char.unwrap())
+    }
+
+    fn call_is_end(&self, char: &u8) -> bool {
+        *char == T_RIGHT_PAREN
     }
 
     fn call_crash_name(&self) -> ! {
@@ -638,13 +641,27 @@ impl<'a> Parser<'a> {
         );
     }
 
+    fn call_crash_depth(&self) -> ! {
+        out::crash_at_token_pos(
+            messages::M_UNEXPECTED_END_OF_CALL,
+            self.source_code,
+            self.tok_pos + 1,
+            messages::M_PARSING_ERROR,
+        );
+    }
+
     fn call_is_name_valid(name: &str) -> bool {
         let re = Regex::new(IDENTIFIER_REGEX).unwrap();
         !name.is_empty() && re.is_match(name)
     }
 
-    fn call_consume_name(&mut self) -> &'static str {
-        let start = self.tok_pos;
+    fn call_consume(&mut self) -> AstNode {
+        let call_start = self.tok_pos;
+
+        // Go to the start of the function name.
+        self.advance();
+
+        let call_name_start = self.tok_pos;
 
         while let Some(c) = self.peek() {
             if c == T_LEFT_PAREN {
@@ -655,36 +672,41 @@ impl<'a> Parser<'a> {
             }
         }
 
-        let name = from_utf8(&self.source_code[start..self.tok_pos]).unwrap();
+        let call_name = from_utf8(&self.source_code[call_name_start..self.tok_pos]).unwrap();
 
-        match name {
-            T_CALL_DECLARE => T_CALL_DECLARE,
-            T_CALL_ADD => T_CALL_ADD,
-            T_CALL_SUB => T_CALL_SUB,
-            T_CALL_MUL => T_CALL_MUL,
-            T_CALL_DIV => T_CALL_DIV,
-            _ => {
-                if Self::call_is_name_valid(name) {
-                    return T_CALL_CUSTOM;
-                } else {
-                    self.call_crash_name()
+        if !Self::call_is_name_valid(call_name) {
+            self.call_crash_name();
+        }
+
+        // Go to the next char after the function name.
+        self.advance();
+
+        let mut children = vec![];
+
+        // Consume function arguments.
+        while let Some(c) = self.peek() {
+            if self.call_is_end(&c) {
+                let last_entry = self.depth_stack.pop();
+                if last_entry.is_none() || last_entry.unwrap() != T_LEFT_PAREN {
+                    self.call_crash_depth();
                 }
+                self.advance();
+                break;
+            }
+            if let Some(node) = self.get_node_from_char(&c) {
+                children.push(Box::new(node));
             }
         }
-    }
 
-    fn call_consume(&mut self) -> AstNode {
-        let start = self.tok_pos;
-        self.advance();
-        let name = self.call_consume_name();
-        let children = vec![];
-        // TODO: Capture bracket, consume arguments recursively
-        let end = self.tok_pos;
+        let call_end = self.tok_pos;
 
         AstNode::Call((
-            name,
+            call_name.to_string(),
             Compound {
-                span: TokSpan { start, end },
+                span: TokSpan {
+                    start: call_start,
+                    end: call_end,
+                },
                 children,
             },
         ))
@@ -1299,6 +1321,71 @@ mod tests {
 
     // ==========================
     // DICT TESTS END
+    // ==========================
+
+    // ==========================
+    // CALL TESTS START
+    // ==========================
+
+    #[test]
+    fn should_parse_empty_function() {
+        let ast = Parser::new(".some-fn()").parse();
+        assert_eq!(
+            *ast.get(0).unwrap(),
+            AstNode::Call((
+                "some-fn".to_string(),
+                Compound {
+                    span: TokSpan { start: 0, end: 10 },
+                    children: vec![],
+                }
+            ))
+        );
+    }
+
+    #[test]
+    fn should_parse_non_empty_function() {
+        let ast = Parser::new(".add(2 .div(4 2))").parse();
+        assert_eq!(
+            *ast.get(0).unwrap(),
+            AstNode::Call((
+                "add".to_string(),
+                Compound {
+                    span: TokSpan { start: 0, end: 17 },
+                    children: vec![
+                        Box::new(AstNode::Number(Primitive {
+                            value: "2".to_string(),
+                            span: TokSpan { start: 5, end: 6 }
+                        })),
+                        Box::new(AstNode::Call((
+                            "div".to_string(),
+                            Compound {
+                                span: TokSpan { start: 7, end: 16 },
+                                children: vec![
+                                    Box::new(AstNode::Number(Primitive {
+                                        value: "4".to_string(),
+                                        span: TokSpan { start: 12, end: 13 }
+                                    })),
+                                    Box::new(AstNode::Number(Primitive {
+                                        value: "2".to_string(),
+                                        span: TokSpan { start: 14, end: 15 }
+                                    }))
+                                ]
+                            }
+                        )))
+                    ],
+                }
+            ))
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "Parsing Error")]
+    fn should_panic_if_not_closed_correctly() {
+        Parser::new(".some-fn(2 2 3))").parse();
+    }
+
+    // ==========================
+    // CALL TESTS END
     // ==========================
 }
 

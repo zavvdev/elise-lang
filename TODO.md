@@ -34,15 +34,15 @@
 
         - [x] Add tests for dictionaries
 
-    - [ ] Add parsing function calls
+    - [x] Add parsing function calls
 
-        - [ ] Add tests for function calls
+        - [x] Add tests for function calls
 
     - [ ] Review tests and add more test cases where possible
 
     - [ ] Review parser for improvements (including messages)
 
-- [ ] Add semantic analysis module
+- [ ] Add semantic analysis module (analyze each known function semantics etc)
 
     - [ ] ...
 

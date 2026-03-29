@@ -17,3 +17,5 @@ pub const M_UNEXPECTED_DICT_KEY: &str = "Unexpected dictionary key type. Keys sh
 pub const M_DICT_INVALID_PAIR: &str = "Invalid dictionary key-value pair.";
 
 pub const M_UNDEXPECTED_EOF: &str = "Unexpected end of file";
+
+pub const M_UNEXPECTED_END_OF_CALL: &str = "Unexpected end of function";
