@@ -17,3 +17,9 @@ test:
 
 check:
 	cargo check
+
+fmt-check:
+	cargo fmt -- --check
+
+fmt:
+	cargo fmt

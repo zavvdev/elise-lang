@@ -4,9 +4,9 @@
 
 pub mod conf;
 pub mod fsys;
+pub mod messages;
 pub mod out;
 pub mod parser;
-pub mod messages;
 
 use conf::Conf;
 
