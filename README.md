@@ -36,7 +36,6 @@ pipe numbers
     map(mul(_, 2))
     filter(.gt(_, 10))
     sum
-)
 ```
 
 After (pseudo code):

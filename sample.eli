@@ -1,1 +1,1 @@
-.say-hi ("World")
+.print("hello world")
