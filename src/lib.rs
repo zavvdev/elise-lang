@@ -11,6 +11,7 @@ pub mod parser;
 use conf::Conf;
 
 use crate::parser::Parser;
+use std::time::Instant;
 
 pub enum ExecStatus {
     Success,
@@ -22,6 +23,7 @@ pub struct ExecResult<'a> {
     pub output: String,
     pub bytecode: Option<String>,
     pub config: &'a Conf,
+    pub ms: u128,
 }
 
 #[derive(PartialEq, Debug)]
@@ -31,6 +33,12 @@ pub enum HandleExecResultOperationStatus {
 }
 
 pub fn exec<'a>(source_code: &'a str, config: &'a Conf) -> ExecResult<'a> {
+    // Customize panic message.
+    std::panic::set_hook(Box::new(|info| {
+        out::panic_hook(info);
+    }));
+
+    let start = Instant::now();
     let ast = Parser::new(&source_code).parse();
 
     println!("ast: {:#?}", ast);
@@ -40,13 +48,14 @@ pub fn exec<'a>(source_code: &'a str, config: &'a Conf) -> ExecResult<'a> {
         output: String::from("123"),
         bytecode: Some(String::from("CALL a [1] [0]")),
         config: config,
+        ms: start.elapsed().as_millis(),
     }
 }
 
 pub fn handle_exec_result(res: &ExecResult, config: &Conf) -> HandleExecResultOperationStatus {
     match &res.status {
         ExecStatus::Success => {
-            out::print_execution_output(&res.output);
+            out::print_exec_result(&res.output, res.ms);
             if let Some(bytecode) = &res.bytecode {
                 if config.print_bytecode {
                     out::print_bytecode(bytecode);
@@ -55,7 +64,7 @@ pub fn handle_exec_result(res: &ExecResult, config: &Conf) -> HandleExecResultOp
             HandleExecResultOperationStatus::Success
         }
         ExecStatus::Error(reason) => {
-            out::error(reason, None);
+            out::silent_error(reason, None);
             HandleExecResultOperationStatus::Error
         }
     }
@@ -85,6 +94,7 @@ mod tests {
                 output: "hello".to_string(),
                 bytecode: Some("SOME [1]".to_string()),
                 config: &config,
+                ms: 1,
             },
             &config,
         );
@@ -103,6 +113,7 @@ mod tests {
                 output: "hello".to_string(),
                 bytecode: Some("SOME [1]".to_string()),
                 config: &config,
+                ms: 1,
             },
             &config,
         );

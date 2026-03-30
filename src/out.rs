@@ -1,34 +1,56 @@
+use colored::Colorize;
 use std::str::from_utf8;
 
+/**
+ * This function will be executed whenever we use panic! macro.
+ */
 pub fn panic_hook(info: &std::panic::PanicHookInfo) {
-    println!("ERR: {}", info.payload_as_str().unwrap_or("UNEXPECTED"));
+    let info = info.payload_as_str().unwrap_or("Unexpected");
+    let message = format!("Fatal error: {}", info);
+    eprintln!("{}", message.red().bold());
 }
 
+/**
+ * Use this function when you want to terminate program execution
+ * due to some error.
+ */
 pub fn crash(message: &str) -> ! {
     panic!("{}", message);
 }
 
-pub fn error(message: &str, label: Option<&str>) {
-    let label = label.unwrap_or("Error");
-    println!("{}: {}", label, message);
+/**
+ * Use this function when you want to show an error message
+ * without terminating the program.
+ */
+pub fn silent_error(message: &str, label: Option<&str>) {
+    let label = if label.is_some() {
+        label.unwrap()
+    } else {
+        "Error"
+    };
+    let error = format!("{}: {}", label.red().bold(), message);
+    eprintln!("{}", error.red().bold());
 }
 
+/**
+ * Print bytecode to std out.
+ */
 pub fn print_bytecode(bytecode: &str) {
-    println!("--- bytecode start ---");
-    println!("{}", bytecode);
-    println!("--- bytecode end ---");
+    println!("--- Bytecode start ---\n{}\n--- Bytecode end ---", bytecode);
 }
 
-pub fn print_execution_output(output: &str) {
-    println!("{}", output);
+/**
+ * Successful program output.
+ */
+pub fn print_exec_result(output: &str, ms: u128) {
+    println!("Output: {}", output);
+    println!("Execution time: {} ms", ms);
 }
 
-pub fn crash_at_token_pos(
-    message: &str,
-    source_code: &[u8],
-    char_pos: usize,
-    panic_message: &str,
-) -> ! {
+/**
+ * Terminate program on specific code line:col.
+ */
+pub fn crash_at(message: &str, source_code: &[u8], char_pos: usize, panic_message: &str) -> ! {
     let mut row = 0;
     let mut col = 0;
 
@@ -62,15 +84,17 @@ pub fn crash_at_token_pos(
 
     let source_code = from_utf8(source_code);
 
-    println!("\n{}", message);
-    println!("At {}:{}\n", row + 1, col + 1);
+    eprintln!("\n{}", message.red().bold());
+    let location = format!("At {}:{}\n", row + 1, col + 1);
+    eprintln!("{}", location.bold());
 
     if source_code.is_ok() {
-        println!(
+        eprintln!(
             "{}",
             &source_code.unwrap()[previous_row_start..preview_row_end]
         );
-        println!("{}\n", "-".repeat(col) + "^");
+        let arrow = "-".repeat(col) + "^";
+        eprintln!("{}\n", arrow.red().bold());
     }
 
     panic!("{}", panic_message)

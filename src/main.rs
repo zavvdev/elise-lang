@@ -5,14 +5,14 @@ use elise::conf::Conf;
 use elise::exec;
 use elise::fsys::file_reader;
 use elise::handle_exec_result;
-use elise::out;
 
 // Rust ecosystem imports
 
 use std::env;
 
 // This function is the entry point for our program
-// that is executed with binary from CLI.
+// that is executed with binary from CLI. Treat it as
+// a consumer (end user) of out program.
 // Since it's called from CLI, we can use standard
 // functions provided by Elise lang library
 // to prepare the configuration for the execution
@@ -30,31 +30,6 @@ use std::env;
 // want to run the program with custom configuration outside the CLI, you can
 // handle the result of execution in any way you want by just using the ExecResult struct.
 fn main() {
-    // env::args() returns back an Iterator:
-    //
-    // https://doc.rust-lang.org/book/ch13-02-iterators.html
-    // https://doc.rust-lang.org/rust-by-example/trait/iter.html
-    //
-    // iterator::collect() method can be used to produce an instance
-    // of any type implementing the FromIterator trait. That trait
-    // is implemented for all of the collections in the standard library.
-    // Because FromIterator is implemented for many types, you need
-    // to let Rust know what sort of collection you desire.
-    //
-    // For example, if we want a Vec<char> from a string slice we could
-    // insert the type into our call to collect like so:
-    //
-    // let my_chars = "Hello, World!".chars().collect::<Vec<char>>();
-    //
-    // The double colons and outer angle brackets (i.e. ::<_>) are known
-    // as the turbofish. In this case the turbofish is noisier syntax than
-    // we need. By specifying the type on the binding itself the collect
-    // can infer what collection it should create with less syntactical noise.
-    //
-    // let my_chars: Vec<char> = "Hello, World!".chars().collect();
-    // or
-    // let my_chars: Vec<_> = "Hello, World!".chars().collect();
-
     // Accept user input into Vec<Strings> for centralized ownership
     // which starts here.
     let args: Vec<String> = env::args().skip(1).collect();
@@ -70,7 +45,11 @@ fn main() {
             handle_exec_result(&exec_res, &config);
         }
         Err(error) => {
-            out::error(&error.message, Some("Error reading file"));
+            // This main.rs is an end user of the program,
+            // we can't use 'out' module here since it exists only
+            // inside our program itself and not exposed outside.
+            // Think of it like we installed lib.rs into other program (main.rs).
+            panic!("{}", &error.message);
         }
     }
 }

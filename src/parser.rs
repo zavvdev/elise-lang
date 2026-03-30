@@ -146,7 +146,7 @@ impl<'a> Parser<'a> {
         } else if Self::identifier_is_start(c) {
             return Some(self.identifier_consume());
         } else {
-            out::crash_at_token_pos(
+            out::crash_at(
                 M_UNEXPECTED_TOKEN,
                 &self.source_code,
                 self.tok_pos,
@@ -169,7 +169,7 @@ impl<'a> Parser<'a> {
         }
 
         if self.depth_stack.len() > 0 {
-            out::crash_at_token_pos(
+            out::crash_at(
                 messages::M_UNDEXPECTED_EOF,
                 &self.source_code,
                 self.source_code.len() - 1,
@@ -232,7 +232,7 @@ impl<'a> Parser<'a> {
     }
 
     fn number_crash_invalid(&self) -> ! {
-        out::crash_at_token_pos(
+        out::crash_at(
             messages::M_NUMBER_INVALID,
             self.source_code,
             self.tok_pos,
@@ -338,7 +338,7 @@ impl<'a> Parser<'a> {
     }
 
     fn string_crash_invalid(&self) -> ! {
-        out::crash_at_token_pos(
+        out::crash_at(
             messages::M_STRING_INVALID,
             self.source_code,
             self.tok_pos,
@@ -399,7 +399,7 @@ impl<'a> Parser<'a> {
     }
 
     fn identifier_crash_invalid(&self) -> ! {
-        out::crash_at_token_pos(
+        out::crash_at(
             messages::M_UNEXPECTED_TOKEN,
             self.source_code,
             self.tok_pos,
@@ -458,7 +458,7 @@ impl<'a> Parser<'a> {
     // ==========================
 
     fn list_crash_depth(&self) -> ! {
-        out::crash_at_token_pos(
+        out::crash_at(
             messages::M_UNEXPECTED_LIST_END,
             self.source_code,
             self.tok_pos,
@@ -522,7 +522,7 @@ impl<'a> Parser<'a> {
     // ==========================
 
     fn dict_crash_depth(&self) -> ! {
-        out::crash_at_token_pos(
+        out::crash_at(
             messages::M_UNEXPECTED_DICT_END,
             self.source_code,
             self.tok_pos,
@@ -531,7 +531,7 @@ impl<'a> Parser<'a> {
     }
 
     fn dict_crash_invalid_key(&self) -> ! {
-        out::crash_at_token_pos(
+        out::crash_at(
             messages::M_UNEXPECTED_DICT_KEY,
             self.source_code,
             self.tok_pos,
@@ -540,7 +540,7 @@ impl<'a> Parser<'a> {
     }
 
     fn dict_crash_invalid_pair(&self) -> ! {
-        out::crash_at_token_pos(
+        out::crash_at(
             messages::M_DICT_INVALID_PAIR,
             self.source_code,
             self.tok_pos,
@@ -633,7 +633,7 @@ impl<'a> Parser<'a> {
     }
 
     fn call_crash_name(&self) -> ! {
-        out::crash_at_token_pos(
+        out::crash_at(
             messages::M_CALL_NAME_INVALID,
             self.source_code,
             self.tok_pos + 1,
@@ -642,7 +642,7 @@ impl<'a> Parser<'a> {
     }
 
     fn call_crash_depth(&self) -> ! {
-        out::crash_at_token_pos(
+        out::crash_at(
             messages::M_UNEXPECTED_END_OF_CALL,
             self.source_code,
             self.tok_pos + 1,
@@ -1281,7 +1281,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Parsing Error")]
+    #[should_panic(expected = "Parsing error")]
     fn dict_test_should_panic_if_pair_is_invalid() {
         Parser::new("{ \"a\" 1, \"b\" }").parse();
     }
@@ -1411,13 +1411,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Parsing Error")]
+    #[should_panic(expected = "Parsing error")]
     fn call_test_should_panic_if_not_closed_correctly() {
         Parser::new(".some-fn(2 2 3))").parse();
     }
 
     #[test]
-    #[should_panic(expected = "Parsing Error")]
+    #[should_panic(expected = "Parsing error")]
     fn call_test_should_panic_if_separator_after_call_symbol() {
         Parser::new(". some-fn()").parse();
     }
@@ -1440,7 +1440,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Parsing Error")]
+    #[should_panic(expected = "Parsing error")]
     fn call_test_should_panic_if_parens_are_standalone() {
         Parser::new("()").parse();
     }

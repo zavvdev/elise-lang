@@ -48,6 +48,8 @@
 
 - [ ] Create a compiler for bytecode (IR) generation from AST
 
+    - [ ] Decompose VM module from compiler module.
+
     - [ ] Apply optimizations
 
         - [ ] Constant folding
