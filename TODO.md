@@ -10,7 +10,7 @@
 
 - [x] Use library crate in the binary crate
 
-- [ ] Create parser for lexing, building AST and enforcing grammar rules 
+- [x] Create parser for lexing, building AST and enforcing grammar rules 
 
     - [x] Add number parsing (positive, negative, float, scientific notation)
 
@@ -40,15 +40,15 @@
 
     - [x] Review tests and add more test cases where possible
 
-    - [ ] Review parser for improvements (including messages)
+    - [x] Review parser for improvements (including messages)
+
+- [ ] Create new module system (bytecode, parser, compiler, vm, cli)
 
 - [ ] Add semantic analysis module (analyze each known function semantics etc)
 
     - [ ] ...
 
 - [ ] Create a compiler for bytecode (IR) generation from AST
-
-    - [ ] Decompose VM module from compiler module.
 
     - [ ] Apply optimizations
 

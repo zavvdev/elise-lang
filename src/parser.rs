@@ -1,7 +1,4 @@
-use crate::{
-    messages::{self, M_PARSING_ERROR, M_UNEXPECTED_TOKEN},
-    out,
-};
+use crate::{messages, out};
 use regex::Regex;
 use std::str::from_utf8;
 
@@ -117,6 +114,35 @@ impl<'a> Parser<'a> {
     }
 
     /**
+     * We do not use this method for recursive parsing. It should only
+     * be used by the end user that wants to get the whole parsing result.
+     */
+    pub fn parse(&mut self) -> Vec<AstNode> {
+        let mut ast: Vec<AstNode> = vec![];
+
+        while let Some(c) = self.peek() {
+            if let Some(node) = self.get_node_from_char(&c) {
+                ast.push(node);
+            }
+        }
+
+        if self.depth_stack.len() > 0 {
+            self.crash(messages::M_UNDEXPECTED_EOF);
+        }
+
+        ast
+    }
+
+    fn crash(&self, msg: &str) -> ! {
+        out::crash_at(
+            msg,
+            &self.source_code,
+            self.tok_pos,
+            messages::M_PARSER_ERROR,
+        );
+    }
+
+    /**
      * We decomposed this function from parse method in order
      * to be able to parse recursively in a more convenient way
      * when we do not want to get Vec<AstNode> but we need
@@ -146,38 +172,8 @@ impl<'a> Parser<'a> {
         } else if Self::identifier_is_start(c) {
             return Some(self.identifier_consume());
         } else {
-            out::crash_at(
-                M_UNEXPECTED_TOKEN,
-                &self.source_code,
-                self.tok_pos,
-                M_PARSING_ERROR,
-            );
+            self.crash(messages::M_TOKEN_UNEXPECTED);
         }
-    }
-
-    /**
-     * We do not use this method for recursive parsing. It should only
-     * be used by the end user that wants to get the whole parsing result.
-     */
-    pub fn parse(&mut self) -> Vec<AstNode> {
-        let mut ast: Vec<AstNode> = vec![];
-
-        while let Some(c) = self.peek() {
-            if let Some(node) = self.get_node_from_char(&c) {
-                ast.push(node);
-            }
-        }
-
-        if self.depth_stack.len() > 0 {
-            out::crash_at(
-                messages::M_UNDEXPECTED_EOF,
-                &self.source_code,
-                self.source_code.len() - 1,
-                M_PARSING_ERROR,
-            );
-        }
-
-        ast
     }
 
     // ==========================
@@ -231,15 +227,6 @@ impl<'a> Parser<'a> {
         Self::is_separator(c) || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
     }
 
-    fn number_crash_invalid(&self) -> ! {
-        out::crash_at(
-            messages::M_NUMBER_INVALID,
-            self.source_code,
-            self.tok_pos,
-            messages::M_PARSING_ERROR,
-        );
-    }
-
     fn number_consume(&mut self) -> AstNode {
         let mut state = FstNumState::Start;
         let tok_start = self.tok_pos;
@@ -289,20 +276,20 @@ impl<'a> Parser<'a> {
                     Scient
                 }
                 (_, c) if Self::number_is_end(&c) => break,
-                _ => self.number_crash_invalid(),
+                _ => self.crash(messages::M_NUMBER_INVALID),
             };
         }
 
         // Panic if we ended up with invalid state.
         match state {
             FstNumState::Zero | FstNumState::Int | FstNumState::Frac | FstNumState::Scient => {}
-            _ => self.number_crash_invalid(),
+            _ => self.crash(messages::M_NUMBER_INVALID),
         }
 
         let tok_end = self.tok_pos;
 
         let value = from_utf8(&self.source_code[tok_start..tok_end])
-            .unwrap_or_else(|_| self.number_crash_invalid());
+            .unwrap_or_else(|_| self.crash(messages::M_NUMBER_INVALID));
 
         AstNode::Number(Primitive {
             value: value.to_string(),
@@ -337,15 +324,6 @@ impl<'a> Parser<'a> {
         *char == b'\n'
     }
 
-    fn string_crash_invalid(&self) -> ! {
-        out::crash_at(
-            messages::M_STRING_INVALID,
-            self.source_code,
-            self.tok_pos,
-            messages::M_PARSING_ERROR,
-        );
-    }
-
     fn string_consume(&mut self) -> AstNode {
         let tok_start = self.tok_pos;
         self.advance();
@@ -356,13 +334,13 @@ impl<'a> Parser<'a> {
                 break;
             }
             if Self::string_is_forbidden_char(&c) {
-                self.string_crash_invalid();
+                self.crash(messages::M_STRING_INVALID);
             }
             self.advance();
         }
 
         let value = from_utf8(&self.source_code[tok_start + 1..self.tok_pos - 1])
-            .unwrap_or_else(|_| self.string_crash_invalid());
+            .unwrap_or_else(|_| self.crash(messages::M_STRING_INVALID));
 
         // Taking surrogate pairs and other code points
         // that represent one lexeme into account.
@@ -398,15 +376,6 @@ impl<'a> Parser<'a> {
         Self::is_separator(c) || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
     }
 
-    fn identifier_crash_invalid(&self) -> ! {
-        out::crash_at(
-            messages::M_UNEXPECTED_TOKEN,
-            self.source_code,
-            self.tok_pos,
-            messages::M_PARSING_ERROR,
-        );
-    }
-
     fn identifier_consume(&mut self) -> AstNode {
         let start = self.tok_pos;
 
@@ -439,7 +408,7 @@ impl<'a> Parser<'a> {
                 if re.is_match(&primitive.value) {
                     return AstNode::Identifier(primitive);
                 } else {
-                    self.identifier_crash_invalid();
+                    self.crash(messages::M_TOKEN_UNEXPECTED);
                 }
             }
         }
@@ -457,15 +426,6 @@ impl<'a> Parser<'a> {
     //
     // ==========================
 
-    fn list_crash_depth(&self) -> ! {
-        out::crash_at(
-            messages::M_UNEXPECTED_LIST_END,
-            self.source_code,
-            self.tok_pos,
-            messages::M_PARSING_ERROR,
-        );
-    }
-
     fn list_is_start(&mut self, c: &u8) -> bool {
         if *c == T_LEFT_SQR_BRACKET {
             self.depth_stack.push(T_LEFT_SQR_BRACKET);
@@ -478,7 +438,7 @@ impl<'a> Parser<'a> {
         if *c == T_RIGHT_SQR_BRACKET {
             let last_entry = self.depth_stack.pop();
             if last_entry.is_none() || last_entry.unwrap() != T_LEFT_SQR_BRACKET {
-                self.list_crash_depth();
+                self.crash(messages::M_LIST_UNEXPECTED_END);
             }
             return true;
         }
@@ -521,33 +481,6 @@ impl<'a> Parser<'a> {
     //
     // ==========================
 
-    fn dict_crash_depth(&self) -> ! {
-        out::crash_at(
-            messages::M_UNEXPECTED_DICT_END,
-            self.source_code,
-            self.tok_pos,
-            messages::M_PARSING_ERROR,
-        );
-    }
-
-    fn dict_crash_invalid_key(&self) -> ! {
-        out::crash_at(
-            messages::M_UNEXPECTED_DICT_KEY,
-            self.source_code,
-            self.tok_pos,
-            messages::M_PARSING_ERROR,
-        );
-    }
-
-    fn dict_crash_invalid_pair(&self) -> ! {
-        out::crash_at(
-            messages::M_DICT_INVALID_PAIR,
-            self.source_code,
-            self.tok_pos,
-            messages::M_PARSING_ERROR,
-        );
-    }
-
     fn dict_is_start(&mut self, c: &u8) -> bool {
         if *c == T_LEFT_CUR_BRACKET {
             self.depth_stack.push(T_LEFT_CUR_BRACKET);
@@ -560,7 +493,7 @@ impl<'a> Parser<'a> {
         if *c == T_RIGHT_CUR_BRACKET {
             let last_entry = self.depth_stack.pop();
             if last_entry.is_none() || last_entry.unwrap() != T_LEFT_CUR_BRACKET {
-                self.dict_crash_depth();
+                self.crash(messages::M_DICT_UNEXPECTED_END);
             }
             return true;
         }
@@ -577,7 +510,7 @@ impl<'a> Parser<'a> {
         while let Some(c) = self.peek() {
             if self.dict_is_end(&c) {
                 if key.is_some() {
-                    self.dict_crash_invalid_pair();
+                    self.crash(messages::M_DICT_INVALID_PAIR);
                 }
                 self.advance();
                 break;
@@ -589,7 +522,7 @@ impl<'a> Parser<'a> {
                             key = Some(primitive.value);
                         }
                         _ => {
-                            self.dict_crash_invalid_key();
+                            self.crash(messages::M_DICT_UNEXPECTED_KEY);
                         }
                     }
                 } else {
@@ -632,24 +565,6 @@ impl<'a> Parser<'a> {
         *char == T_RIGHT_PAREN
     }
 
-    fn call_crash_name(&self) -> ! {
-        out::crash_at(
-            messages::M_CALL_NAME_INVALID,
-            self.source_code,
-            self.tok_pos + 1,
-            messages::M_PARSING_ERROR,
-        );
-    }
-
-    fn call_crash_depth(&self) -> ! {
-        out::crash_at(
-            messages::M_UNEXPECTED_END_OF_CALL,
-            self.source_code,
-            self.tok_pos + 1,
-            messages::M_PARSING_ERROR,
-        );
-    }
-
     fn call_is_name_valid(name: &str) -> bool {
         let re = Regex::new(IDENTIFIER_REGEX).unwrap();
         !name.is_empty() && re.is_match(name)
@@ -677,7 +592,7 @@ impl<'a> Parser<'a> {
         let call_name = call_name.trim_end();
 
         if !Self::call_is_name_valid(call_name) {
-            self.call_crash_name();
+            self.crash(messages::M_CALL_NAME_INVALID);
         }
 
         // Go to the next char after the function name.
@@ -690,7 +605,7 @@ impl<'a> Parser<'a> {
             if self.call_is_end(&c) {
                 let last_entry = self.depth_stack.pop();
                 if last_entry.is_none() || last_entry.unwrap() != T_LEFT_PAREN {
-                    self.call_crash_depth();
+                    self.crash(messages::M_CALL_UNEXPECTED_END);
                 }
                 self.advance();
                 break;
@@ -758,7 +673,7 @@ mod tests {
                     Parser::new(token).parse();
                 },
                 String,
-                messages::M_PARSING_ERROR
+                messages::M_PARSER_ERROR
             );
         }
     }
@@ -773,7 +688,7 @@ mod tests {
                     Parser::new(token).parse();
                 },
                 String,
-                messages::M_PARSING_ERROR
+                messages::M_PARSER_ERROR
             );
         }
     }
@@ -788,7 +703,7 @@ mod tests {
                     Parser::new(token).parse();
                 },
                 String,
-                messages::M_PARSING_ERROR
+                messages::M_PARSER_ERROR
             );
         }
     }
@@ -803,7 +718,7 @@ mod tests {
                     Parser::new(token).parse();
                 },
                 String,
-                messages::M_PARSING_ERROR
+                messages::M_PARSER_ERROR
             );
         }
     }
@@ -815,7 +730,7 @@ mod tests {
                 Parser::new("-").parse();
             },
             String,
-            messages::M_PARSING_ERROR
+            messages::M_PARSER_ERROR
         );
     }
 
@@ -918,7 +833,7 @@ mod tests {
                     Parser::new(token).parse();
                 },
                 String,
-                messages::M_PARSING_ERROR
+                messages::M_PARSER_ERROR
             );
         }
     }
@@ -975,7 +890,7 @@ mod tests {
                 .parse();
             },
             String,
-            messages::M_PARSING_ERROR
+            messages::M_PARSER_ERROR
         );
     }
 
@@ -1078,7 +993,7 @@ mod tests {
                     Parser::new(identifier).parse();
                 },
                 String,
-                messages::M_PARSING_ERROR
+                messages::M_PARSER_ERROR
             );
         }
     }
@@ -1179,7 +1094,7 @@ mod tests {
                 Parser::new("[[1, 3]").parse();
             },
             String,
-            messages::M_PARSING_ERROR
+            messages::M_PARSER_ERROR
         );
     }
 
@@ -1281,7 +1196,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Parsing error")]
+    #[should_panic(expected = "Parser error")]
     fn dict_test_should_panic_if_pair_is_invalid() {
         Parser::new("{ \"a\" 1, \"b\" }").parse();
     }
@@ -1302,7 +1217,7 @@ mod tests {
                     Parser::new(input).parse();
                 },
                 String,
-                messages::M_PARSING_ERROR
+                messages::M_PARSER_ERROR
             );
         }
     }
@@ -1316,7 +1231,7 @@ mod tests {
                     Parser::new(input).parse();
                 },
                 String,
-                messages::M_PARSING_ERROR
+                messages::M_PARSER_ERROR
             );
         }
     }
@@ -1411,13 +1326,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Parsing error")]
+    #[should_panic(expected = "Parser error")]
     fn call_test_should_panic_if_not_closed_correctly() {
         Parser::new(".some-fn(2 2 3))").parse();
     }
 
     #[test]
-    #[should_panic(expected = "Parsing error")]
+    #[should_panic(expected = "Parser error")]
     fn call_test_should_panic_if_separator_after_call_symbol() {
         Parser::new(". some-fn()").parse();
     }
@@ -1434,13 +1349,13 @@ mod tests {
                     Parser::new(&format!(".{}()", identifier)).parse();
                 },
                 String,
-                messages::M_PARSING_ERROR
+                messages::M_PARSER_ERROR
             );
         }
     }
 
     #[test]
-    #[should_panic(expected = "Parsing error")]
+    #[should_panic(expected = "Parser error")]
     fn call_test_should_panic_if_parens_are_standalone() {
         Parser::new("()").parse();
     }
@@ -1474,7 +1389,7 @@ mod tests {
                     Parser::new(depth_case).parse();
                 },
                 String,
-                messages::M_PARSING_ERROR
+                messages::M_PARSER_ERROR
             );
         }
     }
