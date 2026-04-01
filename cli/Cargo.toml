@@ -1,0 +1,19 @@
+[package]
+name = "elise"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+# name = name of the compiled executable.
+# The output binary will be: target/debug/elise
+name = "elise"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+elise-bytecode = { path = "../bytecode" }
+elise-compiler = { path = "../frontend/compiler" }
+elise-parser = { path = "../frontend/parser" }
+elise-vm = { path = "../runtime/vm" }

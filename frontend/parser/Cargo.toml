@@ -1,0 +1,13 @@
+[package]
+name = "elise-parser"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+elise-ast = { path = "../ast" }
+regex.workspace = true
+colored.workspace = true
+assert-panic.workspace = true

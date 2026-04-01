@@ -44,6 +44,9 @@
 
 - [ ] Create new module system (bytecode, parser, compiler, vm, cli)
 
+    - [ ] Remove anything that is related to printing messages to std out from parser. It should
+          live in cli only. Parser should return some struct. 
+
 - [ ] Add semantic analysis module (analyze each known function semantics etc)
 
     - [ ] ...

@@ -1,22 +1,17 @@
-[package]
-name = "elise-lang"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+resolver = "2"
 
-[[bin]]
-# name = name of the compiled executable.
-# The output binary will be: target/debug/elise
-name = "elise"
-path = "src/main.rs"
+members = [
+    "cli",
+    "bytecode",
+    "frontend/ast",
+    "frontend/compiler",
+    "frontend/parser",
+    "frontend/semantic-analyzer",
+    "runtime/vm"
+]
 
-[lib]
-# name = crate name used for extern crate / use.
-# It defines how other crates import this library.
-# use elise::something;
-name = "elise"
-path = "src/lib.rs"
-
-[dependencies]
-assert-panic = "1.0.1"
-colored = "3.1.1"
+[workspace.dependencies]
 regex = "1.12.3"
+colored = "3.1.1"
+assert-panic = "1.0.1"

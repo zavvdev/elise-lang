@@ -27,12 +27,52 @@ dependencies = [
 ]
 
 [[package]]
-name = "elise-lang"
+name = "elise"
+version = "0.1.0"
+dependencies = [
+ "elise-bytecode",
+ "elise-compiler",
+ "elise-parser",
+ "elise-vm",
+]
+
+[[package]]
+name = "elise-ast"
+version = "0.1.0"
+
+[[package]]
+name = "elise-bytecode"
+version = "0.1.0"
+
+[[package]]
+name = "elise-compiler"
+version = "0.1.0"
+dependencies = [
+ "elise-bytecode",
+]
+
+[[package]]
+name = "elise-parser"
 version = "0.1.0"
 dependencies = [
  "assert-panic",
  "colored",
+ "elise-ast",
  "regex",
+]
+
+[[package]]
+name = "elise-semantic-analyzer"
+version = "0.1.0"
+dependencies = [
+ "elise-parser",
+]
+
+[[package]]
+name = "elise-vm"
+version = "0.1.0"
+dependencies = [
+ "elise-bytecode",
 ]
 
 [[package]]

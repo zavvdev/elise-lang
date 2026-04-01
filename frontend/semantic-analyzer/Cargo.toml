@@ -1,0 +1,10 @@
+[package]
+name = "elise-semantic-analyzer"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+elise-parser = { path = "../parser" }
