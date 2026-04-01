@@ -2,10 +2,10 @@
 resolver = "2"
 
 members = [
-    "cli",
     "bytecode",
+    "cli",
+    "compiler",
     "frontend/ast",
-    "frontend/compiler",
     "frontend/parser",
     "frontend/semantic-analyzer",
     "runtime/vm"

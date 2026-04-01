@@ -7,4 +7,4 @@ edition = "2024"
 path = "src/lib.rs"
 
 [dependencies]
-elise-bytecode = { path = "../../bytecode" }
+elise-bytecode = { path = "../bytecode" }
