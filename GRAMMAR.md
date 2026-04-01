@@ -73,7 +73,7 @@ Example of the **list** data structure:
 [1, 2, -1, 4.3, "hello", false, null, [1, 2]]
 ```
 
-- Separator between each element is required.
+- Separator between each element is not required.
 
 Example of the **dictionary** data structure:
 
@@ -89,7 +89,7 @@ Example of the **dictionary** data structure:
 }
 ```
 
-- Separator between each pair and between key and value is required.
+- Separator between each pair is not required.
 
 - Keys are always strings.
 
