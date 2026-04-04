@@ -51,6 +51,8 @@ Source code
 
 - [x] Create new module system (bytecode, parser, compiler, vm, cli)
 
+- [ ] Add support for anonymous functions.
+
 - [ ] Add semantic analysis module (analyze each known function semantics etc)
 
     - [ ] ...

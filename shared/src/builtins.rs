@@ -42,5 +42,12 @@ pub const FN_FILE_READ_FULL: &str = "read";
 
 // Strings
 pub const FN_STRING_CONCAT: &str = "conc";
+pub const FN_STRING_CAST: &str = "str";
+
+// Numbers
+pub const FN_NUMBER_CAST: &str = "num";
+
+// Compounds
+pub const FN_COMP_GET_VALUE: &str = "get";
 
 // ...

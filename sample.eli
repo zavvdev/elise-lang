@@ -1,1 +1,6 @@
-.print("hello world")
+.pipe(
+    .read("./report.csv")
+    .split("\n")
+    .map(
+        .([row index] .concat(.str(index) row)))
+)
