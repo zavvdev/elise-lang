@@ -26,6 +26,23 @@ pub struct Compound {
 }
 
 /**
+ * In order to use in pattern matching where we don't care about
+ * enum values and only need to match type.
+ */
+pub enum AstNodeKind {
+    Call,
+    Number,
+    String,
+    Bool,
+    Null,
+    List,
+    Dict,
+    DictPair,
+    Identifier,
+    Any,
+}
+
+/**
  * We treat DictPair as an AstNode in order to be consistent
  * and always provide ast nodes as children for compound values.
  */
@@ -40,4 +57,20 @@ pub enum AstNode {
     Dict(Compound),
     DictPair((String, Box<AstNode>)),
     Identifier(Primitive),
+}
+
+impl AstNode {
+    pub fn kind(&self) -> AstNodeKind {
+        match self {
+            AstNode::Call(_) => AstNodeKind::Call,
+            AstNode::Number(_) => AstNodeKind::Number,
+            AstNode::String(_) => AstNodeKind::String,
+            AstNode::Bool(_) => AstNodeKind::Bool,
+            AstNode::Null(_) => AstNodeKind::Null,
+            AstNode::List(_) => AstNodeKind::List,
+            AstNode::Dict(_) => AstNodeKind::Dict,
+            AstNode::DictPair(_) => AstNodeKind::DictPair,
+            AstNode::Identifier(_) => AstNodeKind::Identifier,
+        }
+    }
 }

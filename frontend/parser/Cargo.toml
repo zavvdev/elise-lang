@@ -8,6 +8,6 @@ path = "src/lib.rs"
 
 [dependencies]
 elise-shared = { path = "../../shared" }
-elise-ast = { path = "../ast" }
+elise-ast = { path = "../../ast" }
 regex.workspace = true
 assert-panic.workspace = true

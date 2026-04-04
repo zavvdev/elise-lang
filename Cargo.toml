@@ -5,16 +5,19 @@
 resolver = "2"
 
 members = [
+    "ast",
+    "builtins",
     "bytecode",
     "cli",
     "compiler",
-    "frontend/ast",
     "frontend/parser",
     "frontend/semantic-analyzer",
-    "runtime/vm"
+    "runtime/vm",
+    "shared",
 ]
 
 [workspace.dependencies]
 regex = "1.12.3"
 colored = "3.1.1"
 assert-panic = "1.0.1"
+phf = { version = "0.13.1", features = ["macros"] }
