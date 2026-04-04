@@ -97,14 +97,14 @@ pub enum AstNode {
  * slice string bytes and convert to UTF-8 that particular
  * slice of bytes.
  */
-pub struct Parser<'a> {
+pub struct Prelude<'a> {
     source_code: &'a [u8],
     tok_pos: usize,
     // Track open and closed brackets via stack.
     depth_stack: Vec<u8>,
 }
 
-impl<'a> Parser<'a> {
+impl<'a> Prelude<'a> {
     pub fn new(source_code: &'a str) -> Self {
         Self {
             source_code: &source_code.as_bytes(),
@@ -654,7 +654,7 @@ mod tests {
 
     use crate::{
         messages,
-        parser::{AstNode, Compound, Parser, Primitive, TokSpan},
+        parser::{AstNode, Compound, Prelude, Primitive, TokSpan},
     };
 
     // ==========================
@@ -670,7 +670,7 @@ mod tests {
         for token in forbidded_tokens {
             assert_panic!(
                 {
-                    Parser::new(token).parse();
+                    Prelude::new(token).parse();
                 },
                 String,
                 messages::M_PARSER_ERROR
@@ -685,7 +685,7 @@ mod tests {
         for token in forbidded_tokens {
             assert_panic!(
                 {
-                    Parser::new(token).parse();
+                    Prelude::new(token).parse();
                 },
                 String,
                 messages::M_PARSER_ERROR
@@ -700,7 +700,7 @@ mod tests {
         for token in forbidded_tokens {
             assert_panic!(
                 {
-                    Parser::new(token).parse();
+                    Prelude::new(token).parse();
                 },
                 String,
                 messages::M_PARSER_ERROR
@@ -715,7 +715,7 @@ mod tests {
         for token in forbidded_tokens {
             assert_panic!(
                 {
-                    Parser::new(token).parse();
+                    Prelude::new(token).parse();
                 },
                 String,
                 messages::M_PARSER_ERROR
@@ -727,7 +727,7 @@ mod tests {
     fn number_test_should_panic_if_we_start_from_minus_and_nothing_follows() {
         assert_panic!(
             {
-                Parser::new("-").parse();
+                Prelude::new("-").parse();
             },
             String,
             messages::M_PARSER_ERROR
@@ -751,7 +751,7 @@ mod tests {
             ("101", 3),
         ];
         for (number, end) in numbers {
-            let ast = Parser::new(number).parse();
+            let ast = Prelude::new(number).parse();
             assert_eq!(
                 *ast.get(0).unwrap(),
                 AstNode::Number(Primitive {
@@ -782,7 +782,7 @@ mod tests {
             ("-101", 4),
         ];
         for (number, end) in numbers {
-            let ast = Parser::new(number).parse();
+            let ast = Prelude::new(number).parse();
             assert_eq!(
                 *ast.get(0).unwrap(),
                 AstNode::Number(Primitive {
@@ -795,7 +795,7 @@ mod tests {
 
     #[test]
     fn number_test_should_parse_numbers_correctly_that_are_separated() {
-        let ast = Parser::new(
+        let ast = Prelude::new(
             "3
 56  -9   3.2",
         )
@@ -830,7 +830,7 @@ mod tests {
         for token in forbidded_tokens {
             assert_panic!(
                 {
-                    Parser::new(token).parse();
+                    Prelude::new(token).parse();
                 },
                 String,
                 messages::M_PARSER_ERROR
@@ -860,7 +860,7 @@ mod tests {
             ("-2.30e-502", 10),
         ];
         for (number, end) in numbers {
-            let ast = Parser::new(number).parse();
+            let ast = Prelude::new(number).parse();
             assert_eq!(
                 *ast.get(0).unwrap(),
                 AstNode::Number(Primitive {
@@ -883,7 +883,7 @@ mod tests {
     fn string_test_should_panic_if_contains_new_line() {
         assert_panic!(
             {
-                Parser::new(
+                Prelude::new(
                     "\"Hello
                     World\"",
                 )
@@ -904,7 +904,7 @@ mod tests {
             ("\"123 2323 😄😄\"", 13),
         ];
         for (string, end) in strings {
-            let ast = Parser::new(string).parse();
+            let ast = Prelude::new(string).parse();
             assert_eq!(
                 *ast.get(0).unwrap(),
                 AstNode::String(Primitive {
@@ -931,7 +931,7 @@ mod tests {
 
     #[test]
     fn bool_test_should_parse_true_correctly() {
-        let ast = Parser::new("true").parse();
+        let ast = Prelude::new("true").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
             AstNode::Bool(Primitive {
@@ -943,7 +943,7 @@ mod tests {
 
     #[test]
     fn bool_test_should_parse_false_correctly() {
-        let ast = Parser::new("false").parse();
+        let ast = Prelude::new("false").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
             AstNode::Bool(Primitive {
@@ -963,7 +963,7 @@ mod tests {
 
     #[test]
     fn null_test_should_parse_null_correctly() {
-        let ast = Parser::new("null").parse();
+        let ast = Prelude::new("null").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
             AstNode::Null(Primitive {
@@ -990,7 +990,7 @@ mod tests {
         for identifier in identifiers {
             assert_panic!(
                 {
-                    Parser::new(identifier).parse();
+                    Prelude::new(identifier).parse();
                 },
                 String,
                 messages::M_PARSER_ERROR
@@ -1012,7 +1012,7 @@ mod tests {
             ("asd_", 4),
         ];
         for (identifier, end) in identifiers {
-            let ast = Parser::new(identifier).parse();
+            let ast = Prelude::new(identifier).parse();
             assert_eq!(
                 *ast.get(0).unwrap(),
                 AstNode::Identifier(Primitive {
@@ -1033,7 +1033,7 @@ mod tests {
 
     #[test]
     fn list_test_should_parse_empty() {
-        let ast = Parser::new("[]").parse();
+        let ast = Prelude::new("[]").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
             AstNode::List(Compound {
@@ -1045,7 +1045,7 @@ mod tests {
 
     #[test]
     fn list_test_should_parse_nested_empty() {
-        let ast = Parser::new("[[]]").parse();
+        let ast = Prelude::new("[[]]").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
             AstNode::List(Compound {
@@ -1060,7 +1060,7 @@ mod tests {
 
     #[test]
     fn list_test_should_parse_non_empty() {
-        let ast = Parser::new("[1, \"hello\", null, false]").parse();
+        let ast = Prelude::new("[1, \"hello\", null, false]").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
             AstNode::List(Compound {
@@ -1091,7 +1091,7 @@ mod tests {
     fn list_test_should_panic_if_not_closed() {
         assert_panic!(
             {
-                Parser::new("[[1, 3]").parse();
+                Prelude::new("[[1, 3]").parse();
             },
             String,
             messages::M_PARSER_ERROR
@@ -1108,7 +1108,7 @@ mod tests {
 
     #[test]
     fn dict_test_should_parse_empty() {
-        let ast = Parser::new("{}").parse();
+        let ast = Prelude::new("{}").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
             AstNode::Dict(Compound {
@@ -1120,7 +1120,7 @@ mod tests {
 
     #[test]
     fn dict_test_should_parse_non_empty() {
-        let ast = Parser::new(
+        let ast = Prelude::new(
             "{ \"a\" 1, \"b\" \"2\", \"c\" false, \"d\" null, \"e\" [1, 2, 3], \"f\" { \"a2\" some_value } }",
         )
         .parse();
@@ -1198,7 +1198,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Parser error")]
     fn dict_test_should_panic_if_pair_is_invalid() {
-        Parser::new("{ \"a\" 1, \"b\" }").parse();
+        Prelude::new("{ \"a\" 1, \"b\" }").parse();
     }
 
     #[test]
@@ -1214,7 +1214,7 @@ mod tests {
         for input in inputs {
             assert_panic!(
                 {
-                    Parser::new(input).parse();
+                    Prelude::new(input).parse();
                 },
                 String,
                 messages::M_PARSER_ERROR
@@ -1228,7 +1228,7 @@ mod tests {
         for input in inputs {
             assert_panic!(
                 {
-                    Parser::new(input).parse();
+                    Prelude::new(input).parse();
                 },
                 String,
                 messages::M_PARSER_ERROR
@@ -1246,7 +1246,7 @@ mod tests {
 
     #[test]
     fn call_test_should_parse_with_no_arguments() {
-        let ast = Parser::new(".some-fn()").parse();
+        let ast = Prelude::new(".some-fn()").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
             AstNode::Call((
@@ -1261,7 +1261,7 @@ mod tests {
 
     #[test]
     fn call_test_should_parse_with_arguments() {
-        let ast = Parser::new(".add(2 .div(4 2))").parse();
+        let ast = Prelude::new(".add(2 .div(4 2))").parse();
         assert_eq!(
             *ast.get(0).unwrap(),
             AstNode::Call((
@@ -1313,7 +1313,7 @@ mod tests {
         ];
         for (input, end) in inputs {
             assert_eq!(
-                Parser::new(input).parse(),
+                Prelude::new(input).parse(),
                 vec![AstNode::Call((
                     "test".to_string(),
                     Compound {
@@ -1328,13 +1328,13 @@ mod tests {
     #[test]
     #[should_panic(expected = "Parser error")]
     fn call_test_should_panic_if_not_closed_correctly() {
-        Parser::new(".some-fn(2 2 3))").parse();
+        Prelude::new(".some-fn(2 2 3))").parse();
     }
 
     #[test]
     #[should_panic(expected = "Parser error")]
     fn call_test_should_panic_if_separator_after_call_symbol() {
-        Parser::new(". some-fn()").parse();
+        Prelude::new(". some-fn()").parse();
     }
 
     #[test]
@@ -1346,7 +1346,7 @@ mod tests {
         for identifier in identifiers {
             assert_panic!(
                 {
-                    Parser::new(&format!(".{}()", identifier)).parse();
+                    Prelude::new(&format!(".{}()", identifier)).parse();
                 },
                 String,
                 messages::M_PARSER_ERROR
@@ -1357,7 +1357,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Parser error")]
     fn call_test_should_panic_if_parens_are_standalone() {
-        Parser::new("()").parse();
+        Prelude::new("()").parse();
     }
 
     // ==========================
@@ -1386,7 +1386,7 @@ mod tests {
         for depth_case in depth_cases {
             assert_panic!(
                 {
-                    Parser::new(depth_case).parse();
+                    Prelude::new(depth_case).parse();
                 },
                 String,
                 messages::M_PARSER_ERROR

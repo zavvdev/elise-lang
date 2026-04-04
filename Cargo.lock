@@ -30,6 +30,7 @@ dependencies = [
 name = "elise"
 version = "0.1.0"
 dependencies = [
+ "colored",
  "elise-bytecode",
  "elise-compiler",
  "elise-parser",

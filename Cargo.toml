@@ -1,3 +1,6 @@
+# This toml file is called a Virtual Manifest because
+# it defines a workspace rather than a package.
+
 [workspace]
 resolver = "2"
 

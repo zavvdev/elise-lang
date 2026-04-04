@@ -1,5 +1,12 @@
 # TODO
 
+Source code
+    -> Prelude (parser)
+    -> Harmony (semantic-analyzer)
+    -> Maestro (compiler)
+    -> Score (bytecode)
+    -> Sonata (VM)
+
 - [x] Add foundation for executing binary with arguments:
   
     - [x] --file=<file> - specify file to execute
@@ -42,7 +49,7 @@
 
     - [x] Review parser for improvements (including messages)
 
-- [ ] Create new module system (bytecode, parser, compiler, vm, cli)
+- [x] Create new module system (bytecode, parser, compiler, vm, cli)
 
     - [ ] Remove anything that is related to printing messages to std out from parser. It should
           live in cli only. Parser should return some struct. 

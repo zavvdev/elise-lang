@@ -15,6 +15,9 @@ release-run:
 test:
 	cargo test
 
+test\:parser:
+	cargo test -p elise-parser
+
 check:
 	cargo check
 

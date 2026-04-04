@@ -1,5 +1,7 @@
 # elise-lang
 
+/eˈliːs/  → pronounced like “eh-LEES”
+
 A deterministic dataflow programming language with compile-time optimization.
 
 [Grammar Rules](./GRAMMAR.md), [Todos](./TODO.md)

@@ -4,13 +4,11 @@
 
 pub mod conf;
 pub mod fsys;
-pub mod messages;
 pub mod out;
-pub mod parser;
 
 use conf::Conf;
 
-use crate::parser::Parser;
+use elise_parser::parser::Prelude;
 use std::time::Instant;
 
 pub enum ExecStatus {
@@ -39,7 +37,7 @@ pub fn exec<'a>(source_code: &'a str, config: &'a Conf) -> ExecResult<'a> {
     }));
 
     let start = Instant::now();
-    let ast = Parser::new(&source_code).parse();
+    let ast = Prelude::new(&source_code).parse();
 
     println!("ast: {:#?}", ast);
 

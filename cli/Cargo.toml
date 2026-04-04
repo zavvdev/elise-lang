@@ -17,3 +17,4 @@ elise-bytecode = { path = "../bytecode" }
 elise-compiler = { path = "../compiler" }
 elise-parser = { path = "../frontend/parser" }
 elise-vm = { path = "../runtime/vm" }
+colored.workspace = true
