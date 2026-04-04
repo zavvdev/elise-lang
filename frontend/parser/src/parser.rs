@@ -1,6 +1,9 @@
-use crate::{messages, out};
+use crate::messages;
 use regex::Regex;
 use std::str::from_utf8;
+
+use elise_ast::{AstNode, Compound, Primitive, TokSpan};
+use elise_shared::out;
 
 // <identifier> ::= <letter> (<letter> | <digit> | '-' | '?' | '!' | '_')*
 const IDENTIFIER_REGEX: &str = r"^[A-Za-z][A-Za-z0-9\-?!_]*$";
@@ -41,50 +44,6 @@ enum FstNumState {
     Scient,
     ScientMinus,
     Expon,
-}
-
-/**
- * Defines where specific token starts and ends.
- */
-#[derive(Debug, PartialEq)]
-pub struct TokSpan {
-    start: usize,
-    end: usize,
-}
-
-/**
- * Primitive values cannot have children.
- */
-#[derive(Debug, PartialEq)]
-pub struct Primitive {
-    value: String,
-    span: TokSpan,
-}
-
-/**
- * Any other value that needs to have nested values.
- */
-#[derive(Debug, PartialEq)]
-pub struct Compound {
-    span: TokSpan,
-    children: Vec<Box<AstNode>>,
-}
-
-/**
- * We treat DictPair as an AstNode in order to be consistent
- * and always provide ast nodes as children for compound values.
- */
-#[derive(Debug, PartialEq)]
-pub enum AstNode {
-    Call((String, Compound)),
-    Number(Primitive),
-    String(Primitive),
-    Bool(Primitive),
-    Null(Primitive),
-    List(Compound),
-    Dict(Compound),
-    DictPair((String, Box<AstNode>)),
-    Identifier(Primitive),
 }
 
 /**

@@ -7,7 +7,7 @@ edition = "2024"
 path = "src/lib.rs"
 
 [dependencies]
+elise-shared = { path = "../../shared" }
 elise-ast = { path = "../ast" }
 regex.workspace = true
-colored.workspace = true
 assert-panic.workspace = true

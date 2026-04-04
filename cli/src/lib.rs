@@ -4,11 +4,11 @@
 
 pub mod conf;
 pub mod fsys;
-pub mod out;
 
 use conf::Conf;
 
 use elise_parser::parser::Prelude;
+use elise_shared::out;
 use std::time::Instant;
 
 pub enum ExecStatus {

@@ -13,8 +13,5 @@ path = "src/main.rs"
 path = "src/lib.rs"
 
 [dependencies]
-elise-bytecode = { path = "../bytecode" }
-elise-compiler = { path = "../compiler" }
 elise-parser = { path = "../frontend/parser" }
-elise-vm = { path = "../runtime/vm" }
-colored.workspace = true
+elise-shared = { path = "../shared" }

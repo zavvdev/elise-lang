@@ -30,11 +30,8 @@ dependencies = [
 name = "elise"
 version = "0.1.0"
 dependencies = [
- "colored",
- "elise-bytecode",
- "elise-compiler",
  "elise-parser",
- "elise-vm",
+ "elise-shared",
 ]
 
 [[package]]
@@ -48,33 +45,31 @@ version = "0.1.0"
 [[package]]
 name = "elise-compiler"
 version = "0.1.0"
-dependencies = [
- "elise-bytecode",
-]
 
 [[package]]
 name = "elise-parser"
 version = "0.1.0"
 dependencies = [
  "assert-panic",
- "colored",
  "elise-ast",
+ "elise-shared",
  "regex",
 ]
 
 [[package]]
 name = "elise-semantic-analyzer"
 version = "0.1.0"
+
+[[package]]
+name = "elise-shared"
+version = "0.1.0"
 dependencies = [
- "elise-parser",
+ "colored",
 ]
 
 [[package]]
 name = "elise-vm"
 version = "0.1.0"
-dependencies = [
- "elise-bytecode",
-]
 
 [[package]]
 name = "memchr"

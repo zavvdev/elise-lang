@@ -1,14 +1,14 @@
 build:
 	cargo build
 
-release-build:
+build\:release:
 	cargo build --release
 
 # DEV PURPOSE START
 run:
 	./target/debug/elise --file-path=sample.eli --print-bytecode
 
-release-run:
+run\:release:
 	./target/release/elise --file-path=sample.eli --print-bytecode
 # DEV PURPOSE END
 
@@ -21,7 +21,7 @@ test\:parser:
 check:
 	cargo check
 
-fmt-check:
+fmt\:check:
 	cargo fmt -- --check
 
 fmt:
