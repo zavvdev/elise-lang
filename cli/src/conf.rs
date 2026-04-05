@@ -5,15 +5,26 @@ use crate::out;
 
 // ==========================
 //
-// SOURCE FILE START
+// FILE EXT START
 //
 // ==========================
 
-const FILE_EXT: &str = ".eli";
+// Program code
+const FILE_SOURCE_EXT: &str = ".eli";
+
+// File with pre-compiled bytecode
+const FILE_EXECUTABLE_EXT: &str = ".elc";
+
+// Schema file with type definitions
+// for input data
+const FILE_SCHEMA_EXT: &str = ".elt";
+
+// Supported data to be processed
+const FILE_DATA_SUPPORTED_EXT: [&str; 1] = [".csv"];
 
 // ==========================
 //
-// SOURCE FILE END
+// FILE EXT END
 //
 // ==========================
 
@@ -23,9 +34,46 @@ const FILE_EXT: &str = ".eli";
 //
 // ==========================
 
-const ARG_K_FILE_PATH: &str = "file-path";
+/**
+ * Execution modes
+ */
 
-const ARG_K_PRINT_BYTECODE: &str = "print-bytecode";
+// Plain run with full data validation + execution.
+const ARG_EXEC_MODE_RUN: &str = "run";
+
+// Build an executable.
+const ARG_EXEC_MODE_BUILD: &str = "build";
+
+// Exec pre-compiled executable.
+const ARG_EXEC_MODE_EXEC: &str = "exec";
+
+// Validate data against schema.
+const ARG_EXEC_MODE_VALIDATE: &str = "validate";
+
+/**
+ * Flags
+ */
+
+// Path to the file with program code
+const ARG_FLAG_SOURCE_CODE: &str = "source-code";
+
+// Path to the file with data to be processed
+const ARG_FLAG_DATA: &str = "data";
+
+// Path to the file with type definitions for data
+const ARG_FLAG_DATA_SCHEMA: &str = "data-schema";
+
+// Path to the file with pre-compiled bytecode to be executed
+const ARG_FLAG_EXECUTABLE: &str = "executable";
+
+// Path to the executable file that will be generated after the build
+const ARG_FLAG_EXECUTABLE_OUTPUT: &str = "o";
+
+// Disable data validation when program runs
+const ARG_FLAG_UNSAFE_ASSUME_VALID: &str = "unsafe-assume-valid";
+
+// Print bytecode after execution
+const ARG_FLAG_PRINT_BYTECODE: &str = "print-bytecode";
 
 // ==========================
 //
@@ -55,14 +103,22 @@ const ARG_V_FALSE: &str = "false";
 //
 // ==========================
 
-enum AType {
-    SourceFile(&'static str),
+enum ExecMode {
+    RunPlain,
+    Compile,
+    RunCompiled,
+    Validate,
+}
+
+enum ArgType {
+    File(&'static str),
     Boolean,
+    Mode,
 }
 
 struct Arg {
     name: &'static str,
-    t: AType,
+    ty: ArgType,
     req: bool,                 // required or not
     def: Option<&'static str>, // default argument value
 }
@@ -79,18 +135,18 @@ struct Arg {
 //
 // ==========================
 
-const ARGS: [Arg; 2] = [
+const RUN_ARGS: [Arg; 2] = [
     Arg {
-        name: ARG_K_FILE_PATH,
-        t: AType::SourceFile(FILE_EXT),
+        name: ARG_FLAG_SOURCE_CODE,
+        ty: ArgType::File(FILE_SOURCE_EXT),
         req: true,
         def: None,
     },
     Arg {
-        name: ARG_K_PRINT_BYTECODE,
-        t: AType::Boolean,
-        req: false,
-        def: Some(ARG_V_FALSE),
+        name: ARG_FLAG_DATA,
+        ty: ArgType::File(FILE_SOURCE_EXT),
+        req: true,
+        def: None,
     },
 ];
 

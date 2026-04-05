@@ -7,7 +7,7 @@ Source code
     -> Score (bytecode)
     -> Sonata (VM)
 
-- [x] Add foundation for executing binary with arguments:
+- [ ] Add foundation for executing binary with arguments:
   
     - [x] --file=<file> - specify file to execute
     
