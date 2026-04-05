@@ -1,22 +1,107 @@
-# elise-lang
+------ IN PROGRESS ------
 
-/eˈliːs/  → pronounced like “eh-LEES”
+# Elise: Schema-Specialized Execution Model
 
-A deterministic dataflow programming language with compile-time optimization.
+/eˈliːs/ → pronounced like “eh-LEES”
 
 [Grammar Rules](./GRAMMAR.md), [Todos](./TODO.md)
 
-## Main Idea
+## Overview
 
-### Each value is immutable
+Elise is a strongly-typed, schema-driven language for processing structured data efficiently. Programs are compiled against **schemas** rather than specific datasets, separating **code correctness** from **data correctness**. Execution can be optimized or unsafe depending on user requirements.
 
-In order to update the value you need to return a new one.
+## File Types
 
-### No side effects
+Only `.csv` files are supported for now.
 
-Each function is pure and deterministic which allows to perform compile-time optimizations.
+| Extension | Purpose                                             |
+| --------- | --------------------------------------------------- |
+| `.eli`    | Source code                                         |
+| `.elt`    | Schema / type definitions for input data            |
+| `.csv`    | Input data file                                     |
+| `.elc`    | Compiled, schema-specialized bytecode with metadata |
 
-### Distributed Pipelines & Loop fusion
+## Execution Modes
+
+### 1. Safe Direct Execution
+
+```bash
+elise --file=sample.eli --input=data.csv --schema=data.elt
+```
+
+- Compiles in-memory (no `.elc` output)
+
+- Performs full runtime validation of input data against schema
+
+- Executes immediately
+
+**Safety**: High
+
+**Performance**: Medium
+
+### 2. Compiled Execution (Optimized, Safe)
+
+Step 1 — Build
+
+```bash
+elise build --file=sample.eli --schema=data.elt --output=program.elc
+```
+
+Step 2 — Run
+
+```bash
+elise run --bytecode=program.elc --input=data.csv
+```
+
+- Uses precompiled schema-specialized bytecode
+
+- Performs minimal runtime validation (structural + parsing checks)
+
+- Executes optimized pipeline
+
+**Safety**: High
+
+**Performance**: High
+
+### 3. Unsafe Execution (Maximum Performance)
+
+Step 1 — Build
+
+```bash
+elise build --file=sample.eli --schema=data.elt --output=program.elc
+```
+
+Step 2 — Run
+
+```bash
+elise run --bytecode=program.elc --input=data.csv --unsafe-assume-valid
+```
+
+- Requires precompiled .elc
+
+- Skips runtime validation
+
+- Executes fastest possible path
+
+**Use case**: trusted, prevalidated, or immutable data
+
+**Safety**: None ⚠️
+
+**Performance**: Maximum
+
+### 4. Validation-Only Step
+
+```bash
+elise validate --input=data.csv --schema=data.elt
+```
+
+- Full scan of data to ensure strict schema compliance
+
+- Can be used before unsafe execution
+
+### Technical features
+
+#### Distributed Pipelines & Loop fusion
 
 For sequential data transformations compiler can decide whether to run in in single of multi thread.
 
@@ -45,14 +130,14 @@ After (pseudo code):
 ```
 sum = 0
 for n in numbers {
-    x = n * 2
+    x = n \* 2
     if x > 10 {
         sum += x
     }
 }
 ```
 
-### Constant folding
+#### Constant folding
 
 Pseudo code:
 
@@ -66,7 +151,7 @@ Compile-time result:
 10
 ```
 
-### Compile-Time Execution
+#### Compile-Time Execution
 
 Allow functions to run during compilation.
 
