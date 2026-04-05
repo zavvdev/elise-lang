@@ -13,6 +13,10 @@ Source code
     
     - [x] --print-bytecode - print bytecode of the executed file
 
+    - [ ] run/build/validate commands
+
+    - [ ] --input, --schema, --output, --unsafe-assume-valid flags
+
 - [x] Add library crate which exposes interpreter entry point
 
 - [x] Use library crate in the binary crate
@@ -50,6 +54,8 @@ Source code
     - [x] Review parser for improvements (including messages)
 
 - [x] Create new module system (bytecode, parser, compiler, vm, cli)
+
+- [ ] Add support for build and validate execution modes
 
 - [ ] Add support for anonymous functions.
 

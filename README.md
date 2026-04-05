@@ -26,7 +26,7 @@ Only `.csv` files are supported for now.
 ### 1. Safe Direct Execution
 
 ```bash
-elise --file=sample.eli --input=data.csv --schema=data.elt
+elise run --file=sample.eli --input=data.csv --schema=data.elt
 ```
 
 - Compiles in-memory (no `.elc` output)
