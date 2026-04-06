@@ -27,7 +27,7 @@ pub struct ModeRunConf {
 #[derive(Debug)]
 pub struct ModeBuildConf {
     pub source_code_path: String,
-    pub data_path: String,
+    pub data_schema_path: String,
     pub executable_output_path: String,
 }
 
@@ -207,7 +207,7 @@ impl Conf {
 
             ARG_V_MODE_BUILD => Ok(Self::Build(ModeBuildConf {
                 source_code_path: Self::arg_str(args.get(ARG_FLAG_SOURCE_CODE)),
-                data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
+                data_schema_path: Self::arg_str(args.get(ARG_FLAG_DATA_SCHEMA)),
                 executable_output_path: Self::arg_str(args.get(ARG_FLAG_EXECUTABLE_OUTPUT)),
             })),
 
