@@ -11,27 +11,50 @@ use elise_parser::parser::Prelude;
 use elise_shared::out;
 use std::time::Instant;
 
-pub enum ExecStatus {
+pub enum Status {
     Success,
     Error(String),
 }
 
-pub struct ExecResult<'a> {
-    pub status: ExecStatus,
-    pub output: String,
-    pub bytecode: Option<String>,
+pub struct BaseResult<'a> {
     pub config: &'a Conf,
     pub ms: u128,
+    pub status: Status,
+}
+
+pub struct RunResult<'a> {
+    pub base: BaseResult<'a>,
+    pub output: String,
+    pub bytecode: Option<String>,
+}
+
+pub struct ExecResult<'a> {
+    pub base: BaseResult<'a>,
+    pub output: String,
+}
+
+pub struct BuildResult<'a> {
+    pub base: BaseResult<'a>,
+    pub executale_output: String,
+}
+
+pub struct ValidateResult<'a> {
+    pub base: BaseResult<'a>,
+    pub is_valid: bool,
 }
 
 #[derive(PartialEq, Debug)]
-pub enum HandleExecResultOperationStatus {
+pub enum HandleResultStatus {
     Success,
     Error,
 }
 
-pub fn exec<'a>(source_code: &'a str, config: &'a Conf) -> ExecResult<'a> {
-    // Customize panic message.
+pub fn run<'a>(
+    source_code: &'a str,
+    _data: &'a str,
+    _data_schema: &'a str,
+    config: &'a Conf,
+) -> RunResult<'a> {
     std::panic::set_hook(Box::new(|info| {
         out::panic_hook(info);
     }));
@@ -41,12 +64,75 @@ pub fn exec<'a>(source_code: &'a str, config: &'a Conf) -> ExecResult<'a> {
 
     println!("ast: {:#?}", ast);
 
-    ExecResult {
-        status: ExecStatus::Success,
+    RunResult {
+        base: BaseResult {
+            config: config,
+            ms: start.elapsed().as_millis(),
+            status: Status::Success,
+        },
         output: String::from("123"),
         bytecode: Some(String::from("CALL a [1] [0]")),
-        config: config,
-        ms: start.elapsed().as_millis(),
+    }
+}
+
+pub fn build<'a>(
+    _source_code: &'a str,
+    _data_schema: &'a str,
+    config: &'a Conf,
+) -> BuildResult<'a> {
+    std::panic::set_hook(Box::new(|info| {
+        out::panic_hook(info);
+    }));
+
+    let start = Instant::now();
+
+    println!("BUILD MODE");
+
+    BuildResult {
+        base: BaseResult {
+            config: config,
+            ms: start.elapsed().as_millis(),
+            status: Status::Success,
+        },
+        executale_output: String::from("CALL a [1] [0]"),
+    }
+}
+
+pub fn exec<'a>(_executable: &'a str, _data: &'a str, config: &'a Conf) -> ExecResult<'a> {
+    std::panic::set_hook(Box::new(|info| {
+        out::panic_hook(info);
+    }));
+
+    let start = Instant::now();
+
+    println!("EXEC MODE");
+
+    ExecResult {
+        base: BaseResult {
+            config: config,
+            ms: start.elapsed().as_millis(),
+            status: Status::Success,
+        },
+        output: String::from("Exec Result Output"),
+    }
+}
+
+pub fn validate<'a>(_data: &'a str, _data_schema: &'a str, config: &'a Conf) -> ValidateResult<'a> {
+    std::panic::set_hook(Box::new(|info| {
+        out::panic_hook(info);
+    }));
+
+    let start = Instant::now();
+
+    println!("VALIDATE MODE");
+
+    ValidateResult {
+        base: BaseResult {
+            config: config,
+            ms: start.elapsed().as_millis(),
+            status: Status::Success,
+        },
+        is_valid: true,
     }
 }
 
