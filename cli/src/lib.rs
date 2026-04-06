@@ -7,19 +7,13 @@ pub mod fsys;
 
 use conf::Conf;
 
-use elise_parser::parser::Prelude;
-use elise_shared::out;
+//use elise_parser::parser::Prelude;
+use elise_shared::errors::LangError;
 use std::time::Instant;
-
-pub enum Status {
-    Success,
-    Error(String),
-}
 
 pub struct BaseResult<'a> {
     pub config: &'a Conf,
     pub ms: u128,
-    pub status: Status,
 }
 
 pub struct RunResult<'a> {
@@ -50,90 +44,80 @@ pub enum HandleResultStatus {
 }
 
 pub fn run<'a>(
-    source_code: &'a str,
+    _source_code: &'a str,
     _data: &'a str,
     _data_schema: &'a str,
     config: &'a Conf,
-) -> RunResult<'a> {
-    std::panic::set_hook(Box::new(|info| {
-        out::panic_hook(info);
-    }));
-
+) -> Result<RunResult<'a>, LangError> {
     let start = Instant::now();
-    let ast = Prelude::new(&source_code).parse();
+    //let ast = Prelude::new(&source_code).parse();
 
-    println!("ast: {:#?}", ast);
+    //println!("ast: {:#?}", ast);
 
-    RunResult {
+    println!("RUN MODE");
+
+    Ok(RunResult {
         base: BaseResult {
             config: config,
             ms: start.elapsed().as_millis(),
-            status: Status::Success,
         },
         output: String::from("123"),
         bytecode: Some(String::from("CALL a [1] [0]")),
-    }
+    })
 }
 
 pub fn build<'a>(
     _source_code: &'a str,
     _data_schema: &'a str,
     config: &'a Conf,
-) -> BuildResult<'a> {
-    std::panic::set_hook(Box::new(|info| {
-        out::panic_hook(info);
-    }));
-
+) -> Result<BuildResult<'a>, LangError> {
     let start = Instant::now();
 
     println!("BUILD MODE");
 
-    BuildResult {
+    Ok(BuildResult {
         base: BaseResult {
             config: config,
             ms: start.elapsed().as_millis(),
-            status: Status::Success,
         },
         executale_output: String::from("CALL a [1] [0]"),
-    }
+    })
 }
 
-pub fn exec<'a>(_executable: &'a str, _data: &'a str, config: &'a Conf) -> ExecResult<'a> {
-    std::panic::set_hook(Box::new(|info| {
-        out::panic_hook(info);
-    }));
-
+pub fn exec<'a>(
+    _executable: &'a str,
+    _data: &'a str,
+    config: &'a Conf,
+) -> Result<ExecResult<'a>, LangError> {
     let start = Instant::now();
 
     println!("EXEC MODE");
 
-    ExecResult {
+    Ok(ExecResult {
         base: BaseResult {
             config: config,
             ms: start.elapsed().as_millis(),
-            status: Status::Success,
         },
         output: String::from("Exec Result Output"),
-    }
+    })
 }
 
-pub fn validate<'a>(_data: &'a str, _data_schema: &'a str, config: &'a Conf) -> ValidateResult<'a> {
-    std::panic::set_hook(Box::new(|info| {
-        out::panic_hook(info);
-    }));
-
+pub fn validate<'a>(
+    _data: &'a str,
+    _data_schema: &'a str,
+    config: &'a Conf,
+) -> Result<ValidateResult<'a>, LangError> {
     let start = Instant::now();
 
     println!("VALIDATE MODE");
 
-    ValidateResult {
+    Ok(ValidateResult {
         base: BaseResult {
             config: config,
             ms: start.elapsed().as_millis(),
-            status: Status::Success,
         },
         is_valid: true,
-    }
+    })
 }
 
 //pub fn handle_exec_result(res: &ExecResult, config: &Conf) -> HandleExecResultOperationStatus {

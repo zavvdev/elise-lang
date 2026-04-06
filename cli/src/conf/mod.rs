@@ -1,4 +1,3 @@
-use crate::out;
 use std::collections::HashMap;
 pub mod arguments;
 pub mod messages;
@@ -10,9 +9,12 @@ use arguments::{
     ARG_V_MODE_VALIDATE, ARG_V_MODES, ArgType, BUILD_ARGS, EXEC_ARGS, RUN_ARGS, VALIDATE_ARGS,
 };
 
-use messages::{
-    M_ARG_REQUIRED, M_EXEC_MODE_INVALID, M_EXEC_MODE_MISSING, M_EXT_INVALID_IN_PATH, M_UNEXPECTED,
-};
+use messages::{M_ARG_REQUIRED, M_EXEC_MODE_INVALID, M_EXEC_MODE_MISSING, M_EXT_INVALID_IN_PATH};
+
+#[derive(Debug)]
+pub struct ConfError {
+    pub message: String,
+}
 
 #[derive(Debug)]
 pub struct ModeRunConf {
@@ -53,18 +55,24 @@ pub enum Conf {
 impl Conf {
     // Validators. Must be used for argument validation in build_cli_args function.
 
-    fn validate_source_file<'a>(path: &'a str, exts: &[&'_ str]) -> &'a str {
+    fn validate_source_file<'a>(path: &'a str, exts: &[&'_ str]) -> Result<&'a str, ConfError> {
         if !exts.iter().any(|e| path.ends_with(*e)) {
-            out::crash(&format!("{}: {}", M_EXT_INVALID_IN_PATH, path));
+            return Err(ConfError {
+                message: format!("{}: {}", M_EXT_INVALID_IN_PATH, path),
+            });
         }
-        path
+        Ok(path)
     }
 
-    fn validate_mode<'a>(mode: Option<&'a str>) -> &'a str {
+    fn validate_mode<'a>(mode: Option<&'a str>) -> Result<&'a str, ConfError> {
         match mode {
-            Some(mode) if ARG_V_MODES.contains(&mode) => mode,
-            Some(mode) => out::crash(&format!("{}: \"{}\"", M_EXEC_MODE_INVALID, mode)),
-            None => out::crash(M_EXEC_MODE_MISSING),
+            Some(mode) if ARG_V_MODES.contains(&mode) => Ok(mode),
+            Some(mode) => Err(ConfError {
+                message: format!("{}: \"{}\"", M_EXEC_MODE_INVALID, mode),
+            }),
+            None => Err(ConfError {
+                message: M_EXEC_MODE_MISSING.to_string(),
+            }),
         }
     }
 
@@ -76,10 +84,7 @@ impl Conf {
     }
 
     fn arg_str<'a>(value: Option<&&str>) -> String {
-        if value.is_some() {
-            return value.unwrap().to_string();
-        }
-        out::crash(M_UNEXPECTED);
+        value.unwrap().to_string()
     }
 
     // Takes a reference to the list of original argument strings
@@ -120,16 +125,18 @@ impl Conf {
     fn build_valid_cli_args<'a>(
         user_args: &HashMap<&'a str, &'a str>,
         mode: &str,
-    ) -> HashMap<&'a str, &'a str> {
+    ) -> Result<HashMap<&'a str, &'a str>, ConfError> {
         let mut res: HashMap<&str, &str> = HashMap::new();
 
         let args = match mode {
-            ARG_V_MODE_RUN => RUN_ARGS,
-            ARG_V_MODE_BUILD => BUILD_ARGS,
-            ARG_V_MODE_EXEC => EXEC_ARGS,
-            ARG_V_MODE_VALIDATE => VALIDATE_ARGS,
-            _ => out::crash(M_EXEC_MODE_INVALID),
-        };
+            ARG_V_MODE_RUN => Ok(RUN_ARGS),
+            ARG_V_MODE_BUILD => Ok(BUILD_ARGS),
+            ARG_V_MODE_EXEC => Ok(EXEC_ARGS),
+            ARG_V_MODE_VALIDATE => Ok(VALIDATE_ARGS),
+            _ => Err(ConfError {
+                message: M_EXEC_MODE_INVALID.to_string(),
+            }),
+        }?;
 
         for arg in args {
             let mut user_arg: Option<&str> = None;
@@ -140,7 +147,9 @@ impl Conf {
             }
 
             if user_arg.is_none() && arg.req {
-                out::crash(&format!("{}: \"{}\"", M_ARG_REQUIRED, arg.name));
+                return Err(ConfError {
+                    message: format!("{}: \"{}\"", M_ARG_REQUIRED, arg.name),
+                });
             }
 
             if user_arg.is_none() && arg.def.is_some() {
@@ -149,7 +158,8 @@ impl Conf {
                 let user_arg = user_arg.unwrap();
                 match arg.ty {
                     ArgType::SourceFile(ext) => {
-                        res.insert(arg.name, Self::validate_source_file(user_arg, ext));
+                        let file = Self::validate_source_file(user_arg, ext)?;
+                        res.insert(arg.name, file);
                     }
                     ArgType::Boolean => {
                         if user_arg.is_empty() {
@@ -167,52 +177,54 @@ impl Conf {
             }
         }
 
-        res
+        Ok(res)
     }
 
     // Takes a reference to the array of strings that are raw arguments from CLI.
     // We don't own the data here, so the original owned data just reused and not
     // copied.
-    pub fn from_cli(args: &[String]) -> Self {
+    pub fn from_cli(args: &[String]) -> Result<Self, ConfError> {
         // Parse raw CLI arguments. This variable contains only arguments that were provided by
         // user. So if some argument is not provided, it won't be present in this data structure.
         let parsed_args = Self::parse_cli_args(args);
 
         // Must panic if mode is invalid.
-        let mode = Self::validate_mode(parsed_args.get(ARG_FLAG_MODE).map(|mode| *mode));
+        let mode = Self::validate_mode(parsed_args.get(ARG_FLAG_MODE).map(|mode| *mode))?;
 
         // At this point we have the full list of arguments with their values.
         // If some argument was not provided by user, it must be present in this variable with
         // default value. Or if some argument was required but not provided, this function must
         // panic.
-        let args = Self::build_valid_cli_args(&parsed_args, mode);
+        let args = Self::build_valid_cli_args(&parsed_args, mode)?;
 
         match mode {
-            ARG_V_MODE_RUN => Self::Run(ModeRunConf {
+            ARG_V_MODE_RUN => Ok(Self::Run(ModeRunConf {
                 source_code_path: Self::arg_str(args.get(ARG_FLAG_SOURCE_CODE)),
                 data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
                 data_schema_path: Self::arg_str(args.get(ARG_FLAG_DATA_SCHEMA)),
                 print_bytecode: Self::arg_bool(args.get(ARG_FLAG_PRINT_BYTECODE)),
-            }),
+            })),
 
-            ARG_V_MODE_BUILD => Self::Build(ModeBuildConf {
+            ARG_V_MODE_BUILD => Ok(Self::Build(ModeBuildConf {
                 source_code_path: Self::arg_str(args.get(ARG_FLAG_SOURCE_CODE)),
                 data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
                 executable_output_path: Self::arg_str(args.get(ARG_FLAG_EXECUTABLE_OUTPUT)),
-            }),
+            })),
 
-            ARG_V_MODE_EXEC => Self::Exec(ModeExecConf {
+            ARG_V_MODE_EXEC => Ok(Self::Exec(ModeExecConf {
                 executable_path: Self::arg_str(args.get(ARG_FLAG_EXECUTABLE)),
                 data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
                 unsafe_assume_valid: Self::arg_bool(args.get(ARG_FLAG_UNSAFE_ASSUME_VALID)),
-            }),
+            })),
 
-            ARG_V_MODE_VALIDATE => Self::Validate(ModeValidateConf {
+            ARG_V_MODE_VALIDATE => Ok(Self::Validate(ModeValidateConf {
                 data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
                 data_schema_path: Self::arg_str(args.get(ARG_FLAG_DATA_SCHEMA)),
-            }),
+            })),
 
-            _ => out::crash(M_EXEC_MODE_INVALID),
+            _ => Err(ConfError {
+                message: M_EXEC_MODE_INVALID.to_string(),
+            }),
         }
     }
 }

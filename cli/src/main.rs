@@ -1,12 +1,11 @@
 // Imports from lib.rs by referencing custom name that
 // has been specified in Cargo.toml
 
-use elise::conf::Conf;
-use elise::exec;
-use elise::fsys::file_reader;
-//use elise::handle_exec_result;
+//pub mod out;
 
-// Rust ecosystem imports
+use elise::conf::{Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
+//use elise::exec;
+//use elise::fsys::file_reader;
 
 use std::env;
 
@@ -38,6 +37,25 @@ fn main() {
     // without copying.
     // Check from_cli for more details.
     let config = Conf::from_cli(&args);
+
+    if let Err(conf_error) = config {
+        return println!("TODO: Handle config error, {:?}", conf_error);
+    }
+
+    match config.unwrap() {
+        Conf::Run(run_conf) => {
+            println!("Run Conf: {:#?}", run_conf);
+        }
+        Conf::Build(build_conf) => {
+            println!("Build Conf: {:#?}", build_conf);
+        }
+        Conf::Exec(exec_conf) => {
+            println!("Exec Conf: {:#?}", exec_conf);
+        }
+        Conf::Validate(validate_conf) => {
+            println!("Validate Conf: {:#?}", validate_conf);
+        }
+    }
 
     //match file_reader::read_file(&config.file_path) {
     //    Ok(file_descriptor) => {
