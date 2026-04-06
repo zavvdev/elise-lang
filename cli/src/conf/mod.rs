@@ -1,200 +1,92 @@
-use std::collections::HashMap;
-use std::path::Path;
-
 use crate::out;
+use std::collections::HashMap;
+pub mod arguments;
+pub mod messages;
 
-// ==========================
-//
-// FILE EXT START
-//
-// ==========================
+use arguments::{
+    ARG_FLAG_DATA, ARG_FLAG_DATA_SCHEMA, ARG_FLAG_EXECUTABLE, ARG_FLAG_EXECUTABLE_OUTPUT,
+    ARG_FLAG_MODE, ARG_FLAG_PRINT_BYTECODE, ARG_FLAG_SOURCE_CODE, ARG_FLAG_UNSAFE_ASSUME_VALID,
+    ARG_V_BOOL_FALSE, ARG_V_BOOL_TRUE, ARG_V_MODE_BUILD, ARG_V_MODE_EXEC, ARG_V_MODE_RUN,
+    ARG_V_MODE_VALIDATE, ARG_V_MODES, ArgType, BUILD_ARGS, EXEC_ARGS, RUN_ARGS, VALIDATE_ARGS,
+};
 
-// Program code
-const FILE_SOURCE_EXT: &str = ".eli";
-
-// File with pre-compiled bytecode
-const FILE_EXECUTABLE_EXT: &str = ".elc";
-
-// Schema file with type definitions
-// for input data
-const FILE_SCHEMA_EXT: &str = ".elt";
-
-// Supported data to be processed
-const FILE_DATA_SUPPORTED_EXT: [&str; 1] = [".csv"];
-
-// ==========================
-//
-// FILE EXT END
-//
-// ==========================
-
-// ==========================
-//
-// ARGUMENT NAMES START
-//
-// ==========================
-
-/**
- * Execution modes
- */
-
-// Plain run with full data validation + execution.
-const ARG_EXEC_MODE_RUN: &str = "run";
-
-// Build an executable.
-const ARG_EXEC_MODE_BUILD: &str = "build";
-
-// Exec pre-compiled executable.
-const ARG_EXEC_MODE_EXEC: &str = "exec";
-
-// Validate data against schema.
-const ARG_EXEC_MODE_VALIDATE: &str = "validate";
-
-/**
- * Flags
- */
-
-// Path to the file with program code
-const ARG_FLAG_SOURCE_CODE: &str = "source-code";
-
-// Path to the file with data to be processed
-const ARG_FLAG_DATA: &str = "data";
-
-// Path to the file with type definitions for data
-const ARG_FLAG_DATA_SCHEMA: &str = "data-schema";
-
-// Path to the file with pre-compiled bytecode to be executed
-const ARG_FLAG_EXECUTABLE: &str = "executable";
-
-// Path to the executable file that will be generated after the build
-const ARG_FLAG_EXECUTABLE_OUTPUT: &str = "o";
-
-// Disable data validation when program runs
-const ARG_FLAG_UNSAFE_ASSUME_VALID: &str = "unsafe-assume-valid";
-
-// Print bytecode after execution
-const ARG_FLAG_PRINT_BYTECODE: &str = "print-bytecode";
-
-// ==========================
-//
-// ARGUMENT NAMES END
-//
-// ==========================
-
-// ==========================
-//
-// ARGUMENT VALUES START
-//
-// ==========================
-
-const ARG_V_TRUE: &str = "true";
-
-const ARG_V_FALSE: &str = "false";
-
-// ==========================
-//
-// ARGUMENT VALUES END
-//
-// ==========================
-
-// ==========================
-//
-// ARGUMENT TYPES START
-//
-// ==========================
-
-enum ExecMode {
-    RunPlain,
-    Compile,
-    RunCompiled,
-    Validate,
-}
-
-enum ArgType {
-    File(&'static str),
-    Boolean,
-    Mode,
-}
-
-struct Arg {
-    name: &'static str,
-    ty: ArgType,
-    req: bool,                 // required or not
-    def: Option<&'static str>, // default argument value
-}
-
-// ==========================
-//
-// ARGUMENT TYPES END
-//
-// ==========================
-
-// ==========================
-//
-// ARGUMENT LIST START
-//
-// ==========================
-
-const RUN_ARGS: [Arg; 2] = [
-    Arg {
-        name: ARG_FLAG_SOURCE_CODE,
-        ty: ArgType::File(FILE_SOURCE_EXT),
-        req: true,
-        def: None,
-    },
-    Arg {
-        name: ARG_FLAG_DATA,
-        ty: ArgType::File(FILE_SOURCE_EXT),
-        req: true,
-        def: None,
-    },
-];
-
-// ==========================
-//
-// ARGUMENT LIST END
-//
-// ==========================
-
-// ==========================
-//
-// CONFIG START
-//
-// ==========================
+use messages::{
+    M_ARG_REQUIRED, M_EXEC_MODE_INVALID, M_EXEC_MODE_MISSING, M_EXT_INVALID_IN_PATH, M_UNEXPECTED,
+};
 
 #[derive(Debug)]
-pub struct Conf {
-    // We use String here because we don't want to depend on the
-    // lifetime of the string source. Conf must own all arguments.
-    pub file_path: String,
+pub struct ModeRunConf {
+    pub source_code_path: String,
+    pub data_path: String,
+    pub data_schema_path: String,
     pub print_bytecode: bool,
+}
+
+#[derive(Debug)]
+pub struct ModeBuildConf {
+    pub source_code_path: String,
+    pub data_path: String,
+    pub executable_output_path: String,
+}
+
+#[derive(Debug)]
+pub struct ModeExecConf {
+    pub executable_path: String,
+    pub data_path: String,
+    pub unsafe_assume_valid: bool,
+}
+
+#[derive(Debug)]
+pub struct ModeValidateConf {
+    pub data_path: String,
+    pub data_schema_path: String,
+}
+
+#[derive(Debug)]
+pub enum Conf {
+    Run(ModeRunConf),
+    Build(ModeBuildConf),
+    Exec(ModeExecConf),
+    Validate(ModeValidateConf),
 }
 
 impl Conf {
     // Validators. Must be used for argument validation in build_cli_args function.
 
-    fn validate_source_file<'a>(path: &'a str, ext: &'_ str) -> &'a str {
-        if !Path::new(path).exists() {
-            out::crash(&format!("Path does not exist: \"{}\"", path));
-        }
-        if !path.ends_with(ext) {
-            out::crash(&format!("File must have \"{}\" extension", ext));
+    fn validate_source_file<'a>(path: &'a str, exts: &[&'_ str]) -> &'a str {
+        if !exts.iter().any(|e| path.ends_with(*e)) {
+            out::crash(&format!("{}: {}", M_EXT_INVALID_IN_PATH, path));
         }
         path
     }
 
-    // Adapters. Must be used for adapting argument values
-    // in order to construct Conf struct.
+    fn validate_mode<'a>(mode: Option<&'a str>) -> &'a str {
+        match mode {
+            Some(mode) if ARG_V_MODES.contains(&mode) => mode,
+            Some(mode) => out::crash(&format!("{}: \"{}\"", M_EXEC_MODE_INVALID, mode)),
+            None => out::crash(M_EXEC_MODE_MISSING),
+        }
+    }
 
-    fn boolean(value: &str) -> bool {
-        value == ARG_V_TRUE
+    // Adapters. Must be used for adapting argument values
+    // in order to construct Conf structs.
+
+    fn arg_bool(value: Option<&&str>) -> bool {
+        value.is_some() && *value.unwrap() == ARG_V_BOOL_TRUE
+    }
+
+    fn arg_str<'a>(value: Option<&&str>) -> String {
+        if value.is_some() {
+            return value.unwrap().to_string();
+        }
+        out::crash(M_UNEXPECTED);
     }
 
     // Takes a reference to the list of original argument strings
     // and returns a hash-map of parsed data. Lifetimes tied to the
     // original owned array of arguments that was created when
     // from_cli was called, so we don't re-allocate but keeping
-    // original arguments alive until we construct Conf from them.
+    // original arguments alive until we construct Conf struct from them.
     // This function should not perform any validation. It just
     // extract values from the input.
     // If value of the argument wasn't provided, an empty string
@@ -225,10 +117,21 @@ impl Conf {
     // If any argument is provided but has invalid value, this function must panic.
     // If any argument is not provided and not required it must be set to
     // the respective default value.
-    fn build_cli_args<'a>(user_args: &HashMap<&'a str, &'a str>) -> HashMap<&'a str, &'a str> {
+    fn build_valid_cli_args<'a>(
+        user_args: &HashMap<&'a str, &'a str>,
+        mode: &str,
+    ) -> HashMap<&'a str, &'a str> {
         let mut res: HashMap<&str, &str> = HashMap::new();
 
-        for arg in ARGS {
+        let args = match mode {
+            ARG_V_MODE_RUN => RUN_ARGS,
+            ARG_V_MODE_BUILD => BUILD_ARGS,
+            ARG_V_MODE_EXEC => EXEC_ARGS,
+            ARG_V_MODE_VALIDATE => VALIDATE_ARGS,
+            _ => out::crash(M_EXEC_MODE_INVALID),
+        };
+
+        for arg in args {
             let mut user_arg: Option<&str> = None;
 
             if user_args.contains_key(arg.name) {
@@ -237,25 +140,25 @@ impl Conf {
             }
 
             if user_arg.is_none() && arg.req {
-                out::crash(&format!("\"{}\" argument is required.", arg.name));
+                out::crash(&format!("{}: \"{}\"", M_ARG_REQUIRED, arg.name));
             }
 
             if user_arg.is_none() && arg.def.is_some() {
                 res.insert(arg.name, arg.def.unwrap());
             } else if user_arg.is_some() {
                 let user_arg = user_arg.unwrap();
-                match arg.t {
-                    AType::SourceFile(ext) => {
+                match arg.ty {
+                    ArgType::SourceFile(ext) => {
                         res.insert(arg.name, Self::validate_source_file(user_arg, ext));
                     }
-                    AType::Boolean => {
+                    ArgType::Boolean => {
                         if user_arg.is_empty() {
-                            res.insert(arg.name, ARG_V_TRUE);
+                            res.insert(arg.name, ARG_V_BOOL_TRUE);
                         } else {
-                            let value = if ARG_V_TRUE == user_arg {
-                                ARG_V_TRUE
+                            let value = if ARG_V_BOOL_TRUE == user_arg {
+                                ARG_V_BOOL_TRUE
                             } else {
-                                ARG_V_FALSE
+                                ARG_V_BOOL_FALSE
                             };
                             res.insert(arg.name, value);
                         }
@@ -275,16 +178,41 @@ impl Conf {
         // user. So if some argument is not provided, it won't be present in this data structure.
         let parsed_args = Self::parse_cli_args(args);
 
+        // Must panic if mode is invalid.
+        let mode = Self::validate_mode(parsed_args.get(ARG_FLAG_MODE).map(|mode| *mode));
+
         // At this point we have the full list of arguments with their values.
         // If some argument was not provided by user, it must be present in this variable with
         // default value. Or if some argument was required but not provided, this function must
         // panic.
-        let args = Self::build_cli_args(&parsed_args);
+        let args = Self::build_valid_cli_args(&parsed_args, mode);
 
-        Self {
-            // Allocate here because Conf must own its arguments.
-            file_path: args.get(ARG_K_FILE_PATH).unwrap().to_string(),
-            print_bytecode: Self::boolean(args.get(ARG_K_PRINT_BYTECODE).unwrap()),
+        match mode {
+            ARG_V_MODE_RUN => Self::Run(ModeRunConf {
+                source_code_path: Self::arg_str(args.get(ARG_FLAG_SOURCE_CODE)),
+                data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
+                data_schema_path: Self::arg_str(args.get(ARG_FLAG_DATA_SCHEMA)),
+                print_bytecode: Self::arg_bool(args.get(ARG_FLAG_PRINT_BYTECODE)),
+            }),
+
+            ARG_V_MODE_BUILD => Self::Build(ModeBuildConf {
+                source_code_path: Self::arg_str(args.get(ARG_FLAG_SOURCE_CODE)),
+                data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
+                executable_output_path: Self::arg_str(args.get(ARG_FLAG_EXECUTABLE_OUTPUT)),
+            }),
+
+            ARG_V_MODE_EXEC => Self::Exec(ModeExecConf {
+                executable_path: Self::arg_str(args.get(ARG_FLAG_EXECUTABLE)),
+                data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
+                unsafe_assume_valid: Self::arg_bool(args.get(ARG_FLAG_UNSAFE_ASSUME_VALID)),
+            }),
+
+            ARG_V_MODE_VALIDATE => Self::Validate(ModeValidateConf {
+                data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
+                data_schema_path: Self::arg_str(args.get(ARG_FLAG_DATA_SCHEMA)),
+            }),
+
+            _ => out::crash(M_EXEC_MODE_INVALID),
         }
     }
 }

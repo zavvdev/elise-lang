@@ -50,23 +50,23 @@ pub fn exec<'a>(source_code: &'a str, config: &'a Conf) -> ExecResult<'a> {
     }
 }
 
-pub fn handle_exec_result(res: &ExecResult, config: &Conf) -> HandleExecResultOperationStatus {
-    match &res.status {
-        ExecStatus::Success => {
-            out::print_exec_result(&res.output, res.ms);
-            if let Some(bytecode) = &res.bytecode {
-                if config.print_bytecode {
-                    out::print_bytecode(bytecode);
-                }
-            }
-            HandleExecResultOperationStatus::Success
-        }
-        ExecStatus::Error(reason) => {
-            out::silent_error(reason, None);
-            HandleExecResultOperationStatus::Error
-        }
-    }
-}
+//pub fn handle_exec_result(res: &ExecResult, config: &Conf) -> HandleExecResultOperationStatus {
+//    match &res.status {
+//        ExecStatus::Success => {
+//            out::print_exec_result(&res.output, res.ms);
+//            if let Some(bytecode) = &res.bytecode {
+//                if config.print_bytecode {
+//                    out::print_bytecode(bytecode);
+//                }
+//            }
+//            HandleExecResultOperationStatus::Success
+//        }
+//        ExecStatus::Error(reason) => {
+//            out::silent_error(reason, None);
+//            HandleExecResultOperationStatus::Error
+//        }
+//    }
+//}
 
 // ==========================
 //

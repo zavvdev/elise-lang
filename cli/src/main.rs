@@ -4,7 +4,7 @@
 use elise::conf::Conf;
 use elise::exec;
 use elise::fsys::file_reader;
-use elise::handle_exec_result;
+//use elise::handle_exec_result;
 
 // Rust ecosystem imports
 
@@ -39,17 +39,19 @@ fn main() {
     // Check from_cli for more details.
     let config = Conf::from_cli(&args);
 
-    match file_reader::read_file(&config.file_path) {
-        Ok(file_descriptor) => {
-            let exec_res = exec(&file_descriptor.content, &config);
-            handle_exec_result(&exec_res, &config);
-        }
-        Err(error) => {
-            // This main.rs is an end user of the program,
-            // we can't use 'out' module here since it exists only
-            // inside our program itself and not exposed outside.
-            // Think of it like we installed lib.rs into other program (main.rs).
-            panic!("{}", &error.message);
-        }
-    }
+    println!("config: {:#?}", config);
+
+    //match file_reader::read_file(&config.file_path) {
+    //    Ok(file_descriptor) => {
+    //        let exec_res = exec(&file_descriptor.content, &config);
+    //        handle_exec_result(&exec_res, &config);
+    //    }
+    //    Err(error) => {
+    //        // This main.rs is an end user of the program,
+    //        // we can't use 'out' module here since it exists only
+    //        // inside our program itself and not exposed outside.
+    //        // Think of it like we installed lib.rs into other program (main.rs).
+    //        panic!("{}", &error.message);
+    //    }
+    //}
 }

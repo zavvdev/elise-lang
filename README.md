@@ -26,7 +26,7 @@ Only `.csv` files are supported for now.
 ### 1. Safe Direct Execution
 
 ```bash
-elise run --source-code=sample.eli --data=data.csv --data-schema=data.elt
+elise --mode=run --source-code=sample.eli --data=data.csv --data-schema=data.elt
 ```
 
 - Compiles in-memory (no `.elc` output)
@@ -44,13 +44,13 @@ elise run --source-code=sample.eli --data=data.csv --data-schema=data.elt
 Step 1 — Build an executable
 
 ```bash
-elise build --source-code=sample.eli --data-schema=data.elt --executable=program.elc
+elise --mode=build --source-code=sample.eli --data-schema=data.elt --output=program.elc
 ```
 
 Step 2 — Execute
 
 ```bash
-elise exec --executable=program.elc --input=data.csv
+elise --mode=exec --executable=program.elc --data=data.csv
 ```
 
 - Uses precompiled schema-specialized bytecode
@@ -68,13 +68,13 @@ elise exec --executable=program.elc --input=data.csv
 Step 1 — Build an executable
 
 ```bash
-elise build --source-code=sample.eli --data-schema=data.elt --executable=program.elc
+elise --mode=build --source-code=sample.eli --data-schema=data.elt --output=program.elc
 ```
 
 Step 2 — Execute
 
 ```bash
-elise execute --executable=program.elc --data=data.csv --unsafe-assume-valid
+elise --mode=exec --executable=program.elc --data=data.csv --unsafe-assume-valid
 ```
 
 - Requires precompiled .elc
@@ -92,7 +92,7 @@ elise execute --executable=program.elc --data=data.csv --unsafe-assume-valid
 ### 4. Validation-Only Step
 
 ```bash
-elise validate --data=data.csv --data-schema=data.elt
+elise --mode=validate --data=data.csv --data-schema=data.elt
 ```
 
 - Full scan of data to ensure strict schema compliance
