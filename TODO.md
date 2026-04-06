@@ -10,6 +10,9 @@ Source code
 - [ ] Build config from CLI arguments:
   
     - [ ] Add support for different exec modes
+
+    - [ ] Rewrite error/messaging handling. Errors and messages should only be handled inside
+      main.rs as a library consumer.
     
     - [ ] tests
     
