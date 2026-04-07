@@ -15,3 +15,4 @@ path = "src/lib.rs"
 [dependencies]
 elise-parser = { path = "../frontend/parser" }
 elise-shared = { path = "../shared" }
+colored.workspace = true

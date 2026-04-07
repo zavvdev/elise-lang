@@ -30,6 +30,7 @@ dependencies = [
 name = "elise"
 version = "0.1.0"
 dependencies = [
+ "colored",
  "elise-parser",
  "elise-shared",
 ]
@@ -63,9 +64,6 @@ version = "0.1.0"
 [[package]]
 name = "elise-shared"
 version = "0.1.0"
-dependencies = [
- "colored",
-]
 
 [[package]]
 name = "elise-vm"

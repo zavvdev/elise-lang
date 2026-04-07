@@ -1,12 +1,20 @@
+pub mod messages;
+
 use colored::Colorize;
+use messages::{
+    M_ERROR_FATAL, M_ERROR_SILENT, M_ERROR_UNEXPECTED, M_INFO_BYTECODE_END, M_INFO_BYTECODE_START,
+    M_INFO_EXEC_TIME, M_INFO_EXEC_TIME_TYPE, M_INFO_OUTPUT,
+};
 use std::str::from_utf8;
+
+use crate::out::messages::M_ERROR_FILE_READER;
 
 /**
  * This function will be executed whenever we use panic! macro.
  */
 pub fn panic_hook(info: &std::panic::PanicHookInfo) {
-    let info = info.payload_as_str().unwrap_or("Unexpected");
-    let message = format!("Fatal error: {}", info);
+    let info = info.payload_as_str().unwrap_or(M_ERROR_UNEXPECTED);
+    let message = format!("{}: {}", M_ERROR_FATAL, info);
     eprintln!("{}", message.red().bold());
 }
 
@@ -26,7 +34,7 @@ pub fn silent_error(message: &str, label: Option<&str>) {
     let label = if label.is_some() {
         label.unwrap()
     } else {
-        "Error"
+        M_ERROR_SILENT
     };
     let error = format!("{}: {}", label.red().bold(), message);
     eprintln!("{}", error.red().bold());
@@ -36,21 +44,28 @@ pub fn silent_error(message: &str, label: Option<&str>) {
  * Print bytecode to std out.
  */
 pub fn print_bytecode(bytecode: &str) {
-    println!("--- Bytecode start ---\n{}\n--- Bytecode end ---", bytecode);
+    println!(
+        "{}\n{}\n{}",
+        M_INFO_BYTECODE_START, bytecode, M_INFO_BYTECODE_END
+    );
+}
+
+pub fn print_file_reader_error(msg: &str, path: &str) {
+    silent_error(&format!("{} ({})", msg, path), Some(M_ERROR_FILE_READER));
 }
 
 /**
  * Successful program output.
  */
-pub fn print_exec_result(output: &str, ms: u128) {
-    println!("Output: {}", output);
-    println!("Execution time: {} ms", ms);
+pub fn print_run_result(output: &str, ms: u128) {
+    println!("{}: {}", M_INFO_OUTPUT, output);
+    println!("{}: {} {}", M_INFO_EXEC_TIME, ms, M_INFO_EXEC_TIME_TYPE);
 }
 
 /**
  * Terminate program on specific code line:col.
  */
-pub fn crash_at(message: &str, source_code: &[u8], char_pos: usize, panic_message: &str) -> ! {
+pub fn crash_at(message: &str, source_code: &[u8], char_pos: usize) -> ! {
     let mut row = 0;
     let mut col = 0;
 
@@ -84,7 +99,6 @@ pub fn crash_at(message: &str, source_code: &[u8], char_pos: usize, panic_messag
 
     let source_code = from_utf8(source_code);
 
-    eprintln!("\n{}", message.red().bold());
     let location = format!("At {}:{}\n", row + 1, col + 1);
     eprintln!("{}", location.bold());
 
@@ -97,5 +111,5 @@ pub fn crash_at(message: &str, source_code: &[u8], char_pos: usize, panic_messag
         eprintln!("{}\n", arrow.red().bold());
     }
 
-    panic!("{}", panic_message)
+    panic!("{}", message)
 }

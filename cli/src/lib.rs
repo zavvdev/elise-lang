@@ -5,35 +5,38 @@
 pub mod conf;
 pub mod fsys;
 
-use conf::Conf;
+use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 
 //use elise_parser::parser::Prelude;
 use elise_shared::errors::LangError;
 use std::time::Instant;
 
-pub struct BaseResult<'a> {
-    pub config: &'a Conf,
-    pub ms: u128,
-}
-
+#[derive(Debug)]
 pub struct RunResult<'a> {
-    pub base: BaseResult<'a>,
+    pub config: &'a ModeRunConf,
+    pub ms: u128,
     pub output: String,
-    pub bytecode: Option<String>,
+    pub bytecode: String,
 }
 
-pub struct ExecResult<'a> {
-    pub base: BaseResult<'a>,
-    pub output: String,
-}
-
+#[derive(Debug)]
 pub struct BuildResult<'a> {
-    pub base: BaseResult<'a>,
+    pub config: &'a ModeBuildConf,
+    pub ms: u128,
     pub executale_output: String,
 }
 
+#[derive(Debug)]
+pub struct ExecResult<'a> {
+    pub config: &'a ModeExecConf,
+    pub ms: u128,
+    pub output: String,
+}
+
+#[derive(Debug)]
 pub struct ValidateResult<'a> {
-    pub base: BaseResult<'a>,
+    pub config: &'a ModeValidateConf,
+    pub ms: u128,
     pub is_valid: bool,
 }
 
@@ -47,7 +50,7 @@ pub fn run<'a>(
     _source_code: &'a str,
     _data: &'a str,
     _data_schema: &'a str,
-    config: &'a Conf,
+    config: &'a ModeRunConf,
 ) -> Result<RunResult<'a>, LangError> {
     let start = Instant::now();
     //let ast = Prelude::new(&source_code).parse();
@@ -57,29 +60,25 @@ pub fn run<'a>(
     println!("RUN MODE");
 
     Ok(RunResult {
-        base: BaseResult {
-            config: config,
-            ms: start.elapsed().as_millis(),
-        },
+        config,
+        ms: start.elapsed().as_millis(),
         output: String::from("123"),
-        bytecode: Some(String::from("CALL a [1] [0]")),
+        bytecode: String::from("CALL a [1] [0]"),
     })
 }
 
 pub fn build<'a>(
     _source_code: &'a str,
     _data_schema: &'a str,
-    config: &'a Conf,
+    config: &'a ModeBuildConf,
 ) -> Result<BuildResult<'a>, LangError> {
     let start = Instant::now();
 
     println!("BUILD MODE");
 
     Ok(BuildResult {
-        base: BaseResult {
-            config: config,
-            ms: start.elapsed().as_millis(),
-        },
+        config,
+        ms: start.elapsed().as_millis(),
         executale_output: String::from("CALL a [1] [0]"),
     })
 }
@@ -87,17 +86,15 @@ pub fn build<'a>(
 pub fn exec<'a>(
     _executable: &'a str,
     _data: &'a str,
-    config: &'a Conf,
+    config: &'a ModeExecConf,
 ) -> Result<ExecResult<'a>, LangError> {
     let start = Instant::now();
 
     println!("EXEC MODE");
 
     Ok(ExecResult {
-        base: BaseResult {
-            config: config,
-            ms: start.elapsed().as_millis(),
-        },
+        config,
+        ms: start.elapsed().as_millis(),
         output: String::from("Exec Result Output"),
     })
 }
@@ -105,38 +102,18 @@ pub fn exec<'a>(
 pub fn validate<'a>(
     _data: &'a str,
     _data_schema: &'a str,
-    config: &'a Conf,
+    config: &'a ModeValidateConf,
 ) -> Result<ValidateResult<'a>, LangError> {
     let start = Instant::now();
 
     println!("VALIDATE MODE");
 
     Ok(ValidateResult {
-        base: BaseResult {
-            config: config,
-            ms: start.elapsed().as_millis(),
-        },
+        config,
+        ms: start.elapsed().as_millis(),
         is_valid: true,
     })
 }
-
-//pub fn handle_exec_result(res: &ExecResult, config: &Conf) -> HandleExecResultOperationStatus {
-//    match &res.status {
-//        ExecStatus::Success => {
-//            out::print_exec_result(&res.output, res.ms);
-//            if let Some(bytecode) = &res.bytecode {
-//                if config.print_bytecode {
-//                    out::print_bytecode(bytecode);
-//                }
-//            }
-//            HandleExecResultOperationStatus::Success
-//        }
-//        ExecStatus::Error(reason) => {
-//            out::silent_error(reason, None);
-//            HandleExecResultOperationStatus::Error
-//        }
-//    }
-//}
 
 // ==========================
 //
