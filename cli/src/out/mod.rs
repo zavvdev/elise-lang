@@ -2,12 +2,11 @@ pub mod messages;
 
 use colored::Colorize;
 use messages::{
-    M_ERROR_FATAL, M_ERROR_SILENT, M_ERROR_UNEXPECTED, M_INFO_BYTECODE_END, M_INFO_BYTECODE_START,
-    M_INFO_EXEC_TIME, M_INFO_EXEC_TIME_TYPE, M_INFO_OUTPUT,
+    M_ERROR_FATAL, M_ERROR_FILE_READER, M_ERROR_FILE_WRITER, M_ERROR_SILENT, M_ERROR_UNEXPECTED,
+    M_INFO_BYTECODE_END, M_INFO_BYTECODE_START, M_INFO_EXEC_TIME, M_INFO_EXEC_TIME_TYPE,
+    M_INFO_OUTPUT, M_INFO_SAVED_TO,
 };
 use std::str::from_utf8;
-
-use crate::out::messages::M_ERROR_FILE_READER;
 
 /**
  * This function will be executed whenever we use panic! macro.
@@ -54,11 +53,17 @@ pub fn print_file_reader_error(msg: &str, path: &str) {
     silent_error(&format!("{} ({})", msg, path), Some(M_ERROR_FILE_READER));
 }
 
-/**
- * Successful program output.
- */
+pub fn print_file_writer_error(msg: &str, path: &str) {
+    silent_error(&format!("{} ({})", msg, path), Some(M_ERROR_FILE_WRITER));
+}
+
 pub fn print_run_result(output: &str, ms: u128) {
     println!("{}: {}", M_INFO_OUTPUT, output);
+    println!("{}: {} {}", M_INFO_EXEC_TIME, ms, M_INFO_EXEC_TIME_TYPE);
+}
+
+pub fn print_build_result(path: &str, ms: u128) {
+    println!("{}: {}", M_INFO_SAVED_TO, path);
     println!("{}: {} {}", M_INFO_EXEC_TIME, ms, M_INFO_EXEC_TIME_TYPE);
 }
 

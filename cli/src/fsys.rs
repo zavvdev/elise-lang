@@ -1,7 +1,7 @@
 use std::fs;
 
 #[derive(PartialEq, Debug)]
-pub struct FileReaderDescriptor {
+pub struct FileDescriptor {
     pub path: String,
     pub content: String,
 }
@@ -12,9 +12,14 @@ pub struct FileReaderError {
     pub path: String,
 }
 
-fn read_file(path: &str) -> Result<FileReaderDescriptor, FileReaderError> {
+#[derive(PartialEq, Debug)]
+pub struct FileWriterError {
+    pub message: String,
+}
+
+fn read_file(path: &str) -> Result<FileDescriptor, FileReaderError> {
     match fs::read_to_string(path) {
-        Ok(content) => Ok(FileReaderDescriptor {
+        Ok(content) => Ok(FileDescriptor {
             path: path.to_string(),
             content,
         }),
@@ -25,8 +30,17 @@ fn read_file(path: &str) -> Result<FileReaderDescriptor, FileReaderError> {
     }
 }
 
-pub fn read_files(paths: &[&str]) -> Result<Vec<FileReaderDescriptor>, FileReaderError> {
+pub fn read_files(paths: &[&str]) -> Result<Vec<FileDescriptor>, FileReaderError> {
     paths.iter().map(|path| read_file(path)).collect()
+}
+
+pub fn write_file(path: &str, contents: &str) -> Result<(), FileWriterError> {
+    match fs::write(path, contents) {
+        Err(err) => Err(FileWriterError {
+            message: err.to_string(),
+        }),
+        _ => Ok(()),
+    }
 }
 
 // ==========================

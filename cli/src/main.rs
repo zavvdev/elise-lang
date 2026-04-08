@@ -5,12 +5,22 @@ pub mod out;
 
 use elise;
 use elise::conf::{Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
-use elise::fsys::read_files;
+use elise::fsys::{read_files, write_file};
 use elise_shared::errors::LangError;
 
 use std::env;
 
 use crate::out::messages::M_ERROR_CONFIG;
+
+fn handle_lang_error(lang_err: &LangError) {
+    match lang_err {
+        LangError::Parser(parser_error) => out::crash_at(
+            &parser_error.message,
+            &parser_error.source_code,
+            parser_error.char_pos,
+        ),
+    }
+}
 
 fn cli_run(conf: &ModeRunConf) {
     match read_files(&[
@@ -18,31 +28,49 @@ fn cli_run(conf: &ModeRunConf) {
         &conf.data_path,
         &conf.data_schema_path,
     ]) {
-        Ok(res) => match elise::run(&res[0].content, &res[1].content, &res[2].content, &conf) {
-            Ok(run_res) => {
-                out::print_run_result(&run_res.output, run_res.ms);
-                if run_res.config.print_bytecode {
-                    out::print_bytecode(&run_res.bytecode);
-                }
+        Ok(read_res) => {
+            let run_res = elise::run(
+                &read_res[0].content,
+                &read_res[1].content,
+                &read_res[2].content,
+                &conf,
+            );
+
+            if let Err(run_err) = &run_res {
+                handle_lang_error(&run_err);
             }
-            Err(run_err) => match run_err {
-                LangError::Parser(parser_error) => out::crash_at(
-                    &parser_error.message,
-                    &parser_error.source_code,
-                    parser_error.char_pos,
-                ),
-            },
-        },
-        Err(err) => {
-            out::print_file_reader_error(&err.message, &err.path);
+
+            let run_res = run_res.unwrap();
+
+            out::print_run_result(&run_res.output, run_res.ms);
+            if run_res.config.print_bytecode {
+                out::print_bytecode(&run_res.bytecode);
+            }
+        }
+        Err(read_err) => {
+            out::print_file_reader_error(&read_err.message, &read_err.path);
         }
     };
 }
 
 fn cli_build(conf: &ModeBuildConf) {
     match read_files(&[&conf.source_code_path, &conf.data_schema_path]) {
-        Ok(_res) => {}
-        Err(_err) => {}
+        Ok(read_res) => {
+            let build_res = elise::build(&read_res[0].content, &read_res[1].content, &conf);
+
+            if let Err(build_err) = &build_res {
+                handle_lang_error(&build_err);
+            }
+
+            let build_res = build_res.unwrap();
+            let out_path = &build_res.config.executable_output_path;
+
+            match write_file(out_path, &build_res.executale_output) {
+                Ok(_) => out::print_build_result(out_path, build_res.ms),
+                Err(err) => out::print_file_writer_error(&err.message, out_path),
+            }
+        }
+        Err(read_err) => out::print_file_reader_error(&read_err.message, &read_err.path),
     };
 }
 
@@ -65,13 +93,7 @@ fn main() {
         out::panic_hook(info);
     }));
 
-    // Accept user input into Vec<Strings> for centralized ownership
-    // which starts here.
     let args: Vec<String> = env::args().skip(1).collect();
-
-    // Pass the reference to the args so we can re-use our owned data
-    // without copying.
-    // Check from_cli for more details.
     let config = Conf::from_cli(&args);
 
     if let Err(conf_error) = config {
