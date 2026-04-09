@@ -1,7 +1,3 @@
-// This file is an entry point for all modules in this project.
-// If main.ts needs to import something, it needs to import it
-// from this file by using use elise::something;
-
 pub mod conf;
 pub mod fsys;
 
@@ -37,7 +33,6 @@ pub struct ExecResult<'a> {
 pub struct ValidateResult<'a> {
     pub config: &'a ModeValidateConf,
     pub ms: u128,
-    pub is_valid: bool,
 }
 
 #[derive(PartialEq, Debug)]
@@ -53,6 +48,7 @@ pub fn run<'a>(
     config: &'a ModeRunConf,
 ) -> Result<RunResult<'a>, LangError> {
     let start = Instant::now();
+    // TODO: Uncomment after parser refactoring.
     //let ast = Prelude::new(&source_code).parse();
 
     //println!("ast: {:#?}", ast);
@@ -111,63 +107,5 @@ pub fn validate<'a>(
     Ok(ValidateResult {
         config,
         ms: start.elapsed().as_millis(),
-        is_valid: true,
     })
 }
-
-// ==========================
-//
-// TESTS START
-//
-// ==========================
-
-#[cfg(test)]
-mod tests {
-    use crate::{ExecStatus, HandleExecResultOperationStatus, conf::Conf, handle_exec_result};
-
-    // Handle exec result
-
-    #[test]
-    fn should_handle_error_exec_result() {
-        let config = Conf {
-            file_path: "test.eli".to_string(),
-            print_bytecode: true,
-        };
-        let result = handle_exec_result(
-            &crate::ExecResult {
-                status: ExecStatus::Error("Something went wrong".to_string()),
-                output: "hello".to_string(),
-                bytecode: Some("SOME [1]".to_string()),
-                config: &config,
-                ms: 1,
-            },
-            &config,
-        );
-        assert_eq!(result, HandleExecResultOperationStatus::Error);
-    }
-
-    #[test]
-    fn should_handle_success_exec_result() {
-        let config = Conf {
-            file_path: "test.eli".to_string(),
-            print_bytecode: true,
-        };
-        let result = handle_exec_result(
-            &crate::ExecResult {
-                status: ExecStatus::Success,
-                output: "hello".to_string(),
-                bytecode: Some("SOME [1]".to_string()),
-                config: &config,
-                ms: 1,
-            },
-            &config,
-        );
-        assert_eq!(result, HandleExecResultOperationStatus::Success);
-    }
-}
-
-// ==========================
-//
-// TESTS END
-//
-// ==========================

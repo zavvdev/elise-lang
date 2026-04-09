@@ -1,6 +1,3 @@
-// Imports from lib.rs by referencing custom name that
-// has been specified in Cargo.toml
-
 pub mod out;
 
 use elise;
@@ -9,8 +6,6 @@ use elise::fsys::{read_files, write_file};
 use elise_shared::errors::LangError;
 
 use std::env;
-
-use crate::out::messages::M_ERROR_CONFIG;
 
 fn handle_lang_error(lang_err: &LangError) {
     match lang_err {
@@ -76,15 +71,33 @@ fn cli_build(conf: &ModeBuildConf) {
 
 fn cli_exec(conf: &ModeExecConf) {
     match read_files(&[&conf.executable_path, &conf.data_path]) {
-        Ok(_res) => {}
-        Err(_err) => {}
+        Ok(read_res) => {
+            let exec_res = elise::exec(&read_res[0].content, &read_res[1].content, &conf);
+
+            if let Err(exec_err) = &exec_res {
+                handle_lang_error(&exec_err);
+            }
+
+            let exec_res = exec_res.unwrap();
+            out::print_run_result(&exec_res.output, exec_res.ms);
+        }
+        Err(read_err) => out::print_file_reader_error(&read_err.message, &read_err.path),
     };
 }
 
 fn cli_validate(conf: &ModeValidateConf) {
     match read_files(&[&conf.data_path, &conf.data_schema_path]) {
-        Ok(_res) => {}
-        Err(_err) => {}
+        Ok(read_res) => {
+            let validate_res = elise::validate(&read_res[0].content, &read_res[1].content, &conf);
+
+            if let Err(validate_err) = &validate_res {
+                handle_lang_error(&validate_err);
+            }
+
+            let validate_res = validate_res.unwrap();
+            out::print_validate_result(validate_res.ms);
+        }
+        Err(read_err) => out::print_file_reader_error(&read_err.message, &read_err.path),
     };
 }
 
@@ -96,8 +109,8 @@ fn main() {
     let args: Vec<String> = env::args().skip(1).collect();
     let config = Conf::from_cli(&args);
 
-    if let Err(conf_error) = config {
-        return out::silent_error(&format!("{}", conf_error.message), Some(M_ERROR_CONFIG));
+    if let Err(conf_err) = config {
+        return out::config_error(&conf_err.message);
     }
 
     match config.unwrap() {

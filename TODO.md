@@ -7,16 +7,18 @@ Source code
     -> Score (bytecode)
     -> Sonata (VM)
 
-- [ ] Build config from CLI arguments:
+- [ ] CLI:
   
-    - [ ] Add support for different exec modes
+    - [x] Add support for different exec modes
 
-    - [ ] Rewrite error/messaging handling. Errors and messages should only be handled inside
+    - [x] Rewrite error/messaging handling. Errors and messages should only be handled inside
       main.rs as a library consumer.
     
-    - [ ] tests
+    - [ ] fsys tests
+
+    - [ ] conf tests
     
-- [ ] Create parser for lexing, building AST and enforcing grammar rules 
+- [ ] Parser
 
     - [x] Add number parsing (positive, negative, float, scientific notation)
 
@@ -44,19 +46,17 @@ Source code
 
         - [x] Add tests for function calls
 
-    - [x] Review tests and add more test cases where possible
-
-    - [x] Review parser for improvements (including messages)
+    - [ ] Remove out module
 
     - [ ] Add support for anonymous functions
 
-- [x] Create new module system (bytecode, parser, compiler, vm, cli)
+- [ ] ?Data file parsing, schema file parsing
 
-- [ ] Add semantic analysis module (analyze each known function semantics etc)
+- [ ] Semantic analyzer
 
     - [ ] ...
 
-- [ ] Create a compiler for bytecode (IR) generation from AST
+- [ ] Compiler
 
     - [ ] Apply optimizations
 
@@ -66,7 +66,7 @@ Source code
     
     - [ ] ...
 
-- [ ] Create a virtual machine for bytecode interpretation
+- [ ] VM
 
     - [ ] ...
 

@@ -2,34 +2,23 @@ pub mod messages;
 
 use colored::Colorize;
 use messages::{
-    M_ERROR_FATAL, M_ERROR_FILE_READER, M_ERROR_FILE_WRITER, M_ERROR_SILENT, M_ERROR_UNEXPECTED,
-    M_INFO_BYTECODE_END, M_INFO_BYTECODE_START, M_INFO_EXEC_TIME, M_INFO_EXEC_TIME_TYPE,
-    M_INFO_OUTPUT, M_INFO_SAVED_TO,
+    M_ERROR_CONFIG, M_ERROR_FATAL, M_ERROR_FILE_READER, M_ERROR_FILE_WRITER, M_ERROR_SILENT,
+    M_ERROR_UNEXPECTED, M_INFO_BYTECODE_END, M_INFO_BYTECODE_START, M_INFO_EXEC_TIME,
+    M_INFO_EXEC_TIME_TYPE, M_INFO_OUTPUT, M_INFO_SAVED_TO, M_INFO_VALID,
 };
 use std::str::from_utf8;
 
-/**
- * This function will be executed whenever we use panic! macro.
- */
 pub fn panic_hook(info: &std::panic::PanicHookInfo) {
     let info = info.payload_as_str().unwrap_or(M_ERROR_UNEXPECTED);
     let message = format!("{}: {}", M_ERROR_FATAL, info);
     eprintln!("{}", message.red().bold());
 }
 
-/**
- * Use this function when you want to terminate program execution
- * due to some error.
- */
 pub fn crash(message: &str) -> ! {
     panic!("{}", message);
 }
 
-/**
- * Use this function when you want to show an error message
- * without terminating the program.
- */
-pub fn silent_error(message: &str, label: Option<&str>) {
+fn silent_error(message: &str, label: Option<&str>) {
     let label = if label.is_some() {
         label.unwrap()
     } else {
@@ -39,9 +28,6 @@ pub fn silent_error(message: &str, label: Option<&str>) {
     eprintln!("{}", error.red().bold());
 }
 
-/**
- * Print bytecode to std out.
- */
 pub fn print_bytecode(bytecode: &str) {
     println!(
         "{}\n{}\n{}",
@@ -67,9 +53,15 @@ pub fn print_build_result(path: &str, ms: u128) {
     println!("{}: {} {}", M_INFO_EXEC_TIME, ms, M_INFO_EXEC_TIME_TYPE);
 }
 
-/**
- * Terminate program on specific code line:col.
- */
+pub fn print_validate_result(ms: u128) {
+    println!("{}", M_INFO_VALID);
+    println!("{}: {} {}", M_INFO_EXEC_TIME, ms, M_INFO_EXEC_TIME_TYPE);
+}
+
+pub fn config_error(msg: &str) {
+    silent_error(&format!("{}", msg), Some(M_ERROR_CONFIG))
+}
+
 pub fn crash_at(message: &str, source_code: &[u8], char_pos: usize) -> ! {
     let mut row = 0;
     let mut col = 0;

@@ -11,3 +11,4 @@ pub const M_INFO_OUTPUT: &str = "Output";
 pub const M_INFO_EXEC_TIME: &str = "Execution time";
 pub const M_INFO_EXEC_TIME_TYPE: &str = "ms";
 pub const M_INFO_SAVED_TO: &str = "Saved to";
+pub const M_INFO_VALID: &str = "Valid";
