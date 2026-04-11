@@ -39,7 +39,7 @@ elise --mode=run --source-code=sample.eli --data=data.csv --data-schema=data.elt
 
 **Performance**: Medium
 
-### 2. Compiled Execution (Optimized, Safe)
+### 2. Execute Pre-compiled (Optimized, Safe)
 
 Step 1 — Build an executable
 

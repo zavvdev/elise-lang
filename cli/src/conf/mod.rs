@@ -11,12 +11,12 @@ use arguments::{
 
 use messages::{M_ARG_REQUIRED, M_EXEC_MODE_INVALID, M_EXEC_MODE_MISSING, M_EXT_INVALID_IN_PATH};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ConfError {
     pub message: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ModeRunConf {
     pub source_code_path: String,
     pub data_path: String,
@@ -24,27 +24,27 @@ pub struct ModeRunConf {
     pub print_bytecode: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ModeBuildConf {
     pub source_code_path: String,
     pub data_schema_path: String,
     pub executable_output_path: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ModeExecConf {
     pub executable_path: String,
     pub data_path: String,
     pub unsafe_assume_valid: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ModeValidateConf {
     pub data_path: String,
     pub data_schema_path: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Conf {
     Run(ModeRunConf),
     Build(ModeBuildConf),
@@ -241,75 +241,309 @@ impl Conf {
 //
 // ==========================
 
-//#[cfg(test)]
-//mod tests {
-//    use crate::conf::Conf;
-//
-//    // File path
-//
-//    #[test]
-//    #[should_panic(expected = "\"file-path\" argument is required.")]
-//    fn should_require_filepath_arg_if_nothing_provided() {
-//        Conf::from_cli(&[]);
-//    }
-//
-//    #[test]
-//    #[should_panic(expected = "Path does not exist: \"some/path/file.eli\"")]
-//    fn should_reject_if_path_to_file_does_not_exist() {
-//        Conf::from_cli(&["--file-path=some/path/file.eli".to_string()]);
-//    }
-//
-//    #[test]
-//    #[should_panic(expected = "File must have \".eli\" extension")]
-//    fn should_reject_files_with_invalid_ext() {
-//        Conf::from_cli(&["--file-path=mock/test.rs".to_string()]);
-//    }
-//
-//    #[test]
-//    fn should_not_panic_if_path_exists_and_file_has_correct_ext() {
-//        let file_path = "mock/test.eli";
-//        let config = Conf::from_cli(&[format!("--file-path={}", file_path)]);
-//        assert_eq!(config.file_path, file_path);
-//    }
-//
-//    // Print bytecode
-//
-//    #[test]
-//    fn should_set_print_bytecode_to_true_if_no_value_provided() {
-//        let config = Conf::from_cli(&[
-//            "--file-path=mock/test.eli".to_string(),
-//            "--print-bytecode".to_string(),
-//        ]);
-//        assert_eq!(config.print_bytecode, true);
-//    }
-//
-//    #[test]
-//    fn should_set_print_bytecode_to_true_if_explicitly_provided() {
-//        let config = Conf::from_cli(&[
-//            "--file-path=mock/test.eli".to_string(),
-//            "--print-bytecode=true".to_string(),
-//        ]);
-//        assert_eq!(config.print_bytecode, true);
-//    }
-//
-//    #[test]
-//    fn should_set_print_bytecode_to_false_if_explicitly_provided() {
-//        let config = Conf::from_cli(&[
-//            "--file-path=mock/test.eli".to_string(),
-//            "--print-bytecode=false".to_string(),
-//        ]);
-//        assert_eq!(config.print_bytecode, false);
-//    }
-//
-//    #[test]
-//    fn should_set_print_bytecode_to_false_if_invalid_value_provided() {
-//        let config = Conf::from_cli(&[
-//            "--file-path=mock/test.eli".to_string(),
-//            "--print-bytecode=123".to_string(),
-//        ]);
-//        assert_eq!(config.print_bytecode, false);
-//    }
-//}
+#[cfg(test)]
+mod tests {
+    use crate::conf::{
+        Conf, ConfError, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf,
+    };
+
+    #[test]
+    fn should_require_mode_flag() {
+        let result = Conf::from_cli(&[
+            "--source-code=sample.eli".to_string(),
+            "--data=data.csv".to_string(),
+            "--data-schema=data.elt".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Err(ConfError {
+                message: "Missing execution mode".to_string(),
+            })
+        );
+    }
+
+    // RUN MODE TESTS START
+
+    #[test]
+    fn run_should_require_source_code_flag() {
+        let result = Conf::from_cli(&[
+            "--mode=run".to_string(),
+            "--data=data.csv".to_string(),
+            "--data-schema=data.elt".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Err(ConfError {
+                message: "Missing required argument: \"source-code\"".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn run_should_require_data_flag() {
+        let result = Conf::from_cli(&[
+            "--mode=run".to_string(),
+            "--source-code=sample.eli".to_string(),
+            "--data-schema=data.elt".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Err(ConfError {
+                message: "Missing required argument: \"data\"".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn run_should_require_data_schema_flag() {
+        let result = Conf::from_cli(&[
+            "--mode=run".to_string(),
+            "--source-code=sample.eli".to_string(),
+            "--data=data.csv".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Err(ConfError {
+                message: "Missing required argument: \"data-schema\"".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn run_should_construct_conf() {
+        let result = Conf::from_cli(&[
+            "--mode=run".to_string(),
+            "--source-code=sample.eli".to_string(),
+            "--data=data.csv".to_string(),
+            "--data-schema=data.elt".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Ok(Conf::Run(ModeRunConf {
+                source_code_path: "sample.eli".to_string(),
+                data_path: "data.csv".to_string(),
+                data_schema_path: "data.elt".to_string(),
+                print_bytecode: false,
+            }))
+        );
+    }
+
+    #[test]
+    fn run_should_construct_conf_with_bytecode_enabled_flag() {
+        let result = Conf::from_cli(&[
+            "--mode=run".to_string(),
+            "--source-code=sample.eli".to_string(),
+            "--data=data.csv".to_string(),
+            "--data-schema=data.elt".to_string(),
+            "--print-bytecode".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Ok(Conf::Run(ModeRunConf {
+                source_code_path: "sample.eli".to_string(),
+                data_path: "data.csv".to_string(),
+                data_schema_path: "data.elt".to_string(),
+                print_bytecode: true,
+            }))
+        );
+    }
+
+    // RUN MODE TESTS END
+
+    // BUILD MODE TESTS START
+
+    #[test]
+    fn build_should_require_source_code_flag() {
+        let result = Conf::from_cli(&[
+            "--mode=build".to_string(),
+            "--data-schema=data.elt".to_string(),
+            "--output=sample.elc".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Err(ConfError {
+                message: "Missing required argument: \"source-code\"".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn build_should_require_data_schema_flag() {
+        let result = Conf::from_cli(&[
+            "--mode=build".to_string(),
+            "--source-code=sample.eli".to_string(),
+            "--output=sample.elc".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Err(ConfError {
+                message: "Missing required argument: \"data-schema\"".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn build_should_require_output_flag() {
+        let result = Conf::from_cli(&[
+            "--mode=build".to_string(),
+            "--source-code=sample.eli".to_string(),
+            "--data-schema=data.elt".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Err(ConfError {
+                message: "Missing required argument: \"output\"".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn build_should_construct_conf() {
+        let result = Conf::from_cli(&[
+            "--mode=build".to_string(),
+            "--source-code=sample.eli".to_string(),
+            "--data-schema=data.elt".to_string(),
+            "--output=sample.elc".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Ok(Conf::Build(ModeBuildConf {
+                source_code_path: "sample.eli".to_string(),
+                executable_output_path: "sample.elc".to_string(),
+                data_schema_path: "data.elt".to_string(),
+            }))
+        );
+    }
+
+    // BUILD MODE TESTS END
+
+    // EXEC MODE TESTS START
+
+    #[test]
+    fn exec_should_require_executable_flag() {
+        let result = Conf::from_cli(&["--mode=exec".to_string(), "--data=data.csv".to_string()]);
+
+        assert_eq!(
+            result,
+            Err(ConfError {
+                message: "Missing required argument: \"executable\"".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn exec_should_require_data_flag() {
+        let result = Conf::from_cli(&[
+            "--mode=exec".to_string(),
+            "--executable=sample.elc".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Err(ConfError {
+                message: "Missing required argument: \"data\"".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn exec_should_construct_conf() {
+        let result = Conf::from_cli(&[
+            "--mode=exec".to_string(),
+            "--executable=sample.elc".to_string(),
+            "--data=data.csv".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Ok(Conf::Exec(ModeExecConf {
+                executable_path: "sample.elc".to_string(),
+                data_path: "data.csv".to_string(),
+                unsafe_assume_valid: false,
+            }))
+        );
+    }
+
+    #[test]
+    fn exec_should_construct_conf_with_assume_valid() {
+        let result = Conf::from_cli(&[
+            "--mode=exec".to_string(),
+            "--executable=sample.elc".to_string(),
+            "--data=data.csv".to_string(),
+            "--unsafe-assume-valid".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Ok(Conf::Exec(ModeExecConf {
+                executable_path: "sample.elc".to_string(),
+                data_path: "data.csv".to_string(),
+                unsafe_assume_valid: true,
+            }))
+        );
+    }
+
+    // EXEC MODE TESTS END
+
+    // VALIDATE MODE TESTS START
+
+    #[test]
+    fn validate_should_require_data_flag() {
+        let result = Conf::from_cli(&[
+            "--mode=validate".to_string(),
+            "--data-schema=data.elt".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Err(ConfError {
+                message: "Missing required argument: \"data\"".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn validate_should_require_data_schema_flag() {
+        let result =
+            Conf::from_cli(&["--mode=validate".to_string(), "--data=data.csv".to_string()]);
+
+        assert_eq!(
+            result,
+            Err(ConfError {
+                message: "Missing required argument: \"data-schema\"".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn validate_should_construct_conf() {
+        let result = Conf::from_cli(&[
+            "--mode=validate".to_string(),
+            "--data=data.csv".to_string(),
+            "--data-schema=sample.elt".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            Ok(Conf::Validate(ModeValidateConf {
+                data_path: "data.csv".to_string(),
+                data_schema_path: "sample.elt".to_string(),
+            }))
+        );
+    }
+
+    // VALIDATE MODE TESTS END
+}
 
 // ==========================
 //

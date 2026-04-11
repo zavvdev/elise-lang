@@ -7,7 +7,7 @@ Source code
     -> Score (bytecode)
     -> Sonata (VM)
 
-- [ ] CLI:
+- [x] CLI:
   
     - [x] Add support for different exec modes
 
@@ -16,7 +16,7 @@ Source code
     
     - [x] fsys tests
 
-    - [ ] conf tests
+    - [x] conf tests
     
 - [ ] Parser
 
@@ -73,3 +73,5 @@ Source code
 - [ ] Optimizations
 
     - [ ] Read source code file in chunks
+
+- [ ] Integration tests for CLI
