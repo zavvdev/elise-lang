@@ -14,7 +14,7 @@ Source code
     - [x] Rewrite error/messaging handling. Errors and messages should only be handled inside
       main.rs as a library consumer.
     
-    - [ ] fsys tests
+    - [x] fsys tests
 
     - [ ] conf tests
     

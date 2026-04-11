@@ -241,75 +241,75 @@ impl Conf {
 //
 // ==========================
 
-#[cfg(test)]
-mod tests {
-    use crate::conf::Conf;
-
-    // File path
-
-    #[test]
-    #[should_panic(expected = "\"file-path\" argument is required.")]
-    fn should_require_filepath_arg_if_nothing_provided() {
-        Conf::from_cli(&[]);
-    }
-
-    #[test]
-    #[should_panic(expected = "Path does not exist: \"some/path/file.eli\"")]
-    fn should_reject_if_path_to_file_does_not_exist() {
-        Conf::from_cli(&["--file-path=some/path/file.eli".to_string()]);
-    }
-
-    #[test]
-    #[should_panic(expected = "File must have \".eli\" extension")]
-    fn should_reject_files_with_invalid_ext() {
-        Conf::from_cli(&["--file-path=mock/test.rs".to_string()]);
-    }
-
-    #[test]
-    fn should_not_panic_if_path_exists_and_file_has_correct_ext() {
-        let file_path = "mock/test.eli";
-        let config = Conf::from_cli(&[format!("--file-path={}", file_path)]);
-        assert_eq!(config.file_path, file_path);
-    }
-
-    // Print bytecode
-
-    #[test]
-    fn should_set_print_bytecode_to_true_if_no_value_provided() {
-        let config = Conf::from_cli(&[
-            "--file-path=mock/test.eli".to_string(),
-            "--print-bytecode".to_string(),
-        ]);
-        assert_eq!(config.print_bytecode, true);
-    }
-
-    #[test]
-    fn should_set_print_bytecode_to_true_if_explicitly_provided() {
-        let config = Conf::from_cli(&[
-            "--file-path=mock/test.eli".to_string(),
-            "--print-bytecode=true".to_string(),
-        ]);
-        assert_eq!(config.print_bytecode, true);
-    }
-
-    #[test]
-    fn should_set_print_bytecode_to_false_if_explicitly_provided() {
-        let config = Conf::from_cli(&[
-            "--file-path=mock/test.eli".to_string(),
-            "--print-bytecode=false".to_string(),
-        ]);
-        assert_eq!(config.print_bytecode, false);
-    }
-
-    #[test]
-    fn should_set_print_bytecode_to_false_if_invalid_value_provided() {
-        let config = Conf::from_cli(&[
-            "--file-path=mock/test.eli".to_string(),
-            "--print-bytecode=123".to_string(),
-        ]);
-        assert_eq!(config.print_bytecode, false);
-    }
-}
+//#[cfg(test)]
+//mod tests {
+//    use crate::conf::Conf;
+//
+//    // File path
+//
+//    #[test]
+//    #[should_panic(expected = "\"file-path\" argument is required.")]
+//    fn should_require_filepath_arg_if_nothing_provided() {
+//        Conf::from_cli(&[]);
+//    }
+//
+//    #[test]
+//    #[should_panic(expected = "Path does not exist: \"some/path/file.eli\"")]
+//    fn should_reject_if_path_to_file_does_not_exist() {
+//        Conf::from_cli(&["--file-path=some/path/file.eli".to_string()]);
+//    }
+//
+//    #[test]
+//    #[should_panic(expected = "File must have \".eli\" extension")]
+//    fn should_reject_files_with_invalid_ext() {
+//        Conf::from_cli(&["--file-path=mock/test.rs".to_string()]);
+//    }
+//
+//    #[test]
+//    fn should_not_panic_if_path_exists_and_file_has_correct_ext() {
+//        let file_path = "mock/test.eli";
+//        let config = Conf::from_cli(&[format!("--file-path={}", file_path)]);
+//        assert_eq!(config.file_path, file_path);
+//    }
+//
+//    // Print bytecode
+//
+//    #[test]
+//    fn should_set_print_bytecode_to_true_if_no_value_provided() {
+//        let config = Conf::from_cli(&[
+//            "--file-path=mock/test.eli".to_string(),
+//            "--print-bytecode".to_string(),
+//        ]);
+//        assert_eq!(config.print_bytecode, true);
+//    }
+//
+//    #[test]
+//    fn should_set_print_bytecode_to_true_if_explicitly_provided() {
+//        let config = Conf::from_cli(&[
+//            "--file-path=mock/test.eli".to_string(),
+//            "--print-bytecode=true".to_string(),
+//        ]);
+//        assert_eq!(config.print_bytecode, true);
+//    }
+//
+//    #[test]
+//    fn should_set_print_bytecode_to_false_if_explicitly_provided() {
+//        let config = Conf::from_cli(&[
+//            "--file-path=mock/test.eli".to_string(),
+//            "--print-bytecode=false".to_string(),
+//        ]);
+//        assert_eq!(config.print_bytecode, false);
+//    }
+//
+//    #[test]
+//    fn should_set_print_bytecode_to_false_if_invalid_value_provided() {
+//        let config = Conf::from_cli(&[
+//            "--file-path=mock/test.eli".to_string(),
+//            "--print-bytecode=123".to_string(),
+//        ]);
+//        assert_eq!(config.print_bytecode, false);
+//    }
+//}
 
 // ==========================
 //

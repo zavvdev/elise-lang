@@ -16,3 +16,4 @@ path = "src/lib.rs"
 elise-parser = { path = "../frontend/parser" }
 elise-shared = { path = "../shared" }
 colored.workspace = true
+serial_test.workspace = true

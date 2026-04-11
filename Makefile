@@ -38,6 +38,9 @@ test:
 test\:parser:
 	cargo test -p elise-parser
 
+test\:cli:
+	cargo test -p elise
+
 check:
 	cargo check
 
