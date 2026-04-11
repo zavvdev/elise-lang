@@ -1,11 +1,11 @@
 #[derive(Debug)]
-pub struct ParserError {
+pub struct ParserError<'a> {
     pub char_pos: usize,
-    pub message: String,
-    pub source_code: Vec<u8>,
+    pub message: &'static str,
+    pub source_code: &'a [u8],
 }
 
 #[derive(Debug)]
-pub enum LangError {
-    Parser(ParserError),
+pub enum LangError<'a> {
+    Parser(ParserError<'a>),
 }

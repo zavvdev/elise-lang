@@ -48,6 +48,8 @@ Source code
 
     - [ ] Remove out module
 
+    - [ ] Remove should panic crate 
+
     - [ ] Add support for anonymous functions
 
 - [ ] ?Data file parsing, schema file parsing

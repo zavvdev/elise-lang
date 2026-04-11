@@ -10,8 +10,8 @@ use std::env;
 fn handle_lang_error(lang_err: &LangError) {
     match lang_err {
         LangError::Parser(parser_error) => out::crash_at(
-            &parser_error.message,
-            &parser_error.source_code,
+            parser_error.message,
+            parser_error.source_code,
             parser_error.char_pos,
         ),
     }

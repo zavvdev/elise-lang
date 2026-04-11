@@ -2,27 +2,13 @@ use crate::messages;
 use regex::Regex;
 use std::str::from_utf8;
 
+use crate::config::{
+    IDENTIFIER_REGEX, T_CALL_PREFIX, T_COMMA, T_DOUBLE_QT, T_LEFT_CUR_BRACKET, T_LEFT_PAREN,
+    T_LEFT_SQR_BRACKET, T_MINUS, T_RIGHT_CUR_BRACKET, T_RIGHT_PAREN, T_RIGHT_SQR_BRACKET,
+};
+
 use elise_ast::{AstNode, Compound, Primitive, TokSpan};
-use elise_shared::out;
-
-// <identifier> ::= <letter> (<letter> | <digit> | '-' | '?' | '!' | '_')*
-const IDENTIFIER_REGEX: &str = r"^[A-Za-z][A-Za-z0-9\-?!_]*$";
-
-const T_CALL_PREFIX: u8 = b'.';
-const T_TRUE: &'static str = "true";
-const T_FALSE: &'static str = "false";
-const T_NULL: &'static str = "null";
-
-const T_LEFT_PAREN: u8 = b'(';
-const T_RIGHT_PAREN: u8 = b')';
-const T_LEFT_SQR_BRACKET: u8 = b'[';
-const T_RIGHT_SQR_BRACKET: u8 = b']';
-const T_LEFT_CUR_BRACKET: u8 = b'{';
-const T_RIGHT_CUR_BRACKET: u8 = b'}';
-
-const T_MINUS: u8 = b'-';
-const T_COMMA: u8 = b',';
-const T_DOUBLE_QT: u8 = b'"';
+use elise_shared::errors::{LangError, ParserError};
 
 // ==========================
 //
@@ -76,29 +62,35 @@ impl<'a> Prelude<'a> {
      * We do not use this method for recursive parsing. It should only
      * be used by the end user that wants to get the whole parsing result.
      */
-    pub fn parse(&mut self) -> Vec<AstNode> {
+    pub fn parse(&mut self) -> Result<Vec<AstNode>, LangError> {
         let mut ast: Vec<AstNode> = vec![];
 
         while let Some(c) = self.peek() {
-            if let Some(node) = self.get_node_from_char(&c) {
-                ast.push(node);
+            match self.get_node_from_char(&c) {
+                Ok(node_option) => {
+                    if let Some(node) = node_option {
+                        ast.push(node);
+                    }
+                }
+                Err(lang_error) => {
+                    return Err(lang_error);
+                }
             }
         }
 
         if self.depth_stack.len() > 0 {
-            self.crash(messages::M_UNDEXPECTED_EOF);
+            return Err(self.fail(messages::M_UNDEXPECTED_EOF));
         }
 
-        ast
+        Ok(ast)
     }
 
-    fn crash(&self, msg: &str) -> ! {
-        out::crash_at(
-            msg,
-            &self.source_code,
-            self.tok_pos,
-            messages::M_PARSER_ERROR,
-        );
+    fn fail(&self, msg: &'static str) -> LangError {
+        LangError::Parser(ParserError {
+            char_pos: self.tok_pos,
+            source_code: self.source_code,
+            message: msg,
+        })
     }
 
     /**
@@ -111,27 +103,27 @@ impl<'a> Prelude<'a> {
      * use parse method since it returns an array of nodes but
      * we need an array of pointers to the nodes.
      */
-    fn get_node_from_char(&mut self, c: &u8) -> Option<AstNode> {
+    fn get_node_from_char(&mut self, c: &u8) -> Result<Option<AstNode>, LangError> {
         if Self::is_separator(c) {
             self.advance();
-            return None;
+            return Ok(None);
         } else if self.call_is_start(c) {
-            return Some(self.call_consume());
+            return Ok(Some(self.call_consume()));
         } else if Self::number_is_start(c) {
-            return Some(self.number_consume());
+            return Ok(Some(self.number_consume()));
         } else if Self::string_is_start(c) {
-            return Some(self.string_consume());
+            return Ok(Some(self.string_consume()));
         } else if self.list_is_start(c) {
-            return Some(self.list_consume());
+            return Ok(Some(self.list_consume()));
         } else if self.dict_is_start(c) {
-            return Some(self.dict_consume());
+            return Ok(Some(self.dict_consume()));
 
         // Matching identifier should be at the very end
         // since it matches any character.
         } else if Self::identifier_is_start(c) {
-            return Some(self.identifier_consume());
+            return Ok(Some(self.identifier_consume()));
         } else {
-            self.crash(messages::M_TOKEN_UNEXPECTED);
+            Err(self.fail(messages::M_TOKEN_UNEXPECTED))
         }
     }
 
