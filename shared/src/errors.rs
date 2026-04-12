@@ -1,3 +1,20 @@
+// Config
+
+#[derive(Debug, PartialEq)]
+pub struct InvalidArg {
+    pub arg_name: String,
+    pub provided: String,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ConfError {
+    ExtInvalid(String),
+    ArgInvalid(InvalidArg),
+    ArgRequired(String),
+}
+
+// Language specific
+
 #[derive(Debug)]
 pub struct ParserError {
     pub row: usize,

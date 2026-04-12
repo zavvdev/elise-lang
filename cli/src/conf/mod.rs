@@ -1,20 +1,14 @@
-use std::collections::HashMap;
-pub mod arguments;
-pub mod messages;
+pub mod config;
 
-use arguments::{
+use elise_shared::errors::{ConfError, InvalidArg};
+use std::collections::HashMap;
+
+use config::{
     ARG_FLAG_DATA, ARG_FLAG_DATA_SCHEMA, ARG_FLAG_EXECUTABLE, ARG_FLAG_EXECUTABLE_OUTPUT,
     ARG_FLAG_MODE, ARG_FLAG_PRINT_BYTECODE, ARG_FLAG_SOURCE_CODE, ARG_FLAG_UNSAFE_ASSUME_VALID,
     ARG_V_BOOL_FALSE, ARG_V_BOOL_TRUE, ARG_V_MODE_BUILD, ARG_V_MODE_EXEC, ARG_V_MODE_RUN,
     ARG_V_MODE_VALIDATE, ARG_V_MODES, ArgType, BUILD_ARGS, EXEC_ARGS, RUN_ARGS, VALIDATE_ARGS,
 };
-
-use messages::{M_ARG_REQUIRED, M_EXEC_MODE_INVALID, M_EXEC_MODE_MISSING, M_EXT_INVALID_IN_PATH};
-
-#[derive(Debug, PartialEq)]
-pub struct ConfError {
-    pub message: String,
-}
 
 #[derive(Debug, PartialEq)]
 pub struct ModeRunConf {
@@ -57,9 +51,7 @@ impl Conf {
 
     fn validate_source_file<'a>(path: &'a str, exts: &[&'_ str]) -> Result<&'a str, ConfError> {
         if !exts.iter().any(|e| path.ends_with(*e)) {
-            return Err(ConfError {
-                message: format!("{}: {}", M_EXT_INVALID_IN_PATH, path),
-            });
+            return Err(ConfError::ExtInvalid(path.to_string()));
         }
         Ok(path)
     }
@@ -67,12 +59,11 @@ impl Conf {
     fn validate_mode<'a>(mode: Option<&'a str>) -> Result<&'a str, ConfError> {
         match mode {
             Some(mode) if ARG_V_MODES.contains(&mode) => Ok(mode),
-            Some(mode) => Err(ConfError {
-                message: format!("{}: \"{}\"", M_EXEC_MODE_INVALID, mode),
-            }),
-            None => Err(ConfError {
-                message: M_EXEC_MODE_MISSING.to_string(),
-            }),
+            Some(mode) => Err(ConfError::ArgInvalid(InvalidArg {
+                provided: mode.to_string(),
+                arg_name: ARG_FLAG_MODE.to_string(),
+            })),
+            None => Err(ConfError::ArgRequired(ARG_FLAG_MODE.to_string())),
         }
     }
 
@@ -133,9 +124,10 @@ impl Conf {
             ARG_V_MODE_BUILD => Ok(BUILD_ARGS),
             ARG_V_MODE_EXEC => Ok(EXEC_ARGS),
             ARG_V_MODE_VALIDATE => Ok(VALIDATE_ARGS),
-            _ => Err(ConfError {
-                message: M_EXEC_MODE_INVALID.to_string(),
-            }),
+            _ => Err(ConfError::ArgInvalid(InvalidArg {
+                provided: mode.to_string(),
+                arg_name: ARG_FLAG_MODE.to_string(),
+            })),
         }?;
 
         for arg in args {
@@ -147,9 +139,7 @@ impl Conf {
             }
 
             if user_arg.is_none() && arg.req {
-                return Err(ConfError {
-                    message: format!("{}: \"{}\"", M_ARG_REQUIRED, arg.name),
-                });
+                return Err(ConfError::ArgRequired(arg.name.to_string()));
             }
 
             if user_arg.is_none() && arg.def.is_some() {
@@ -222,9 +212,10 @@ impl Conf {
                 data_schema_path: Self::arg_str(args.get(ARG_FLAG_DATA_SCHEMA)),
             })),
 
-            _ => Err(ConfError {
-                message: M_EXEC_MODE_INVALID.to_string(),
-            }),
+            _ => Err(ConfError::ArgInvalid(InvalidArg {
+                provided: mode.to_string(),
+                arg_name: ARG_FLAG_MODE.to_string(),
+            })),
         }
     }
 }
@@ -243,9 +234,12 @@ impl Conf {
 
 #[cfg(test)]
 mod tests {
-    use crate::conf::{
-        Conf, ConfError, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf,
+    use crate::conf::config::{
+        ARG_FLAG_DATA, ARG_FLAG_DATA_SCHEMA, ARG_FLAG_EXECUTABLE, ARG_FLAG_EXECUTABLE_OUTPUT,
+        ARG_FLAG_MODE, ARG_FLAG_SOURCE_CODE,
     };
+    use crate::conf::{Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
+    use elise_shared::errors::{ConfError, InvalidArg};
 
     #[test]
     fn should_require_mode_flag() {
@@ -254,12 +248,26 @@ mod tests {
             "--data=data.csv".to_string(),
             "--data-schema=data.elt".to_string(),
         ]);
-
         assert_eq!(
             result,
-            Err(ConfError {
-                message: "Missing execution mode".to_string(),
-            })
+            Err(ConfError::ArgRequired(ARG_FLAG_MODE.to_string()))
+        );
+    }
+
+    #[test]
+    fn should_reject_invalid_mode_flag() {
+        let result = Conf::from_cli(&[
+            "--mode=invalid".to_string(),
+            "--source-code=sample.eli".to_string(),
+            "--data=data.csv".to_string(),
+            "--data-schema=data.elt".to_string(),
+        ]);
+        assert_eq!(
+            result,
+            Err(ConfError::ArgInvalid(InvalidArg {
+                provided: "invalid".to_string(),
+                arg_name: ARG_FLAG_MODE.to_string(),
+            }))
         );
     }
 
@@ -272,12 +280,9 @@ mod tests {
             "--data=data.csv".to_string(),
             "--data-schema=data.elt".to_string(),
         ]);
-
         assert_eq!(
             result,
-            Err(ConfError {
-                message: "Missing required argument: \"source-code\"".to_string(),
-            })
+            Err(ConfError::ArgRequired(ARG_FLAG_SOURCE_CODE.to_string()))
         );
     }
 
@@ -288,12 +293,9 @@ mod tests {
             "--source-code=sample.eli".to_string(),
             "--data-schema=data.elt".to_string(),
         ]);
-
         assert_eq!(
             result,
-            Err(ConfError {
-                message: "Missing required argument: \"data\"".to_string(),
-            })
+            Err(ConfError::ArgRequired(ARG_FLAG_DATA.to_string()))
         );
     }
 
@@ -304,12 +306,9 @@ mod tests {
             "--source-code=sample.eli".to_string(),
             "--data=data.csv".to_string(),
         ]);
-
         assert_eq!(
             result,
-            Err(ConfError {
-                message: "Missing required argument: \"data-schema\"".to_string(),
-            })
+            Err(ConfError::ArgRequired(ARG_FLAG_DATA_SCHEMA.to_string()))
         );
     }
 
@@ -321,7 +320,6 @@ mod tests {
             "--data=data.csv".to_string(),
             "--data-schema=data.elt".to_string(),
         ]);
-
         assert_eq!(
             result,
             Ok(Conf::Run(ModeRunConf {
@@ -342,7 +340,6 @@ mod tests {
             "--data-schema=data.elt".to_string(),
             "--print-bytecode".to_string(),
         ]);
-
         assert_eq!(
             result,
             Ok(Conf::Run(ModeRunConf {
@@ -365,12 +362,9 @@ mod tests {
             "--data-schema=data.elt".to_string(),
             "--output=sample.elc".to_string(),
         ]);
-
         assert_eq!(
             result,
-            Err(ConfError {
-                message: "Missing required argument: \"source-code\"".to_string(),
-            })
+            Err(ConfError::ArgRequired(ARG_FLAG_SOURCE_CODE.to_string()))
         );
     }
 
@@ -384,9 +378,7 @@ mod tests {
 
         assert_eq!(
             result,
-            Err(ConfError {
-                message: "Missing required argument: \"data-schema\"".to_string(),
-            })
+            Err(ConfError::ArgRequired(ARG_FLAG_DATA_SCHEMA.to_string()))
         );
     }
 
@@ -397,12 +389,11 @@ mod tests {
             "--source-code=sample.eli".to_string(),
             "--data-schema=data.elt".to_string(),
         ]);
-
         assert_eq!(
             result,
-            Err(ConfError {
-                message: "Missing required argument: \"output\"".to_string(),
-            })
+            Err(ConfError::ArgRequired(
+                ARG_FLAG_EXECUTABLE_OUTPUT.to_string()
+            ))
         );
     }
 
@@ -414,7 +405,6 @@ mod tests {
             "--data-schema=data.elt".to_string(),
             "--output=sample.elc".to_string(),
         ]);
-
         assert_eq!(
             result,
             Ok(Conf::Build(ModeBuildConf {
@@ -432,12 +422,9 @@ mod tests {
     #[test]
     fn exec_should_require_executable_flag() {
         let result = Conf::from_cli(&["--mode=exec".to_string(), "--data=data.csv".to_string()]);
-
         assert_eq!(
             result,
-            Err(ConfError {
-                message: "Missing required argument: \"executable\"".to_string(),
-            })
+            Err(ConfError::ArgRequired(ARG_FLAG_EXECUTABLE.to_string()))
         );
     }
 
@@ -447,12 +434,9 @@ mod tests {
             "--mode=exec".to_string(),
             "--executable=sample.elc".to_string(),
         ]);
-
         assert_eq!(
             result,
-            Err(ConfError {
-                message: "Missing required argument: \"data\"".to_string(),
-            })
+            Err(ConfError::ArgRequired(ARG_FLAG_DATA.to_string()))
         );
     }
 
@@ -463,7 +447,6 @@ mod tests {
             "--executable=sample.elc".to_string(),
             "--data=data.csv".to_string(),
         ]);
-
         assert_eq!(
             result,
             Ok(Conf::Exec(ModeExecConf {
@@ -482,7 +465,6 @@ mod tests {
             "--data=data.csv".to_string(),
             "--unsafe-assume-valid".to_string(),
         ]);
-
         assert_eq!(
             result,
             Ok(Conf::Exec(ModeExecConf {
@@ -503,12 +485,9 @@ mod tests {
             "--mode=validate".to_string(),
             "--data-schema=data.elt".to_string(),
         ]);
-
         assert_eq!(
             result,
-            Err(ConfError {
-                message: "Missing required argument: \"data\"".to_string(),
-            })
+            Err(ConfError::ArgRequired(ARG_FLAG_DATA.to_string()))
         );
     }
 
@@ -516,12 +495,9 @@ mod tests {
     fn validate_should_require_data_schema_flag() {
         let result =
             Conf::from_cli(&["--mode=validate".to_string(), "--data=data.csv".to_string()]);
-
         assert_eq!(
             result,
-            Err(ConfError {
-                message: "Missing required argument: \"data-schema\"".to_string(),
-            })
+            Err(ConfError::ArgRequired(ARG_FLAG_DATA_SCHEMA.to_string()))
         );
     }
 
@@ -532,7 +508,6 @@ mod tests {
             "--data=data.csv".to_string(),
             "--data-schema=sample.elt".to_string(),
         ]);
-
         assert_eq!(
             result,
             Ok(Conf::Validate(ModeValidateConf {

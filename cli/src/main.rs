@@ -8,14 +8,14 @@ use elise_shared::errors::LangError;
 use std::env;
 
 fn handle_lang_error(lang_err: &LangError) {
-    match lang_err {
-        LangError::Parser(parser_error) => out::crash_at(
-            parser_error.message,
-            parser_error.source_code,
-            parser_error.row,
-            parser_error.col,
-        ),
-    }
+   // match lang_err {
+   //     LangError::Parser(parser_error) => out::crash_at(
+   //         parser_error.message,
+   //         parser_error.source_code,
+   //         parser_error.row,
+   //         parser_error.col,
+   //     ),
+   // }
 }
 
 fn cli_run(conf: &ModeRunConf) {
@@ -111,7 +111,8 @@ fn main() {
     let config = Conf::from_cli(&args);
 
     if let Err(conf_err) = config {
-        return out::config_error(&conf_err.message);
+        return;
+        //return out::config_error(&conf_err.message);
     }
 
     match config.unwrap() {

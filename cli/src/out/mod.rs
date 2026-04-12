@@ -66,7 +66,7 @@ pub fn crash_at(message: &str, source_code_slice: Option<String>, row: usize, co
     if let Some(code) = source_code_slice {
         let location = format!("At {}:{}\n", row, col);
         eprintln!("{}", location.bold());
-        eprintln!("{}", source_code_slice);
+        eprintln!("{}", code);
         let arrow = "-".repeat(col) + "^";
         eprintln!("{}\n", arrow.red().bold());
     }
