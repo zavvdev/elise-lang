@@ -1,2 +1,0 @@
-.declare(PI 3.14)
-.add(2 + PI)

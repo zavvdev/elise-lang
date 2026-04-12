@@ -1,126 +1,111 @@
-// This file is an entry point for all modules in this project.
-// If main.ts needs to import something, it needs to import it
-// from this file by using use elise::something;
-
 pub mod conf;
 pub mod fsys;
 
-use conf::Conf;
+use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 
-use elise_parser::parser::Prelude;
-use elise_shared::out;
+//use elise_parser::parser::Prelude;
+use elise_shared::errors::LangError;
 use std::time::Instant;
 
-pub enum ExecStatus {
-    Success,
-    Error(String),
+#[derive(Debug)]
+pub struct RunResult<'a> {
+    pub config: &'a ModeRunConf,
+    pub ms: u128,
+    pub output: String,
+    pub bytecode: String,
 }
 
+#[derive(Debug)]
+pub struct BuildResult<'a> {
+    pub config: &'a ModeBuildConf,
+    pub ms: u128,
+    pub executale_output: String,
+}
+
+#[derive(Debug)]
 pub struct ExecResult<'a> {
-    pub status: ExecStatus,
+    pub config: &'a ModeExecConf,
+    pub ms: u128,
     pub output: String,
-    pub bytecode: Option<String>,
-    pub config: &'a Conf,
+}
+
+#[derive(Debug)]
+pub struct ValidateResult<'a> {
+    pub config: &'a ModeValidateConf,
     pub ms: u128,
 }
 
 #[derive(PartialEq, Debug)]
-pub enum HandleExecResultOperationStatus {
+pub enum HandleResultStatus {
     Success,
     Error,
 }
 
-pub fn exec<'a>(source_code: &'a str, config: &'a Conf) -> ExecResult<'a> {
-    // Customize panic message.
-    std::panic::set_hook(Box::new(|info| {
-        out::panic_hook(info);
-    }));
-
+pub fn run<'a>(
+    _source_code: &'a str,
+    _data: &'a str,
+    _data_schema: &'a str,
+    config: &'a ModeRunConf,
+) -> Result<RunResult<'a>, LangError> {
     let start = Instant::now();
-    let ast = Prelude::new(&source_code).parse();
+    // TODO: Uncomment after parser refactoring.
+    //let ast = Prelude::new(&source_code).parse();
 
-    println!("ast: {:#?}", ast);
+    //println!("ast: {:#?}", ast);
 
-    ExecResult {
-        status: ExecStatus::Success,
-        output: String::from("123"),
-        bytecode: Some(String::from("CALL a [1] [0]")),
-        config: config,
+    println!("RUN MODE");
+
+    Ok(RunResult {
+        config,
         ms: start.elapsed().as_millis(),
-    }
+        output: String::from("123"),
+        bytecode: String::from("CALL a [1] [0]"),
+    })
 }
 
-pub fn handle_exec_result(res: &ExecResult, config: &Conf) -> HandleExecResultOperationStatus {
-    match &res.status {
-        ExecStatus::Success => {
-            out::print_exec_result(&res.output, res.ms);
-            if let Some(bytecode) = &res.bytecode {
-                if config.print_bytecode {
-                    out::print_bytecode(bytecode);
-                }
-            }
-            HandleExecResultOperationStatus::Success
-        }
-        ExecStatus::Error(reason) => {
-            out::silent_error(reason, None);
-            HandleExecResultOperationStatus::Error
-        }
-    }
+pub fn build<'a>(
+    _source_code: &'a str,
+    _data_schema: &'a str,
+    config: &'a ModeBuildConf,
+) -> Result<BuildResult<'a>, LangError> {
+    let start = Instant::now();
+
+    println!("BUILD MODE");
+
+    Ok(BuildResult {
+        config,
+        ms: start.elapsed().as_millis(),
+        executale_output: String::from("CALL a [1] [0]"),
+    })
 }
 
-// ==========================
-//
-// TESTS START
-//
-// ==========================
+pub fn exec<'a>(
+    _executable: &'a str,
+    _data: &'a str,
+    config: &'a ModeExecConf,
+) -> Result<ExecResult<'a>, LangError> {
+    let start = Instant::now();
 
-#[cfg(test)]
-mod tests {
-    use crate::{ExecStatus, HandleExecResultOperationStatus, conf::Conf, handle_exec_result};
+    println!("EXEC MODE");
 
-    // Handle exec result
-
-    #[test]
-    fn should_handle_error_exec_result() {
-        let config = Conf {
-            file_path: "test.eli".to_string(),
-            print_bytecode: true,
-        };
-        let result = handle_exec_result(
-            &crate::ExecResult {
-                status: ExecStatus::Error("Something went wrong".to_string()),
-                output: "hello".to_string(),
-                bytecode: Some("SOME [1]".to_string()),
-                config: &config,
-                ms: 1,
-            },
-            &config,
-        );
-        assert_eq!(result, HandleExecResultOperationStatus::Error);
-    }
-
-    #[test]
-    fn should_handle_success_exec_result() {
-        let config = Conf {
-            file_path: "test.eli".to_string(),
-            print_bytecode: true,
-        };
-        let result = handle_exec_result(
-            &crate::ExecResult {
-                status: ExecStatus::Success,
-                output: "hello".to_string(),
-                bytecode: Some("SOME [1]".to_string()),
-                config: &config,
-                ms: 1,
-            },
-            &config,
-        );
-        assert_eq!(result, HandleExecResultOperationStatus::Success);
-    }
+    Ok(ExecResult {
+        config,
+        ms: start.elapsed().as_millis(),
+        output: String::from("Exec Result Output"),
+    })
 }
 
-// ==========================
-//
-// TESTS END
-//
-// ==========================
+pub fn validate<'a>(
+    _data: &'a str,
+    _data_schema: &'a str,
+    config: &'a ModeValidateConf,
+) -> Result<ValidateResult<'a>, LangError> {
+    let start = Instant::now();
+
+    println!("VALIDATE MODE");
+
+    Ok(ValidateResult {
+        config,
+        ms: start.elapsed().as_millis(),
+    })
+}

@@ -1,28 +1,17 @@
-use crate::messages;
+use crate::utilities::get_source_code_slice;
 use regex::Regex;
 use std::str::from_utf8;
 
+use crate::config::{
+    IDENTIFIER_REGEX, M_CALL_NAME_INVALID, M_CALL_UNEXPECTED_END, M_DICT_INVALID_PAIR,
+    M_DICT_UNEXPECTED_END, M_DICT_UNEXPECTED_KEY, M_LIST_UNEXPECTED_END, M_NUMBER_INVALID,
+    M_STRING_INVALID, M_TOKEN_UNEXPECTED, M_UNDEXPECTED_EOF, T_CALL_PREFIX, T_COMMA, T_DOUBLE_QT,
+    T_FALSE, T_LEFT_CUR_BRACKET, T_LEFT_PAREN, T_LEFT_SQR_BRACKET, T_MINUS, T_NULL,
+    T_RIGHT_CUR_BRACKET, T_RIGHT_PAREN, T_RIGHT_SQR_BRACKET, T_TRUE,
+};
+
 use elise_ast::{AstNode, Compound, Primitive, TokSpan};
-use elise_shared::out;
-
-// <identifier> ::= <letter> (<letter> | <digit> | '-' | '?' | '!' | '_')*
-const IDENTIFIER_REGEX: &str = r"^[A-Za-z][A-Za-z0-9\-?!_]*$";
-
-const T_CALL_PREFIX: u8 = b'.';
-const T_TRUE: &'static str = "true";
-const T_FALSE: &'static str = "false";
-const T_NULL: &'static str = "null";
-
-const T_LEFT_PAREN: u8 = b'(';
-const T_RIGHT_PAREN: u8 = b')';
-const T_LEFT_SQR_BRACKET: u8 = b'[';
-const T_RIGHT_SQR_BRACKET: u8 = b']';
-const T_LEFT_CUR_BRACKET: u8 = b'{';
-const T_RIGHT_CUR_BRACKET: u8 = b'}';
-
-const T_MINUS: u8 = b'-';
-const T_COMMA: u8 = b',';
-const T_DOUBLE_QT: u8 = b'"';
+use elise_shared::errors::{LangError, ParserError};
 
 // ==========================
 //
@@ -76,62 +65,72 @@ impl<'a> Prelude<'a> {
      * We do not use this method for recursive parsing. It should only
      * be used by the end user that wants to get the whole parsing result.
      */
-    pub fn parse(&mut self) -> Vec<AstNode> {
+    pub fn parse(&mut self) -> Result<Vec<AstNode>, LangError> {
         let mut ast: Vec<AstNode> = vec![];
 
         while let Some(c) = self.peek() {
-            if let Some(node) = self.get_node_from_char(&c) {
-                ast.push(node);
+            match self.get_node_from_char(&c) {
+                Ok(node_option) => {
+                    if let Some(node) = node_option {
+                        ast.push(node);
+                    }
+                }
+                Err(lang_error) => {
+                    return Err(lang_error);
+                }
             }
         }
 
         if self.depth_stack.len() > 0 {
-            self.crash(messages::M_UNDEXPECTED_EOF);
+            return Err(self.fail(M_UNDEXPECTED_EOF));
         }
 
-        ast
+        Ok(ast)
     }
 
-    fn crash(&self, msg: &str) -> ! {
-        out::crash_at(
-            msg,
-            &self.source_code,
-            self.tok_pos,
-            messages::M_PARSER_ERROR,
-        );
+    fn fail(&self, msg: &'static str) -> LangError {
+        if let Ok(slice) = get_source_code_slice(self.source_code, self.tok_pos) {
+            LangError::Parser(ParserError {
+                row: slice.row,
+                col: slice.col,
+                source_code_slice: Some(slice.slice),
+                message: msg,
+            })
+        } else {
+            LangError::Parser(ParserError {
+                row: 1,
+                col: 1,
+                source_code_slice: None,
+                message: msg,
+            })
+        }
     }
 
     /**
-     * We decomposed this function from parse method in order
-     * to be able to parse recursively in a more convenient way
-     * when we do not want to get Vec<AstNode> but we need
-     * Vec<Box<AstNode>>. So we can loop, get node and compose
-     * them in a way that we need.
-     * For example, if we need to parse list of values, we can't
-     * use parse method since it returns an array of nodes but
-     * we need an array of pointers to the nodes.
+     * This function was decomposed from parse function in order
+     * to be able to handle AstNode differently in some cases.
      */
-    fn get_node_from_char(&mut self, c: &u8) -> Option<AstNode> {
+    fn get_node_from_char(&mut self, c: &u8) -> Result<Option<AstNode>, LangError> {
         if Self::is_separator(c) {
             self.advance();
-            return None;
+            return Ok(None);
         } else if self.call_is_start(c) {
-            return Some(self.call_consume());
+            return Ok(Some(self.call_consume()));
         } else if Self::number_is_start(c) {
-            return Some(self.number_consume());
+            return Ok(Some(self.number_consume()));
         } else if Self::string_is_start(c) {
-            return Some(self.string_consume());
+            return Ok(Some(self.string_consume()));
         } else if self.list_is_start(c) {
-            return Some(self.list_consume());
+            return Ok(Some(self.list_consume()));
         } else if self.dict_is_start(c) {
-            return Some(self.dict_consume());
+            return Ok(Some(self.dict_consume()));
 
         // Matching identifier should be at the very end
         // since it matches any character.
         } else if Self::identifier_is_start(c) {
-            return Some(self.identifier_consume());
+            return Ok(Some(self.identifier_consume()));
         } else {
-            self.crash(messages::M_TOKEN_UNEXPECTED);
+            Err(self.fail(M_TOKEN_UNEXPECTED))
         }
     }
 
@@ -235,20 +234,20 @@ impl<'a> Prelude<'a> {
                     Scient
                 }
                 (_, c) if Self::number_is_end(&c) => break,
-                _ => self.crash(messages::M_NUMBER_INVALID),
+                _ => self.fail(M_NUMBER_INVALID),
             };
         }
 
         // Panic if we ended up with invalid state.
         match state {
             FstNumState::Zero | FstNumState::Int | FstNumState::Frac | FstNumState::Scient => {}
-            _ => self.crash(messages::M_NUMBER_INVALID),
+            _ => self.fail(M_NUMBER_INVALID),
         }
 
         let tok_end = self.tok_pos;
 
         let value = from_utf8(&self.source_code[tok_start..tok_end])
-            .unwrap_or_else(|_| self.crash(messages::M_NUMBER_INVALID));
+            .unwrap_or_else(|_| self.fail(M_NUMBER_INVALID));
 
         AstNode::Number(Primitive {
             value: value.to_string(),
@@ -293,13 +292,13 @@ impl<'a> Prelude<'a> {
                 break;
             }
             if Self::string_is_forbidden_char(&c) {
-                self.crash(messages::M_STRING_INVALID);
+                self.fail(M_STRING_INVALID);
             }
             self.advance();
         }
 
         let value = from_utf8(&self.source_code[tok_start + 1..self.tok_pos - 1])
-            .unwrap_or_else(|_| self.crash(messages::M_STRING_INVALID));
+            .unwrap_or_else(|_| self.fail(M_STRING_INVALID));
 
         // Taking surrogate pairs and other code points
         // that represent one lexeme into account.
@@ -367,7 +366,7 @@ impl<'a> Prelude<'a> {
                 if re.is_match(&primitive.value) {
                     return AstNode::Identifier(primitive);
                 } else {
-                    self.crash(messages::M_TOKEN_UNEXPECTED);
+                    self.fail(M_TOKEN_UNEXPECTED);
                 }
             }
         }
@@ -397,7 +396,7 @@ impl<'a> Prelude<'a> {
         if *c == T_RIGHT_SQR_BRACKET {
             let last_entry = self.depth_stack.pop();
             if last_entry.is_none() || last_entry.unwrap() != T_LEFT_SQR_BRACKET {
-                self.crash(messages::M_LIST_UNEXPECTED_END);
+                self.fail(M_LIST_UNEXPECTED_END);
             }
             return true;
         }
@@ -452,7 +451,7 @@ impl<'a> Prelude<'a> {
         if *c == T_RIGHT_CUR_BRACKET {
             let last_entry = self.depth_stack.pop();
             if last_entry.is_none() || last_entry.unwrap() != T_LEFT_CUR_BRACKET {
-                self.crash(messages::M_DICT_UNEXPECTED_END);
+                self.fail(M_DICT_UNEXPECTED_END);
             }
             return true;
         }
@@ -469,7 +468,7 @@ impl<'a> Prelude<'a> {
         while let Some(c) = self.peek() {
             if self.dict_is_end(&c) {
                 if key.is_some() {
-                    self.crash(messages::M_DICT_INVALID_PAIR);
+                    self.fail(M_DICT_INVALID_PAIR);
                 }
                 self.advance();
                 break;
@@ -481,7 +480,7 @@ impl<'a> Prelude<'a> {
                             key = Some(primitive.value);
                         }
                         _ => {
-                            self.crash(messages::M_DICT_UNEXPECTED_KEY);
+                            self.fail(M_DICT_UNEXPECTED_KEY);
                         }
                     }
                 } else {
@@ -551,7 +550,7 @@ impl<'a> Prelude<'a> {
         let call_name = call_name.trim_end();
 
         if !Self::call_is_name_valid(call_name) {
-            self.crash(messages::M_CALL_NAME_INVALID);
+            self.fail(M_CALL_NAME_INVALID);
         }
 
         // Go to the next char after the function name.
@@ -564,7 +563,7 @@ impl<'a> Prelude<'a> {
             if self.call_is_end(&c) {
                 let last_entry = self.depth_stack.pop();
                 if last_entry.is_none() || last_entry.unwrap() != T_LEFT_PAREN {
-                    self.crash(messages::M_CALL_UNEXPECTED_END);
+                    self.fail(M_CALL_UNEXPECTED_END);
                 }
                 self.advance();
                 break;
@@ -632,7 +631,7 @@ mod tests {
                     Prelude::new(token).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -647,7 +646,7 @@ mod tests {
                     Prelude::new(token).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -662,7 +661,7 @@ mod tests {
                     Prelude::new(token).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -677,7 +676,7 @@ mod tests {
                     Prelude::new(token).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -689,7 +688,7 @@ mod tests {
                 Prelude::new("-").parse();
             },
             String,
-            messages::M_PARSER_ERROR
+            M_PARSER_ERROR
         );
     }
 
@@ -792,7 +791,7 @@ mod tests {
                     Prelude::new(token).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -849,7 +848,7 @@ mod tests {
                 .parse();
             },
             String,
-            messages::M_PARSER_ERROR
+            M_PARSER_ERROR
         );
     }
 
@@ -952,7 +951,7 @@ mod tests {
                     Prelude::new(identifier).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -1053,7 +1052,7 @@ mod tests {
                 Prelude::new("[[1, 3]").parse();
             },
             String,
-            messages::M_PARSER_ERROR
+            M_PARSER_ERROR
         );
     }
 
@@ -1176,7 +1175,7 @@ mod tests {
                     Prelude::new(input).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -1190,7 +1189,7 @@ mod tests {
                     Prelude::new(input).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -1308,7 +1307,7 @@ mod tests {
                     Prelude::new(&format!(".{}()", identifier)).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -1348,7 +1347,7 @@ mod tests {
                     Prelude::new(depth_case).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
