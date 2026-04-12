@@ -46,7 +46,7 @@ pub fn run<'a>(
     _data: &'a str,
     _data_schema: &'a str,
     config: &'a ModeRunConf,
-) -> Result<RunResult<'a>, LangError> {
+) -> Result<RunResult<'a>, LangError<'a>> {
     let start = Instant::now();
     // TODO: Uncomment after parser refactoring.
     //let ast = Prelude::new(&source_code).parse();
@@ -67,7 +67,7 @@ pub fn build<'a>(
     _source_code: &'a str,
     _data_schema: &'a str,
     config: &'a ModeBuildConf,
-) -> Result<BuildResult<'a>, LangError> {
+) -> Result<BuildResult<'a>, LangError<'a>> {
     let start = Instant::now();
 
     println!("BUILD MODE");
@@ -83,7 +83,7 @@ pub fn exec<'a>(
     _executable: &'a str,
     _data: &'a str,
     config: &'a ModeExecConf,
-) -> Result<ExecResult<'a>, LangError> {
+) -> Result<ExecResult<'a>, LangError<'a>> {
     let start = Instant::now();
 
     println!("EXEC MODE");
@@ -99,7 +99,7 @@ pub fn validate<'a>(
     _data: &'a str,
     _data_schema: &'a str,
     config: &'a ModeValidateConf,
-) -> Result<ValidateResult<'a>, LangError> {
+) -> Result<ValidateResult<'a>, LangError<'a>> {
     let start = Instant::now();
 
     println!("VALIDATE MODE");

@@ -62,51 +62,13 @@ pub fn config_error(msg: &str) {
     silent_error(&format!("{}", msg), Some(M_ERROR_CONFIG))
 }
 
-pub fn crash_at(message: &str, source_code: &[u8], char_pos: usize) -> ! {
-    let mut row = 0;
-    let mut col = 0;
-
-    let mut previous_row_start = 0;
-    let mut preview_row_start = 0;
-    let mut preview_row_end = 0;
-
-    let mut found = false;
-
-    for char in source_code {
-        if preview_row_end == char_pos {
-            found = true;
-        }
-
-        preview_row_end += 1;
-
-        if *char == b'\n' {
-            if found {
-                break;
-            }
-
-            previous_row_start = preview_row_start;
-            preview_row_start = preview_row_end;
-
-            row += 1;
-            col = 0;
-        } else if !found {
-            col += 1;
-        }
-    }
-
-    let source_code = from_utf8(source_code);
-
-    let location = format!("At {}:{}\n", row + 1, col + 1);
-    eprintln!("{}", location.bold());
-
-    if source_code.is_ok() {
-        eprintln!(
-            "{}",
-            &source_code.unwrap()[previous_row_start..preview_row_end]
-        );
+pub fn crash_at(message: &str, source_code_slice: Option<String>, row: usize, col: usize) -> ! {
+    if let Some(code) = source_code_slice {
+        let location = format!("At {}:{}\n", row, col);
+        eprintln!("{}", location.bold());
+        eprintln!("{}", source_code_slice);
         let arrow = "-".repeat(col) + "^";
         eprintln!("{}\n", arrow.red().bold());
     }
-
     panic!("{}", message)
 }

@@ -1,10 +1,13 @@
-use crate::messages;
+use crate::utilities::get_source_code_slice;
 use regex::Regex;
 use std::str::from_utf8;
 
 use crate::config::{
-    IDENTIFIER_REGEX, T_CALL_PREFIX, T_COMMA, T_DOUBLE_QT, T_LEFT_CUR_BRACKET, T_LEFT_PAREN,
-    T_LEFT_SQR_BRACKET, T_MINUS, T_RIGHT_CUR_BRACKET, T_RIGHT_PAREN, T_RIGHT_SQR_BRACKET,
+    IDENTIFIER_REGEX, M_CALL_NAME_INVALID, M_CALL_UNEXPECTED_END, M_DICT_INVALID_PAIR,
+    M_DICT_UNEXPECTED_END, M_DICT_UNEXPECTED_KEY, M_LIST_UNEXPECTED_END, M_NUMBER_INVALID,
+    M_STRING_INVALID, M_TOKEN_UNEXPECTED, M_UNDEXPECTED_EOF, T_CALL_PREFIX, T_COMMA, T_DOUBLE_QT,
+    T_FALSE, T_LEFT_CUR_BRACKET, T_LEFT_PAREN, T_LEFT_SQR_BRACKET, T_MINUS, T_NULL,
+    T_RIGHT_CUR_BRACKET, T_RIGHT_PAREN, T_RIGHT_SQR_BRACKET, T_TRUE,
 };
 
 use elise_ast::{AstNode, Compound, Primitive, TokSpan};
@@ -79,29 +82,33 @@ impl<'a> Prelude<'a> {
         }
 
         if self.depth_stack.len() > 0 {
-            return Err(self.fail(messages::M_UNDEXPECTED_EOF));
+            return Err(self.fail(M_UNDEXPECTED_EOF));
         }
 
         Ok(ast)
     }
 
     fn fail(&self, msg: &'static str) -> LangError {
-        LangError::Parser(ParserError {
-            char_pos: self.tok_pos,
-            source_code: self.source_code,
-            message: msg,
-        })
+        if let Ok(slice) = get_source_code_slice(self.source_code, self.tok_pos) {
+            LangError::Parser(ParserError {
+                row: slice.row,
+                col: slice.col,
+                source_code_slice: Some(slice.slice),
+                message: msg,
+            })
+        } else {
+            LangError::Parser(ParserError {
+                row: 1,
+                col: 1,
+                source_code_slice: None,
+                message: msg,
+            })
+        }
     }
 
     /**
-     * We decomposed this function from parse method in order
-     * to be able to parse recursively in a more convenient way
-     * when we do not want to get Vec<AstNode> but we need
-     * Vec<Box<AstNode>>. So we can loop, get node and compose
-     * them in a way that we need.
-     * For example, if we need to parse list of values, we can't
-     * use parse method since it returns an array of nodes but
-     * we need an array of pointers to the nodes.
+     * This function was decomposed from parse function in order
+     * to be able to handle AstNode differently in some cases.
      */
     fn get_node_from_char(&mut self, c: &u8) -> Result<Option<AstNode>, LangError> {
         if Self::is_separator(c) {
@@ -123,7 +130,7 @@ impl<'a> Prelude<'a> {
         } else if Self::identifier_is_start(c) {
             return Ok(Some(self.identifier_consume()));
         } else {
-            Err(self.fail(messages::M_TOKEN_UNEXPECTED))
+            Err(self.fail(M_TOKEN_UNEXPECTED))
         }
     }
 
@@ -227,20 +234,20 @@ impl<'a> Prelude<'a> {
                     Scient
                 }
                 (_, c) if Self::number_is_end(&c) => break,
-                _ => self.crash(messages::M_NUMBER_INVALID),
+                _ => self.fail(M_NUMBER_INVALID),
             };
         }
 
         // Panic if we ended up with invalid state.
         match state {
             FstNumState::Zero | FstNumState::Int | FstNumState::Frac | FstNumState::Scient => {}
-            _ => self.crash(messages::M_NUMBER_INVALID),
+            _ => self.fail(M_NUMBER_INVALID),
         }
 
         let tok_end = self.tok_pos;
 
         let value = from_utf8(&self.source_code[tok_start..tok_end])
-            .unwrap_or_else(|_| self.crash(messages::M_NUMBER_INVALID));
+            .unwrap_or_else(|_| self.fail(M_NUMBER_INVALID));
 
         AstNode::Number(Primitive {
             value: value.to_string(),
@@ -285,13 +292,13 @@ impl<'a> Prelude<'a> {
                 break;
             }
             if Self::string_is_forbidden_char(&c) {
-                self.crash(messages::M_STRING_INVALID);
+                self.fail(M_STRING_INVALID);
             }
             self.advance();
         }
 
         let value = from_utf8(&self.source_code[tok_start + 1..self.tok_pos - 1])
-            .unwrap_or_else(|_| self.crash(messages::M_STRING_INVALID));
+            .unwrap_or_else(|_| self.fail(M_STRING_INVALID));
 
         // Taking surrogate pairs and other code points
         // that represent one lexeme into account.
@@ -359,7 +366,7 @@ impl<'a> Prelude<'a> {
                 if re.is_match(&primitive.value) {
                     return AstNode::Identifier(primitive);
                 } else {
-                    self.crash(messages::M_TOKEN_UNEXPECTED);
+                    self.fail(M_TOKEN_UNEXPECTED);
                 }
             }
         }
@@ -389,7 +396,7 @@ impl<'a> Prelude<'a> {
         if *c == T_RIGHT_SQR_BRACKET {
             let last_entry = self.depth_stack.pop();
             if last_entry.is_none() || last_entry.unwrap() != T_LEFT_SQR_BRACKET {
-                self.crash(messages::M_LIST_UNEXPECTED_END);
+                self.fail(M_LIST_UNEXPECTED_END);
             }
             return true;
         }
@@ -444,7 +451,7 @@ impl<'a> Prelude<'a> {
         if *c == T_RIGHT_CUR_BRACKET {
             let last_entry = self.depth_stack.pop();
             if last_entry.is_none() || last_entry.unwrap() != T_LEFT_CUR_BRACKET {
-                self.crash(messages::M_DICT_UNEXPECTED_END);
+                self.fail(M_DICT_UNEXPECTED_END);
             }
             return true;
         }
@@ -461,7 +468,7 @@ impl<'a> Prelude<'a> {
         while let Some(c) = self.peek() {
             if self.dict_is_end(&c) {
                 if key.is_some() {
-                    self.crash(messages::M_DICT_INVALID_PAIR);
+                    self.fail(M_DICT_INVALID_PAIR);
                 }
                 self.advance();
                 break;
@@ -473,7 +480,7 @@ impl<'a> Prelude<'a> {
                             key = Some(primitive.value);
                         }
                         _ => {
-                            self.crash(messages::M_DICT_UNEXPECTED_KEY);
+                            self.fail(M_DICT_UNEXPECTED_KEY);
                         }
                     }
                 } else {
@@ -543,7 +550,7 @@ impl<'a> Prelude<'a> {
         let call_name = call_name.trim_end();
 
         if !Self::call_is_name_valid(call_name) {
-            self.crash(messages::M_CALL_NAME_INVALID);
+            self.fail(M_CALL_NAME_INVALID);
         }
 
         // Go to the next char after the function name.
@@ -556,7 +563,7 @@ impl<'a> Prelude<'a> {
             if self.call_is_end(&c) {
                 let last_entry = self.depth_stack.pop();
                 if last_entry.is_none() || last_entry.unwrap() != T_LEFT_PAREN {
-                    self.crash(messages::M_CALL_UNEXPECTED_END);
+                    self.fail(M_CALL_UNEXPECTED_END);
                 }
                 self.advance();
                 break;
@@ -624,7 +631,7 @@ mod tests {
                     Prelude::new(token).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -639,7 +646,7 @@ mod tests {
                     Prelude::new(token).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -654,7 +661,7 @@ mod tests {
                     Prelude::new(token).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -669,7 +676,7 @@ mod tests {
                     Prelude::new(token).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -681,7 +688,7 @@ mod tests {
                 Prelude::new("-").parse();
             },
             String,
-            messages::M_PARSER_ERROR
+            M_PARSER_ERROR
         );
     }
 
@@ -784,7 +791,7 @@ mod tests {
                     Prelude::new(token).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -841,7 +848,7 @@ mod tests {
                 .parse();
             },
             String,
-            messages::M_PARSER_ERROR
+            M_PARSER_ERROR
         );
     }
 
@@ -944,7 +951,7 @@ mod tests {
                     Prelude::new(identifier).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -1045,7 +1052,7 @@ mod tests {
                 Prelude::new("[[1, 3]").parse();
             },
             String,
-            messages::M_PARSER_ERROR
+            M_PARSER_ERROR
         );
     }
 
@@ -1168,7 +1175,7 @@ mod tests {
                     Prelude::new(input).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -1182,7 +1189,7 @@ mod tests {
                     Prelude::new(input).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -1300,7 +1307,7 @@ mod tests {
                     Prelude::new(&format!(".{}()", identifier)).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }
@@ -1340,7 +1347,7 @@ mod tests {
                     Prelude::new(depth_case).parse();
                 },
                 String,
-                messages::M_PARSER_ERROR
+                M_PARSER_ERROR
             );
         }
     }

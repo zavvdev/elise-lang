@@ -1,11 +1,15 @@
 #[derive(Debug)]
-pub struct ParserError<'a> {
-    pub char_pos: usize,
+pub struct ParserError {
+    pub row: usize,
+    pub col: usize,
     pub message: &'static str,
-    pub source_code: &'a [u8],
+    // This field should not store the whole source code.
+    // Instead we just keep a slice of it where exactly
+    // an error happened.
+    pub source_code_slice: Option<String>,
 }
 
 #[derive(Debug)]
-pub enum LangError<'a> {
-    Parser(ParserError<'a>),
+pub enum LangError {
+    Parser(ParserError),
 }

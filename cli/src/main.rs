@@ -12,7 +12,8 @@ fn handle_lang_error(lang_err: &LangError) {
         LangError::Parser(parser_error) => out::crash_at(
             parser_error.message,
             parser_error.source_code,
-            parser_error.char_pos,
+            parser_error.row,
+            parser_error.col,
         ),
     }
 }
