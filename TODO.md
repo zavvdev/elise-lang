@@ -47,6 +47,8 @@ Source code
         - [x] Add tests for function calls
 
     - [ ] Remove out module
+        
+        - [ ] Remove human readable messages from everywhere except cli/out. Use enums.
 
     - [ ] Remove should panic crate 
 
