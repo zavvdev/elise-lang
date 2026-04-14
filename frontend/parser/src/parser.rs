@@ -3,15 +3,13 @@ use regex::Regex;
 use std::str::from_utf8;
 
 use crate::config::{
-    IDENTIFIER_REGEX, M_CALL_NAME_INVALID, M_CALL_UNEXPECTED_END, M_DICT_INVALID_PAIR,
-    M_DICT_UNEXPECTED_END, M_DICT_UNEXPECTED_KEY, M_LIST_UNEXPECTED_END, M_NUMBER_INVALID,
-    M_STRING_INVALID, M_TOKEN_UNEXPECTED, M_UNDEXPECTED_EOF, T_CALL_PREFIX, T_COMMA, T_DOUBLE_QT,
-    T_FALSE, T_LEFT_CUR_BRACKET, T_LEFT_PAREN, T_LEFT_SQR_BRACKET, T_MINUS, T_NULL,
-    T_RIGHT_CUR_BRACKET, T_RIGHT_PAREN, T_RIGHT_SQR_BRACKET, T_TRUE,
+    IDENTIFIER_REGEX, T_CALL_PREFIX, T_COMMA, T_DOUBLE_QT, T_FALSE, T_LEFT_CUR_BRACKET,
+    T_LEFT_PAREN, T_LEFT_SQR_BRACKET, T_MINUS, T_NULL, T_RIGHT_CUR_BRACKET, T_RIGHT_PAREN,
+    T_RIGHT_SQR_BRACKET, T_TRUE,
 };
 
 use elise_ast::{AstNode, Compound, Primitive, TokSpan};
-use elise_shared::errors::{LangError, ParserError};
+use elise_shared::errors::{LangErr, ParserErr, ParserErrInfo};
 
 // ==========================
 //
@@ -65,7 +63,7 @@ impl<'a> Prelude<'a> {
      * We do not use this method for recursive parsing. It should only
      * be used by the end user that wants to get the whole parsing result.
      */
-    pub fn parse(&mut self) -> Result<Vec<AstNode>, LangError> {
+    pub fn parse(&mut self) -> Result<Vec<AstNode>, LangErr> {
         let mut ast: Vec<AstNode> = vec![];
 
         while let Some(c) = self.peek() {
@@ -82,35 +80,33 @@ impl<'a> Prelude<'a> {
         }
 
         if self.depth_stack.len() > 0 {
-            return Err(self.fail(M_UNDEXPECTED_EOF));
+            return Err(self.fail(ParserErr::UnexpEoFile));
         }
 
         Ok(ast)
     }
 
-    fn fail(&self, msg: &'static str) -> LangError {
+    fn fail(&self, variant: fn(ParserErrInfo) -> ParserErr) -> LangErr {
+        let mut info = ParserErrInfo {
+            row: 1,
+            col: 1,
+            source_code_slice: None,
+        };
         if let Ok(slice) = get_source_code_slice(self.source_code, self.tok_pos) {
-            LangError::Parser(ParserError {
+            info = ParserErrInfo {
                 row: slice.row,
                 col: slice.col,
                 source_code_slice: Some(slice.slice),
-                message: msg,
-            })
-        } else {
-            LangError::Parser(ParserError {
-                row: 1,
-                col: 1,
-                source_code_slice: None,
-                message: msg,
-            })
+            }
         }
+        LangErr::Parser(variant(info))
     }
 
     /**
      * This function was decomposed from parse function in order
      * to be able to handle AstNode differently in some cases.
      */
-    fn get_node_from_char(&mut self, c: &u8) -> Result<Option<AstNode>, LangError> {
+    fn get_node_from_char(&mut self, c: &u8) -> Result<Option<AstNode>, LangErr> {
         if Self::is_separator(c) {
             self.advance();
             return Ok(None);
@@ -130,7 +126,7 @@ impl<'a> Prelude<'a> {
         } else if Self::identifier_is_start(c) {
             return Ok(Some(self.identifier_consume()));
         } else {
-            Err(self.fail(M_TOKEN_UNEXPECTED))
+            Err(self.fail(ParserErr::UnexpTok))
         }
     }
 

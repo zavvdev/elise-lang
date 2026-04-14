@@ -7,36 +7,36 @@ pub struct FileDescriptor {
 }
 
 #[derive(PartialEq, Debug)]
-pub struct FileReaderError {
+pub struct FileReaderErr {
     pub message: String,
     pub path: String,
 }
 
 #[derive(PartialEq, Debug)]
-pub struct FileWriterError {
+pub struct FileWriterErr {
     pub message: String,
 }
 
-fn read_file(path: &str) -> Result<FileDescriptor, FileReaderError> {
+fn read_file(path: &str) -> Result<FileDescriptor, FileReaderErr> {
     match fs::read_to_string(path) {
         Ok(content) => Ok(FileDescriptor {
             path: path.to_string(),
             content,
         }),
-        Err(e) => Err(FileReaderError {
+        Err(e) => Err(FileReaderErr {
             message: e.to_string(),
             path: path.to_string(),
         }),
     }
 }
 
-pub fn read_files(paths: &[&str]) -> Result<Vec<FileDescriptor>, FileReaderError> {
+pub fn read_files(paths: &[&str]) -> Result<Vec<FileDescriptor>, FileReaderErr> {
     paths.iter().map(|path| read_file(path)).collect()
 }
 
-pub fn write_file(path: &str, contents: &str) -> Result<(), FileWriterError> {
+pub fn write_file(path: &str, contents: &str) -> Result<(), FileWriterErr> {
     match fs::write(path, contents) {
-        Err(err) => Err(FileWriterError {
+        Err(err) => Err(FileWriterErr {
             message: err.to_string(),
         }),
         _ => Ok(()),
@@ -53,7 +53,7 @@ pub fn write_file(path: &str, contents: &str) -> Result<(), FileWriterError> {
 mod tests {
 
     use crate::fsys::{
-        FileDescriptor, FileReaderError, FileWriterError, read_file, read_files, write_file,
+        FileDescriptor, FileReaderErr, FileWriterErr, read_file, read_files, write_file,
     };
     // We need to use this crate here in order to make these tests run in serial order.
     // If we run them in parallel, we might end up in a situation when our tests
@@ -88,7 +88,7 @@ mod tests {
         let result = read_file(file_name);
         assert_eq!(
             result,
-            Err(FileReaderError {
+            Err(FileReaderErr {
                 message: "No such file or directory (os error 2)".to_string(),
                 path: file_name.to_string(),
             })
@@ -140,7 +140,7 @@ mod tests {
 
         assert_eq!(
             result,
-            Err(FileReaderError {
+            Err(FileReaderErr {
                 message: "No such file or directory (os error 2)".to_string(),
                 path: file_name2.to_string(),
             })
@@ -186,7 +186,7 @@ mod tests {
 
         assert_eq!(
             result,
-            Err(FileWriterError {
+            Err(FileWriterErr {
                 message: "Permission denied (os error 13)".to_string()
             })
         );

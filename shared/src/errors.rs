@@ -1,25 +1,13 @@
-// Config
-
-#[derive(Debug, PartialEq)]
-pub struct InvalidArg {
-    pub arg_name: String,
-    pub provided: String,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum ConfError {
-    ExtInvalid(String),
-    ArgInvalid(InvalidArg),
-    ArgRequired(String),
-}
-
-// Language specific
+// ==========================
+//
+//  PARSER ERRORS START
+//
+// ==========================
 
 #[derive(Debug)]
-pub struct ParserError {
+pub struct ParserErrInfo {
     pub row: usize,
     pub col: usize,
-    pub message: &'static str,
     // This field should not store the whole source code.
     // Instead we just keep a slice of it where exactly
     // an error happened.
@@ -27,6 +15,26 @@ pub struct ParserError {
 }
 
 #[derive(Debug)]
-pub enum LangError {
-    Parser(ParserError),
+pub enum ParserErr {
+    UnexpTok(ParserErrInfo),
+    UnexpEoFile(ParserErrInfo),
+    UnexpEoList(ParserErrInfo),
+    UnexpEoDict(ParserErrInfo),
+    UnexpEoFn(ParserErrInfo),
+    UnexpDictKey(ParserErrInfo),
+    InvalNum(ParserErrInfo),
+    InvalStr(ParserErrInfo),
+    InvalDictPair(ParserErrInfo),
+    InvalFnName(ParserErrInfo),
+}
+
+// ==========================
+//
+//  PARSER ERRORS END
+//
+// ==========================
+
+#[derive(Debug)]
+pub enum LangErr {
+    Parser(ParserErr),
 }

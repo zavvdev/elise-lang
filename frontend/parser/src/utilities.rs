@@ -6,6 +6,7 @@ pub struct SourceCodeSlice {
     pub col: usize,
 }
 
+// Get source code substring for error report.
 pub fn get_source_code_slice(source_code: &[u8], char_pos: usize) -> Result<SourceCodeSlice, ()> {
     let mut row = 0;
     let mut col = 0;

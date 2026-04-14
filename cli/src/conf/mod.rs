@@ -1,6 +1,5 @@
 pub mod config;
 
-use elise_shared::errors::{ConfError, InvalidArg};
 use std::collections::HashMap;
 
 use config::{
@@ -9,6 +8,19 @@ use config::{
     ARG_V_BOOL_FALSE, ARG_V_BOOL_TRUE, ARG_V_MODE_BUILD, ARG_V_MODE_EXEC, ARG_V_MODE_RUN,
     ARG_V_MODE_VALIDATE, ARG_V_MODES, ArgType, BUILD_ARGS, EXEC_ARGS, RUN_ARGS, VALIDATE_ARGS,
 };
+
+#[derive(Debug, PartialEq)]
+pub struct InvalidArg {
+    pub arg_name: String,
+    pub provided: String,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ConfErr {
+    ExtInvalid(String),
+    ArgInvalid(InvalidArg),
+    ArgRequired(String),
+}
 
 #[derive(Debug, PartialEq)]
 pub struct ModeRunConf {
@@ -49,21 +61,21 @@ pub enum Conf {
 impl Conf {
     // Validators. Must be used for argument validation in build_cli_args function.
 
-    fn validate_source_file<'a>(path: &'a str, exts: &[&'_ str]) -> Result<&'a str, ConfError> {
+    fn validate_source_file<'a>(path: &'a str, exts: &[&'_ str]) -> Result<&'a str, ConfErr> {
         if !exts.iter().any(|e| path.ends_with(*e)) {
-            return Err(ConfError::ExtInvalid(path.to_string()));
+            return Err(ConfErr::ExtInvalid(path.to_string()));
         }
         Ok(path)
     }
 
-    fn validate_mode<'a>(mode: Option<&'a str>) -> Result<&'a str, ConfError> {
+    fn validate_mode<'a>(mode: Option<&'a str>) -> Result<&'a str, ConfErr> {
         match mode {
             Some(mode) if ARG_V_MODES.contains(&mode) => Ok(mode),
-            Some(mode) => Err(ConfError::ArgInvalid(InvalidArg {
+            Some(mode) => Err(ConfErr::ArgInvalid(InvalidArg {
                 provided: mode.to_string(),
                 arg_name: ARG_FLAG_MODE.to_string(),
             })),
-            None => Err(ConfError::ArgRequired(ARG_FLAG_MODE.to_string())),
+            None => Err(ConfErr::ArgRequired(ARG_FLAG_MODE.to_string())),
         }
     }
 
@@ -116,7 +128,7 @@ impl Conf {
     fn build_valid_cli_args<'a>(
         user_args: &HashMap<&'a str, &'a str>,
         mode: &str,
-    ) -> Result<HashMap<&'a str, &'a str>, ConfError> {
+    ) -> Result<HashMap<&'a str, &'a str>, ConfErr> {
         let mut res: HashMap<&str, &str> = HashMap::new();
 
         let args = match mode {
@@ -124,7 +136,7 @@ impl Conf {
             ARG_V_MODE_BUILD => Ok(BUILD_ARGS),
             ARG_V_MODE_EXEC => Ok(EXEC_ARGS),
             ARG_V_MODE_VALIDATE => Ok(VALIDATE_ARGS),
-            _ => Err(ConfError::ArgInvalid(InvalidArg {
+            _ => Err(ConfErr::ArgInvalid(InvalidArg {
                 provided: mode.to_string(),
                 arg_name: ARG_FLAG_MODE.to_string(),
             })),
@@ -139,7 +151,7 @@ impl Conf {
             }
 
             if user_arg.is_none() && arg.req {
-                return Err(ConfError::ArgRequired(arg.name.to_string()));
+                return Err(ConfErr::ArgRequired(arg.name.to_string()));
             }
 
             if user_arg.is_none() && arg.def.is_some() {
@@ -173,7 +185,7 @@ impl Conf {
     // Takes a reference to the array of strings that are raw arguments from CLI.
     // We don't own the data here, so the original owned data just reused and not
     // copied.
-    pub fn from_cli(args: &[String]) -> Result<Self, ConfError> {
+    pub fn from_cli(args: &[String]) -> Result<Self, ConfErr> {
         // Parse raw CLI arguments. This variable contains only arguments that were provided by
         // user. So if some argument is not provided, it won't be present in this data structure.
         let parsed_args = Self::parse_cli_args(args);
@@ -212,7 +224,7 @@ impl Conf {
                 data_schema_path: Self::arg_str(args.get(ARG_FLAG_DATA_SCHEMA)),
             })),
 
-            _ => Err(ConfError::ArgInvalid(InvalidArg {
+            _ => Err(ConfErr::ArgInvalid(InvalidArg {
                 provided: mode.to_string(),
                 arg_name: ARG_FLAG_MODE.to_string(),
             })),
@@ -238,8 +250,9 @@ mod tests {
         ARG_FLAG_DATA, ARG_FLAG_DATA_SCHEMA, ARG_FLAG_EXECUTABLE, ARG_FLAG_EXECUTABLE_OUTPUT,
         ARG_FLAG_MODE, ARG_FLAG_SOURCE_CODE,
     };
-    use crate::conf::{Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
-    use elise_shared::errors::{ConfError, InvalidArg};
+    use crate::conf::{
+        Conf, ConfErr, InvalidArg, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf,
+    };
 
     #[test]
     fn should_require_mode_flag() {
@@ -248,10 +261,7 @@ mod tests {
             "--data=data.csv".to_string(),
             "--data-schema=data.elt".to_string(),
         ]);
-        assert_eq!(
-            result,
-            Err(ConfError::ArgRequired(ARG_FLAG_MODE.to_string()))
-        );
+        assert_eq!(result, Err(ConfErr::ArgRequired(ARG_FLAG_MODE.to_string())));
     }
 
     #[test]
@@ -264,7 +274,7 @@ mod tests {
         ]);
         assert_eq!(
             result,
-            Err(ConfError::ArgInvalid(InvalidArg {
+            Err(ConfErr::ArgInvalid(InvalidArg {
                 provided: "invalid".to_string(),
                 arg_name: ARG_FLAG_MODE.to_string(),
             }))
@@ -282,7 +292,7 @@ mod tests {
         ]);
         assert_eq!(
             result,
-            Err(ConfError::ArgRequired(ARG_FLAG_SOURCE_CODE.to_string()))
+            Err(ConfErr::ArgRequired(ARG_FLAG_SOURCE_CODE.to_string()))
         );
     }
 
@@ -293,10 +303,7 @@ mod tests {
             "--source-code=sample.eli".to_string(),
             "--data-schema=data.elt".to_string(),
         ]);
-        assert_eq!(
-            result,
-            Err(ConfError::ArgRequired(ARG_FLAG_DATA.to_string()))
-        );
+        assert_eq!(result, Err(ConfErr::ArgRequired(ARG_FLAG_DATA.to_string())));
     }
 
     #[test]
@@ -308,7 +315,7 @@ mod tests {
         ]);
         assert_eq!(
             result,
-            Err(ConfError::ArgRequired(ARG_FLAG_DATA_SCHEMA.to_string()))
+            Err(ConfErr::ArgRequired(ARG_FLAG_DATA_SCHEMA.to_string()))
         );
     }
 
@@ -364,7 +371,7 @@ mod tests {
         ]);
         assert_eq!(
             result,
-            Err(ConfError::ArgRequired(ARG_FLAG_SOURCE_CODE.to_string()))
+            Err(ConfErr::ArgRequired(ARG_FLAG_SOURCE_CODE.to_string()))
         );
     }
 
@@ -378,7 +385,7 @@ mod tests {
 
         assert_eq!(
             result,
-            Err(ConfError::ArgRequired(ARG_FLAG_DATA_SCHEMA.to_string()))
+            Err(ConfErr::ArgRequired(ARG_FLAG_DATA_SCHEMA.to_string()))
         );
     }
 
@@ -391,9 +398,7 @@ mod tests {
         ]);
         assert_eq!(
             result,
-            Err(ConfError::ArgRequired(
-                ARG_FLAG_EXECUTABLE_OUTPUT.to_string()
-            ))
+            Err(ConfErr::ArgRequired(ARG_FLAG_EXECUTABLE_OUTPUT.to_string()))
         );
     }
 
@@ -424,7 +429,7 @@ mod tests {
         let result = Conf::from_cli(&["--mode=exec".to_string(), "--data=data.csv".to_string()]);
         assert_eq!(
             result,
-            Err(ConfError::ArgRequired(ARG_FLAG_EXECUTABLE.to_string()))
+            Err(ConfErr::ArgRequired(ARG_FLAG_EXECUTABLE.to_string()))
         );
     }
 
@@ -434,10 +439,7 @@ mod tests {
             "--mode=exec".to_string(),
             "--executable=sample.elc".to_string(),
         ]);
-        assert_eq!(
-            result,
-            Err(ConfError::ArgRequired(ARG_FLAG_DATA.to_string()))
-        );
+        assert_eq!(result, Err(ConfErr::ArgRequired(ARG_FLAG_DATA.to_string())));
     }
 
     #[test]
@@ -485,10 +487,7 @@ mod tests {
             "--mode=validate".to_string(),
             "--data-schema=data.elt".to_string(),
         ]);
-        assert_eq!(
-            result,
-            Err(ConfError::ArgRequired(ARG_FLAG_DATA.to_string()))
-        );
+        assert_eq!(result, Err(ConfErr::ArgRequired(ARG_FLAG_DATA.to_string())));
     }
 
     #[test]
@@ -497,7 +496,7 @@ mod tests {
             Conf::from_cli(&["--mode=validate".to_string(), "--data=data.csv".to_string()]);
         assert_eq!(
             result,
-            Err(ConfError::ArgRequired(ARG_FLAG_DATA_SCHEMA.to_string()))
+            Err(ConfErr::ArgRequired(ARG_FLAG_DATA_SCHEMA.to_string()))
         );
     }
 

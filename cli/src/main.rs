@@ -1,21 +1,22 @@
 pub mod out;
 
 use elise;
-use elise::conf::{Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
+use elise::conf::{Conf, ConfErr, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise::fsys::{read_files, write_file};
-use elise_shared::errors::LangError;
+use elise_shared::errors::LangErr;
 
 use std::env;
 
-fn handle_lang_error(lang_err: &LangError) {
-   // match lang_err {
-   //     LangError::Parser(parser_error) => out::crash_at(
-   //         parser_error.message,
-   //         parser_error.source_code,
-   //         parser_error.row,
-   //         parser_error.col,
-   //     ),
-   // }
+fn handle_conf_err(conf_err: &ConfErr) {
+    match conf_err {
+        ConfErr::ExtInvalid(ext) => out::conf_err_ext_invalid(ext),
+        ConfErr::ArgInvalid(arg) => out::conf_err_arg_invalid(&arg.provided, &arg.arg_name),
+        ConfErr::ArgRequired(arg) => out::conf_err_arg_required(arg),
+    }
+}
+
+fn handle_lang_err(_lang_err: &LangErr) {
+    // TODO: handle parser language error enums
 }
 
 fn cli_run(conf: &ModeRunConf) {
@@ -33,18 +34,18 @@ fn cli_run(conf: &ModeRunConf) {
             );
 
             if let Err(run_err) = &run_res {
-                handle_lang_error(&run_err);
+                handle_lang_err(&run_err);
             }
 
             let run_res = run_res.unwrap();
 
-            out::print_run_result(&run_res.output, run_res.ms);
+            out::run_result(&run_res.output, run_res.ms);
             if run_res.config.print_bytecode {
                 out::print_bytecode(&run_res.bytecode);
             }
         }
         Err(read_err) => {
-            out::print_file_reader_error(&read_err.message, &read_err.path);
+            out::fsys_file_reader_err(&read_err.message, &read_err.path);
         }
     };
 }
@@ -55,18 +56,18 @@ fn cli_build(conf: &ModeBuildConf) {
             let build_res = elise::build(&read_res[0].content, &read_res[1].content, &conf);
 
             if let Err(build_err) = &build_res {
-                handle_lang_error(&build_err);
+                handle_lang_err(&build_err);
             }
 
             let build_res = build_res.unwrap();
             let out_path = &build_res.config.executable_output_path;
 
             match write_file(out_path, &build_res.executale_output) {
-                Ok(_) => out::print_build_result(out_path, build_res.ms),
-                Err(err) => out::print_file_writer_error(&err.message, out_path),
+                Ok(_) => out::build_result(out_path, build_res.ms),
+                Err(err) => out::fsys_file_writer_err(&err.message, out_path),
             }
         }
-        Err(read_err) => out::print_file_reader_error(&read_err.message, &read_err.path),
+        Err(read_err) => out::fsys_file_reader_err(&read_err.message, &read_err.path),
     };
 }
 
@@ -76,13 +77,13 @@ fn cli_exec(conf: &ModeExecConf) {
             let exec_res = elise::exec(&read_res[0].content, &read_res[1].content, &conf);
 
             if let Err(exec_err) = &exec_res {
-                handle_lang_error(&exec_err);
+                handle_lang_err(&exec_err);
             }
 
             let exec_res = exec_res.unwrap();
-            out::print_run_result(&exec_res.output, exec_res.ms);
+            out::run_result(&exec_res.output, exec_res.ms);
         }
-        Err(read_err) => out::print_file_reader_error(&read_err.message, &read_err.path),
+        Err(read_err) => out::fsys_file_reader_err(&read_err.message, &read_err.path),
     };
 }
 
@@ -92,13 +93,13 @@ fn cli_validate(conf: &ModeValidateConf) {
             let validate_res = elise::validate(&read_res[0].content, &read_res[1].content, &conf);
 
             if let Err(validate_err) = &validate_res {
-                handle_lang_error(&validate_err);
+                handle_lang_err(&validate_err);
             }
 
             let validate_res = validate_res.unwrap();
-            out::print_validate_result(validate_res.ms);
+            out::validate_result(validate_res.ms);
         }
-        Err(read_err) => out::print_file_reader_error(&read_err.message, &read_err.path),
+        Err(read_err) => out::fsys_file_reader_err(&read_err.message, &read_err.path),
     };
 }
 
@@ -111,8 +112,7 @@ fn main() {
     let config = Conf::from_cli(&args);
 
     if let Err(conf_err) = config {
-        return;
-        //return out::config_error(&conf_err.message);
+        return handle_conf_err(&conf_err);
     }
 
     match config.unwrap() {

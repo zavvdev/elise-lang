@@ -3,8 +3,8 @@ pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 
-//use elise_parser::parser::Prelude;
-use elise_shared::errors::LangError;
+use elise_parser::parser::Prelude;
+use elise_shared::errors::LangErr;
 use std::time::Instant;
 
 #[derive(Debug)]
@@ -46,12 +46,11 @@ pub fn run<'a>(
     _data: &'a str,
     _data_schema: &'a str,
     config: &'a ModeRunConf,
-) -> Result<RunResult<'a>, LangError> {
+) -> Result<RunResult<'a>, LangErr> {
     let start = Instant::now();
-    // TODO: Uncomment after parser refactoring.
-    //let ast = Prelude::new(&source_code).parse();
+    let ast = Prelude::new(&source_code).parse();
 
-    //println!("ast: {:#?}", ast);
+    println!("ast: {:#?}", ast);
 
     println!("RUN MODE");
 
@@ -67,7 +66,7 @@ pub fn build<'a>(
     _source_code: &'a str,
     _data_schema: &'a str,
     config: &'a ModeBuildConf,
-) -> Result<BuildResult<'a>, LangError> {
+) -> Result<BuildResult<'a>, LangErr> {
     let start = Instant::now();
 
     println!("BUILD MODE");
@@ -83,7 +82,7 @@ pub fn exec<'a>(
     _executable: &'a str,
     _data: &'a str,
     config: &'a ModeExecConf,
-) -> Result<ExecResult<'a>, LangError> {
+) -> Result<ExecResult<'a>, LangErr> {
     let start = Instant::now();
 
     println!("EXEC MODE");
@@ -99,7 +98,7 @@ pub fn validate<'a>(
     _data: &'a str,
     _data_schema: &'a str,
     config: &'a ModeValidateConf,
-) -> Result<ValidateResult<'a>, LangError> {
+) -> Result<ValidateResult<'a>, LangErr> {
     let start = Instant::now();
 
     println!("VALIDATE MODE");
