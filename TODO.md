@@ -7,21 +7,18 @@ Source code
     -> Score (bytecode)
     -> Sonata (VM)
 
-- [x] Add foundation for executing binary with arguments:
+- [x] CLI:
   
-    - [x] --file=<file> - specify file to execute
+    - [x] Add support for different exec modes
+
+    - [x] Rewrite error/messaging handling. Errors and messages should only be handled inside
+      main.rs as a library consumer.
     
-    - [x] --print-bytecode - print bytecode of the executed file
+    - [x] fsys tests
 
-    - [ ] run/build/validate commands
-
-    - [ ] --input, --schema, --output, --unsafe-assume-valid flags
-
-- [x] Add library crate which exposes interpreter entry point
-
-- [x] Use library crate in the binary crate
-
-- [x] Create parser for lexing, building AST and enforcing grammar rules 
+    - [x] conf tests
+    
+- [ ] Parser
 
     - [x] Add number parsing (positive, negative, float, scientific notation)
 
@@ -49,21 +46,21 @@ Source code
 
         - [x] Add tests for function calls
 
-    - [x] Review tests and add more test cases where possible
+    - [ ] Remove out module
+        
+        - [ ] Remove human readable messages from everywhere except cli/out. Use enums.
 
-    - [x] Review parser for improvements (including messages)
+    - [ ] Remove should panic crate 
 
-- [x] Create new module system (bytecode, parser, compiler, vm, cli)
+    - [ ] Add support for anonymous functions
 
-- [ ] Add support for build and validate execution modes
+- [ ] ?Data file parsing, schema file parsing
 
-- [ ] Add support for anonymous functions.
-
-- [ ] Add semantic analysis module (analyze each known function semantics etc)
+- [ ] Semantic analyzer
 
     - [ ] ...
 
-- [ ] Create a compiler for bytecode (IR) generation from AST
+- [ ] Compiler
 
     - [ ] Apply optimizations
 
@@ -73,10 +70,12 @@ Source code
     
     - [ ] ...
 
-- [ ] Create a virtual machine for bytecode interpretation
+- [ ] VM
 
     - [ ] ...
 
 - [ ] Optimizations
 
     - [ ] Read source code file in chunks
+
+- [ ] Integration tests for CLI
