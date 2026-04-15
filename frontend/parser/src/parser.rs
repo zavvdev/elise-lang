@@ -618,12 +618,7 @@ impl<'a> Prelude<'a> {
 
 #[cfg(test)]
 mod tests {
-    use assert_panic::assert_panic;
-
-    use crate::{
-        messages,
-        parser::{AstNode, Compound, Prelude, Primitive, TokSpan},
-    };
+    use crate::parser::{AstNode, Compound, Prelude, Primitive, TokSpan};
 
     // ==========================
     // NUMBER TESTS START

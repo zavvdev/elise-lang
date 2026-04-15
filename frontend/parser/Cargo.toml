@@ -10,4 +10,3 @@ path = "src/lib.rs"
 elise-shared = { path = "../../shared" }
 elise-ast = { path = "../../ast" }
 regex.workspace = true
-assert-panic.workspace = true

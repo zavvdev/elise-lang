@@ -12,12 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "assert-panic"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "763b2b82aee23fe46c14c792470080c26538396e9ea589f548298f26b22d7f41"
-
-[[package]]
 name = "bitflags"
 version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -64,7 +58,6 @@ version = "0.1.0"
 name = "elise-parser"
 version = "0.1.0"
 dependencies = [
- "assert-panic",
  "elise-ast",
  "elise-shared",
  "regex",
