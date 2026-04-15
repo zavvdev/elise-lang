@@ -42,7 +42,7 @@ pub enum HandleResultStatus {
 }
 
 pub fn run<'a>(
-    _source_code: &'a str,
+    source_code: &'a str,
     _data: &'a str,
     _data_schema: &'a str,
     config: &'a ModeRunConf,

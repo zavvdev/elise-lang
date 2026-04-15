@@ -67,15 +67,8 @@ impl<'a> Prelude<'a> {
         let mut ast: Vec<AstNode> = vec![];
 
         while let Some(c) = self.peek() {
-            match self.get_node_from_char(&c) {
-                Ok(node_option) => {
-                    if let Some(node) = node_option {
-                        ast.push(node);
-                    }
-                }
-                Err(lang_error) => {
-                    return Err(lang_error);
-                }
+            if let Some(node) = self.get_node_from_char(&c)? {
+                ast.push(node);
             }
         }
 
@@ -107,27 +100,27 @@ impl<'a> Prelude<'a> {
      * to be able to handle AstNode differently in some cases.
      */
     fn get_node_from_char(&mut self, c: &u8) -> Result<Option<AstNode>, LangErr> {
-        if Self::is_separator(c) {
+        return if Self::is_separator(c) {
             self.advance();
-            return Ok(None);
+            Ok(None)
         } else if self.call_is_start(c) {
-            return Ok(Some(self.call_consume()));
+            self.call_consume()
         } else if Self::number_is_start(c) {
-            return Ok(Some(self.number_consume()));
+            self.number_consume()
         } else if Self::string_is_start(c) {
-            return Ok(Some(self.string_consume()));
+            self.string_consume()
         } else if self.list_is_start(c) {
-            return Ok(Some(self.list_consume()));
+            self.list_consume()
         } else if self.dict_is_start(c) {
-            return Ok(Some(self.dict_consume()));
+            self.dict_consume()
 
         // Matching identifier should be at the very end
         // since it matches any character.
         } else if Self::identifier_is_start(c) {
-            return Ok(Some(self.identifier_consume()));
+            self.identifier_consume()
         } else {
             Err(self.fail(ParserErr::UnexpTok))
-        }
+        };
     }
 
     // ==========================
@@ -181,7 +174,7 @@ impl<'a> Prelude<'a> {
         Self::is_separator(c) || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
     }
 
-    fn number_consume(&mut self) -> AstNode {
+    fn number_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
         let mut state = FstNumState::Start;
         let tok_start = self.tok_pos;
 
@@ -230,28 +223,34 @@ impl<'a> Prelude<'a> {
                     Scient
                 }
                 (_, c) if Self::number_is_end(&c) => break,
-                _ => self.fail(M_NUMBER_INVALID),
+                _ => {
+                    return Err(self.fail(ParserErr::InvalNum));
+                }
             };
         }
 
-        // Panic if we ended up with invalid state.
+        // Return an error we ended up with invalid state.
         match state {
             FstNumState::Zero | FstNumState::Int | FstNumState::Frac | FstNumState::Scient => {}
-            _ => self.fail(M_NUMBER_INVALID),
+            _ => {
+                return Err(self.fail(ParserErr::InvalNum));
+            }
         }
 
         let tok_end = self.tok_pos;
+        let value = from_utf8(&self.source_code[tok_start..tok_end]);
 
-        let value = from_utf8(&self.source_code[tok_start..tok_end])
-            .unwrap_or_else(|_| self.fail(M_NUMBER_INVALID));
+        if value.is_err() {
+            return Err(self.fail(ParserErr::InvalNum));
+        }
 
-        AstNode::Number(Primitive {
-            value: value.to_string(),
+        Ok(Some(AstNode::Number(Primitive {
+            value: value.unwrap().to_string(),
             span: TokSpan {
                 start: tok_start,
                 end: tok_end,
             },
-        })
+        })))
     }
 
     // ==========================
@@ -278,7 +277,7 @@ impl<'a> Prelude<'a> {
         *char == b'\n'
     }
 
-    fn string_consume(&mut self) -> AstNode {
+    fn string_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
         let tok_start = self.tok_pos;
         self.advance();
 
@@ -288,26 +287,31 @@ impl<'a> Prelude<'a> {
                 break;
             }
             if Self::string_is_forbidden_char(&c) {
-                self.fail(M_STRING_INVALID);
+                return Err(self.fail(ParserErr::InvalStr));
             }
             self.advance();
         }
 
-        let value = from_utf8(&self.source_code[tok_start + 1..self.tok_pos - 1])
-            .unwrap_or_else(|_| self.fail(M_STRING_INVALID));
+        let value = from_utf8(&self.source_code[tok_start + 1..self.tok_pos - 1]);
+
+        if value.is_err() {
+            return Err(self.fail(ParserErr::InvalStr));
+        }
+
+        let value = value.unwrap();
 
         // Taking surrogate pairs and other code points
         // that represent one lexeme into account.
         // We add 2 in order to include quote start and end.
         let tok_end = tok_start + value.chars().count() + 2;
 
-        AstNode::String(Primitive {
+        Ok(Some(AstNode::String(Primitive {
             value: value.to_string(),
             span: TokSpan {
                 start: tok_start,
                 end: tok_end,
             },
-        })
+        })))
     }
 
     // ==========================
@@ -330,7 +334,7 @@ impl<'a> Prelude<'a> {
         Self::is_separator(c) || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
     }
 
-    fn identifier_consume(&mut self) -> AstNode {
+    fn identifier_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
         let start = self.tok_pos;
 
         while let Some(c) = self.peek() {
@@ -355,14 +359,14 @@ impl<'a> Prelude<'a> {
 
         match primitive.value.as_str() {
             // Identify known identifiers.
-            T_TRUE | T_FALSE => AstNode::Bool(primitive),
-            T_NULL => AstNode::Null(primitive),
+            T_TRUE | T_FALSE => Ok(Some(AstNode::Bool(primitive))),
+            T_NULL => Ok(Some(AstNode::Null(primitive))),
             _ => {
                 let re = Regex::new(IDENTIFIER_REGEX).unwrap();
                 if re.is_match(&primitive.value) {
-                    return AstNode::Identifier(primitive);
+                    return Ok(Some(AstNode::Identifier(primitive)));
                 } else {
-                    self.fail(M_TOKEN_UNEXPECTED);
+                    return Err(self.fail(ParserErr::UnexpTok));
                 }
             }
         }
@@ -388,39 +392,43 @@ impl<'a> Prelude<'a> {
         false
     }
 
-    fn list_is_end(&mut self, c: &u8) -> bool {
+    fn list_check_end(&mut self, c: &u8) -> Result<bool, ()> {
         if *c == T_RIGHT_SQR_BRACKET {
             let last_entry = self.depth_stack.pop();
             if last_entry.is_none() || last_entry.unwrap() != T_LEFT_SQR_BRACKET {
-                self.fail(M_LIST_UNEXPECTED_END);
+                return Err(());
             }
-            return true;
+            return Ok(true);
         }
-        false
+        Ok(false)
     }
 
-    fn list_consume(&mut self) -> AstNode {
+    fn list_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
         let start = self.tok_pos;
         self.advance();
         let mut children: Vec<Box<AstNode>> = vec![];
 
         while let Some(c) = self.peek() {
-            if self.list_is_end(&c) {
-                self.advance();
-                break;
-            }
-            if let Some(node) = self.get_node_from_char(&c) {
-                children.push(Box::new(node));
+            if let Ok(eo_list) = self.list_check_end(&c) {
+                if eo_list {
+                    self.advance();
+                    break;
+                }
+                if let Some(node) = self.get_node_from_char(&c)? {
+                    children.push(Box::new(node));
+                }
+            } else {
+                return Err(self.fail(ParserErr::UnexpEoList));
             }
         }
 
-        AstNode::List(Compound {
+        Ok(Some(AstNode::List(Compound {
             span: TokSpan {
                 start,
                 end: self.tok_pos,
             },
             children,
-        })
+        })))
     }
 
     // ==========================
@@ -443,18 +451,18 @@ impl<'a> Prelude<'a> {
         false
     }
 
-    fn dict_is_end(&mut self, c: &u8) -> bool {
+    fn dict_check_end(&mut self, c: &u8) -> Result<bool, ()> {
         if *c == T_RIGHT_CUR_BRACKET {
             let last_entry = self.depth_stack.pop();
             if last_entry.is_none() || last_entry.unwrap() != T_LEFT_CUR_BRACKET {
-                self.fail(M_DICT_UNEXPECTED_END);
+                return Err(());
             }
-            return true;
+            return Ok(true);
         }
-        false
+        Ok(false)
     }
 
-    fn dict_consume(&mut self) -> AstNode {
+    fn dict_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
         let start = self.tok_pos;
         self.advance();
 
@@ -462,21 +470,26 @@ impl<'a> Prelude<'a> {
         let mut key: Option<String> = None;
 
         while let Some(c) = self.peek() {
-            if self.dict_is_end(&c) {
-                if key.is_some() {
-                    self.fail(M_DICT_INVALID_PAIR);
+            if let Ok(eo_dict) = self.dict_check_end(&c) {
+                if eo_dict {
+                    if key.is_some() {
+                        return Err(self.fail(ParserErr::InvalDictPair));
+                    }
+                    self.advance();
+                    break;
                 }
-                self.advance();
-                break;
+            } else {
+                return Err(self.fail(ParserErr::UnexpEoDict));
             }
-            if let Some(node) = self.get_node_from_char(&c) {
+
+            if let Some(node) = self.get_node_from_char(&c)? {
                 if key.is_none() {
                     match node {
                         AstNode::String(primitive) => {
                             key = Some(primitive.value);
                         }
                         _ => {
-                            self.fail(M_DICT_UNEXPECTED_KEY);
+                            return Err(self.fail(ParserErr::UnexpDictKey));
                         }
                     }
                 } else {
@@ -489,13 +502,13 @@ impl<'a> Prelude<'a> {
             }
         }
 
-        AstNode::Dict(Compound {
+        Ok(Some(AstNode::Dict(Compound {
             span: TokSpan {
                 start,
                 end: self.tok_pos,
             },
             children,
-        })
+        })))
     }
 
     // ==========================
@@ -524,7 +537,7 @@ impl<'a> Prelude<'a> {
         !name.is_empty() && re.is_match(name)
     }
 
-    fn call_consume(&mut self) -> AstNode {
+    fn call_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
         let call_start = self.tok_pos;
 
         // Go to the start of the function name.
@@ -546,7 +559,7 @@ impl<'a> Prelude<'a> {
         let call_name = call_name.trim_end();
 
         if !Self::call_is_name_valid(call_name) {
-            self.fail(M_CALL_NAME_INVALID);
+            return Err(self.fail(ParserErr::InvalFnName));
         }
 
         // Go to the next char after the function name.
@@ -559,19 +572,20 @@ impl<'a> Prelude<'a> {
             if self.call_is_end(&c) {
                 let last_entry = self.depth_stack.pop();
                 if last_entry.is_none() || last_entry.unwrap() != T_LEFT_PAREN {
-                    self.fail(M_CALL_UNEXPECTED_END);
+                    return Err(self.fail(ParserErr::UnexpEoFn));
                 }
                 self.advance();
                 break;
             }
-            if let Some(node) = self.get_node_from_char(&c) {
+
+            if let Some(node) = self.get_node_from_char(&c)? {
                 children.push(Box::new(node));
             }
         }
 
         let call_end = self.tok_pos;
 
-        AstNode::Call((
+        Ok(Some(AstNode::Call((
             call_name.to_string(),
             Compound {
                 span: TokSpan {
@@ -580,7 +594,7 @@ impl<'a> Prelude<'a> {
                 },
                 children,
             },
-        ))
+        ))))
     }
 
     // ==========================
