@@ -1,3 +1,8 @@
+/**
+ * This file represents configuration type
+ * that must include all necessary information
+ * for the program in order to start execution.
+ */
 pub mod config;
 
 use std::collections::HashMap;
@@ -59,7 +64,7 @@ pub enum Conf {
 }
 
 impl Conf {
-    // Validators. Must be used for argument validation in build_cli_args function.
+    // Validators. Must be used for argument validation in build_args function.
 
     fn validate_source_file<'a>(path: &'a str, exts: &[&'_ str]) -> Result<&'a str, ConfErr> {
         if !exts.iter().any(|e| path.ends_with(*e)) {
@@ -93,13 +98,13 @@ impl Conf {
     // Takes a reference to the list of original argument strings
     // and returns a hash-map of parsed data. Lifetimes tied to the
     // original owned array of arguments that was created when
-    // from_cli was called, so we don't re-allocate but keeping
+    // Conf::new was called, so we don't re-allocate but keeping
     // original arguments alive until we construct Conf struct from them.
     // This function should not perform any validation. It just
     // extract values from the input.
-    // If value of the argument wasn't provided, an empty string
-    // has to be inserted as value.
-    fn parse_cli_args<'a>(args: &'a [String]) -> HashMap<&'a str, &'a str> {
+    // If value of some argument wasn't provided, an empty string
+    // has to be inserted as a value.
+    fn parse_args<'a>(args: &'a [String]) -> HashMap<&'a str, &'a str> {
         let mut res = HashMap::new();
 
         for arg in args {
@@ -115,17 +120,18 @@ impl Conf {
         res
     }
 
-    // Takes a reference to the hash-map created by parse_cli_args
+    // Takes a reference to the hash-map created by parse_args
     // and returns a new hash-map. Both hash-maps are tied to the
     // lifetime of the original vector of strings that is owned by
-    // the from_cli caller.
+    // the Conf::new caller.
     // This must build the final HashMap of arguments that must
     // contain all possible arguments as key-value pairs with valid values.
-    // If any argument is required but not provided, this function must panic.
-    // If any argument is provided but has invalid value, this function must panic.
+    //
+    // If any argument is required but not provided, this function must return an error.
+    // If any argument is provided but has invalid value, this function must return an error.
     // If any argument is not provided and not required it must be set to
-    // the respective default value.
-    fn build_valid_cli_args<'a>(
+    // the respective default value if available.
+    fn build_valid_args<'a>(
         user_args: &HashMap<&'a str, &'a str>,
         mode: &str,
     ) -> Result<HashMap<&'a str, &'a str>, ConfErr> {
@@ -182,22 +188,22 @@ impl Conf {
         Ok(res)
     }
 
-    // Takes a reference to the array of strings that are raw arguments from CLI.
+    // Takes a reference to the array of strings that are raw arguments.
     // We don't own the data here, so the original owned data just reused and not
     // copied.
-    pub fn from_cli(args: &[String]) -> Result<Self, ConfErr> {
-        // Parse raw CLI arguments. This variable contains only arguments that were provided by
+    pub fn new(args: &[String]) -> Result<Self, ConfErr> {
+        // Parse raw arguments. This variable contains only arguments that were provided by
         // user. So if some argument is not provided, it won't be present in this data structure.
-        let parsed_args = Self::parse_cli_args(args);
+        let parsed_args = Self::parse_args(args);
 
-        // Must panic if mode is invalid.
+        // Must be an error if mode is invalid.
         let mode = Self::validate_mode(parsed_args.get(ARG_FLAG_MODE).map(|mode| *mode))?;
 
         // At this point we have the full list of arguments with their values.
         // If some argument was not provided by user, it must be present in this variable with
-        // default value. Or if some argument was required but not provided, this function must
-        // panic.
-        let args = Self::build_valid_cli_args(&parsed_args, mode)?;
+        // a default value. Or if some argument was required but not provided, this function must
+        // return an error.
+        let args = Self::build_valid_args(&parsed_args, mode)?;
 
         match mode {
             ARG_V_MODE_RUN => Ok(Self::Run(ModeRunConf {
@@ -256,7 +262,7 @@ mod tests {
 
     #[test]
     fn should_require_mode_flag() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--source-code=sample.eli".to_string(),
             "--data=data.csv".to_string(),
             "--data-schema=data.elt".to_string(),
@@ -266,7 +272,7 @@ mod tests {
 
     #[test]
     fn should_reject_invalid_mode_flag() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=invalid".to_string(),
             "--source-code=sample.eli".to_string(),
             "--data=data.csv".to_string(),
@@ -285,7 +291,7 @@ mod tests {
 
     #[test]
     fn run_should_require_source_code_flag() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=run".to_string(),
             "--data=data.csv".to_string(),
             "--data-schema=data.elt".to_string(),
@@ -298,7 +304,7 @@ mod tests {
 
     #[test]
     fn run_should_require_data_flag() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=run".to_string(),
             "--source-code=sample.eli".to_string(),
             "--data-schema=data.elt".to_string(),
@@ -308,7 +314,7 @@ mod tests {
 
     #[test]
     fn run_should_require_data_schema_flag() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=run".to_string(),
             "--source-code=sample.eli".to_string(),
             "--data=data.csv".to_string(),
@@ -321,7 +327,7 @@ mod tests {
 
     #[test]
     fn run_should_construct_conf() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=run".to_string(),
             "--source-code=sample.eli".to_string(),
             "--data=data.csv".to_string(),
@@ -340,7 +346,7 @@ mod tests {
 
     #[test]
     fn run_should_construct_conf_with_bytecode_enabled_flag() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=run".to_string(),
             "--source-code=sample.eli".to_string(),
             "--data=data.csv".to_string(),
@@ -364,7 +370,7 @@ mod tests {
 
     #[test]
     fn build_should_require_source_code_flag() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=build".to_string(),
             "--data-schema=data.elt".to_string(),
             "--output=sample.elc".to_string(),
@@ -377,7 +383,7 @@ mod tests {
 
     #[test]
     fn build_should_require_data_schema_flag() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=build".to_string(),
             "--source-code=sample.eli".to_string(),
             "--output=sample.elc".to_string(),
@@ -391,7 +397,7 @@ mod tests {
 
     #[test]
     fn build_should_require_output_flag() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=build".to_string(),
             "--source-code=sample.eli".to_string(),
             "--data-schema=data.elt".to_string(),
@@ -404,7 +410,7 @@ mod tests {
 
     #[test]
     fn build_should_construct_conf() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=build".to_string(),
             "--source-code=sample.eli".to_string(),
             "--data-schema=data.elt".to_string(),
@@ -426,7 +432,7 @@ mod tests {
 
     #[test]
     fn exec_should_require_executable_flag() {
-        let result = Conf::from_cli(&["--mode=exec".to_string(), "--data=data.csv".to_string()]);
+        let result = Conf::new(&["--mode=exec".to_string(), "--data=data.csv".to_string()]);
         assert_eq!(
             result,
             Err(ConfErr::ArgRequired(ARG_FLAG_EXECUTABLE.to_string()))
@@ -435,7 +441,7 @@ mod tests {
 
     #[test]
     fn exec_should_require_data_flag() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=exec".to_string(),
             "--executable=sample.elc".to_string(),
         ]);
@@ -444,7 +450,7 @@ mod tests {
 
     #[test]
     fn exec_should_construct_conf() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=exec".to_string(),
             "--executable=sample.elc".to_string(),
             "--data=data.csv".to_string(),
@@ -461,7 +467,7 @@ mod tests {
 
     #[test]
     fn exec_should_construct_conf_with_assume_valid() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=exec".to_string(),
             "--executable=sample.elc".to_string(),
             "--data=data.csv".to_string(),
@@ -483,7 +489,7 @@ mod tests {
 
     #[test]
     fn validate_should_require_data_flag() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=validate".to_string(),
             "--data-schema=data.elt".to_string(),
         ]);
@@ -492,8 +498,7 @@ mod tests {
 
     #[test]
     fn validate_should_require_data_schema_flag() {
-        let result =
-            Conf::from_cli(&["--mode=validate".to_string(), "--data=data.csv".to_string()]);
+        let result = Conf::new(&["--mode=validate".to_string(), "--data=data.csv".to_string()]);
         assert_eq!(
             result,
             Err(ConfErr::ArgRequired(ARG_FLAG_DATA_SCHEMA.to_string()))
@@ -502,7 +507,7 @@ mod tests {
 
     #[test]
     fn validate_should_construct_conf() {
-        let result = Conf::from_cli(&[
+        let result = Conf::new(&[
             "--mode=validate".to_string(),
             "--data=data.csv".to_string(),
             "--data-schema=sample.elt".to_string(),

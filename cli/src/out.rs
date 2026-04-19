@@ -1,4 +1,10 @@
+/**
+ * This file must contain anything that is related to displaying messages
+ * for a user in case of errors or other cases which requires output.
+ * This is the only file that should be responsible for it.
+ */
 use colored::Colorize;
+use elise_shared::errors::ParserErr;
 
 // ==========================
 //
@@ -16,15 +22,14 @@ fn silent_err(message: &str, label: Option<&str>) {
     eprintln!("{}", error.red().bold());
 }
 
-fn crash_at(message: &str, source_code_slice: Option<String>, row: usize, col: usize) -> ! {
-    if let Some(code) = source_code_slice {
+fn error_at_code(source_code_slice: &str, row: usize, col: usize) {
+    if source_code_slice.len() > 0 {
         let location = format!("At {}:{}\n", row, col);
         eprintln!("{}", location.bold());
-        eprintln!("{}", code);
-        let arrow = "-".repeat(col) + "^";
+        eprintln!("{}", source_code_slice);
+        let arrow = "-".repeat(col - 1) + "^";
         eprintln!("{}\n", arrow.red().bold());
     }
-    panic!("{}", message)
 }
 
 pub fn panic_hook(info: &std::panic::PanicHookInfo) {
@@ -98,4 +103,35 @@ pub fn build_result(path: &str, ms: u128) {
 pub fn validate_result(ms: u128) {
     println!("Valid");
     println!("Execution time: {} ms", ms);
+}
+
+// ==========================
+//
+// PARSER ERROR HANDLER
+//
+// ==========================
+
+pub fn parser_err(parser_err: &ParserErr) {
+    use ParserErr::*;
+
+    let info = match parser_err {
+        UnexpTok(err_info) => ("Unexpected token", err_info),
+        UnexpEoFile(err_info) => ("Unexpected end of file", err_info),
+        UnexpEoList(err_info) => ("Unexpected end of list", err_info),
+        UnexpEoDict(err_info) => ("Unexpected end of dictionary", err_info),
+        UnexpEoFn(err_info) => ("Unexpected end of function", err_info),
+        UnexpDictKey(err_info) => ("Unexpected dictionary key", err_info),
+        InvalNum(err_info) => ("Invalid number", err_info),
+        InvalStr(err_info) => ("Invalid string", err_info),
+        InvalDictPair(err_info) => ("Invalid dictionary key value pair", err_info),
+        InvalFnName(err_info) => ("Invalid function name", err_info),
+    };
+
+    let source_code = match &info.1.source_code_slice {
+        Some(code) => code,
+        None => "",
+    };
+
+    silent_err(info.0, Some("Parser error"));
+    error_at_code(source_code, info.1.row, info.1.col);
 }

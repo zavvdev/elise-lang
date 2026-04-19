@@ -1,3 +1,9 @@
+/**
+ * This file is an abstraction around file system
+ * which exposes functions that can be useful for
+ * preparing program for running or handling
+ * program output.
+ */
 use std::fs;
 
 #[derive(PartialEq, Debug)]

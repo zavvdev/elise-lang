@@ -44,8 +44,8 @@ pub fn get_source_code_slice(source_code: &[u8], char_pos: usize) -> Result<Sour
     if source_code.is_ok() {
         return Ok(SourceCodeSlice {
             slice: source_code.unwrap()[previous_row_start..preview_row_end].to_string(),
-            row,
-            col,
+            row: row + 1,
+            col: col + 1,
         });
     }
 

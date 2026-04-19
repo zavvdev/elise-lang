@@ -4,7 +4,7 @@
 //
 // ==========================
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ParserErrInfo {
     pub row: usize,
     pub col: usize,
@@ -14,7 +14,7 @@ pub struct ParserErrInfo {
     pub source_code_slice: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ParserErr {
     UnexpTok(ParserErrInfo),
     UnexpEoFile(ParserErrInfo),
@@ -34,7 +34,7 @@ pub enum ParserErr {
 //
 // ==========================
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum LangErr {
     Parser(ParserErr),
 }

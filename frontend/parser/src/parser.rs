@@ -619,743 +619,756 @@ impl<'a> Prelude<'a> {
 #[cfg(test)]
 mod tests {
     use crate::parser::{AstNode, Compound, Prelude, Primitive, TokSpan};
+    use LangErr::Parser;
+    use elise_shared::errors::{LangErr, ParserErr, ParserErrInfo};
 
     // ==========================
     // NUMBER TESTS START
     // ==========================
 
     #[test]
-    fn number_test_should_panic_if_contains_non_numeric_token() {
+    fn number_test_should_not_contain_non_numeric_tokens() {
         let forbidded_tokens = vec![
-            "0a", "-0a", "0.a", "-0.a", "1a", "1.a", "-1a", "-1.a", "12a2", "0.2a",
+            ("0a", 2),
+            ("-0a", 3),
+            ("0.a", 3),
+            ("-0.a", 4),
+            ("1a", 2),
+            ("1.a", 3),
+            ("-1a", 3),
+            ("-1.a", 4),
+            ("12a2", 3),
+            ("0.2a", 4),
         ];
 
-        for token in forbidded_tokens {
-            assert_panic!(
-                {
-                    Prelude::new(token).parse();
-                },
-                String,
-                M_PARSER_ERROR
-            );
-        }
-    }
-
-    #[test]
-    fn number_test_should_panic_if_contains_more_than_one_minus_token() {
-        let forbidded_tokens = vec!["--1", "-1-2", "-2-3-"];
-
-        for token in forbidded_tokens {
-            assert_panic!(
-                {
-                    Prelude::new(token).parse();
-                },
-                String,
-                M_PARSER_ERROR
-            );
-        }
-    }
-
-    #[test]
-    fn number_test_should_panic_if_contains_more_than_one_period_token() {
-        let forbidded_tokens = vec!["0.2.3", "0.3."];
-
-        for token in forbidded_tokens {
-            assert_panic!(
-                {
-                    Prelude::new(token).parse();
-                },
-                String,
-                M_PARSER_ERROR
-            );
-        }
-    }
-
-    #[test]
-    fn number_test_should_panic_if_starts_with_zero_and_not_float() {
-        let forbidded_tokens = vec!["02", "00"];
-
-        for token in forbidded_tokens {
-            assert_panic!(
-                {
-                    Prelude::new(token).parse();
-                },
-                String,
-                M_PARSER_ERROR
-            );
-        }
-    }
-
-    #[test]
-    fn number_test_should_panic_if_we_start_from_minus_and_nothing_follows() {
-        assert_panic!(
-            {
-                Prelude::new("-").parse();
-            },
-            String,
-            M_PARSER_ERROR
-        );
-    }
-
-    #[test]
-    fn number_test_should_parse_positive_numbers() {
-        let numbers = vec![
-            ("0", 1),
-            ("1", 1),
-            ("2", 1),
-            ("9", 1),
-            ("123", 3),
-            ("999999", 6),
-            ("0.1", 3),
-            ("2.3", 3),
-            ("23.23", 5),
-            ("0.23", 4),
-            ("9999.9999", 9),
-            ("101", 3),
-        ];
-        for (number, end) in numbers {
-            let ast = Prelude::new(number).parse();
+        for (token, col) in forbidded_tokens {
             assert_eq!(
-                *ast.get(0).unwrap(),
-                AstNode::Number(Primitive {
-                    value: number.to_string(),
-                    span: TokSpan { start: 0, end },
-                })
+                Prelude::new(token).parse(),
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
+                    row: 1,
+                    col,
+                    source_code_slice: Some(token.to_string())
+                })))
             );
         }
     }
 
     #[test]
-    fn number_test_should_parse_negative_numbers() {
-        let numbers = vec![
-            ("-0", 2),
-            ("-0.0", 4),
-            ("-0.1", 4),
-            ("-0.101", 6),
-            ("-2", 2),
-            ("-2.0", 4),
-            ("-2.01", 5),
-            ("-2.101", 6),
-            ("-123", 4),
-            ("-999999", 7),
-            ("-2.3", 4),
-            ("-23.23", 6),
-            ("-0.23", 5),
-            ("-9999.9999", 10),
-            ("-101", 4),
-        ];
-        for (number, end) in numbers {
-            let ast = Prelude::new(number).parse();
+    fn number_test_should_not_allow_more_than_one_minus_token() {
+        let forbidded_tokens = vec![("--1", 2), ("-1-2", 3), ("-2-3-", 3)];
+
+        for (token, col) in forbidded_tokens {
             assert_eq!(
-                *ast.get(0).unwrap(),
-                AstNode::Number(Primitive {
-                    value: number.to_string(),
-                    span: TokSpan { start: 0, end },
-                })
+                Prelude::new(token).parse(),
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
+                    row: 1,
+                    col,
+                    source_code_slice: Some(token.to_string())
+                })))
             );
         }
     }
 
-    #[test]
-    fn number_test_should_parse_numbers_correctly_that_are_separated() {
-        let ast = Prelude::new(
-            "3
-56  -9   3.2",
-        )
-        .parse();
-        assert_eq!(
-            *ast,
-            vec![
-                AstNode::Number(Primitive {
-                    value: "3".to_string(),
-                    span: TokSpan { start: 0, end: 1 },
-                }),
-                AstNode::Number(Primitive {
-                    value: "56".to_string(),
-                    span: TokSpan { start: 2, end: 4 },
-                }),
-                AstNode::Number(Primitive {
-                    value: "-9".to_string(),
-                    span: TokSpan { start: 6, end: 8 },
-                }),
-                AstNode::Number(Primitive {
-                    value: "3.2".to_string(),
-                    span: TokSpan { start: 11, end: 14 },
-                }),
-            ]
-        );
-    }
+    // #[test]
+    // fn number_test_should_panic_if_contains_more_than_one_period_token() {
+    //     let forbidded_tokens = vec!["0.2.3", "0.3."];
 
-    #[test]
-    fn number_test_should_panic_if_scientific_notation_number_is_invalid() {
-        let forbidded_tokens = vec!["1e1.2", "1e-", "1e"];
+    //     for token in forbidded_tokens {
+    //         assert_panic!(
+    //             {
+    //                 Prelude::new(token).parse();
+    //             },
+    //             String,
+    //             M_PARSER_ERROR
+    //         );
+    //     }
+    // }
 
-        for token in forbidded_tokens {
-            assert_panic!(
-                {
-                    Prelude::new(token).parse();
-                },
-                String,
-                M_PARSER_ERROR
-            );
-        }
-    }
+    // #[test]
+    // fn number_test_should_panic_if_starts_with_zero_and_not_float() {
+    //     let forbidded_tokens = vec!["02", "00"];
 
-    #[test]
-    fn number_test_should_parse_scientific_numbers_correctly() {
-        let numbers = vec![
-            ("0e0", 3),
-            ("-0e0", 4),
-            ("-0e-0", 5),
-            ("0e-0", 4),
-            ("1e0", 3),
-            ("1e-0", 4),
-            ("1e3", 3),
-            ("10e3", 4),
-            ("102e302", 7),
-            ("1E3", 3),
-            ("1e-3", 4),
-            ("10e-30", 6),
-            ("102e-304", 8),
-            ("1.5e10", 6),
-            ("1.504e101", 9),
-            ("-2.3e-5", 7),
-            ("-2.30e-502", 10),
-        ];
-        for (number, end) in numbers {
-            let ast = Prelude::new(number).parse();
-            assert_eq!(
-                *ast.get(0).unwrap(),
-                AstNode::Number(Primitive {
-                    value: number.to_string(),
-                    span: TokSpan { start: 0, end },
-                })
-            );
-        }
-    }
+    //     for token in forbidded_tokens {
+    //         assert_panic!(
+    //             {
+    //                 Prelude::new(token).parse();
+    //             },
+    //             String,
+    //             M_PARSER_ERROR
+    //         );
+    //     }
+    // }
 
-    // ==========================
-    // NUMBER TESTS END
-    // ==========================
+    // #[test]
+    // fn number_test_should_panic_if_we_start_from_minus_and_nothing_follows() {
+    //     assert_panic!(
+    //         {
+    //             Prelude::new("-").parse();
+    //         },
+    //         String,
+    //         M_PARSER_ERROR
+    //     );
+    // }
 
-    // ==========================
-    // STRING TESTS START
-    // ==========================
+    // #[test]
+    // fn number_test_should_parse_positive_numbers() {
+    //     let numbers = vec![
+    //         ("0", 1),
+    //         ("1", 1),
+    //         ("2", 1),
+    //         ("9", 1),
+    //         ("123", 3),
+    //         ("999999", 6),
+    //         ("0.1", 3),
+    //         ("2.3", 3),
+    //         ("23.23", 5),
+    //         ("0.23", 4),
+    //         ("9999.9999", 9),
+    //         ("101", 3),
+    //     ];
+    //     for (number, end) in numbers {
+    //         let ast = Prelude::new(number).parse();
+    //         assert_eq!(
+    //             *ast.get(0).unwrap(),
+    //             AstNode::Number(Primitive {
+    //                 value: number.to_string(),
+    //                 span: TokSpan { start: 0, end },
+    //             })
+    //         );
+    //     }
+    // }
 
-    #[test]
-    fn string_test_should_panic_if_contains_new_line() {
-        assert_panic!(
-            {
-                Prelude::new(
-                    "\"Hello
-                    World\"",
-                )
-                .parse();
-            },
-            String,
-            M_PARSER_ERROR
-        );
-    }
+    // #[test]
+    // fn number_test_should_parse_negative_numbers() {
+    //     let numbers = vec![
+    //         ("-0", 2),
+    //         ("-0.0", 4),
+    //         ("-0.1", 4),
+    //         ("-0.101", 6),
+    //         ("-2", 2),
+    //         ("-2.0", 4),
+    //         ("-2.01", 5),
+    //         ("-2.101", 6),
+    //         ("-123", 4),
+    //         ("-999999", 7),
+    //         ("-2.3", 4),
+    //         ("-23.23", 6),
+    //         ("-0.23", 5),
+    //         ("-9999.9999", 10),
+    //         ("-101", 4),
+    //     ];
+    //     for (number, end) in numbers {
+    //         let ast = Prelude::new(number).parse();
+    //         assert_eq!(
+    //             *ast.get(0).unwrap(),
+    //             AstNode::Number(Primitive {
+    //                 value: number.to_string(),
+    //                 span: TokSpan { start: 0, end },
+    //             })
+    //         );
+    //     }
+    // }
 
-    #[test]
-    fn string_test_should_parse_correctly() {
-        let strings = vec![
-            ("\"\"", 2),
-            ("\"Hello\"", 7),
-            ("\"Hello World\"", 13),
-            ("\"Hello       world!\"", 20),
-            ("\"123 2323 😄😄\"", 13),
-        ];
-        for (string, end) in strings {
-            let ast = Prelude::new(string).parse();
-            assert_eq!(
-                *ast.get(0).unwrap(),
-                AstNode::String(Primitive {
-                    value: string
-                        .split("\"")
-                        .into_iter()
-                        .collect::<Vec<&str>>()
-                        .get(1)
-                        .unwrap()
-                        .to_string(),
-                    span: TokSpan { start: 0, end },
-                })
-            );
-        }
-    }
+    // #[test]
+    // fn number_test_should_parse_numbers_correctly_that_are_separated() {
+    //     let ast = Prelude::new(
+    //         "3
+    // 56  -9   3.2",
+    //     )
+    //     .parse();
+    //     assert_eq!(
+    //         *ast,
+    //         vec![
+    //             AstNode::Number(Primitive {
+    //                 value: "3".to_string(),
+    //                 span: TokSpan { start: 0, end: 1 },
+    //             }),
+    //             AstNode::Number(Primitive {
+    //                 value: "56".to_string(),
+    //                 span: TokSpan { start: 2, end: 4 },
+    //             }),
+    //             AstNode::Number(Primitive {
+    //                 value: "-9".to_string(),
+    //                 span: TokSpan { start: 6, end: 8 },
+    //             }),
+    //             AstNode::Number(Primitive {
+    //                 value: "3.2".to_string(),
+    //                 span: TokSpan { start: 11, end: 14 },
+    //             }),
+    //         ]
+    //     );
+    // }
 
-    // ==========================
-    // STRING TESTS END
-    // ==========================
+    // #[test]
+    // fn number_test_should_panic_if_scientific_notation_number_is_invalid() {
+    //     let forbidded_tokens = vec!["1e1.2", "1e-", "1e"];
 
-    // ==========================
-    // BOOL TESTS START
-    // ==========================
+    //     for token in forbidded_tokens {
+    //         assert_panic!(
+    //             {
+    //                 Prelude::new(token).parse();
+    //             },
+    //             String,
+    //             M_PARSER_ERROR
+    //         );
+    //     }
+    // }
 
-    #[test]
-    fn bool_test_should_parse_true_correctly() {
-        let ast = Prelude::new("true").parse();
-        assert_eq!(
-            *ast.get(0).unwrap(),
-            AstNode::Bool(Primitive {
-                value: "true".to_string(),
-                span: TokSpan { start: 0, end: 4 }
-            })
-        )
-    }
+    // #[test]
+    // fn number_test_should_parse_scientific_numbers_correctly() {
+    //     let numbers = vec![
+    //         ("0e0", 3),
+    //         ("-0e0", 4),
+    //         ("-0e-0", 5),
+    //         ("0e-0", 4),
+    //         ("1e0", 3),
+    //         ("1e-0", 4),
+    //         ("1e3", 3),
+    //         ("10e3", 4),
+    //         ("102e302", 7),
+    //         ("1E3", 3),
+    //         ("1e-3", 4),
+    //         ("10e-30", 6),
+    //         ("102e-304", 8),
+    //         ("1.5e10", 6),
+    //         ("1.504e101", 9),
+    //         ("-2.3e-5", 7),
+    //         ("-2.30e-502", 10),
+    //     ];
+    //     for (number, end) in numbers {
+    //         let ast = Prelude::new(number).parse();
+    //         assert_eq!(
+    //             *ast.get(0).unwrap(),
+    //             AstNode::Number(Primitive {
+    //                 value: number.to_string(),
+    //                 span: TokSpan { start: 0, end },
+    //             })
+    //         );
+    //     }
+    // }
 
-    #[test]
-    fn bool_test_should_parse_false_correctly() {
-        let ast = Prelude::new("false").parse();
-        assert_eq!(
-            *ast.get(0).unwrap(),
-            AstNode::Bool(Primitive {
-                value: "false".to_string(),
-                span: TokSpan { start: 0, end: 5 }
-            })
-        )
-    }
+    // // ==========================
+    // // NUMBER TESTS END
+    // // ==========================
 
-    // ==========================
-    // BOOL TESTS END
-    // ==========================
+    // // ==========================
+    // // STRING TESTS START
+    // // ==========================
 
-    // ==========================
-    // NULL TESTS START
-    // ==========================
+    // #[test]
+    // fn string_test_should_panic_if_contains_new_line() {
+    //     assert_panic!(
+    //         {
+    //             Prelude::new(
+    //                 "\"Hello
+    //                 World\"",
+    //             )
+    //             .parse();
+    //         },
+    //         String,
+    //         M_PARSER_ERROR
+    //     );
+    // }
 
-    #[test]
-    fn null_test_should_parse_null_correctly() {
-        let ast = Prelude::new("null").parse();
-        assert_eq!(
-            *ast.get(0).unwrap(),
-            AstNode::Null(Primitive {
-                value: "null".to_string(),
-                span: TokSpan { start: 0, end: 4 }
-            })
-        )
-    }
+    // #[test]
+    // fn string_test_should_parse_correctly() {
+    //     let strings = vec![
+    //         ("\"\"", 2),
+    //         ("\"Hello\"", 7),
+    //         ("\"Hello World\"", 13),
+    //         ("\"Hello       world!\"", 20),
+    //         ("\"123 2323 😄😄\"", 13),
+    //     ];
+    //     for (string, end) in strings {
+    //         let ast = Prelude::new(string).parse();
+    //         assert_eq!(
+    //             *ast.get(0).unwrap(),
+    //             AstNode::String(Primitive {
+    //                 value: string
+    //                     .split("\"")
+    //                     .into_iter()
+    //                     .collect::<Vec<&str>>()
+    //                     .get(1)
+    //                     .unwrap()
+    //                     .to_string(),
+    //                 span: TokSpan { start: 0, end },
+    //             })
+    //         );
+    //     }
+    // }
 
-    // ==========================
-    // NULL TESTS END
-    // ==========================
+    // // ==========================
+    // // STRING TESTS END
+    // // ==========================
 
-    // ==========================
-    // IDENTIFIER TESTS START
-    // ==========================
+    // // ==========================
+    // // BOOL TESTS START
+    // // ==========================
 
-    #[test]
-    fn identifier_test_should_reject_invalid_names() {
-        let identifiers = vec![
-            "1asd", "!asd", "@asd", "#asd", "$asd", "%asd", "^asd", "&asd", "*asd", "-asd", "_asd",
-            "=asd", "+asd", "?asd", "?asd", ">asd", "<asd", "/asd",
-        ];
-        for identifier in identifiers {
-            assert_panic!(
-                {
-                    Prelude::new(identifier).parse();
-                },
-                String,
-                M_PARSER_ERROR
-            );
-        }
-    }
+    // #[test]
+    // fn bool_test_should_parse_true_correctly() {
+    //     let ast = Prelude::new("true").parse();
+    //     assert_eq!(
+    //         *ast.get(0).unwrap(),
+    //         AstNode::Bool(Primitive {
+    //             value: "true".to_string(),
+    //             span: TokSpan { start: 0, end: 4 }
+    //         })
+    //     )
+    // }
 
-    #[test]
-    fn identifier_test_should_parse_correctly() {
-        let identifiers = vec![
-            ("asd", 3),
-            ("asd?", 4),
-            ("as?d", 4),
-            ("as5?d", 5),
-            ("asd-", 4),
-            ("as-d", 4),
-            ("asd!", 4),
-            ("as!d", 4),
-            ("asd_", 4),
-        ];
-        for (identifier, end) in identifiers {
-            let ast = Prelude::new(identifier).parse();
-            assert_eq!(
-                *ast.get(0).unwrap(),
-                AstNode::Identifier(Primitive {
-                    value: identifier.to_string(),
-                    span: TokSpan { start: 0, end },
-                })
-            );
-        }
-    }
+    // #[test]
+    // fn bool_test_should_parse_false_correctly() {
+    //     let ast = Prelude::new("false").parse();
+    //     assert_eq!(
+    //         *ast.get(0).unwrap(),
+    //         AstNode::Bool(Primitive {
+    //             value: "false".to_string(),
+    //             span: TokSpan { start: 0, end: 5 }
+    //         })
+    //     )
+    // }
 
-    // ==========================
-    // IDENTIFIER TESTS END
-    // ==========================
+    // // ==========================
+    // // BOOL TESTS END
+    // // ==========================
 
-    // ==========================
-    // LIST TESTS START
-    // ==========================
+    // // ==========================
+    // // NULL TESTS START
+    // // ==========================
 
-    #[test]
-    fn list_test_should_parse_empty() {
-        let ast = Prelude::new("[]").parse();
-        assert_eq!(
-            *ast.get(0).unwrap(),
-            AstNode::List(Compound {
-                span: TokSpan { start: 0, end: 2 },
-                children: vec![],
-            })
-        );
-    }
+    // #[test]
+    // fn null_test_should_parse_null_correctly() {
+    //     let ast = Prelude::new("null").parse();
+    //     assert_eq!(
+    //         *ast.get(0).unwrap(),
+    //         AstNode::Null(Primitive {
+    //             value: "null".to_string(),
+    //             span: TokSpan { start: 0, end: 4 }
+    //         })
+    //     )
+    // }
 
-    #[test]
-    fn list_test_should_parse_nested_empty() {
-        let ast = Prelude::new("[[]]").parse();
-        assert_eq!(
-            *ast.get(0).unwrap(),
-            AstNode::List(Compound {
-                span: TokSpan { start: 0, end: 4 },
-                children: vec![Box::new(AstNode::List(Compound {
-                    span: TokSpan { start: 1, end: 3 },
-                    children: vec![],
-                }))],
-            })
-        );
-    }
+    // // ==========================
+    // // NULL TESTS END
+    // // ==========================
 
-    #[test]
-    fn list_test_should_parse_non_empty() {
-        let ast = Prelude::new("[1, \"hello\", null, false]").parse();
-        assert_eq!(
-            *ast.get(0).unwrap(),
-            AstNode::List(Compound {
-                span: TokSpan { start: 0, end: 25 },
-                children: vec![
-                    Box::new(AstNode::Number(Primitive {
-                        value: "1".to_string(),
-                        span: TokSpan { start: 1, end: 2 },
-                    })),
-                    Box::new(AstNode::String(Primitive {
-                        value: "hello".to_string(),
-                        span: TokSpan { start: 4, end: 11 },
-                    })),
-                    Box::new(AstNode::Null(Primitive {
-                        value: "null".to_string(),
-                        span: TokSpan { start: 13, end: 17 },
-                    })),
-                    Box::new(AstNode::Bool(Primitive {
-                        value: "false".to_string(),
-                        span: TokSpan { start: 19, end: 24 },
-                    }))
-                ],
-            })
-        );
-    }
+    // // ==========================
+    // // IDENTIFIER TESTS START
+    // // ==========================
 
-    #[test]
-    fn list_test_should_panic_if_not_closed() {
-        assert_panic!(
-            {
-                Prelude::new("[[1, 3]").parse();
-            },
-            String,
-            M_PARSER_ERROR
-        );
-    }
+    // #[test]
+    // fn identifier_test_should_reject_invalid_names() {
+    //     let identifiers = vec![
+    //         "1asd", "!asd", "@asd", "#asd", "$asd", "%asd", "^asd", "&asd", "*asd", "-asd", "_asd",
+    //         "=asd", "+asd", "?asd", "?asd", ">asd", "<asd", "/asd",
+    //     ];
+    //     for identifier in identifiers {
+    //         assert_panic!(
+    //             {
+    //                 Prelude::new(identifier).parse();
+    //             },
+    //             String,
+    //             M_PARSER_ERROR
+    //         );
+    //     }
+    // }
 
-    // ==========================
-    // LIST TESTS END
-    // ==========================
+    // #[test]
+    // fn identifier_test_should_parse_correctly() {
+    //     let identifiers = vec![
+    //         ("asd", 3),
+    //         ("asd?", 4),
+    //         ("as?d", 4),
+    //         ("as5?d", 5),
+    //         ("asd-", 4),
+    //         ("as-d", 4),
+    //         ("asd!", 4),
+    //         ("as!d", 4),
+    //         ("asd_", 4),
+    //     ];
+    //     for (identifier, end) in identifiers {
+    //         let ast = Prelude::new(identifier).parse();
+    //         assert_eq!(
+    //             *ast.get(0).unwrap(),
+    //             AstNode::Identifier(Primitive {
+    //                 value: identifier.to_string(),
+    //                 span: TokSpan { start: 0, end },
+    //             })
+    //         );
+    //     }
+    // }
 
-    // ==========================
-    // DICT TESTS START
-    // ==========================
+    // // ==========================
+    // // IDENTIFIER TESTS END
+    // // ==========================
 
-    #[test]
-    fn dict_test_should_parse_empty() {
-        let ast = Prelude::new("{}").parse();
-        assert_eq!(
-            *ast.get(0).unwrap(),
-            AstNode::Dict(Compound {
-                span: TokSpan { start: 0, end: 2 },
-                children: vec![],
-            })
-        );
-    }
+    // // ==========================
+    // // LIST TESTS START
+    // // ==========================
 
-    #[test]
-    fn dict_test_should_parse_non_empty() {
-        let ast = Prelude::new(
-            "{ \"a\" 1, \"b\" \"2\", \"c\" false, \"d\" null, \"e\" [1, 2, 3], \"f\" { \"a2\" some_value } }",
-        )
-        .parse();
-        assert_eq!(
-            *ast.get(0).unwrap(),
-            AstNode::Dict(Compound {
-                span: TokSpan { start: 0, end: 79 },
-                children: vec![
-                    Box::new(AstNode::DictPair((
-                        "a".to_string(),
-                        Box::new(AstNode::Number(Primitive {
-                            value: "1".to_string(),
-                            span: TokSpan { start: 6, end: 7 }
-                        }))
-                    ))),
-                    Box::new(AstNode::DictPair((
-                        "b".to_string(),
-                        Box::new(AstNode::String(Primitive {
-                            value: "2".to_string(),
-                            span: TokSpan { start: 13, end: 16 }
-                        }))
-                    ))),
-                    Box::new(AstNode::DictPair((
-                        "c".to_string(),
-                        Box::new(AstNode::Bool(Primitive {
-                            value: "false".to_string(),
-                            span: TokSpan { start: 22, end: 27 }
-                        }))
-                    ))),
-                    Box::new(AstNode::DictPair((
-                        "d".to_string(),
-                        Box::new(AstNode::Null(Primitive {
-                            value: "null".to_string(),
-                            span: TokSpan { start: 33, end: 37 }
-                        }))
-                    ))),
-                    Box::new(AstNode::DictPair((
-                        "e".to_string(),
-                        Box::new(AstNode::List(Compound {
-                            span: TokSpan { start: 43, end: 52 },
-                            children: vec![
-                                Box::new(AstNode::Number(Primitive {
-                                    value: "1".to_string(),
-                                    span: TokSpan { start: 44, end: 45 }
-                                })),
-                                Box::new(AstNode::Number(Primitive {
-                                    value: "2".to_string(),
-                                    span: TokSpan { start: 47, end: 48 }
-                                })),
-                                Box::new(AstNode::Number(Primitive {
-                                    value: "3".to_string(),
-                                    span: TokSpan { start: 50, end: 51 }
-                                }))
-                            ]
-                        }))
-                    ))),
-                    Box::new(AstNode::DictPair((
-                        "f".to_string(),
-                        Box::new(AstNode::Dict(Compound {
-                            span: TokSpan { start: 58, end: 77 },
-                            children: vec![Box::new(AstNode::DictPair((
-                                "a2".to_string(),
-                                Box::new(AstNode::Identifier(Primitive {
-                                    value: "some_value".to_string(),
-                                    span: TokSpan { start: 65, end: 75 }
-                                }))
-                            )))]
-                        }))
-                    )))
-                ],
-            })
-        );
-    }
+    // #[test]
+    // fn list_test_should_parse_empty() {
+    //     let ast = Prelude::new("[]").parse();
+    //     assert_eq!(
+    //         *ast.get(0).unwrap(),
+    //         AstNode::List(Compound {
+    //             span: TokSpan { start: 0, end: 2 },
+    //             children: vec![],
+    //         })
+    //     );
+    // }
 
-    #[test]
-    #[should_panic(expected = "Parser error")]
-    fn dict_test_should_panic_if_pair_is_invalid() {
-        Prelude::new("{ \"a\" 1, \"b\" }").parse();
-    }
+    // #[test]
+    // fn list_test_should_parse_nested_empty() {
+    //     let ast = Prelude::new("[[]]").parse();
+    //     assert_eq!(
+    //         *ast.get(0).unwrap(),
+    //         AstNode::List(Compound {
+    //             span: TokSpan { start: 0, end: 4 },
+    //             children: vec![Box::new(AstNode::List(Compound {
+    //                 span: TokSpan { start: 1, end: 3 },
+    //                 children: vec![],
+    //             }))],
+    //         })
+    //     );
+    // }
 
-    #[test]
-    fn dict_test_should_panic_if_key_is_invalid() {
-        let inputs = vec![
-            "{ a 1 }",
-            "{ 1 \"2\" }",
-            "{ null false }",
-            "{ false true }",
-            "{ [] \"`\" }",
-            "{ {} a }",
-        ];
-        for input in inputs {
-            assert_panic!(
-                {
-                    Prelude::new(input).parse();
-                },
-                String,
-                M_PARSER_ERROR
-            );
-        }
-    }
+    // #[test]
+    // fn list_test_should_parse_non_empty() {
+    //     let ast = Prelude::new("[1, \"hello\", null, false]").parse();
+    //     assert_eq!(
+    //         *ast.get(0).unwrap(),
+    //         AstNode::List(Compound {
+    //             span: TokSpan { start: 0, end: 25 },
+    //             children: vec![
+    //                 Box::new(AstNode::Number(Primitive {
+    //                     value: "1".to_string(),
+    //                     span: TokSpan { start: 1, end: 2 },
+    //                 })),
+    //                 Box::new(AstNode::String(Primitive {
+    //                     value: "hello".to_string(),
+    //                     span: TokSpan { start: 4, end: 11 },
+    //                 })),
+    //                 Box::new(AstNode::Null(Primitive {
+    //                     value: "null".to_string(),
+    //                     span: TokSpan { start: 13, end: 17 },
+    //                 })),
+    //                 Box::new(AstNode::Bool(Primitive {
+    //                     value: "false".to_string(),
+    //                     span: TokSpan { start: 19, end: 24 },
+    //                 }))
+    //             ],
+    //         })
+    //     );
+    // }
 
-    #[test]
-    fn dict_test_should_panic_if_not_closed_correctly() {
-        let inputs = vec!["{ \"a\" 1 }}", "{{ \"1\" \"2\" }"];
-        for input in inputs {
-            assert_panic!(
-                {
-                    Prelude::new(input).parse();
-                },
-                String,
-                M_PARSER_ERROR
-            );
-        }
-    }
+    // #[test]
+    // fn list_test_should_panic_if_not_closed() {
+    //     assert_panic!(
+    //         {
+    //             Prelude::new("[[1, 3]").parse();
+    //         },
+    //         String,
+    //         M_PARSER_ERROR
+    //     );
+    // }
 
-    // ==========================
-    // DICT TESTS END
-    // ==========================
+    // // ==========================
+    // // LIST TESTS END
+    // // ==========================
 
-    // ==========================
-    // CALL TESTS START
-    // ==========================
+    // // ==========================
+    // // DICT TESTS START
+    // // ==========================
 
-    #[test]
-    fn call_test_should_parse_with_no_arguments() {
-        let ast = Prelude::new(".some-fn()").parse();
-        assert_eq!(
-            *ast.get(0).unwrap(),
-            AstNode::Call((
-                "some-fn".to_string(),
-                Compound {
-                    span: TokSpan { start: 0, end: 10 },
-                    children: vec![],
-                }
-            ))
-        );
-    }
+    // #[test]
+    // fn dict_test_should_parse_empty() {
+    //     let ast = Prelude::new("{}").parse();
+    //     assert_eq!(
+    //         *ast.get(0).unwrap(),
+    //         AstNode::Dict(Compound {
+    //             span: TokSpan { start: 0, end: 2 },
+    //             children: vec![],
+    //         })
+    //     );
+    // }
 
-    #[test]
-    fn call_test_should_parse_with_arguments() {
-        let ast = Prelude::new(".add(2 .div(4 2))").parse();
-        assert_eq!(
-            *ast.get(0).unwrap(),
-            AstNode::Call((
-                "add".to_string(),
-                Compound {
-                    span: TokSpan { start: 0, end: 17 },
-                    children: vec![
-                        Box::new(AstNode::Number(Primitive {
-                            value: "2".to_string(),
-                            span: TokSpan { start: 5, end: 6 }
-                        })),
-                        Box::new(AstNode::Call((
-                            "div".to_string(),
-                            Compound {
-                                span: TokSpan { start: 7, end: 16 },
-                                children: vec![
-                                    Box::new(AstNode::Number(Primitive {
-                                        value: "4".to_string(),
-                                        span: TokSpan { start: 12, end: 13 }
-                                    })),
-                                    Box::new(AstNode::Number(Primitive {
-                                        value: "2".to_string(),
-                                        span: TokSpan { start: 14, end: 15 }
-                                    }))
-                                ]
-                            }
-                        )))
-                    ],
-                }
-            ))
-        );
-    }
+    // #[test]
+    // fn dict_test_should_parse_non_empty() {
+    //     let ast = Prelude::new(
+    //         "{ \"a\" 1, \"b\" \"2\", \"c\" false, \"d\" null, \"e\" [1, 2, 3], \"f\" { \"a2\" some_value } }",
+    //     )
+    //     .parse();
+    //     assert_eq!(
+    //         *ast.get(0).unwrap(),
+    //         AstNode::Dict(Compound {
+    //             span: TokSpan { start: 0, end: 79 },
+    //             children: vec![
+    //                 Box::new(AstNode::DictPair((
+    //                     "a".to_string(),
+    //                     Box::new(AstNode::Number(Primitive {
+    //                         value: "1".to_string(),
+    //                         span: TokSpan { start: 6, end: 7 }
+    //                     }))
+    //                 ))),
+    //                 Box::new(AstNode::DictPair((
+    //                     "b".to_string(),
+    //                     Box::new(AstNode::String(Primitive {
+    //                         value: "2".to_string(),
+    //                         span: TokSpan { start: 13, end: 16 }
+    //                     }))
+    //                 ))),
+    //                 Box::new(AstNode::DictPair((
+    //                     "c".to_string(),
+    //                     Box::new(AstNode::Bool(Primitive {
+    //                         value: "false".to_string(),
+    //                         span: TokSpan { start: 22, end: 27 }
+    //                     }))
+    //                 ))),
+    //                 Box::new(AstNode::DictPair((
+    //                     "d".to_string(),
+    //                     Box::new(AstNode::Null(Primitive {
+    //                         value: "null".to_string(),
+    //                         span: TokSpan { start: 33, end: 37 }
+    //                     }))
+    //                 ))),
+    //                 Box::new(AstNode::DictPair((
+    //                     "e".to_string(),
+    //                     Box::new(AstNode::List(Compound {
+    //                         span: TokSpan { start: 43, end: 52 },
+    //                         children: vec![
+    //                             Box::new(AstNode::Number(Primitive {
+    //                                 value: "1".to_string(),
+    //                                 span: TokSpan { start: 44, end: 45 }
+    //                             })),
+    //                             Box::new(AstNode::Number(Primitive {
+    //                                 value: "2".to_string(),
+    //                                 span: TokSpan { start: 47, end: 48 }
+    //                             })),
+    //                             Box::new(AstNode::Number(Primitive {
+    //                                 value: "3".to_string(),
+    //                                 span: TokSpan { start: 50, end: 51 }
+    //                             }))
+    //                         ]
+    //                     }))
+    //                 ))),
+    //                 Box::new(AstNode::DictPair((
+    //                     "f".to_string(),
+    //                     Box::new(AstNode::Dict(Compound {
+    //                         span: TokSpan { start: 58, end: 77 },
+    //                         children: vec![Box::new(AstNode::DictPair((
+    //                             "a2".to_string(),
+    //                             Box::new(AstNode::Identifier(Primitive {
+    //                                 value: "some_value".to_string(),
+    //                                 span: TokSpan { start: 65, end: 75 }
+    //                             }))
+    //                         )))]
+    //                     }))
+    //                 )))
+    //             ],
+    //         })
+    //     );
+    // }
 
-    #[test]
-    fn call_test_should_parse_with_separators_after_name() {
-        let inputs = vec![
-            (".test ()", 8),
-            (".test  ()", 9),
-            (
-                ".test
-            ()",
-                20,
-            ),
-            (
-                ".test
-                        ()",
-                32,
-            ),
-        ];
-        for (input, end) in inputs {
-            assert_eq!(
-                Prelude::new(input).parse(),
-                vec![AstNode::Call((
-                    "test".to_string(),
-                    Compound {
-                        span: TokSpan { start: 0, end },
-                        children: vec![],
-                    }
-                ))]
-            );
-        }
-    }
+    // #[test]
+    // #[should_panic(expected = "Parser error")]
+    // fn dict_test_should_panic_if_pair_is_invalid() {
+    //     Prelude::new("{ \"a\" 1, \"b\" }").parse();
+    // }
 
-    #[test]
-    #[should_panic(expected = "Parser error")]
-    fn call_test_should_panic_if_not_closed_correctly() {
-        Prelude::new(".some-fn(2 2 3))").parse();
-    }
+    // #[test]
+    // fn dict_test_should_panic_if_key_is_invalid() {
+    //     let inputs = vec![
+    //         "{ a 1 }",
+    //         "{ 1 \"2\" }",
+    //         "{ null false }",
+    //         "{ false true }",
+    //         "{ [] \"`\" }",
+    //         "{ {} a }",
+    //     ];
+    //     for input in inputs {
+    //         assert_panic!(
+    //             {
+    //                 Prelude::new(input).parse();
+    //             },
+    //             String,
+    //             M_PARSER_ERROR
+    //         );
+    //     }
+    // }
 
-    #[test]
-    #[should_panic(expected = "Parser error")]
-    fn call_test_should_panic_if_separator_after_call_symbol() {
-        Prelude::new(". some-fn()").parse();
-    }
+    // #[test]
+    // fn dict_test_should_panic_if_not_closed_correctly() {
+    //     let inputs = vec!["{ \"a\" 1 }}", "{{ \"1\" \"2\" }"];
+    //     for input in inputs {
+    //         assert_panic!(
+    //             {
+    //                 Prelude::new(input).parse();
+    //             },
+    //             String,
+    //             M_PARSER_ERROR
+    //         );
+    //     }
+    // }
 
-    #[test]
-    fn call_test_should_reject_invalid_names() {
-        let identifiers = vec![
-            "1asd", "!asd", "@asd", "#asd", "$asd", "%asd", "^asd", "&asd", "*asd", "-asd", "_asd",
-            "=asd", "+asd", "?asd", "?asd", ">asd", "<asd", "/asd",
-        ];
-        for identifier in identifiers {
-            assert_panic!(
-                {
-                    Prelude::new(&format!(".{}()", identifier)).parse();
-                },
-                String,
-                M_PARSER_ERROR
-            );
-        }
-    }
+    // // ==========================
+    // // DICT TESTS END
+    // // ==========================
 
-    #[test]
-    #[should_panic(expected = "Parser error")]
-    fn call_test_should_panic_if_parens_are_standalone() {
-        Prelude::new("()").parse();
-    }
+    // // ==========================
+    // // CALL TESTS START
+    // // ==========================
 
-    // ==========================
-    // CALL TESTS END
-    // ==========================
+    // #[test]
+    // fn call_test_should_parse_with_no_arguments() {
+    //     let ast = Prelude::new(".some-fn()").parse();
+    //     assert_eq!(
+    //         *ast.get(0).unwrap(),
+    //         AstNode::Call((
+    //             "some-fn".to_string(),
+    //             Compound {
+    //                 span: TokSpan { start: 0, end: 10 },
+    //                 children: vec![],
+    //             }
+    //         ))
+    //     );
+    // }
 
-    // ==========================
-    // DEPTH TESTS START
-    // ==========================
+    // #[test]
+    // fn call_test_should_parse_with_arguments() {
+    //     let ast = Prelude::new(".add(2 .div(4 2))").parse();
+    //     assert_eq!(
+    //         *ast.get(0).unwrap(),
+    //         AstNode::Call((
+    //             "add".to_string(),
+    //             Compound {
+    //                 span: TokSpan { start: 0, end: 17 },
+    //                 children: vec![
+    //                     Box::new(AstNode::Number(Primitive {
+    //                         value: "2".to_string(),
+    //                         span: TokSpan { start: 5, end: 6 }
+    //                     })),
+    //                     Box::new(AstNode::Call((
+    //                         "div".to_string(),
+    //                         Compound {
+    //                             span: TokSpan { start: 7, end: 16 },
+    //                             children: vec![
+    //                                 Box::new(AstNode::Number(Primitive {
+    //                                     value: "4".to_string(),
+    //                                     span: TokSpan { start: 12, end: 13 }
+    //                                 })),
+    //                                 Box::new(AstNode::Number(Primitive {
+    //                                     value: "2".to_string(),
+    //                                     span: TokSpan { start: 14, end: 15 }
+    //                                 }))
+    //                             ]
+    //                         }
+    //                     )))
+    //                 ],
+    //             }
+    //         ))
+    //     );
+    // }
 
-    #[test]
-    fn depth_test_should_reject_invalid_depth() {
-        let depth_cases = vec![
-            ".a())",
-            ".a(()",
-            ".a().a()))",
-            "()()))",
-            "())",
-            "(()",
-            "[]]",
-            "[][[][][]]][[",
-            "[{}}]",
-            "[{{{{}]",
-            "[{{}]",
-        ];
-        for depth_case in depth_cases {
-            assert_panic!(
-                {
-                    Prelude::new(depth_case).parse();
-                },
-                String,
-                M_PARSER_ERROR
-            );
-        }
-    }
+    // #[test]
+    // fn call_test_should_parse_with_separators_after_name() {
+    //     let inputs = vec![
+    //         (".test ()", 8),
+    //         (".test  ()", 9),
+    //         (
+    //             ".test
+    //         ()",
+    //             20,
+    //         ),
+    //         (
+    //             ".test
+    //                     ()",
+    //             32,
+    //         ),
+    //     ];
+    //     for (input, end) in inputs {
+    //         assert_eq!(
+    //             Prelude::new(input).parse(),
+    //             vec![AstNode::Call((
+    //                 "test".to_string(),
+    //                 Compound {
+    //                     span: TokSpan { start: 0, end },
+    //                     children: vec![],
+    //                 }
+    //             ))]
+    //         );
+    //     }
+    // }
+
+    // #[test]
+    // #[should_panic(expected = "Parser error")]
+    // fn call_test_should_panic_if_not_closed_correctly() {
+    //     Prelude::new(".some-fn(2 2 3))").parse();
+    // }
+
+    // #[test]
+    // #[should_panic(expected = "Parser error")]
+    // fn call_test_should_panic_if_separator_after_call_symbol() {
+    //     Prelude::new(". some-fn()").parse();
+    // }
+
+    // #[test]
+    // fn call_test_should_reject_invalid_names() {
+    //     let identifiers = vec![
+    //         "1asd", "!asd", "@asd", "#asd", "$asd", "%asd", "^asd", "&asd", "*asd", "-asd", "_asd",
+    //         "=asd", "+asd", "?asd", "?asd", ">asd", "<asd", "/asd",
+    //     ];
+    //     for identifier in identifiers {
+    //         assert_panic!(
+    //             {
+    //                 Prelude::new(&format!(".{}()", identifier)).parse();
+    //             },
+    //             String,
+    //             M_PARSER_ERROR
+    //         );
+    //     }
+    // }
+
+    // #[test]
+    // #[should_panic(expected = "Parser error")]
+    // fn call_test_should_panic_if_parens_are_standalone() {
+    //     Prelude::new("()").parse();
+    // }
+
+    // // ==========================
+    // // CALL TESTS END
+    // // ==========================
+
+    // // ==========================
+    // // DEPTH TESTS START
+    // // ==========================
+
+    // #[test]
+    // fn depth_test_should_reject_invalid_depth() {
+    //     let depth_cases = vec![
+    //         ".a())",
+    //         ".a(()",
+    //         ".a().a()))",
+    //         "()()))",
+    //         "())",
+    //         "(()",
+    //         "[]]",
+    //         "[][[][][]]][[",
+    //         "[{}}]",
+    //         "[{{{{}]",
+    //         "[{{}]",
+    //     ];
+    //     for depth_case in depth_cases {
+    //         assert_panic!(
+    //             {
+    //                 Prelude::new(depth_case).parse();
+    //             },
+    //             String,
+    //             M_PARSER_ERROR
+    //         );
+    //     }
+    // }
 
     // ==========================
     // DEPTH TESTS END

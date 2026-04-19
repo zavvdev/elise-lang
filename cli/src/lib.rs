@@ -1,3 +1,8 @@
+/**
+ * This file is a boundary between implementation details and
+ * a program consumer. It must only expose functions that are
+ * necessary for running the program.
+ */
 pub mod conf;
 pub mod fsys;
 
@@ -48,7 +53,7 @@ pub fn run<'a>(
     config: &'a ModeRunConf,
 ) -> Result<RunResult<'a>, LangErr> {
     let start = Instant::now();
-    let ast = Prelude::new(&source_code).parse();
+    let ast = Prelude::new(&source_code).parse()?;
 
     println!("ast: {:#?}", ast);
 
