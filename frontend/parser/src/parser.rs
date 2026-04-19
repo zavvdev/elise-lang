@@ -669,183 +669,188 @@ mod tests {
         }
     }
 
-    // #[test]
-    // fn number_test_should_panic_if_contains_more_than_one_period_token() {
-    //     let forbidded_tokens = vec!["0.2.3", "0.3."];
+    #[test]
+    fn number_test_should_not_allow_more_than_one_period_token() {
+        let forbidded_tokens = vec![("0.2.3", 4), ("0.3.", 4)];
 
-    //     for token in forbidded_tokens {
-    //         assert_panic!(
-    //             {
-    //                 Prelude::new(token).parse();
-    //             },
-    //             String,
-    //             M_PARSER_ERROR
-    //         );
-    //     }
-    // }
+        for (token, col) in forbidded_tokens {
+            assert_eq!(
+                Prelude::new(token).parse(),
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
+                    row: 1,
+                    col,
+                    source_code_slice: Some(token.to_string())
+                })))
+            );
+        }
+    }
 
-    // #[test]
-    // fn number_test_should_panic_if_starts_with_zero_and_not_float() {
-    //     let forbidded_tokens = vec!["02", "00"];
+    #[test]
+    fn number_test_should_not_allow_start_with_zero_which_not_float() {
+        let forbidded_tokens = vec![("02", 2), ("00", 2)];
 
-    //     for token in forbidded_tokens {
-    //         assert_panic!(
-    //             {
-    //                 Prelude::new(token).parse();
-    //             },
-    //             String,
-    //             M_PARSER_ERROR
-    //         );
-    //     }
-    // }
+        for (token, col) in forbidded_tokens {
+            assert_eq!(
+                Prelude::new(token).parse(),
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
+                    row: 1,
+                    col,
+                    source_code_slice: Some(token.to_string())
+                })))
+            );
+        }
+    }
 
-    // #[test]
-    // fn number_test_should_panic_if_we_start_from_minus_and_nothing_follows() {
-    //     assert_panic!(
-    //         {
-    //             Prelude::new("-").parse();
-    //         },
-    //         String,
-    //         M_PARSER_ERROR
-    //     );
-    // }
+    #[test]
+    fn number_test_should_not_allow_start_from_minus_if_nothing_follows() {
+        let code = "-".to_string();
+        assert_eq!(
+            Prelude::new(&code).parse(),
+            Err(Parser(ParserErr::InvalNum(ParserErrInfo {
+                row: 1,
+                col: 2,
+                source_code_slice: Some(code)
+            })))
+        );
+    }
 
-    // #[test]
-    // fn number_test_should_parse_positive_numbers() {
-    //     let numbers = vec![
-    //         ("0", 1),
-    //         ("1", 1),
-    //         ("2", 1),
-    //         ("9", 1),
-    //         ("123", 3),
-    //         ("999999", 6),
-    //         ("0.1", 3),
-    //         ("2.3", 3),
-    //         ("23.23", 5),
-    //         ("0.23", 4),
-    //         ("9999.9999", 9),
-    //         ("101", 3),
-    //     ];
-    //     for (number, end) in numbers {
-    //         let ast = Prelude::new(number).parse();
-    //         assert_eq!(
-    //             *ast.get(0).unwrap(),
-    //             AstNode::Number(Primitive {
-    //                 value: number.to_string(),
-    //                 span: TokSpan { start: 0, end },
-    //             })
-    //         );
-    //     }
-    // }
+    #[test]
+    fn number_test_should_parse_positive_numbers() {
+        let numbers = vec![
+            ("0", 1),
+            ("1", 1),
+            ("2", 1),
+            ("9", 1),
+            ("123", 3),
+            ("999999", 6),
+            ("0.1", 3),
+            ("2.3", 3),
+            ("23.23", 5),
+            ("0.23", 4),
+            ("9999.9999", 9),
+            ("101", 3),
+        ];
+        for (number, end) in numbers {
+            let ast = Prelude::new(number).parse();
+            assert_eq!(
+                ast,
+                Ok(vec![AstNode::Number(Primitive {
+                    value: number.to_string(),
+                    span: TokSpan { start: 0, end },
+                })])
+            );
+        }
+    }
 
-    // #[test]
-    // fn number_test_should_parse_negative_numbers() {
-    //     let numbers = vec![
-    //         ("-0", 2),
-    //         ("-0.0", 4),
-    //         ("-0.1", 4),
-    //         ("-0.101", 6),
-    //         ("-2", 2),
-    //         ("-2.0", 4),
-    //         ("-2.01", 5),
-    //         ("-2.101", 6),
-    //         ("-123", 4),
-    //         ("-999999", 7),
-    //         ("-2.3", 4),
-    //         ("-23.23", 6),
-    //         ("-0.23", 5),
-    //         ("-9999.9999", 10),
-    //         ("-101", 4),
-    //     ];
-    //     for (number, end) in numbers {
-    //         let ast = Prelude::new(number).parse();
-    //         assert_eq!(
-    //             *ast.get(0).unwrap(),
-    //             AstNode::Number(Primitive {
-    //                 value: number.to_string(),
-    //                 span: TokSpan { start: 0, end },
-    //             })
-    //         );
-    //     }
-    // }
+    #[test]
+    fn number_test_should_parse_negative_numbers() {
+        let numbers = vec![
+            ("-0", 2),
+            ("-0.0", 4),
+            ("-0.1", 4),
+            ("-0.101", 6),
+            ("-2", 2),
+            ("-2.0", 4),
+            ("-2.01", 5),
+            ("-2.101", 6),
+            ("-123", 4),
+            ("-999999", 7),
+            ("-2.3", 4),
+            ("-23.23", 6),
+            ("-0.23", 5),
+            ("-9999.9999", 10),
+            ("-101", 4),
+        ];
+        for (number, end) in numbers {
+            let ast = Prelude::new(number).parse();
+            assert_eq!(
+                ast,
+                Ok(vec![AstNode::Number(Primitive {
+                    value: number.to_string(),
+                    span: TokSpan { start: 0, end },
+                })])
+            );
+        }
+    }
 
-    // #[test]
-    // fn number_test_should_parse_numbers_correctly_that_are_separated() {
-    //     let ast = Prelude::new(
-    //         "3
-    // 56  -9   3.2",
-    //     )
-    //     .parse();
-    //     assert_eq!(
-    //         *ast,
-    //         vec![
-    //             AstNode::Number(Primitive {
-    //                 value: "3".to_string(),
-    //                 span: TokSpan { start: 0, end: 1 },
-    //             }),
-    //             AstNode::Number(Primitive {
-    //                 value: "56".to_string(),
-    //                 span: TokSpan { start: 2, end: 4 },
-    //             }),
-    //             AstNode::Number(Primitive {
-    //                 value: "-9".to_string(),
-    //                 span: TokSpan { start: 6, end: 8 },
-    //             }),
-    //             AstNode::Number(Primitive {
-    //                 value: "3.2".to_string(),
-    //                 span: TokSpan { start: 11, end: 14 },
-    //             }),
-    //         ]
-    //     );
-    // }
+    #[test]
+    fn number_test_should_parse_numbers_correctly_that_are_separated() {
+        let ast = Prelude::new(
+            "3
+56  -9   3.2",
+        )
+        .parse();
+        assert_eq!(
+            ast,
+            Ok(vec![
+                AstNode::Number(Primitive {
+                    value: "3".to_string(),
+                    span: TokSpan { start: 0, end: 1 },
+                }),
+                AstNode::Number(Primitive {
+                    value: "56".to_string(),
+                    span: TokSpan { start: 2, end: 4 },
+                }),
+                AstNode::Number(Primitive {
+                    value: "-9".to_string(),
+                    span: TokSpan { start: 6, end: 8 },
+                }),
+                AstNode::Number(Primitive {
+                    value: "3.2".to_string(),
+                    span: TokSpan { start: 11, end: 14 },
+                }),
+            ])
+        );
+    }
 
-    // #[test]
-    // fn number_test_should_panic_if_scientific_notation_number_is_invalid() {
-    //     let forbidded_tokens = vec!["1e1.2", "1e-", "1e"];
+    #[test]
+    fn number_test_should_not_allow_invalod_scientific_notation_numbers() {
+        let forbidded_tokens = vec![("1e1.2", 4), ("1e-", 4), ("1e", 3)];
 
-    //     for token in forbidded_tokens {
-    //         assert_panic!(
-    //             {
-    //                 Prelude::new(token).parse();
-    //             },
-    //             String,
-    //             M_PARSER_ERROR
-    //         );
-    //     }
-    // }
+        for (token, col) in forbidded_tokens {
+            assert_eq!(
+                Prelude::new(token).parse(),
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
+                    row: 1,
+                    col,
+                    source_code_slice: Some(token.to_string()),
+                })))
+            );
+        }
+    }
 
-    // #[test]
-    // fn number_test_should_parse_scientific_numbers_correctly() {
-    //     let numbers = vec![
-    //         ("0e0", 3),
-    //         ("-0e0", 4),
-    //         ("-0e-0", 5),
-    //         ("0e-0", 4),
-    //         ("1e0", 3),
-    //         ("1e-0", 4),
-    //         ("1e3", 3),
-    //         ("10e3", 4),
-    //         ("102e302", 7),
-    //         ("1E3", 3),
-    //         ("1e-3", 4),
-    //         ("10e-30", 6),
-    //         ("102e-304", 8),
-    //         ("1.5e10", 6),
-    //         ("1.504e101", 9),
-    //         ("-2.3e-5", 7),
-    //         ("-2.30e-502", 10),
-    //     ];
-    //     for (number, end) in numbers {
-    //         let ast = Prelude::new(number).parse();
-    //         assert_eq!(
-    //             *ast.get(0).unwrap(),
-    //             AstNode::Number(Primitive {
-    //                 value: number.to_string(),
-    //                 span: TokSpan { start: 0, end },
-    //             })
-    //         );
-    //     }
-    // }
+    #[test]
+    fn number_test_should_parse_scientific_numbers_correctly() {
+        let numbers = vec![
+            ("0e0", 3),
+            ("-0e0", 4),
+            ("-0e-0", 5),
+            ("0e-0", 4),
+            ("1e0", 3),
+            ("1e-0", 4),
+            ("1e3", 3),
+            ("10e3", 4),
+            ("102e302", 7),
+            ("1E3", 3),
+            ("1e-3", 4),
+            ("10e-30", 6),
+            ("102e-304", 8),
+            ("1.5e10", 6),
+            ("1.504e101", 9),
+            ("-2.3e-5", 7),
+            ("-2.30e-502", 10),
+        ];
+        for (number, end) in numbers {
+            let ast = Prelude::new(number).parse();
+            assert_eq!(
+                ast,
+                Ok(vec![AstNode::Number(Primitive {
+                    value: number.to_string(),
+                    span: TokSpan { start: 0, end },
+                })])
+            );
+        }
+    }
 
     // // ==========================
     // // NUMBER TESTS END
