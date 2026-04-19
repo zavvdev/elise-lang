@@ -959,55 +959,72 @@ mod tests {
     // NULL TESTS END
     // ==========================
 
-    // // ==========================
-    // // IDENTIFIER TESTS START
-    // // ==========================
+    // ==========================
+    // IDENTIFIER TESTS START
+    // ==========================
 
-    // #[test]
-    // fn identifier_test_should_reject_invalid_names() {
-    //     let identifiers = vec![
-    //         "1asd", "!asd", "@asd", "#asd", "$asd", "%asd", "^asd", "&asd", "*asd", "-asd", "_asd",
-    //         "=asd", "+asd", "?asd", "?asd", ">asd", "<asd", "/asd",
-    //     ];
-    //     for identifier in identifiers {
-    //         assert_panic!(
-    //             {
-    //                 Prelude::new(identifier).parse();
-    //             },
-    //             String,
-    //             M_PARSER_ERROR
-    //         );
-    //     }
-    // }
+    #[test]
+    fn identifier_test_should_reject_invalid_names() {
+        let identifiers: Vec<(&str, usize, fn(ParserErrInfo) -> ParserErr)> = vec![
+            ("1asd", 2, ParserErr::InvalNum),
+            ("!asd", 1, ParserErr::UnexpTok),
+            ("@asd", 1, ParserErr::UnexpTok),
+            ("#asd", 1, ParserErr::UnexpTok),
+            ("$asd", 1, ParserErr::UnexpTok),
+            ("%asd", 1, ParserErr::UnexpTok),
+            ("^asd", 1, ParserErr::UnexpTok),
+            ("&asd", 1, ParserErr::UnexpTok),
+            ("*asd", 1, ParserErr::UnexpTok),
+            ("-asd", 2, ParserErr::InvalNum),
+            ("_asd", 1, ParserErr::UnexpTok),
+            ("=asd", 1, ParserErr::UnexpTok),
+            ("+asd", 1, ParserErr::UnexpTok),
+            ("?asd", 1, ParserErr::UnexpTok),
+            ("?asd", 1, ParserErr::UnexpTok),
+            (">asd", 1, ParserErr::UnexpTok),
+            ("<asd", 1, ParserErr::UnexpTok),
+            ("/asd", 1, ParserErr::UnexpTok),
+        ];
+        for (identifier, col, err) in identifiers {
+            assert_eq!(
+                Prelude::new(identifier).parse(),
+                Err(Parser(err(ParserErrInfo {
+                    row: 1,
+                    col,
+                    source_code_slice: Some(identifier.to_string()),
+                })))
+            );
+        }
+    }
 
-    // #[test]
-    // fn identifier_test_should_parse_correctly() {
-    //     let identifiers = vec![
-    //         ("asd", 3),
-    //         ("asd?", 4),
-    //         ("as?d", 4),
-    //         ("as5?d", 5),
-    //         ("asd-", 4),
-    //         ("as-d", 4),
-    //         ("asd!", 4),
-    //         ("as!d", 4),
-    //         ("asd_", 4),
-    //     ];
-    //     for (identifier, end) in identifiers {
-    //         let ast = Prelude::new(identifier).parse();
-    //         assert_eq!(
-    //             *ast.get(0).unwrap(),
-    //             AstNode::Identifier(Primitive {
-    //                 value: identifier.to_string(),
-    //                 span: TokSpan { start: 0, end },
-    //             })
-    //         );
-    //     }
-    // }
+    #[test]
+    fn identifier_test_should_parse_correctly() {
+        let identifiers = vec![
+            ("asd", 3),
+            ("asd?", 4),
+            ("as?d", 4),
+            ("as5?d", 5),
+            ("asd-", 4),
+            ("as-d", 4),
+            ("asd!", 4),
+            ("as!d", 4),
+            ("asd_", 4),
+        ];
+        for (identifier, end) in identifiers {
+            let ast = Prelude::new(identifier).parse();
+            assert_eq!(
+                ast,
+                Ok(vec![AstNode::Identifier(Primitive {
+                    value: identifier.to_string(),
+                    span: TokSpan { start: 0, end },
+                })])
+            );
+        }
+    }
 
-    // // ==========================
-    // // IDENTIFIER TESTS END
-    // // ==========================
+    // ==========================
+    // IDENTIFIER TESTS END
+    // ==========================
 
     // // ==========================
     // // LIST TESTS START
