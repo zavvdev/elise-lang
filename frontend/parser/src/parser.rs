@@ -907,41 +907,41 @@ mod tests {
     // STRING TESTS END
     // ==========================
 
-    // // ==========================
-    // // BOOL TESTS START
-    // // ==========================
+    // ==========================
+    // BOOL TESTS START
+    // ==========================
 
-    // #[test]
-    // fn bool_test_should_parse_true_correctly() {
-    //     let ast = Prelude::new("true").parse();
-    //     assert_eq!(
-    //         *ast.get(0).unwrap(),
-    //         AstNode::Bool(Primitive {
-    //             value: "true".to_string(),
-    //             span: TokSpan { start: 0, end: 4 }
-    //         })
-    //     )
-    // }
+    #[test]
+    fn bool_test_should_parse_true_correctly() {
+        let ast = Prelude::new("true").parse();
+        assert_eq!(
+            ast,
+            Ok(vec![AstNode::Bool(Primitive {
+                value: "true".to_string(),
+                span: TokSpan { start: 0, end: 4 }
+            })])
+        )
+    }
 
-    // #[test]
-    // fn bool_test_should_parse_false_correctly() {
-    //     let ast = Prelude::new("false").parse();
-    //     assert_eq!(
-    //         *ast.get(0).unwrap(),
-    //         AstNode::Bool(Primitive {
-    //             value: "false".to_string(),
-    //             span: TokSpan { start: 0, end: 5 }
-    //         })
-    //     )
-    // }
+    #[test]
+    fn bool_test_should_parse_false_correctly() {
+        let ast = Prelude::new("false").parse();
+        assert_eq!(
+            ast,
+            Ok(vec![AstNode::Bool(Primitive {
+                value: "false".to_string(),
+                span: TokSpan { start: 0, end: 5 }
+            })])
+        )
+    }
 
-    // // ==========================
-    // // BOOL TESTS END
-    // // ==========================
+    // ==========================
+    // BOOL TESTS END
+    // ==========================
 
-    // // ==========================
-    // // NULL TESTS START
-    // // ==========================
+    // ==========================
+    // NULL TESTS START
+    // ==========================
 
     // #[test]
     // fn null_test_should_parse_null_correctly() {
