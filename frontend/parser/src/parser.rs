@@ -943,21 +943,21 @@ mod tests {
     // NULL TESTS START
     // ==========================
 
-    // #[test]
-    // fn null_test_should_parse_null_correctly() {
-    //     let ast = Prelude::new("null").parse();
-    //     assert_eq!(
-    //         *ast.get(0).unwrap(),
-    //         AstNode::Null(Primitive {
-    //             value: "null".to_string(),
-    //             span: TokSpan { start: 0, end: 4 }
-    //         })
-    //     )
-    // }
+    #[test]
+    fn null_test_should_parse_null_correctly() {
+        let ast = Prelude::new("null").parse();
+        assert_eq!(
+            ast,
+            Ok(vec![AstNode::Null(Primitive {
+                value: "null".to_string(),
+                span: TokSpan { start: 0, end: 4 }
+            })])
+        )
+    }
 
-    // // ==========================
-    // // NULL TESTS END
-    // // ==========================
+    // ==========================
+    // NULL TESTS END
+    // ==========================
 
     // // ==========================
     // // IDENTIFIER TESTS START
