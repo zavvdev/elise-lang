@@ -852,59 +852,60 @@ mod tests {
         }
     }
 
-    // // ==========================
-    // // NUMBER TESTS END
-    // // ==========================
+    // ==========================
+    // NUMBER TESTS END
+    // ==========================
 
-    // // ==========================
-    // // STRING TESTS START
-    // // ==========================
+    // ==========================
+    // STRING TESTS START
+    // ==========================
 
-    // #[test]
-    // fn string_test_should_panic_if_contains_new_line() {
-    //     assert_panic!(
-    //         {
-    //             Prelude::new(
-    //                 "\"Hello
-    //                 World\"",
-    //             )
-    //             .parse();
-    //         },
-    //         String,
-    //         M_PARSER_ERROR
-    //     );
-    // }
+    #[test]
+    fn string_test_should_not_allow_new_line() {
+        assert_eq!(
+            Prelude::new(
+                "\"Hello
+            World\""
+            )
+            .parse(),
+            Err(Parser(ParserErr::InvalStr(ParserErrInfo {
+                row: 1,
+                col: 7,
+                source_code_slice: Some("\"Hello\n".to_string()),
+            })))
+        );
+    }
 
-    // #[test]
-    // fn string_test_should_parse_correctly() {
-    //     let strings = vec![
-    //         ("\"\"", 2),
-    //         ("\"Hello\"", 7),
-    //         ("\"Hello World\"", 13),
-    //         ("\"Hello       world!\"", 20),
-    //         ("\"123 2323 😄😄\"", 13),
-    //     ];
-    //     for (string, end) in strings {
-    //         let ast = Prelude::new(string).parse();
-    //         assert_eq!(
-    //             *ast.get(0).unwrap(),
-    //             AstNode::String(Primitive {
-    //                 value: string
-    //                     .split("\"")
-    //                     .into_iter()
-    //                     .collect::<Vec<&str>>()
-    //                     .get(1)
-    //                     .unwrap()
-    //                     .to_string(),
-    //                 span: TokSpan { start: 0, end },
-    //             })
-    //         );
-    //     }
-    // }
+    #[test]
+    fn string_test_should_parse_correctly() {
+        let strings = vec![
+            ("\"\"", 2),
+            ("\"Hello\"", 7),
+            ("\"Hello World\"", 13),
+            ("\"Hello       world!\"", 20),
+            ("\"123 2323 😄😄\"", 13),
+        ];
+        for (string, end) in strings {
+            let ast = Prelude::new(string).parse();
+            assert_eq!(
+                ast,
+                Ok(vec![AstNode::String(Primitive {
+                    value: string
+                        .split("\"")
+                        .into_iter()
+                        .collect::<Vec<&str>>()
+                        .get(1)
+                        .unwrap()
+                        .to_string(),
+                    span: TokSpan { start: 0, end },
+                })])
+            );
+        }
+    }
 
-    // // ==========================
-    // // STRING TESTS END
-    // // ==========================
+    // ==========================
+    // STRING TESTS END
+    // ==========================
 
     // // ==========================
     // // BOOL TESTS START
