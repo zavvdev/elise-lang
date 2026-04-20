@@ -1026,80 +1026,82 @@ mod tests {
     // IDENTIFIER TESTS END
     // ==========================
 
-    // // ==========================
-    // // LIST TESTS START
-    // // ==========================
+    // ==========================
+    // LIST TESTS START
+    // ==========================
 
-    // #[test]
-    // fn list_test_should_parse_empty() {
-    //     let ast = Prelude::new("[]").parse();
-    //     assert_eq!(
-    //         *ast.get(0).unwrap(),
-    //         AstNode::List(Compound {
-    //             span: TokSpan { start: 0, end: 2 },
-    //             children: vec![],
-    //         })
-    //     );
-    // }
+    #[test]
+    fn list_test_should_parse_empty() {
+        let ast = Prelude::new("[]").parse();
+        assert_eq!(
+            ast,
+            Ok(vec![AstNode::List(Compound {
+                span: TokSpan { start: 0, end: 2 },
+                children: vec![],
+            })])
+        );
+    }
 
-    // #[test]
-    // fn list_test_should_parse_nested_empty() {
-    //     let ast = Prelude::new("[[]]").parse();
-    //     assert_eq!(
-    //         *ast.get(0).unwrap(),
-    //         AstNode::List(Compound {
-    //             span: TokSpan { start: 0, end: 4 },
-    //             children: vec![Box::new(AstNode::List(Compound {
-    //                 span: TokSpan { start: 1, end: 3 },
-    //                 children: vec![],
-    //             }))],
-    //         })
-    //     );
-    // }
+    #[test]
+    fn list_test_should_parse_nested_empty() {
+        let ast = Prelude::new("[[]]").parse();
+        assert_eq!(
+            ast,
+            Ok(vec![AstNode::List(Compound {
+                span: TokSpan { start: 0, end: 4 },
+                children: vec![Box::new(AstNode::List(Compound {
+                    span: TokSpan { start: 1, end: 3 },
+                    children: vec![],
+                }))],
+            })])
+        );
+    }
 
-    // #[test]
-    // fn list_test_should_parse_non_empty() {
-    //     let ast = Prelude::new("[1, \"hello\", null, false]").parse();
-    //     assert_eq!(
-    //         *ast.get(0).unwrap(),
-    //         AstNode::List(Compound {
-    //             span: TokSpan { start: 0, end: 25 },
-    //             children: vec![
-    //                 Box::new(AstNode::Number(Primitive {
-    //                     value: "1".to_string(),
-    //                     span: TokSpan { start: 1, end: 2 },
-    //                 })),
-    //                 Box::new(AstNode::String(Primitive {
-    //                     value: "hello".to_string(),
-    //                     span: TokSpan { start: 4, end: 11 },
-    //                 })),
-    //                 Box::new(AstNode::Null(Primitive {
-    //                     value: "null".to_string(),
-    //                     span: TokSpan { start: 13, end: 17 },
-    //                 })),
-    //                 Box::new(AstNode::Bool(Primitive {
-    //                     value: "false".to_string(),
-    //                     span: TokSpan { start: 19, end: 24 },
-    //                 }))
-    //             ],
-    //         })
-    //     );
-    // }
+    #[test]
+    fn list_test_should_parse_non_empty() {
+        let ast = Prelude::new("[1, \"hello\", null, false]").parse();
+        assert_eq!(
+            ast,
+            Ok(vec![AstNode::List(Compound {
+                span: TokSpan { start: 0, end: 25 },
+                children: vec![
+                    Box::new(AstNode::Number(Primitive {
+                        value: "1".to_string(),
+                        span: TokSpan { start: 1, end: 2 },
+                    })),
+                    Box::new(AstNode::String(Primitive {
+                        value: "hello".to_string(),
+                        span: TokSpan { start: 4, end: 11 },
+                    })),
+                    Box::new(AstNode::Null(Primitive {
+                        value: "null".to_string(),
+                        span: TokSpan { start: 13, end: 17 },
+                    })),
+                    Box::new(AstNode::Bool(Primitive {
+                        value: "false".to_string(),
+                        span: TokSpan { start: 19, end: 24 },
+                    }))
+                ],
+            })])
+        );
+    }
 
-    // #[test]
-    // fn list_test_should_panic_if_not_closed() {
-    //     assert_panic!(
-    //         {
-    //             Prelude::new("[[1, 3]").parse();
-    //         },
-    //         String,
-    //         M_PARSER_ERROR
-    //     );
-    // }
+    #[test]
+    fn list_test_not_allow_non_closed() {
+        let code = "[[1, 3]";
+        assert_eq!(
+            Prelude::new(code).parse(),
+            Err(Parser(ParserErr::UnexpEoFile(ParserErrInfo {
+                row: 1,
+                col: 8,
+                source_code_slice: Some(code.to_string()),
+            })))
+        );
+    }
 
-    // // ==========================
-    // // LIST TESTS END
-    // // ==========================
+    // ==========================
+    // LIST TESTS END
+    // ==========================
 
     // // ==========================
     // // DICT TESTS START
