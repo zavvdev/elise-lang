@@ -1103,147 +1103,159 @@ mod tests {
     // LIST TESTS END
     // ==========================
 
-    // // ==========================
-    // // DICT TESTS START
-    // // ==========================
+    // ==========================
+    // DICT TESTS START
+    // ==========================
 
-    // #[test]
-    // fn dict_test_should_parse_empty() {
-    //     let ast = Prelude::new("{}").parse();
-    //     assert_eq!(
-    //         *ast.get(0).unwrap(),
-    //         AstNode::Dict(Compound {
-    //             span: TokSpan { start: 0, end: 2 },
-    //             children: vec![],
-    //         })
-    //     );
-    // }
+    #[test]
+    fn dict_test_should_parse_empty() {
+        let ast = Prelude::new("{}").parse();
+        assert_eq!(
+            ast,
+            Ok(vec![AstNode::Dict(Compound {
+                span: TokSpan { start: 0, end: 2 },
+                children: vec![],
+            })])
+        );
+    }
 
-    // #[test]
-    // fn dict_test_should_parse_non_empty() {
-    //     let ast = Prelude::new(
-    //         "{ \"a\" 1, \"b\" \"2\", \"c\" false, \"d\" null, \"e\" [1, 2, 3], \"f\" { \"a2\" some_value } }",
-    //     )
-    //     .parse();
-    //     assert_eq!(
-    //         *ast.get(0).unwrap(),
-    //         AstNode::Dict(Compound {
-    //             span: TokSpan { start: 0, end: 79 },
-    //             children: vec![
-    //                 Box::new(AstNode::DictPair((
-    //                     "a".to_string(),
-    //                     Box::new(AstNode::Number(Primitive {
-    //                         value: "1".to_string(),
-    //                         span: TokSpan { start: 6, end: 7 }
-    //                     }))
-    //                 ))),
-    //                 Box::new(AstNode::DictPair((
-    //                     "b".to_string(),
-    //                     Box::new(AstNode::String(Primitive {
-    //                         value: "2".to_string(),
-    //                         span: TokSpan { start: 13, end: 16 }
-    //                     }))
-    //                 ))),
-    //                 Box::new(AstNode::DictPair((
-    //                     "c".to_string(),
-    //                     Box::new(AstNode::Bool(Primitive {
-    //                         value: "false".to_string(),
-    //                         span: TokSpan { start: 22, end: 27 }
-    //                     }))
-    //                 ))),
-    //                 Box::new(AstNode::DictPair((
-    //                     "d".to_string(),
-    //                     Box::new(AstNode::Null(Primitive {
-    //                         value: "null".to_string(),
-    //                         span: TokSpan { start: 33, end: 37 }
-    //                     }))
-    //                 ))),
-    //                 Box::new(AstNode::DictPair((
-    //                     "e".to_string(),
-    //                     Box::new(AstNode::List(Compound {
-    //                         span: TokSpan { start: 43, end: 52 },
-    //                         children: vec![
-    //                             Box::new(AstNode::Number(Primitive {
-    //                                 value: "1".to_string(),
-    //                                 span: TokSpan { start: 44, end: 45 }
-    //                             })),
-    //                             Box::new(AstNode::Number(Primitive {
-    //                                 value: "2".to_string(),
-    //                                 span: TokSpan { start: 47, end: 48 }
-    //                             })),
-    //                             Box::new(AstNode::Number(Primitive {
-    //                                 value: "3".to_string(),
-    //                                 span: TokSpan { start: 50, end: 51 }
-    //                             }))
-    //                         ]
-    //                     }))
-    //                 ))),
-    //                 Box::new(AstNode::DictPair((
-    //                     "f".to_string(),
-    //                     Box::new(AstNode::Dict(Compound {
-    //                         span: TokSpan { start: 58, end: 77 },
-    //                         children: vec![Box::new(AstNode::DictPair((
-    //                             "a2".to_string(),
-    //                             Box::new(AstNode::Identifier(Primitive {
-    //                                 value: "some_value".to_string(),
-    //                                 span: TokSpan { start: 65, end: 75 }
-    //                             }))
-    //                         )))]
-    //                     }))
-    //                 )))
-    //             ],
-    //         })
-    //     );
-    // }
+    #[test]
+    fn dict_test_should_parse_non_empty() {
+        let ast = Prelude::new(
+             "{ \"a\" 1, \"b\" \"2\", \"c\" false, \"d\" null, \"e\" [1, 2, 3], \"f\" { \"a2\" some_value } }",
+         )
+         .parse();
+        assert_eq!(
+            ast,
+            Ok(vec![AstNode::Dict(Compound {
+                span: TokSpan { start: 0, end: 79 },
+                children: vec![
+                    Box::new(AstNode::DictPair((
+                        "a".to_string(),
+                        Box::new(AstNode::Number(Primitive {
+                            value: "1".to_string(),
+                            span: TokSpan { start: 6, end: 7 }
+                        }))
+                    ))),
+                    Box::new(AstNode::DictPair((
+                        "b".to_string(),
+                        Box::new(AstNode::String(Primitive {
+                            value: "2".to_string(),
+                            span: TokSpan { start: 13, end: 16 }
+                        }))
+                    ))),
+                    Box::new(AstNode::DictPair((
+                        "c".to_string(),
+                        Box::new(AstNode::Bool(Primitive {
+                            value: "false".to_string(),
+                            span: TokSpan { start: 22, end: 27 }
+                        }))
+                    ))),
+                    Box::new(AstNode::DictPair((
+                        "d".to_string(),
+                        Box::new(AstNode::Null(Primitive {
+                            value: "null".to_string(),
+                            span: TokSpan { start: 33, end: 37 }
+                        }))
+                    ))),
+                    Box::new(AstNode::DictPair((
+                        "e".to_string(),
+                        Box::new(AstNode::List(Compound {
+                            span: TokSpan { start: 43, end: 52 },
+                            children: vec![
+                                Box::new(AstNode::Number(Primitive {
+                                    value: "1".to_string(),
+                                    span: TokSpan { start: 44, end: 45 }
+                                })),
+                                Box::new(AstNode::Number(Primitive {
+                                    value: "2".to_string(),
+                                    span: TokSpan { start: 47, end: 48 }
+                                })),
+                                Box::new(AstNode::Number(Primitive {
+                                    value: "3".to_string(),
+                                    span: TokSpan { start: 50, end: 51 }
+                                }))
+                            ]
+                        }))
+                    ))),
+                    Box::new(AstNode::DictPair((
+                        "f".to_string(),
+                        Box::new(AstNode::Dict(Compound {
+                            span: TokSpan { start: 58, end: 77 },
+                            children: vec![Box::new(AstNode::DictPair((
+                                "a2".to_string(),
+                                Box::new(AstNode::Identifier(Primitive {
+                                    value: "some_value".to_string(),
+                                    span: TokSpan { start: 65, end: 75 }
+                                }))
+                            )))]
+                        }))
+                    )))
+                ],
+            })])
+        );
+    }
 
-    // #[test]
-    // #[should_panic(expected = "Parser error")]
-    // fn dict_test_should_panic_if_pair_is_invalid() {
-    //     Prelude::new("{ \"a\" 1, \"b\" }").parse();
-    // }
+    #[test]
+    fn dict_test_should_not_allow_invalid_pair() {
+        let code = "{ \"a\" 1, \"b\" }";
+        assert_eq!(
+            Prelude::new(code).parse(),
+            Err(Parser(ParserErr::InvalDictPair(ParserErrInfo {
+                row: 1,
+                col: 14,
+                source_code_slice: Some(code.to_string()),
+            })))
+        );
+    }
 
-    // #[test]
-    // fn dict_test_should_panic_if_key_is_invalid() {
-    //     let inputs = vec![
-    //         "{ a 1 }",
-    //         "{ 1 \"2\" }",
-    //         "{ null false }",
-    //         "{ false true }",
-    //         "{ [] \"`\" }",
-    //         "{ {} a }",
-    //     ];
-    //     for input in inputs {
-    //         assert_panic!(
-    //             {
-    //                 Prelude::new(input).parse();
-    //             },
-    //             String,
-    //             M_PARSER_ERROR
-    //         );
-    //     }
-    // }
+    #[test]
+    fn dict_test_should_not_allow_invalid_key() {
+        let inputs = vec![
+            ("{ a 1 }", 4),
+            ("{ 1 \"2\" }", 4),
+            ("{ null false }", 7),
+            ("{ false true }", 8),
+            ("{ [] \"`\" }", 5),
+            ("{ {} a }", 5),
+        ];
+        for (input, col) in inputs {
+            assert_eq!(
+                Prelude::new(input).parse(),
+                Err(Parser(ParserErr::UnexpDictKey(ParserErrInfo {
+                    row: 1,
+                    col,
+                    source_code_slice: Some(input.to_string()),
+                })))
+            );
+        }
+    }
 
-    // #[test]
-    // fn dict_test_should_panic_if_not_closed_correctly() {
-    //     let inputs = vec!["{ \"a\" 1 }}", "{{ \"1\" \"2\" }"];
-    //     for input in inputs {
-    //         assert_panic!(
-    //             {
-    //                 Prelude::new(input).parse();
-    //             },
-    //             String,
-    //             M_PARSER_ERROR
-    //         );
-    //     }
-    // }
+    #[test]
+    fn dict_test_should_not_allow_non_closed() {
+        let inputs: Vec<(&str, usize, fn(ParserErrInfo) -> ParserErr)> = vec![
+            ("{ \"a\" 1 }}", 10, ParserErr::UnexpTok),
+            ("{{ \"1\" \"2\" }", 13, ParserErr::UnexpDictKey),
+        ];
+        for (input, col, err) in inputs {
+            assert_eq!(
+                Prelude::new(input).parse(),
+                Err(Parser(err(ParserErrInfo {
+                    row: 1,
+                    col,
+                    source_code_slice: Some(input.to_string()),
+                })))
+            );
+        }
+    }
 
-    // // ==========================
-    // // DICT TESTS END
-    // // ==========================
+    // ==========================
+    // DICT TESTS END
+    // ==========================
 
-    // // ==========================
-    // // CALL TESTS START
-    // // ==========================
+    // ==========================
+    // CALL TESTS START
+    // ==========================
 
     // #[test]
     // fn call_test_should_parse_with_no_arguments() {
