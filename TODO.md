@@ -50,13 +50,15 @@ Source code
         
         - [x] Remove human readable messages from everywhere except cli/out. Use enums.
 
-    - [ ] Refactor tests 
+    - [x] Refactor tests 
 
     - [x] Remove should panic crate 
 
     - [ ] Add support for anonymous functions
 
-- [ ] ?Data file parsing, schema file parsing
+- [ ] Data file parsing
+
+- [ ] Schema file parsing
 
 - [ ] Semantic analyzer
 

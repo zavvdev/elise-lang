@@ -1257,155 +1257,194 @@ mod tests {
     // CALL TESTS START
     // ==========================
 
-    // #[test]
-    // fn call_test_should_parse_with_no_arguments() {
-    //     let ast = Prelude::new(".some-fn()").parse();
-    //     assert_eq!(
-    //         *ast.get(0).unwrap(),
-    //         AstNode::Call((
-    //             "some-fn".to_string(),
-    //             Compound {
-    //                 span: TokSpan { start: 0, end: 10 },
-    //                 children: vec![],
-    //             }
-    //         ))
-    //     );
-    // }
+    #[test]
+    fn call_test_should_parse_with_no_arguments() {
+        let ast = Prelude::new(".some-fn()").parse();
+        assert_eq!(
+            ast,
+            Ok(vec![AstNode::Call((
+                "some-fn".to_string(),
+                Compound {
+                    span: TokSpan { start: 0, end: 10 },
+                    children: vec![],
+                }
+            ))])
+        );
+    }
 
-    // #[test]
-    // fn call_test_should_parse_with_arguments() {
-    //     let ast = Prelude::new(".add(2 .div(4 2))").parse();
-    //     assert_eq!(
-    //         *ast.get(0).unwrap(),
-    //         AstNode::Call((
-    //             "add".to_string(),
-    //             Compound {
-    //                 span: TokSpan { start: 0, end: 17 },
-    //                 children: vec![
-    //                     Box::new(AstNode::Number(Primitive {
-    //                         value: "2".to_string(),
-    //                         span: TokSpan { start: 5, end: 6 }
-    //                     })),
-    //                     Box::new(AstNode::Call((
-    //                         "div".to_string(),
-    //                         Compound {
-    //                             span: TokSpan { start: 7, end: 16 },
-    //                             children: vec![
-    //                                 Box::new(AstNode::Number(Primitive {
-    //                                     value: "4".to_string(),
-    //                                     span: TokSpan { start: 12, end: 13 }
-    //                                 })),
-    //                                 Box::new(AstNode::Number(Primitive {
-    //                                     value: "2".to_string(),
-    //                                     span: TokSpan { start: 14, end: 15 }
-    //                                 }))
-    //                             ]
-    //                         }
-    //                     )))
-    //                 ],
-    //             }
-    //         ))
-    //     );
-    // }
+    #[test]
+    fn call_test_should_parse_with_arguments() {
+        let ast = Prelude::new(".add(2 .div(4 2))").parse();
+        assert_eq!(
+            ast,
+            Ok(vec![AstNode::Call((
+                "add".to_string(),
+                Compound {
+                    span: TokSpan { start: 0, end: 17 },
+                    children: vec![
+                        Box::new(AstNode::Number(Primitive {
+                            value: "2".to_string(),
+                            span: TokSpan { start: 5, end: 6 }
+                        })),
+                        Box::new(AstNode::Call((
+                            "div".to_string(),
+                            Compound {
+                                span: TokSpan { start: 7, end: 16 },
+                                children: vec![
+                                    Box::new(AstNode::Number(Primitive {
+                                        value: "4".to_string(),
+                                        span: TokSpan { start: 12, end: 13 }
+                                    })),
+                                    Box::new(AstNode::Number(Primitive {
+                                        value: "2".to_string(),
+                                        span: TokSpan { start: 14, end: 15 }
+                                    }))
+                                ]
+                            }
+                        )))
+                    ],
+                }
+            ))])
+        );
+    }
 
-    // #[test]
-    // fn call_test_should_parse_with_separators_after_name() {
-    //     let inputs = vec![
-    //         (".test ()", 8),
-    //         (".test  ()", 9),
-    //         (
-    //             ".test
-    //         ()",
-    //             20,
-    //         ),
-    //         (
-    //             ".test
-    //                     ()",
-    //             32,
-    //         ),
-    //     ];
-    //     for (input, end) in inputs {
-    //         assert_eq!(
-    //             Prelude::new(input).parse(),
-    //             vec![AstNode::Call((
-    //                 "test".to_string(),
-    //                 Compound {
-    //                     span: TokSpan { start: 0, end },
-    //                     children: vec![],
-    //                 }
-    //             ))]
-    //         );
-    //     }
-    // }
+    #[test]
+    fn call_test_should_parse_with_separators_after_name() {
+        let inputs = vec![
+            (".test ()", 8),
+            (".test  ()", 9),
+            (
+                ".test
+             ()",
+                21,
+            ),
+            (
+                ".test
+                         ()",
+                33,
+            ),
+        ];
+        for (input, end) in inputs {
+            assert_eq!(
+                Prelude::new(input).parse(),
+                Ok(vec![AstNode::Call((
+                    "test".to_string(),
+                    Compound {
+                        span: TokSpan { start: 0, end },
+                        children: vec![],
+                    }
+                ))])
+            );
+        }
+    }
 
-    // #[test]
-    // #[should_panic(expected = "Parser error")]
-    // fn call_test_should_panic_if_not_closed_correctly() {
-    //     Prelude::new(".some-fn(2 2 3))").parse();
-    // }
+    #[test]
+    fn call_test_should_not_allow_non_closed() {
+        let code = ".some-fn(2 2 3))";
+        assert_eq!(
+            Prelude::new(code).parse(),
+            Err(Parser(ParserErr::UnexpTok(ParserErrInfo {
+                row: 1,
+                col: 16,
+                source_code_slice: Some(code.to_string()),
+            })))
+        );
+    }
 
-    // #[test]
-    // #[should_panic(expected = "Parser error")]
-    // fn call_test_should_panic_if_separator_after_call_symbol() {
-    //     Prelude::new(". some-fn()").parse();
-    // }
+    #[test]
+    fn call_test_should_not_allow_separator_after_call_symbol() {
+        let code = ". some-fn()";
+        assert_eq!(
+            Prelude::new(code).parse(),
+            Err(Parser(ParserErr::InvalFnName(ParserErrInfo {
+                row: 1,
+                col: 10,
+                source_code_slice: Some(code.to_string()),
+            })))
+        );
+    }
 
-    // #[test]
-    // fn call_test_should_reject_invalid_names() {
-    //     let identifiers = vec![
-    //         "1asd", "!asd", "@asd", "#asd", "$asd", "%asd", "^asd", "&asd", "*asd", "-asd", "_asd",
-    //         "=asd", "+asd", "?asd", "?asd", ">asd", "<asd", "/asd",
-    //     ];
-    //     for identifier in identifiers {
-    //         assert_panic!(
-    //             {
-    //                 Prelude::new(&format!(".{}()", identifier)).parse();
-    //             },
-    //             String,
-    //             M_PARSER_ERROR
-    //         );
-    //     }
-    // }
+    #[test]
+    fn call_test_should_reject_invalid_names() {
+        let identifiers = vec![
+            ("1asd", 6, ParserErr::InvalFnName),
+            ("!asd", 6, ParserErr::InvalFnName),
+            ("@asd", 6, ParserErr::InvalFnName),
+            ("#asd", 6, ParserErr::InvalFnName),
+            ("$asd", 6, ParserErr::InvalFnName),
+            ("%asd", 6, ParserErr::InvalFnName),
+            ("^asd", 6, ParserErr::InvalFnName),
+            ("&asd", 6, ParserErr::InvalFnName),
+            ("*asd", 6, ParserErr::InvalFnName),
+            ("-asd", 6, ParserErr::InvalFnName),
+            ("_asd", 6, ParserErr::InvalFnName),
+            ("=asd", 6, ParserErr::InvalFnName),
+            ("+asd", 6, ParserErr::InvalFnName),
+            ("?asd", 6, ParserErr::InvalFnName),
+            ("?asd", 6, ParserErr::InvalFnName),
+            (">asd", 6, ParserErr::InvalFnName),
+            ("<asd", 6, ParserErr::InvalFnName),
+            ("/asd", 6, ParserErr::InvalFnName),
+        ];
+        for (identifier, col, err) in identifiers {
+            assert_eq!(
+                Prelude::new(&format!(".{}()", identifier)).parse(),
+                Err(Parser(err(ParserErrInfo {
+                    row: 1,
+                    col,
+                    source_code_slice: Some(format!(".{}()", identifier)),
+                })))
+            );
+        }
+    }
 
-    // #[test]
-    // #[should_panic(expected = "Parser error")]
-    // fn call_test_should_panic_if_parens_are_standalone() {
-    //     Prelude::new("()").parse();
-    // }
+    #[test]
+    fn call_test_should_panic_if_parens_are_standalone() {
+        let code = "()";
+        assert_eq!(
+            Prelude::new(code).parse(),
+            Err(Parser(ParserErr::UnexpTok(ParserErrInfo {
+                row: 1,
+                col: 1,
+                source_code_slice: Some(code.to_string()),
+            })))
+        );
+    }
 
-    // // ==========================
-    // // CALL TESTS END
-    // // ==========================
+    // ==========================
+    // CALL TESTS END
+    // ==========================
 
-    // // ==========================
-    // // DEPTH TESTS START
-    // // ==========================
+    // ==========================
+    // DEPTH TESTS START
+    // ==========================
 
-    // #[test]
-    // fn depth_test_should_reject_invalid_depth() {
-    //     let depth_cases = vec![
-    //         ".a())",
-    //         ".a(()",
-    //         ".a().a()))",
-    //         "()()))",
-    //         "())",
-    //         "(()",
-    //         "[]]",
-    //         "[][[][][]]][[",
-    //         "[{}}]",
-    //         "[{{{{}]",
-    //         "[{{}]",
-    //     ];
-    //     for depth_case in depth_cases {
-    //         assert_panic!(
-    //             {
-    //                 Prelude::new(depth_case).parse();
-    //             },
-    //             String,
-    //             M_PARSER_ERROR
-    //         );
-    //     }
-    // }
+    #[test]
+    fn depth_test_should_reject_invalid_depth() {
+        let depth_cases: Vec<(&str, usize, fn(ParserErrInfo) -> ParserErr)> = vec![
+            (".a())", 5, ParserErr::UnexpTok),
+            (".a(()", 4, ParserErr::UnexpTok),
+            (".a().a()))", 9, ParserErr::UnexpTok),
+            ("()()))", 1, ParserErr::UnexpTok),
+            ("())", 1, ParserErr::UnexpTok),
+            ("(()", 1, ParserErr::UnexpTok),
+            ("[]]", 3, ParserErr::UnexpTok),
+            ("[][[][][]]][[", 11, ParserErr::UnexpTok),
+            ("[{}}]", 4, ParserErr::UnexpTok),
+            ("[{{{{}]", 7, ParserErr::UnexpDictKey),
+            ("[{{}]", 5, ParserErr::UnexpDictKey),
+        ];
+        for (depth_case, col, err) in depth_cases {
+            assert_eq!(
+                Prelude::new(depth_case).parse(),
+                Err(Parser(err(ParserErrInfo {
+                    row: 1,
+                    col,
+                    source_code_slice: Some(depth_case.to_string()),
+                })))
+            );
+        }
+    }
 
     // ==========================
     // DEPTH TESTS END
