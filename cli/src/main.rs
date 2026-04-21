@@ -57,10 +57,17 @@ fn cli_run(conf: &ModeRunConf) {
             }
 
             let run_res = run_res.unwrap();
-
             out::run_result(&run_res.output, run_res.ms);
+
             if run_res.config.print_bytecode {
                 out::print_bytecode(&run_res.bytecode);
+            }
+
+            if let Some(path) = run_res.config.output_path.as_ref() {
+                match write_file(path, &run_res.output) {
+                    Ok(_) => out::fsys_saved_to(path),
+                    Err(err) => out::fsys_file_writer_err(&err.message, path),
+                }
             }
         }
         Err(read_err) => {

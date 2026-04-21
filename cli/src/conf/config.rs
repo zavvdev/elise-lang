@@ -26,7 +26,7 @@ pub const ARG_FLAG_SOURCE_CODE: &str = "source-code";
 pub const ARG_FLAG_DATA: &str = "data";
 pub const ARG_FLAG_DATA_SCHEMA: &str = "data-schema";
 pub const ARG_FLAG_EXECUTABLE: &str = "executable";
-pub const ARG_FLAG_EXECUTABLE_OUTPUT: &str = "output";
+pub const ARG_FLAG_OUTPUT: &str = "output";
 pub const ARG_FLAG_UNSAFE_ASSUME_VALID: &str = "unsafe-assume-valid";
 pub const ARG_FLAG_PRINT_BYTECODE: &str = "print-bytecode";
 
@@ -71,6 +71,7 @@ pub const ARG_V_MODES: [&str; 4] = [
 pub enum ArgType {
     SourceFile(&'static [&'static str]),
     Boolean,
+    Any,
 }
 
 pub struct Arg {
@@ -112,6 +113,12 @@ pub const RUN_ARGS: &[Arg] = &[
         def: None,
     },
     Arg {
+        name: ARG_FLAG_OUTPUT,
+        ty: ArgType::Any,
+        req: false,
+        def: None,
+    },
+    Arg {
         name: ARG_FLAG_PRINT_BYTECODE,
         ty: ArgType::Boolean,
         req: false,
@@ -133,7 +140,7 @@ pub const BUILD_ARGS: &[Arg] = &[
         def: None,
     },
     Arg {
-        name: ARG_FLAG_EXECUTABLE_OUTPUT,
+        name: ARG_FLAG_OUTPUT,
         ty: ArgType::SourceFile(FILE_EXT_EXECUTABLE),
         req: true,
         def: None,

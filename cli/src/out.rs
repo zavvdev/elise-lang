@@ -84,6 +84,10 @@ pub fn fsys_file_writer_err(msg: &str, path: &str) {
     silent_err(&format!("{} ({})", msg, path), Some("File writer error"));
 }
 
+pub fn fsys_saved_to(path: &str) {
+    println!("Saved to: {}", path);
+}
+
 // ==========================
 //
 // EXEC HANDLERS
@@ -96,7 +100,7 @@ pub fn run_result(output: &str, ms: u128) {
 }
 
 pub fn build_result(path: &str, ms: u128) {
-    println!("Saved to: {}", path);
+    fsys_saved_to(path);
     println!("Execution time: {} ms", ms);
 }
 

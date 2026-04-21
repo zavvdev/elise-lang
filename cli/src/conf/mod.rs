@@ -8,10 +8,10 @@ pub mod config;
 use std::collections::HashMap;
 
 use config::{
-    ARG_FLAG_DATA, ARG_FLAG_DATA_SCHEMA, ARG_FLAG_EXECUTABLE, ARG_FLAG_EXECUTABLE_OUTPUT,
-    ARG_FLAG_MODE, ARG_FLAG_PRINT_BYTECODE, ARG_FLAG_SOURCE_CODE, ARG_FLAG_UNSAFE_ASSUME_VALID,
-    ARG_V_BOOL_FALSE, ARG_V_BOOL_TRUE, ARG_V_MODE_BUILD, ARG_V_MODE_EXEC, ARG_V_MODE_RUN,
-    ARG_V_MODE_VALIDATE, ARG_V_MODES, ArgType, BUILD_ARGS, EXEC_ARGS, RUN_ARGS, VALIDATE_ARGS,
+    ARG_FLAG_DATA, ARG_FLAG_DATA_SCHEMA, ARG_FLAG_EXECUTABLE, ARG_FLAG_MODE, ARG_FLAG_OUTPUT,
+    ARG_FLAG_PRINT_BYTECODE, ARG_FLAG_SOURCE_CODE, ARG_FLAG_UNSAFE_ASSUME_VALID, ARG_V_BOOL_FALSE,
+    ARG_V_BOOL_TRUE, ARG_V_MODE_BUILD, ARG_V_MODE_EXEC, ARG_V_MODE_RUN, ARG_V_MODE_VALIDATE,
+    ARG_V_MODES, ArgType, BUILD_ARGS, EXEC_ARGS, RUN_ARGS, VALIDATE_ARGS,
 };
 
 #[derive(Debug, PartialEq)]
@@ -33,6 +33,7 @@ pub struct ModeRunConf {
     pub data_path: String,
     pub data_schema_path: String,
     pub print_bytecode: bool,
+    pub output_path: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -92,7 +93,20 @@ impl Conf {
     }
 
     fn arg_str<'a>(value: Option<&&str>) -> String {
-        value.unwrap().to_string()
+        if value.is_some() {
+            value.unwrap().to_string()
+        } else {
+            "".to_string()
+        }
+    }
+
+    fn arg_any(value: Option<&&str>) -> Option<String> {
+        if value.is_some() {
+            let val = *value.unwrap();
+            Some(val.to_string())
+        } else {
+            None
+        }
     }
 
     // Takes a reference to the list of original argument strings
@@ -181,6 +195,9 @@ impl Conf {
                             res.insert(arg.name, value);
                         }
                     }
+                    ArgType::Any => {
+                        res.insert(arg.name, user_arg);
+                    }
                 }
             }
         }
@@ -211,12 +228,13 @@ impl Conf {
                 data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
                 data_schema_path: Self::arg_str(args.get(ARG_FLAG_DATA_SCHEMA)),
                 print_bytecode: Self::arg_bool(args.get(ARG_FLAG_PRINT_BYTECODE)),
+                output_path: Self::arg_any(args.get(ARG_FLAG_OUTPUT)),
             })),
 
             ARG_V_MODE_BUILD => Ok(Self::Build(ModeBuildConf {
                 source_code_path: Self::arg_str(args.get(ARG_FLAG_SOURCE_CODE)),
                 data_schema_path: Self::arg_str(args.get(ARG_FLAG_DATA_SCHEMA)),
-                executable_output_path: Self::arg_str(args.get(ARG_FLAG_EXECUTABLE_OUTPUT)),
+                executable_output_path: Self::arg_str(args.get(ARG_FLAG_OUTPUT)),
             })),
 
             ARG_V_MODE_EXEC => Ok(Self::Exec(ModeExecConf {
@@ -253,8 +271,8 @@ impl Conf {
 #[cfg(test)]
 mod tests {
     use crate::conf::config::{
-        ARG_FLAG_DATA, ARG_FLAG_DATA_SCHEMA, ARG_FLAG_EXECUTABLE, ARG_FLAG_EXECUTABLE_OUTPUT,
-        ARG_FLAG_MODE, ARG_FLAG_SOURCE_CODE,
+        ARG_FLAG_DATA, ARG_FLAG_DATA_SCHEMA, ARG_FLAG_EXECUTABLE, ARG_FLAG_MODE, ARG_FLAG_OUTPUT,
+        ARG_FLAG_SOURCE_CODE,
     };
     use crate::conf::{
         Conf, ConfErr, InvalidArg, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf,
@@ -332,6 +350,7 @@ mod tests {
             "--source-code=sample.eli".to_string(),
             "--data=data.csv".to_string(),
             "--data-schema=data.elt".to_string(),
+            "--output=res.txt".to_string(),
         ]);
         assert_eq!(
             result,
@@ -340,6 +359,7 @@ mod tests {
                 data_path: "data.csv".to_string(),
                 data_schema_path: "data.elt".to_string(),
                 print_bytecode: false,
+                output_path: Some("res.txt".to_string()),
             }))
         );
     }
@@ -360,6 +380,7 @@ mod tests {
                 data_path: "data.csv".to_string(),
                 data_schema_path: "data.elt".to_string(),
                 print_bytecode: true,
+                output_path: None,
             }))
         );
     }
@@ -404,7 +425,7 @@ mod tests {
         ]);
         assert_eq!(
             result,
-            Err(ConfErr::ArgRequired(ARG_FLAG_EXECUTABLE_OUTPUT.to_string()))
+            Err(ConfErr::ArgRequired(ARG_FLAG_OUTPUT.to_string()))
         );
     }
 

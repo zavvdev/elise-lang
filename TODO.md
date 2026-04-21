@@ -17,6 +17,8 @@ Source code
     - [x] fsys tests
 
     - [x] conf tests
+
+    - [x] Add support for output (run mode)
     
 - [ ] Parser
 
@@ -55,6 +57,8 @@ Source code
     - [x] Remove should panic crate 
 
     - [x] Add support for anonymous functions
+    
+    - [ ] Add support for slots (@data)
 
     - [ ] Improve source code slice function
 

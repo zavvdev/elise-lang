@@ -1,1 +1,6 @@
-.()
+.fn (name-getter [row]
+    .add(1 .get(row "name")))
+
+.pipe (
+    data
+    .map(name-getter))
