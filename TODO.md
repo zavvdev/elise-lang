@@ -56,9 +56,9 @@ Source code
 
     - [ ] Add support for anonymous functions
 
-- [ ] Data file parsing
-
 - [ ] Schema file parsing
+
+- [ ] Data file parsing
 
 - [ ] Semantic analyzer
 
