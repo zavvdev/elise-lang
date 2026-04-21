@@ -25,13 +25,19 @@ pub struct Compound {
     pub children: Vec<Box<AstNode>>,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum CallKind {
+    Named(String),
+    Anon,
+}
+
 /**
  * We treat DictPair as an AstNode in order to be consistent
  * and always provide ast nodes as children for compound values.
  */
 #[derive(Debug, PartialEq)]
 pub enum AstNode {
-    Call((String, Compound)),
+    Call((CallKind, Compound)),
     Number(Primitive),
     String(Primitive),
     Bool(Primitive),

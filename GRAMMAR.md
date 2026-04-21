@@ -19,7 +19,7 @@ separator you use and how much of them, you just have to use it to separate expr
 ```
 <expression> ::= <call> | <primitive> | <compound> | <identifier>
 
-<call> ::= '.'<no-separator><identifier> '(' <expression>* ')'
+<call> ::= '.'<no-separator><identifier>? '(' <expression>* ')'
 
 <primitive> ::= <number> | <string> | <boolean> | "null"
 <compound> ::= <list> | <dictionary>
@@ -56,6 +56,12 @@ In other words, it's a function call.
 
 ```
 .function-name(...)
+```
+
+It can also be anonymous. For example if you want to pass it as an argument.
+
+```
+.([x] .add(x 1))
 ```
 
 - You can pass anything as an argument.

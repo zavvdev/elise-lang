@@ -54,7 +54,9 @@ Source code
 
     - [x] Remove should panic crate 
 
-    - [ ] Add support for anonymous functions
+    - [x] Add support for anonymous functions
+
+    - [ ] Improve source code slice function
 
 - [ ] Schema file parsing
 

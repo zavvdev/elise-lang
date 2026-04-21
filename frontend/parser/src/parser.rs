@@ -8,7 +8,7 @@ use crate::config::{
     T_RIGHT_SQR_BRACKET, T_TRUE,
 };
 
-use elise_ast::{AstNode, Compound, Primitive, TokSpan};
+use elise_ast::{AstNode, CallKind, Compound, Primitive, TokSpan};
 use elise_shared::errors::{LangErr, ParserErr, ParserErrInfo};
 
 // ==========================
@@ -532,9 +532,17 @@ impl<'a> Prelude<'a> {
         *char == T_RIGHT_PAREN
     }
 
-    fn call_is_name_valid(name: &str) -> bool {
+    fn call_validate_name(&self, name: &str) -> Result<CallKind, LangErr> {
+        // Anonymous function
+        if name.len() == 0 {
+            return Ok(CallKind::Anon);
+        }
         let re = Regex::new(IDENTIFIER_REGEX).unwrap();
-        !name.is_empty() && re.is_match(name)
+        if !name.is_empty() && re.is_match(name) {
+            Ok(CallKind::Named(name.to_string()))
+        } else {
+            Err(self.fail(ParserErr::InvalFnName))
+        }
     }
 
     fn call_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
@@ -556,11 +564,7 @@ impl<'a> Prelude<'a> {
 
         let call_name = from_utf8(&self.source_code[call_name_start..self.tok_pos]).unwrap();
         // Allow separators at the end for user preferences.
-        let call_name = call_name.trim_end();
-
-        if !Self::call_is_name_valid(call_name) {
-            return Err(self.fail(ParserErr::InvalFnName));
-        }
+        let call_name = self.call_validate_name(call_name.trim_end())?;
 
         // Go to the next char after the function name.
         self.advance();
@@ -586,7 +590,7 @@ impl<'a> Prelude<'a> {
         let call_end = self.tok_pos;
 
         Ok(Some(AstNode::Call((
-            call_name.to_string(),
+            call_name,
             Compound {
                 span: TokSpan {
                     start: call_start,
@@ -618,7 +622,7 @@ impl<'a> Prelude<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{AstNode, Compound, Prelude, Primitive, TokSpan};
+    use crate::parser::{AstNode, CallKind, Compound, Prelude, Primitive, TokSpan};
     use LangErr::Parser;
     use elise_shared::errors::{LangErr, ParserErr, ParserErrInfo};
 
@@ -1263,7 +1267,7 @@ mod tests {
         assert_eq!(
             ast,
             Ok(vec![AstNode::Call((
-                "some-fn".to_string(),
+                CallKind::Named("some-fn".to_string()),
                 Compound {
                     span: TokSpan { start: 0, end: 10 },
                     children: vec![],
@@ -1278,7 +1282,7 @@ mod tests {
         assert_eq!(
             ast,
             Ok(vec![AstNode::Call((
-                "add".to_string(),
+                CallKind::Named("add".to_string()),
                 Compound {
                     span: TokSpan { start: 0, end: 17 },
                     children: vec![
@@ -1287,7 +1291,7 @@ mod tests {
                             span: TokSpan { start: 5, end: 6 }
                         })),
                         Box::new(AstNode::Call((
-                            "div".to_string(),
+                            CallKind::Named("div".to_string()),
                             Compound {
                                 span: TokSpan { start: 7, end: 16 },
                                 children: vec![
@@ -1328,7 +1332,7 @@ mod tests {
             assert_eq!(
                 Prelude::new(input).parse(),
                 Ok(vec![AstNode::Call((
-                    "test".to_string(),
+                    CallKind::Named("test".to_string()),
                     Compound {
                         span: TokSpan { start: 0, end },
                         children: vec![],
@@ -1399,7 +1403,7 @@ mod tests {
     }
 
     #[test]
-    fn call_test_should_panic_if_parens_are_standalone() {
+    fn call_test_should_not_allow_standalone_parens() {
         let code = "()";
         assert_eq!(
             Prelude::new(code).parse(),
@@ -1408,6 +1412,20 @@ mod tests {
                 col: 1,
                 source_code_slice: Some(code.to_string()),
             })))
+        );
+    }
+
+    #[test]
+    fn call_test_should_parse_anon() {
+        assert_eq!(
+            Prelude::new(".()").parse(),
+            Ok(vec![AstNode::Call((
+                CallKind::Anon,
+                Compound {
+                    span: TokSpan { start: 0, end: 3 },
+                    children: vec![],
+                }
+            ))])
         );
     }
 
