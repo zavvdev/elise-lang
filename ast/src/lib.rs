@@ -46,4 +46,5 @@ pub enum AstNode {
     Dict(Compound),
     DictPair((String, Box<AstNode>)),
     Identifier(Primitive),
+    Slot(Primitive),
 }

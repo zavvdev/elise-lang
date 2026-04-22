@@ -17,7 +17,7 @@ of separators are not enforced and they are literally decorative. It doesn't mat
 separator you use and how much of them, you just have to use it to separate expressions.
 
 ```
-<expression> ::= <call> | <primitive> | <compound> | <identifier>
+<expression> ::= <call> | <primitive> | <compound> | <identifier> | <slot>
 
 <call> ::= '.'<no-separator><identifier>? '(' <expression>* ')'
 
@@ -28,6 +28,8 @@ separator you use and how much of them, you just have to use it to separate expr
 <dictionary> ::= '{' (<string> <expression>)* '}'
 
 <identifier> ::= <letter> (<letter> | <digit> | '-' | '?' | '!' | '_')*
+
+<slot> ::= '@'<no-separator><identifier>
 
 <string> ::= '"' <string-char>* '"'
 <string-char> ::= /* any character except " */

@@ -5,7 +5,7 @@ use std::str::from_utf8;
 use crate::config::{
     IDENTIFIER_REGEX, T_CALL_PREFIX, T_COMMA, T_DOUBLE_QT, T_FALSE, T_LEFT_CUR_BRACKET,
     T_LEFT_PAREN, T_LEFT_SQR_BRACKET, T_MINUS, T_NULL, T_RIGHT_CUR_BRACKET, T_RIGHT_PAREN,
-    T_RIGHT_SQR_BRACKET, T_TRUE,
+    T_RIGHT_SQR_BRACKET, T_SLOT_PREFIX, T_TRUE,
 };
 
 use elise_ast::{AstNode, CallKind, Compound, Primitive, TokSpan};
@@ -105,6 +105,8 @@ impl<'a> Prelude<'a> {
             Ok(None)
         } else if self.call_is_start(c) {
             self.call_consume()
+        } else if self.slot_is_start(c) {
+            self.slot_consume()
         } else if Self::number_is_start(c) {
             self.number_consume()
         } else if Self::string_is_start(c) {
@@ -327,7 +329,7 @@ impl<'a> Prelude<'a> {
     // ==========================
 
     fn identifier_is_start(c: &u8) -> bool {
-        (*c >= b'a' && *c <= b'z') || (*c >= b'A' && *c <= b'Z')
+        matches!(*c, b'a'..=b'z') || matches!(*c, b'A'..=b'Z')
     }
 
     fn identifier_is_end(c: &u8) -> bool {
@@ -524,8 +526,10 @@ impl<'a> Prelude<'a> {
     // ==========================
 
     fn call_is_start(&self, char: &u8) -> bool {
-        let next_char = self.peek_at(self.tok_pos);
-        *char == T_CALL_PREFIX && next_char.is_some() && !Self::is_separator(&next_char.unwrap())
+        if let Some(next_char) = self.peek_at(self.tok_pos) {
+            return *char == T_CALL_PREFIX && !Self::is_separator(&next_char);
+        }
+        false
     }
 
     fn call_is_end(&self, char: &u8) -> bool {
@@ -604,6 +608,64 @@ impl<'a> Prelude<'a> {
     // ==========================
     //
     // CALL END
+    //
+    // ==========================
+
+    // ==========================
+    //
+    // SLOT START
+    //
+    // ==========================
+
+    fn slot_is_start(&self, char: &u8) -> bool {
+        if let Some(next_char) = self.peek_at(self.tok_pos) {
+            return *char == T_SLOT_PREFIX && !Self::is_separator(&next_char);
+        }
+        false
+    }
+
+    fn slot_is_end(c: &u8) -> bool {
+        Self::is_separator(c) || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
+    }
+
+    fn slot_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
+        let start = self.tok_pos;
+
+        // Exclude slot prefix.
+        self.advance();
+
+        let slot_name_start = self.tok_pos;
+
+        while let Some(c) = self.peek() {
+            if Self::slot_is_end(&c) {
+                break;
+            } else {
+                self.advance();
+            }
+        }
+
+        let value = from_utf8(&self.source_code[slot_name_start..self.tok_pos])
+            .unwrap()
+            .to_string();
+
+        let re = Regex::new(IDENTIFIER_REGEX).unwrap();
+
+        if re.is_match(&value) {
+            return Ok(Some(AstNode::Slot(Primitive {
+                value,
+                span: TokSpan {
+                    start,
+                    end: self.tok_pos,
+                },
+            })));
+        } else {
+            return Err(self.fail(ParserErr::UnexpTok));
+        }
+    }
+
+    // ==========================
+    //
+    // SLOT END
     //
     // ==========================
 }
@@ -972,7 +1034,6 @@ mod tests {
         let identifiers: Vec<(&str, usize, fn(ParserErrInfo) -> ParserErr)> = vec![
             ("1asd", 2, ParserErr::InvalNum),
             ("!asd", 1, ParserErr::UnexpTok),
-            ("@asd", 1, ParserErr::UnexpTok),
             ("#asd", 1, ParserErr::UnexpTok),
             ("$asd", 1, ParserErr::UnexpTok),
             ("%asd", 1, ParserErr::UnexpTok),
@@ -1371,29 +1432,29 @@ mod tests {
     #[test]
     fn call_test_should_reject_invalid_names() {
         let identifiers = vec![
-            ("1asd", 6, ParserErr::InvalFnName),
-            ("!asd", 6, ParserErr::InvalFnName),
-            ("@asd", 6, ParserErr::InvalFnName),
-            ("#asd", 6, ParserErr::InvalFnName),
-            ("$asd", 6, ParserErr::InvalFnName),
-            ("%asd", 6, ParserErr::InvalFnName),
-            ("^asd", 6, ParserErr::InvalFnName),
-            ("&asd", 6, ParserErr::InvalFnName),
-            ("*asd", 6, ParserErr::InvalFnName),
-            ("-asd", 6, ParserErr::InvalFnName),
-            ("_asd", 6, ParserErr::InvalFnName),
-            ("=asd", 6, ParserErr::InvalFnName),
-            ("+asd", 6, ParserErr::InvalFnName),
-            ("?asd", 6, ParserErr::InvalFnName),
-            ("?asd", 6, ParserErr::InvalFnName),
-            (">asd", 6, ParserErr::InvalFnName),
-            ("<asd", 6, ParserErr::InvalFnName),
-            ("/asd", 6, ParserErr::InvalFnName),
+            ("1asd", 6),
+            ("!asd", 6),
+            ("@asd", 6),
+            ("#asd", 6),
+            ("$asd", 6),
+            ("%asd", 6),
+            ("^asd", 6),
+            ("&asd", 6),
+            ("*asd", 6),
+            ("-asd", 6),
+            ("_asd", 6),
+            ("=asd", 6),
+            ("+asd", 6),
+            ("?asd", 6),
+            ("?asd", 6),
+            (">asd", 6),
+            ("<asd", 6),
+            ("/asd", 6),
         ];
-        for (identifier, col, err) in identifiers {
+        for (identifier, col) in identifiers {
             assert_eq!(
                 Prelude::new(&format!(".{}()", identifier)).parse(),
-                Err(Parser(err(ParserErrInfo {
+                Err(Parser(ParserErr::InvalFnName(ParserErrInfo {
                     row: 1,
                     col,
                     source_code_slice: Some(format!(".{}()", identifier)),
@@ -1431,6 +1492,75 @@ mod tests {
 
     // ==========================
     // CALL TESTS END
+    // ==========================
+
+    // ==========================
+    // SLOT TESTS START
+    // ==========================
+
+    #[test]
+    fn slot_test_should_parse_correctly() {
+        let slots = vec![
+            ("@asd", 4),
+            ("@asd?", 5),
+            ("@as?d", 5),
+            ("@as5?d", 6),
+            ("@asd-", 5),
+            ("@as-d", 5),
+            ("@asd!", 5),
+            ("@as!d", 5),
+            ("@asd_", 5),
+        ];
+        for (slot, end) in slots {
+            let ast = Prelude::new(slot).parse();
+            assert_eq!(
+                ast,
+                Ok(vec![AstNode::Slot(Primitive {
+                    value: slot[1..].to_string(),
+                    span: TokSpan { start: 0, end },
+                })])
+            );
+        }
+    }
+
+    #[test]
+    fn slot_test_should_reject_invalid_names() {
+        let slots = vec![
+            ("@1asd", 6),
+            ("@!asd", 6),
+            ("@@asd", 6),
+            ("@#asd", 6),
+            ("@$asd", 6),
+            ("@%asd", 6),
+            ("@^asd", 6),
+            ("@&asd", 6),
+            ("@*asd", 6),
+            ("@-asd", 6),
+            ("@_asd", 6),
+            ("@=asd", 6),
+            ("@+asd", 6),
+            ("@?asd", 6),
+            ("@?asd", 6),
+            ("@>asd", 6),
+            ("@<asd", 6),
+            ("@/asd", 6),
+            ("@@asd", 6),
+            ("@ asd", 2),
+        ];
+        for (slot, col) in slots {
+            assert_eq!(
+                Prelude::new(slot).parse(),
+                Err(Parser(ParserErr::UnexpTok(ParserErrInfo {
+                    row: 1,
+                    col,
+                    source_code_slice: Some(slot.to_string()),
+                })))
+            );
+        }
+    }
+
+    // ==========================
+    // SLOT TESTS END
     // ==========================
 
     // ==========================

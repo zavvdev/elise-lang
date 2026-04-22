@@ -58,7 +58,9 @@ Source code
 
     - [x] Add support for anonymous functions
     
-    - [ ] Add support for slots (@data)
+    - [x] Add support for slots (@data)
+
+    - [ ] Review parser for reusable functions
 
     - [ ] Improve source code slice function
 

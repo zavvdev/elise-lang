@@ -1,6 +1,7 @@
 pub const IDENTIFIER_REGEX: &str = r"^[A-Za-z][A-Za-z0-9\-?!_]*$";
 
 pub const T_CALL_PREFIX: u8 = b'.';
+pub const T_SLOT_PREFIX: u8 = b'@';
 pub const T_TRUE: &str = "true";
 pub const T_FALSE: &str = "false";
 pub const T_NULL: &str = "null";
