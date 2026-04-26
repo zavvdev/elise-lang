@@ -17,14 +17,14 @@ pub fn get_source_code_slice(source_code: &[u8], char_pos: usize) -> Result<Sour
 
     let mut found = false;
 
-    for char in source_code {
+    for c in source_code {
         if preview_row_end == char_pos {
             found = true;
         }
 
         preview_row_end += 1;
 
-        if *char == b'\n' {
+        if *c == b'\n' {
             if found {
                 break;
             }

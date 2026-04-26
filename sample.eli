@@ -1,1 +1,11 @@
-@data
+.let ([first-row null]
+    .get(@data, 0)
+    .add(2 3 4)
+    .div(2 3))
+
+.fn (format-name [name]
+    .concat(name "!"))
+
+.pipe(
+    @data
+    .map(format-name))
