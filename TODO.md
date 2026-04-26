@@ -28,6 +28,10 @@ Source code
 - [x] Schema file parsing
 
 - [ ] Data file parsing
+    
+    - [ ] Rename d-parser into csv-parser
+
+    - [ ] Move parser.rs logic into lib.rs for sc-parser
 
     - [ ] Add csv parser that will parse csv into raw string records
 
