@@ -1,5 +1,5 @@
 use csv::ReaderBuilder;
-use elise_shared::errors::{DParserErr::InvalRow, DParserErrInfo, LangErr};
+use elise_shared::errors::{LangErr, errors_csv_parser::CsvParserErr};
 
 pub struct CsvParser<'a> {
     data: &'a str,
@@ -23,13 +23,14 @@ impl<'a> CsvParser<'a> {
             .from_reader(self.data.as_bytes());
 
         for result in rdr.records() {
-            if let Ok(result) = result {
-                records.push(CsvParserRecord {
-                    row: result.iter().map(str::to_owned).collect::<Vec<String>>(),
-                })
-            } else {
-                // TODO: Add info to parser err info
-                return Err(LangErr::DParser(InvalRow(DParserErrInfo {})));
+            match result {
+                Ok(rec) => records.push(CsvParserRecord {
+                    row: rec.iter().map(str::to_owned).collect::<Vec<String>>(),
+                }),
+                Err(err) => {
+                    println!("{:#?}", err);
+                    return Err(LangErr::CsvParser(CsvParserErr::Impl));
+                }
             }
         }
 

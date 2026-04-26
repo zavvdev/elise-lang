@@ -9,7 +9,10 @@ use crate::config::{
 };
 
 use elise_ast::{AstNode, CallKind, Compound, Primitive, TokSpan};
-use elise_shared::errors::{LangErr, ScParserErr, ScParserErrInfo};
+use elise_shared::errors::{
+    LangErr,
+    errors_sc_parser::{ScParserErr, ScParserErrInfo},
+};
 
 // ==========================
 //
@@ -686,7 +689,10 @@ impl<'a> Prelude<'a> {
 mod tests {
     use crate::parser::{AstNode, CallKind, Compound, Prelude, Primitive, TokSpan};
     use LangErr::ScParser;
-    use elise_shared::errors::{LangErr, ScParserErr, ScParserErrInfo};
+    use elise_shared::errors::{
+        LangErr,
+        errors_sc_parser::{ScParserErr, ScParserErrInfo},
+    };
 
     // ==========================
     // NUMBER TESTS START

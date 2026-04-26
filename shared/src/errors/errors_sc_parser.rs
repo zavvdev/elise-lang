@@ -1,9 +1,3 @@
-// ==========================
-//
-//  SC PARSER ERRORS START
-//
-// ==========================
-
 #[derive(Debug, PartialEq)]
 pub struct ScParserErrInfo {
     pub row: usize,
@@ -26,36 +20,4 @@ pub enum ScParserErr {
     InvalStr(ScParserErrInfo),
     InvalDictPair(ScParserErrInfo),
     InvalFnName(ScParserErrInfo),
-}
-
-// ==========================
-//
-//  SC PARSER ERRORS END
-//
-// ==========================
-
-// ==========================
-//
-//  D PARSER ERRORS START
-//
-// ==========================
-
-#[derive(Debug, PartialEq)]
-pub struct DParserErrInfo {}
-
-#[derive(Debug, PartialEq)]
-pub enum DParserErr {
-    InvalRow(DParserErrInfo),
-}
-
-// ==========================
-//
-//  D PARSER ERRORS END
-//
-// ==========================
-
-#[derive(Debug, PartialEq)]
-pub enum LangErr {
-    ScParser(ScParserErr),
-    DParser(DParserErr),
 }

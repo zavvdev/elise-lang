@@ -29,13 +29,15 @@ Source code
 
 - [ ] Data file parsing
 
-    - [ ] Add data parser dispatcher to correct parser according to data type
-
-    - [ ] Add error info for data parser + error handling in main.rs
-    
     - [ ] Add csv parser that will parse csv into raw string records
 
-    - [ ] Add raw csv strings coercion to data types defined in .elt
+        - [ ] Split out.rs for different handlers
+
+        - [ ] Add error invariants for csv parser
+
+    - [ ] Add data parser dispatcher to correct parser according to data type in lib.rs
+
+    - [ ] Add raw csv strings coercion typed DataGraph
         
         - [ ] Number
 

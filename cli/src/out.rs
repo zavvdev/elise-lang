@@ -4,7 +4,8 @@
  * This is the only file that should be responsible for it.
  */
 use colored::Colorize;
-use elise_shared::errors::{DParserErr, ScParserErr};
+use elise_shared::errors::errors_csv_parser::CsvParserErr;
+use elise_shared::errors::errors_sc_parser::ScParserErr;
 
 // ==========================
 //
@@ -142,17 +143,10 @@ pub fn sc_parser_err(parser_err: &ScParserErr) {
 
 // ==========================
 //
-// D PARSER ERROR HANDLER
+// CSV PARSER ERROR HANDLER
 //
 // ==========================
 
-pub fn d_parser_err(parser_err: &DParserErr) {
-    use DParserErr::*;
-
+pub fn csv_parser_err(_parser_err: &CsvParserErr) {
     // TODO: handle info
-    let info = match parser_err {
-        InvalRow(err_info) => ("Invalid csv row", err_info),
-    };
-
-    silent_err(info.0, Some("Data parser error"));
 }
