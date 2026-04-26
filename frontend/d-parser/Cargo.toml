@@ -1,0 +1,11 @@
+[package]
+name = "elise-d-parser"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+csv.workspace = true
+elise-shared = { path = "../../shared" }

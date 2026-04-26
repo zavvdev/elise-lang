@@ -1,5 +1,4 @@
 .schema(
-    "csv"
     .row(
         name   .string()
         age    .number()

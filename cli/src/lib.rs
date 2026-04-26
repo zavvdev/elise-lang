@@ -8,10 +8,13 @@ pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 
-use elise_parser::parser::Prelude;
+use elise_d_parser::csv::CsvParser;
+use elise_sc_parser::parser::Prelude;
 use elise_shared::errors::LangErr;
 use rayon::scope;
 use std::time::Instant;
+
+use crate::conf::config::FILE_EXT_CSV;
 
 #[derive(Debug)]
 pub struct RunResult<'a> {
@@ -66,16 +69,10 @@ pub fn run<'a>(
     let source_code_ast = source_code_ast.unwrap()?;
     let schema_ast = schema_ast.unwrap()?;
 
-    // TODO: Move into separate module
-
-    let mut rdr = csv::ReaderBuilder::new()
-        .has_headers(true)
-        .from_reader(data.as_bytes());
-
-    for result in rdr.records() {
-        if let Ok(result) = result {
-            println!("{:#?}", result);
-        }
+    // TODO: Add dispatcher to correct data parser
+    if config.data_path.ends_with(FILE_EXT_CSV) {
+        let records = CsvParser::new(data).parse();
+        println!("{:#?}", records);
     }
 
     println!("source_code_ast: {:#?}", source_code_ast);

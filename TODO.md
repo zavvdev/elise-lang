@@ -29,7 +29,9 @@ Source code
 
 - [ ] Data file parsing
 
-    - [ ] Add data_type field into config so we can differentiate between data file formats (CSV, JSON)
+    - [ ] Add data parser dispatcher to correct parser according to data type
+
+    - [ ] Add error info for data parser + error handling in main.rs
     
     - [ ] Add csv parser that will parse csv into raw string records
 

@@ -7,7 +7,10 @@
 pub const FILE_EXT_SOURCE_CODE: &[&str] = &[".eli"];
 pub const FILE_EXT_EXECUTABLE: &[&str] = &[".elc"];
 pub const FILE_EXT_DATA_SCHEMA: &[&str] = &[".elt"];
-pub const FILE_EXT_DATA: &[&str] = &[".csv"];
+
+pub const FILE_EXT_CSV: &str = ".csv";
+
+pub const FILE_EXT_DATA: &[&str] = &[FILE_EXT_CSV];
 
 // ==========================
 //

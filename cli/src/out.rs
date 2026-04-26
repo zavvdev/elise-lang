@@ -4,7 +4,7 @@
  * This is the only file that should be responsible for it.
  */
 use colored::Colorize;
-use elise_shared::errors::ParserErr;
+use elise_shared::errors::{DParserErr, ScParserErr};
 
 // ==========================
 //
@@ -111,12 +111,12 @@ pub fn validate_result(ms: u128) {
 
 // ==========================
 //
-// PARSER ERROR HANDLER
+// SC PARSER ERROR HANDLER
 //
 // ==========================
 
-pub fn parser_err(parser_err: &ParserErr) {
-    use ParserErr::*;
+pub fn sc_parser_err(parser_err: &ScParserErr) {
+    use ScParserErr::*;
 
     let info = match parser_err {
         UnexpTok(err_info) => ("Unexpected token", err_info),
@@ -138,4 +138,21 @@ pub fn parser_err(parser_err: &ParserErr) {
 
     silent_err(info.0, Some("Parser error"));
     error_at_code(source_code, info.1.row, info.1.col);
+}
+
+// ==========================
+//
+// D PARSER ERROR HANDLER
+//
+// ==========================
+
+pub fn d_parser_err(parser_err: &DParserErr) {
+    use DParserErr::*;
+
+    // TODO: handle info
+    let info = match parser_err {
+        InvalRow(err_info) => ("Invalid csv row", err_info),
+    };
+
+    silent_err(info.0, Some("Data parser error"));
 }
