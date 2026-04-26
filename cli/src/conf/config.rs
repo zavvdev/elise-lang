@@ -27,7 +27,6 @@ pub const ARG_FLAG_DATA: &str = "data";
 pub const ARG_FLAG_DATA_SCHEMA: &str = "data-schema";
 pub const ARG_FLAG_EXECUTABLE: &str = "executable";
 pub const ARG_FLAG_OUTPUT: &str = "output";
-pub const ARG_FLAG_UNSAFE_ASSUME_VALID: &str = "unsafe-assume-valid";
 pub const ARG_FLAG_PRINT_BYTECODE: &str = "print-bytecode";
 
 // ==========================
@@ -159,12 +158,6 @@ pub const EXEC_ARGS: &[Arg] = &[
         ty: ArgType::SourceFile(FILE_EXT_DATA),
         req: true,
         def: None,
-    },
-    Arg {
-        name: ARG_FLAG_UNSAFE_ASSUME_VALID,
-        ty: ArgType::Boolean,
-        req: false,
-        def: Some(ARG_V_BOOL_FALSE),
     },
 ];
 

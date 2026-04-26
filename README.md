@@ -39,7 +39,7 @@ elise --mode=run --source-code=sample.eli --data=data.csv --data-schema=data.elt
 
 **Performance**: Medium
 
-### 2. Execute Pre-compiled (Optimized, Safe)
+### 2. Unsafe Execution (Maximum Performance)
 
 Step 1 — Build an executable
 
@@ -51,30 +51,6 @@ Step 2 — Execute
 
 ```bash
 elise --mode=exec --executable=program.elc --data=data.csv
-```
-
-- Uses precompiled schema-specialized bytecode
-
-- Performs minimal runtime validation (structural + parsing checks)
-
-- Executes optimized pipeline
-
-**Safety**: High
-
-**Performance**: High
-
-### 3. Unsafe Execution (Maximum Performance)
-
-Step 1 — Build an executable
-
-```bash
-elise --mode=build --source-code=sample.eli --data-schema=data.elt --output=program.elc
-```
-
-Step 2 — Execute
-
-```bash
-elise --mode=exec --executable=program.elc --data=data.csv --unsafe-assume-valid
 ```
 
 - Requires precompiled .elc
@@ -89,7 +65,7 @@ elise --mode=exec --executable=program.elc --data=data.csv --unsafe-assume-valid
 
 **Performance**: Maximum
 
-### 4. Validation-Only Step
+### 3. Validation-Only Step
 
 ```bash
 elise --mode=validate --data=data.csv --data-schema=data.elt

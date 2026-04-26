@@ -1,24 +1,7 @@
-FOR CSV:
-
-@format csv
-
-record Row {
-    name:   String  @column(0)
-    age:    Int     @column(1)
-    salary: Float   @column(2)
-}
-
-FOR JSON:
-
-@format json
-
-record User {
-    name:    String
-    address: Address
-    tags:    List<String>
-}
-
-record Address {
-    city:    String
-    country: String
-}
+.schema(
+    "csv"
+    .row(
+        name   .string()
+        age    .number()
+        salary .number()
+    ))

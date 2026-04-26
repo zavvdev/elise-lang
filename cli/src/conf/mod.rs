@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 use config::{
     ARG_FLAG_DATA, ARG_FLAG_DATA_SCHEMA, ARG_FLAG_EXECUTABLE, ARG_FLAG_MODE, ARG_FLAG_OUTPUT,
-    ARG_FLAG_PRINT_BYTECODE, ARG_FLAG_SOURCE_CODE, ARG_FLAG_UNSAFE_ASSUME_VALID, ARG_V_BOOL_FALSE,
+    ARG_FLAG_PRINT_BYTECODE, ARG_FLAG_SOURCE_CODE, ARG_V_BOOL_FALSE,
     ARG_V_BOOL_TRUE, ARG_V_MODE_BUILD, ARG_V_MODE_EXEC, ARG_V_MODE_RUN, ARG_V_MODE_VALIDATE,
     ARG_V_MODES, ArgType, BUILD_ARGS, EXEC_ARGS, RUN_ARGS, VALIDATE_ARGS,
 };
@@ -47,7 +47,6 @@ pub struct ModeBuildConf {
 pub struct ModeExecConf {
     pub executable_path: String,
     pub data_path: String,
-    pub unsafe_assume_valid: bool,
 }
 
 #[derive(Debug, PartialEq)]
@@ -240,7 +239,6 @@ impl Conf {
             ARG_V_MODE_EXEC => Ok(Self::Exec(ModeExecConf {
                 executable_path: Self::arg_str(args.get(ARG_FLAG_EXECUTABLE)),
                 data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
-                unsafe_assume_valid: Self::arg_bool(args.get(ARG_FLAG_UNSAFE_ASSUME_VALID)),
             })),
 
             ARG_V_MODE_VALIDATE => Ok(Self::Validate(ModeValidateConf {
@@ -481,25 +479,6 @@ mod tests {
             Ok(Conf::Exec(ModeExecConf {
                 executable_path: "sample.elc".to_string(),
                 data_path: "data.csv".to_string(),
-                unsafe_assume_valid: false,
-            }))
-        );
-    }
-
-    #[test]
-    fn exec_should_construct_conf_with_assume_valid() {
-        let result = Conf::new(&[
-            "--mode=exec".to_string(),
-            "--executable=sample.elc".to_string(),
-            "--data=data.csv".to_string(),
-            "--unsafe-assume-valid".to_string(),
-        ]);
-        assert_eq!(
-            result,
-            Ok(Conf::Exec(ModeExecConf {
-                executable_path: "sample.elc".to_string(),
-                data_path: "data.csv".to_string(),
-                unsafe_assume_valid: true,
             }))
         );
     }
