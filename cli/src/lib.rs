@@ -49,7 +49,7 @@ pub enum HandleResultStatus {
 
 pub fn run<'a>(
     source_code: &'a str,
-    _data: &'a str,
+    data: &'a str,
     data_schema: &'a str,
     config: &'a ModeRunConf,
 ) -> Result<RunResult<'a>, LangErr> {
@@ -65,6 +65,18 @@ pub fn run<'a>(
 
     let source_code_ast = source_code_ast.unwrap()?;
     let schema_ast = schema_ast.unwrap()?;
+
+    // TODO: Move into separate module
+
+    let mut rdr = csv::ReaderBuilder::new()
+        .has_headers(true)
+        .from_reader(data.as_bytes());
+
+    for result in rdr.records() {
+        if let Ok(result) = result {
+            println!("{:#?}", result);
+        }
+    }
 
     println!("source_code_ast: {:#?}", source_code_ast);
     println!("schema_ast: {:#?}", schema_ast);
