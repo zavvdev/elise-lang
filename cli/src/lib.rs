@@ -10,6 +10,7 @@ use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 
 use elise_parser::parser::Prelude;
 use elise_shared::errors::LangErr;
+use rayon::scope;
 use std::time::Instant;
 
 #[derive(Debug)]
@@ -49,13 +50,24 @@ pub enum HandleResultStatus {
 pub fn run<'a>(
     source_code: &'a str,
     _data: &'a str,
-    _data_schema: &'a str,
+    data_schema: &'a str,
     config: &'a ModeRunConf,
 ) -> Result<RunResult<'a>, LangErr> {
     let start = Instant::now();
-    let ast = Prelude::new(&source_code).parse()?;
 
-    println!("ast: {:#?}", ast);
+    let (mut source_code_ast, mut schema_ast) = (None, None);
+
+    // Run parsers in separate threads.
+    scope(|s| {
+        s.spawn(|_| source_code_ast = Some(Prelude::new(source_code).parse()));
+        s.spawn(|_| schema_ast = Some(Prelude::new(data_schema).parse()));
+    });
+
+    let source_code_ast = source_code_ast.unwrap()?;
+    let schema_ast = schema_ast.unwrap()?;
+
+    println!("source_code_ast: {:#?}", source_code_ast);
+    println!("schema_ast: {:#?}", schema_ast);
 
     println!("RUN MODE");
 

@@ -11,7 +11,7 @@ Source code
   
 - [x] Parser
 
-- [ ] Schema file parsing
+- [x] Schema file parsing
 
 - [ ] Data file parsing
 
