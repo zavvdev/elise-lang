@@ -1,5 +1,5 @@
 [package]
-name = "elise-sc-parser"
+name = "elise-csv-parser"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,6 +7,5 @@ edition = "2024"
 path = "src/lib.rs"
 
 [dependencies]
+csv.workspace = true
 elise-shared = { path = "../../shared" }
-elise-ast = { path = "../../ast" }
-regex.workspace = true

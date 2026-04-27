@@ -1,11 +1,11 @@
 pub mod errors_csv_parser;
-pub mod errors_sc_parser;
+pub mod errors_parser;
 
 use errors_csv_parser::CsvParserErr;
-use errors_sc_parser::ScParserErr;
+use errors_parser::ParserErr;
 
 #[derive(Debug, PartialEq)]
 pub enum LangErr {
-    ScParser(ScParserErr),
+    Parser(ParserErr),
     CsvParser(CsvParserErr),
 }

@@ -89,8 +89,8 @@ name = "elise"
 version = "0.1.0"
 dependencies = [
  "colored",
- "elise-d-parser",
- "elise-sc-parser",
+ "elise-csv-parser",
+ "elise-parser",
  "elise-shared",
  "rayon",
  "serial_test",
@@ -109,7 +109,7 @@ name = "elise-compiler"
 version = "0.1.0"
 
 [[package]]
-name = "elise-d-parser"
+name = "elise-csv-parser"
 version = "0.1.0"
 dependencies = [
  "csv",
@@ -117,7 +117,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "elise-sc-parser"
+name = "elise-parser"
 version = "0.1.0"
 dependencies = [
  "elise-ast",

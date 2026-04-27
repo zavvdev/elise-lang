@@ -5,7 +5,7 @@
  */
 use colored::Colorize;
 use elise_shared::errors::errors_csv_parser::CsvParserErr;
-use elise_shared::errors::errors_sc_parser::ScParserErr;
+use elise_shared::errors::errors_parser::ParserErr;
 
 // ==========================
 //
@@ -116,8 +116,8 @@ pub fn validate_result(ms: u128) {
 //
 // ==========================
 
-pub fn sc_parser_err(parser_err: &ScParserErr) {
-    use ScParserErr::*;
+pub fn parser_err(parser_err: &ParserErr) {
+    use ParserErr::*;
 
     let info = match parser_err {
         UnexpTok(err_info) => ("Unexpected token", err_info),

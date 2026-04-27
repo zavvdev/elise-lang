@@ -8,8 +8,8 @@ pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 
-use elise_d_parser::csv::CsvParser;
-use elise_sc_parser::parser::Prelude;
+use elise_csv_parser::CsvParser;
+use elise_parser::Prelude;
 use elise_shared::errors::LangErr;
 use rayon::scope;
 use std::time::Instant;

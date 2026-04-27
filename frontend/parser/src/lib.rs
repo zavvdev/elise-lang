@@ -1,3 +1,6 @@
+pub mod config;
+pub mod utilities;
+
 use crate::utilities::get_source_code_slice;
 use regex::Regex;
 use std::str::from_utf8;
@@ -11,7 +14,7 @@ use crate::config::{
 use elise_ast::{AstNode, CallKind, Compound, Primitive, TokSpan};
 use elise_shared::errors::{
     LangErr,
-    errors_sc_parser::{ScParserErr, ScParserErrInfo},
+    errors_parser::{ParserErr, ParserErrInfo},
 };
 
 // ==========================
@@ -76,26 +79,26 @@ impl<'a> Prelude<'a> {
         }
 
         if self.depth_stack.len() > 0 {
-            return Err(self.fail(ScParserErr::UnexpEoFile));
+            return Err(self.fail(ParserErr::UnexpEoFile));
         }
 
         Ok(ast)
     }
 
-    fn fail(&self, variant: fn(ScParserErrInfo) -> ScParserErr) -> LangErr {
-        let mut info = ScParserErrInfo {
+    fn fail(&self, variant: fn(ParserErrInfo) -> ParserErr) -> LangErr {
+        let mut info = ParserErrInfo {
             row: 1,
             col: 1,
             source_code_slice: None,
         };
         if let Ok(slice) = get_source_code_slice(self.source_code, self.tok_pos) {
-            info = ScParserErrInfo {
+            info = ParserErrInfo {
                 row: slice.row,
                 col: slice.col,
                 source_code_slice: Some(slice.slice),
             }
         }
-        LangErr::ScParser(variant(info))
+        LangErr::Parser(variant(info))
     }
 
     /**
@@ -124,7 +127,7 @@ impl<'a> Prelude<'a> {
         } else if Self::identifier_is_start(c) {
             self.identifier_consume()
         } else {
-            Err(self.fail(ScParserErr::UnexpTok))
+            Err(self.fail(ParserErr::UnexpTok))
         };
     }
 
@@ -229,7 +232,7 @@ impl<'a> Prelude<'a> {
                 }
                 (_, c) if Self::number_is_end(&c) => break,
                 _ => {
-                    return Err(self.fail(ScParserErr::InvalNum));
+                    return Err(self.fail(ParserErr::InvalNum));
                 }
             };
         }
@@ -238,7 +241,7 @@ impl<'a> Prelude<'a> {
         match state {
             FstNumState::Zero | FstNumState::Int | FstNumState::Frac | FstNumState::Scient => {}
             _ => {
-                return Err(self.fail(ScParserErr::InvalNum));
+                return Err(self.fail(ParserErr::InvalNum));
             }
         }
 
@@ -246,7 +249,7 @@ impl<'a> Prelude<'a> {
         let value = from_utf8(&self.source_code[tok_start..tok_end]);
 
         if value.is_err() {
-            return Err(self.fail(ScParserErr::InvalNum));
+            return Err(self.fail(ParserErr::InvalNum));
         }
 
         Ok(Some(AstNode::Number(Primitive {
@@ -292,7 +295,7 @@ impl<'a> Prelude<'a> {
                 break;
             }
             if Self::string_is_forbidden_char(&c) {
-                return Err(self.fail(ScParserErr::InvalStr));
+                return Err(self.fail(ParserErr::InvalStr));
             }
             self.advance();
         }
@@ -300,7 +303,7 @@ impl<'a> Prelude<'a> {
         let value = from_utf8(&self.source_code[tok_start + 1..self.tok_pos - 1]);
 
         if value.is_err() {
-            return Err(self.fail(ScParserErr::InvalStr));
+            return Err(self.fail(ParserErr::InvalStr));
         }
 
         let value = value.unwrap();
@@ -371,7 +374,7 @@ impl<'a> Prelude<'a> {
                 if re.is_match(&primitive.value) {
                     return Ok(Some(AstNode::Identifier(primitive)));
                 } else {
-                    return Err(self.fail(ScParserErr::UnexpTok));
+                    return Err(self.fail(ParserErr::UnexpTok));
                 }
             }
         }
@@ -423,7 +426,7 @@ impl<'a> Prelude<'a> {
                     children.push(Box::new(node));
                 }
             } else {
-                return Err(self.fail(ScParserErr::UnexpEoList));
+                return Err(self.fail(ParserErr::UnexpEoList));
             }
         }
 
@@ -478,13 +481,13 @@ impl<'a> Prelude<'a> {
             if let Ok(eo_dict) = self.dict_check_end(&c) {
                 if eo_dict {
                     if key.is_some() {
-                        return Err(self.fail(ScParserErr::InvalDictPair));
+                        return Err(self.fail(ParserErr::InvalDictPair));
                     }
                     self.advance();
                     break;
                 }
             } else {
-                return Err(self.fail(ScParserErr::UnexpEoDict));
+                return Err(self.fail(ParserErr::UnexpEoDict));
             }
 
             if let Some(node) = self.get_node_from_char(&c)? {
@@ -494,7 +497,7 @@ impl<'a> Prelude<'a> {
                             key = Some(primitive.value);
                         }
                         _ => {
-                            return Err(self.fail(ScParserErr::UnexpDictKey));
+                            return Err(self.fail(ParserErr::UnexpDictKey));
                         }
                     }
                 } else {
@@ -548,7 +551,7 @@ impl<'a> Prelude<'a> {
         if !name.is_empty() && re.is_match(name) {
             Ok(CallKind::Named(name.to_string()))
         } else {
-            Err(self.fail(ScParserErr::InvalFnName))
+            Err(self.fail(ParserErr::InvalFnName))
         }
     }
 
@@ -583,7 +586,7 @@ impl<'a> Prelude<'a> {
             if self.call_is_end(&c) {
                 let last_entry = self.depth_stack.pop();
                 if last_entry.is_none() || last_entry.unwrap() != T_LEFT_PAREN {
-                    return Err(self.fail(ScParserErr::UnexpEoFn));
+                    return Err(self.fail(ParserErr::UnexpEoFn));
                 }
                 self.advance();
                 break;
@@ -662,7 +665,7 @@ impl<'a> Prelude<'a> {
                 },
             })));
         } else {
-            return Err(self.fail(ScParserErr::UnexpTok));
+            return Err(self.fail(ParserErr::UnexpTok));
         }
     }
 
@@ -687,11 +690,11 @@ impl<'a> Prelude<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{AstNode, CallKind, Compound, Prelude, Primitive, TokSpan};
-    use LangErr::ScParser;
+    use crate::{AstNode, CallKind, Compound, Prelude, Primitive, TokSpan};
+    use LangErr::Parser;
     use elise_shared::errors::{
         LangErr,
-        errors_sc_parser::{ScParserErr, ScParserErrInfo},
+        errors_parser::{ParserErr, ParserErrInfo},
     };
 
     // ==========================
@@ -716,7 +719,7 @@ mod tests {
         for (token, col) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token).parse(),
-                Err(ScParser(ScParserErr::InvalNum(ScParserErrInfo {
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
                     row: 1,
                     col,
                     source_code_slice: Some(token.to_string())
@@ -732,7 +735,7 @@ mod tests {
         for (token, col) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token).parse(),
-                Err(ScParser(ScParserErr::InvalNum(ScParserErrInfo {
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
                     row: 1,
                     col,
                     source_code_slice: Some(token.to_string())
@@ -748,7 +751,7 @@ mod tests {
         for (token, col) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token).parse(),
-                Err(ScParser(ScParserErr::InvalNum(ScParserErrInfo {
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
                     row: 1,
                     col,
                     source_code_slice: Some(token.to_string())
@@ -764,7 +767,7 @@ mod tests {
         for (token, col) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token).parse(),
-                Err(ScParser(ScParserErr::InvalNum(ScParserErrInfo {
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
                     row: 1,
                     col,
                     source_code_slice: Some(token.to_string())
@@ -778,7 +781,7 @@ mod tests {
         let code = "-".to_string();
         assert_eq!(
             Prelude::new(&code).parse(),
-            Err(ScParser(ScParserErr::InvalNum(ScParserErrInfo {
+            Err(Parser(ParserErr::InvalNum(ParserErrInfo {
                 row: 1,
                 col: 2,
                 source_code_slice: Some(code)
@@ -882,7 +885,7 @@ mod tests {
         for (token, col) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token).parse(),
-                Err(ScParser(ScParserErr::InvalNum(ScParserErrInfo {
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
                     row: 1,
                     col,
                     source_code_slice: Some(token.to_string()),
@@ -940,7 +943,7 @@ mod tests {
             World\""
             )
             .parse(),
-            Err(ScParser(ScParserErr::InvalStr(ScParserErrInfo {
+            Err(Parser(ParserErr::InvalStr(ParserErrInfo {
                 row: 1,
                 col: 7,
                 source_code_slice: Some("\"Hello\n".to_string()),
@@ -1037,29 +1040,29 @@ mod tests {
 
     #[test]
     fn identifier_test_should_reject_invalid_names() {
-        let identifiers: Vec<(&str, usize, fn(ScParserErrInfo) -> ScParserErr)> = vec![
-            ("1asd", 2, ScParserErr::InvalNum),
-            ("!asd", 1, ScParserErr::UnexpTok),
-            ("#asd", 1, ScParserErr::UnexpTok),
-            ("$asd", 1, ScParserErr::UnexpTok),
-            ("%asd", 1, ScParserErr::UnexpTok),
-            ("^asd", 1, ScParserErr::UnexpTok),
-            ("&asd", 1, ScParserErr::UnexpTok),
-            ("*asd", 1, ScParserErr::UnexpTok),
-            ("-asd", 2, ScParserErr::InvalNum),
-            ("_asd", 1, ScParserErr::UnexpTok),
-            ("=asd", 1, ScParserErr::UnexpTok),
-            ("+asd", 1, ScParserErr::UnexpTok),
-            ("?asd", 1, ScParserErr::UnexpTok),
-            ("?asd", 1, ScParserErr::UnexpTok),
-            (">asd", 1, ScParserErr::UnexpTok),
-            ("<asd", 1, ScParserErr::UnexpTok),
-            ("/asd", 1, ScParserErr::UnexpTok),
+        let identifiers: Vec<(&str, usize, fn(ParserErrInfo) -> ParserErr)> = vec![
+            ("1asd", 2, ParserErr::InvalNum),
+            ("!asd", 1, ParserErr::UnexpTok),
+            ("#asd", 1, ParserErr::UnexpTok),
+            ("$asd", 1, ParserErr::UnexpTok),
+            ("%asd", 1, ParserErr::UnexpTok),
+            ("^asd", 1, ParserErr::UnexpTok),
+            ("&asd", 1, ParserErr::UnexpTok),
+            ("*asd", 1, ParserErr::UnexpTok),
+            ("-asd", 2, ParserErr::InvalNum),
+            ("_asd", 1, ParserErr::UnexpTok),
+            ("=asd", 1, ParserErr::UnexpTok),
+            ("+asd", 1, ParserErr::UnexpTok),
+            ("?asd", 1, ParserErr::UnexpTok),
+            ("?asd", 1, ParserErr::UnexpTok),
+            (">asd", 1, ParserErr::UnexpTok),
+            ("<asd", 1, ParserErr::UnexpTok),
+            ("/asd", 1, ParserErr::UnexpTok),
         ];
         for (identifier, col, err) in identifiers {
             assert_eq!(
                 Prelude::new(identifier).parse(),
-                Err(ScParser(err(ScParserErrInfo {
+                Err(Parser(err(ParserErrInfo {
                     row: 1,
                     col,
                     source_code_slice: Some(identifier.to_string()),
@@ -1162,7 +1165,7 @@ mod tests {
         let code = "[[1, 3]";
         assert_eq!(
             Prelude::new(code).parse(),
-            Err(ScParser(ScParserErr::UnexpEoFile(ScParserErrInfo {
+            Err(Parser(ParserErr::UnexpEoFile(ParserErrInfo {
                 row: 1,
                 col: 8,
                 source_code_slice: Some(code.to_string()),
@@ -1272,7 +1275,7 @@ mod tests {
         let code = "{ \"a\" 1, \"b\" }";
         assert_eq!(
             Prelude::new(code).parse(),
-            Err(ScParser(ScParserErr::InvalDictPair(ScParserErrInfo {
+            Err(Parser(ParserErr::InvalDictPair(ParserErrInfo {
                 row: 1,
                 col: 14,
                 source_code_slice: Some(code.to_string()),
@@ -1293,7 +1296,7 @@ mod tests {
         for (input, col) in inputs {
             assert_eq!(
                 Prelude::new(input).parse(),
-                Err(ScParser(ScParserErr::UnexpDictKey(ScParserErrInfo {
+                Err(Parser(ParserErr::UnexpDictKey(ParserErrInfo {
                     row: 1,
                     col,
                     source_code_slice: Some(input.to_string()),
@@ -1304,14 +1307,14 @@ mod tests {
 
     #[test]
     fn dict_test_should_not_allow_non_closed() {
-        let inputs: Vec<(&str, usize, fn(ScParserErrInfo) -> ScParserErr)> = vec![
-            ("{ \"a\" 1 }}", 10, ScParserErr::UnexpTok),
-            ("{{ \"1\" \"2\" }", 13, ScParserErr::UnexpDictKey),
+        let inputs: Vec<(&str, usize, fn(ParserErrInfo) -> ParserErr)> = vec![
+            ("{ \"a\" 1 }}", 10, ParserErr::UnexpTok),
+            ("{{ \"1\" \"2\" }", 13, ParserErr::UnexpDictKey),
         ];
         for (input, col, err) in inputs {
             assert_eq!(
                 Prelude::new(input).parse(),
-                Err(ScParser(err(ScParserErrInfo {
+                Err(Parser(err(ParserErrInfo {
                     row: 1,
                     col,
                     source_code_slice: Some(input.to_string()),
@@ -1414,7 +1417,7 @@ mod tests {
         let code = ".some-fn(2 2 3))";
         assert_eq!(
             Prelude::new(code).parse(),
-            Err(ScParser(ScParserErr::UnexpTok(ScParserErrInfo {
+            Err(Parser(ParserErr::UnexpTok(ParserErrInfo {
                 row: 1,
                 col: 16,
                 source_code_slice: Some(code.to_string()),
@@ -1427,7 +1430,7 @@ mod tests {
         let code = ". some-fn()";
         assert_eq!(
             Prelude::new(code).parse(),
-            Err(ScParser(ScParserErr::InvalFnName(ScParserErrInfo {
+            Err(Parser(ParserErr::InvalFnName(ParserErrInfo {
                 row: 1,
                 col: 10,
                 source_code_slice: Some(code.to_string()),
@@ -1460,7 +1463,7 @@ mod tests {
         for (identifier, col) in identifiers {
             assert_eq!(
                 Prelude::new(&format!(".{}()", identifier)).parse(),
-                Err(ScParser(ScParserErr::InvalFnName(ScParserErrInfo {
+                Err(Parser(ParserErr::InvalFnName(ParserErrInfo {
                     row: 1,
                     col,
                     source_code_slice: Some(format!(".{}()", identifier)),
@@ -1474,7 +1477,7 @@ mod tests {
         let code = "()";
         assert_eq!(
             Prelude::new(code).parse(),
-            Err(ScParser(ScParserErr::UnexpTok(ScParserErrInfo {
+            Err(Parser(ParserErr::UnexpTok(ParserErrInfo {
                 row: 1,
                 col: 1,
                 source_code_slice: Some(code.to_string()),
@@ -1556,7 +1559,7 @@ mod tests {
         for (slot, col) in slots {
             assert_eq!(
                 Prelude::new(slot).parse(),
-                Err(ScParser(ScParserErr::UnexpTok(ScParserErrInfo {
+                Err(Parser(ParserErr::UnexpTok(ParserErrInfo {
                     row: 1,
                     col,
                     source_code_slice: Some(slot.to_string()),
@@ -1575,23 +1578,23 @@ mod tests {
 
     #[test]
     fn depth_test_should_reject_invalid_depth() {
-        let depth_cases: Vec<(&str, usize, fn(ScParserErrInfo) -> ScParserErr)> = vec![
-            (".a())", 5, ScParserErr::UnexpTok),
-            (".a(()", 4, ScParserErr::UnexpTok),
-            (".a().a()))", 9, ScParserErr::UnexpTok),
-            ("()()))", 1, ScParserErr::UnexpTok),
-            ("())", 1, ScParserErr::UnexpTok),
-            ("(()", 1, ScParserErr::UnexpTok),
-            ("[]]", 3, ScParserErr::UnexpTok),
-            ("[][[][][]]][[", 11, ScParserErr::UnexpTok),
-            ("[{}}]", 4, ScParserErr::UnexpTok),
-            ("[{{{{}]", 7, ScParserErr::UnexpDictKey),
-            ("[{{}]", 5, ScParserErr::UnexpDictKey),
+        let depth_cases: Vec<(&str, usize, fn(ParserErrInfo) -> ParserErr)> = vec![
+            (".a())", 5, ParserErr::UnexpTok),
+            (".a(()", 4, ParserErr::UnexpTok),
+            (".a().a()))", 9, ParserErr::UnexpTok),
+            ("()()))", 1, ParserErr::UnexpTok),
+            ("())", 1, ParserErr::UnexpTok),
+            ("(()", 1, ParserErr::UnexpTok),
+            ("[]]", 3, ParserErr::UnexpTok),
+            ("[][[][][]]][[", 11, ParserErr::UnexpTok),
+            ("[{}}]", 4, ParserErr::UnexpTok),
+            ("[{{{{}]", 7, ParserErr::UnexpDictKey),
+            ("[{{}]", 5, ParserErr::UnexpDictKey),
         ];
         for (depth_case, col, err) in depth_cases {
             assert_eq!(
                 Prelude::new(depth_case).parse(),
-                Err(ScParser(err(ScParserErrInfo {
+                Err(Parser(err(ParserErrInfo {
                     row: 1,
                     col,
                     source_code_slice: Some(depth_case.to_string()),

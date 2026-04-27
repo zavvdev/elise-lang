@@ -34,7 +34,7 @@ fn handle_lang_err(lang_err: &LangErr) {
     use LangErr::*;
 
     match lang_err {
-        ScParser(sc_parser_err) => out::sc_parser_err(sc_parser_err),
+        Parser(parser_err) => out::parser_err(parser_err),
         CsvParser(csv_parser_err) => out::csv_parser_err(csv_parser_err),
     }
 }
