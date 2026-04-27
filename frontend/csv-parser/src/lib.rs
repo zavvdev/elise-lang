@@ -18,16 +18,17 @@ impl<'a> CsvParser<'a> {
     pub fn parse(&self) -> Result<Vec<CsvParserRecord>, LangErr> {
         let mut records: Vec<CsvParserRecord> = vec![];
 
-        let mut rdr = ReaderBuilder::new()
+        let mut reader = ReaderBuilder::new()
             .has_headers(true)
             .from_reader(self.data.as_bytes());
 
-        for result in rdr.records() {
+        for result in reader.records() {
             match result {
                 Ok(rec) => records.push(CsvParserRecord {
                     row: rec.iter().map(str::to_owned).collect::<Vec<String>>(),
                 }),
                 Err(err) => {
+                    // TODO: Map errors
                     println!("{:#?}", err);
                     return Err(LangErr::CsvParser(CsvParserErr::Impl));
                 }

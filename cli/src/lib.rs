@@ -8,7 +8,7 @@ pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 
-use elise_csv_parser::CsvParser;
+use elise_csv_parser::{CsvParser, CsvParserRecord};
 use elise_parser::Prelude;
 use elise_shared::errors::LangErr;
 use rayon::scope;
@@ -50,6 +50,10 @@ pub enum HandleResultStatus {
     Error,
 }
 
+enum DataParseResult {
+    Csv(Result<Vec<CsvParserRecord>, LangErr>),
+}
+
 pub fn run<'a>(
     source_code: &'a str,
     data: &'a str,
@@ -58,27 +62,30 @@ pub fn run<'a>(
 ) -> Result<RunResult<'a>, LangErr> {
     let start = Instant::now();
 
-    let (mut source_code_ast, mut schema_ast) = (None, None);
+    let (mut source_code_ast, mut schema_ast, mut parsed_data) = (None, None, None);
 
-    // Run parsers in separate threads.
     scope(|s| {
         s.spawn(|_| source_code_ast = Some(Prelude::new(source_code).parse()));
         s.spawn(|_| schema_ast = Some(Prelude::new(data_schema).parse()));
+
+        if config.data_path.ends_with(FILE_EXT_CSV) {
+            s.spawn(|_| parsed_data = Some(DataParseResult::Csv(CsvParser::new(data).parse())));
+        }
     });
 
     let source_code_ast = source_code_ast.unwrap()?;
     let schema_ast = schema_ast.unwrap()?;
+    let parsed_data = parsed_data.unwrap();
 
-    // TODO: Add dispatcher to correct data parser
-    if config.data_path.ends_with(FILE_EXT_CSV) {
-        let records = CsvParser::new(data).parse();
-        println!("{:#?}", records);
+    match parsed_data {
+        DataParseResult::Csv(records) => {
+            // TODO: Build DataGraph according to schema
+            println!("csv records: {:#?}", records);
+        }
     }
 
     println!("source_code_ast: {:#?}", source_code_ast);
     println!("schema_ast: {:#?}", schema_ast);
-
-    println!("RUN MODE");
 
     Ok(RunResult {
         config,

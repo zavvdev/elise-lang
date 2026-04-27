@@ -112,7 +112,7 @@ pub fn validate_result(ms: u128) {
 
 // ==========================
 //
-// SC PARSER ERROR HANDLER
+// PARSER ERROR HANDLER
 //
 // ==========================
 

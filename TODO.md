@@ -31,11 +31,9 @@ Source code
     
     - [ ] Add csv parser that will parse csv into raw string records
 
-        - [ ] Split out.rs for different handlers
-
         - [ ] Add error invariants for csv parser
 
-    - [ ] Add data parser dispatcher to correct parser according to data type in lib.rs
+        - [ ] Handle csv parser errors
 
     - [ ] Add raw csv strings coercion typed DataGraph
         
