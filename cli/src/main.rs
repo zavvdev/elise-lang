@@ -16,26 +16,25 @@
 pub mod out;
 
 use elise;
-use elise::conf::{Conf, ConfErr, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
+use elise::conf::{Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise::fsys::{read_files, write_file};
 use elise_shared::errors::LangErr;
 
 use std::env;
 
-fn handle_conf_err(conf_err: &ConfErr) {
-    match conf_err {
-        ConfErr::ExtInvalid(ext) => out::conf_err_ext_invalid(ext),
-        ConfErr::ArgInvalid(arg) => out::conf_err_arg_invalid(&arg.provided, &arg.arg_name),
-        ConfErr::ArgRequired(arg) => out::conf_err_arg_required(arg),
-    }
-}
+use crate::out::msg_conf;
+use crate::out::msg_csv_parser;
+use crate::out::msg_fsys;
+use crate::out::msg_modes;
+use crate::out::msg_parser;
+use crate::out::utils::{panic_hook, print_bytecode};
 
 fn handle_lang_err(lang_err: &LangErr) {
     use LangErr::*;
 
     match lang_err {
-        Parser(parser_err) => out::parser_err(parser_err),
-        CsvParser(csv_parser_err) => out::csv_parser_err(csv_parser_err),
+        Parser(err) => msg_parser::print_parser_err(err),
+        CsvParser(err) => msg_csv_parser::print_csv_parser_err(err),
     }
 }
 
@@ -58,21 +57,21 @@ fn cli_run(conf: &ModeRunConf) {
             }
 
             let run_res = run_res.unwrap();
-            out::run_result(&run_res.output, run_res.ms);
+            msg_modes::print_run_result(&run_res.output, run_res.ms);
 
             if run_res.config.print_bytecode {
-                out::print_bytecode(&run_res.bytecode);
+                print_bytecode(&run_res.bytecode);
             }
 
             if let Some(path) = run_res.config.output_path.as_ref() {
                 match write_file(path, &run_res.output) {
-                    Ok(_) => out::fsys_saved_to(path),
-                    Err(err) => out::fsys_file_writer_err(&err.message, path),
+                    Ok(_) => msg_fsys::print_fsys_saved_to(path),
+                    Err(err) => msg_fsys::print_fsys_file_writer_err(&err.message, path),
                 }
             }
         }
         Err(read_err) => {
-            out::fsys_file_reader_err(&read_err.message, &read_err.path);
+            msg_fsys::print_fsys_file_reader_err(&read_err.message, &read_err.path);
         }
     };
 }
@@ -90,11 +89,11 @@ fn cli_build(conf: &ModeBuildConf) {
             let out_path = &build_res.config.executable_output_path;
 
             match write_file(out_path, &build_res.executale_output) {
-                Ok(_) => out::build_result(out_path, build_res.ms),
-                Err(err) => out::fsys_file_writer_err(&err.message, out_path),
+                Ok(_) => msg_modes::print_build_result(out_path, build_res.ms),
+                Err(err) => msg_fsys::print_fsys_file_writer_err(&err.message, out_path),
             }
         }
-        Err(read_err) => out::fsys_file_reader_err(&read_err.message, &read_err.path),
+        Err(read_err) => msg_fsys::print_fsys_file_reader_err(&read_err.message, &read_err.path),
     };
 }
 
@@ -108,9 +107,9 @@ fn cli_exec(conf: &ModeExecConf) {
             }
 
             let exec_res = exec_res.unwrap();
-            out::run_result(&exec_res.output, exec_res.ms);
+            msg_modes::print_run_result(&exec_res.output, exec_res.ms);
         }
-        Err(read_err) => out::fsys_file_reader_err(&read_err.message, &read_err.path),
+        Err(read_err) => msg_fsys::print_fsys_file_reader_err(&read_err.message, &read_err.path),
     };
 }
 
@@ -124,15 +123,15 @@ fn cli_validate(conf: &ModeValidateConf) {
             }
 
             let validate_res = validate_res.unwrap();
-            out::validate_result(validate_res.ms);
+            msg_modes::print_validate_result(validate_res.ms);
         }
-        Err(read_err) => out::fsys_file_reader_err(&read_err.message, &read_err.path),
+        Err(read_err) => msg_fsys::print_fsys_file_reader_err(&read_err.message, &read_err.path),
     };
 }
 
 fn main() {
     std::panic::set_hook(Box::new(|info| {
-        out::panic_hook(info);
+        panic_hook(info);
     }));
 
     // Skip first argument which is the name of the program.
@@ -141,7 +140,7 @@ fn main() {
     let config = Conf::new(&args);
 
     if let Err(conf_err) = config {
-        return handle_conf_err(&conf_err);
+        return msg_conf::print_conf_err(&conf_err);
     }
 
     match config.unwrap() {

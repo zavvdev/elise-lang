@@ -79,6 +79,7 @@ pub fn run<'a>(
 
     match parsed_data {
         DataParseResult::Csv(records) => {
+            let records = records?;
             // TODO: Build DataGraph according to schema
             println!("csv records: {:#?}", records);
         }

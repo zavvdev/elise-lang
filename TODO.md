@@ -27,31 +27,27 @@ Source code
 
 - [x] Schema file parsing
 
-- [ ] Data file parsing
+- [x] Csv data file parsing
     
-    - [ ] Add csv parser that will parse csv into raw string records
+- [ ] Add semantic analysis for csv data schema
 
-        - [ ] Add error invariants for csv parser
+- [ ] Add raw csv strings coercion to typed DataGraph
+    
+    - [ ] Number
 
-        - [ ] Handle csv parser errors
+    - [ ] String
 
-    - [ ] Add raw csv strings coercion typed DataGraph
-        
-        - [ ] Number
+    - [ ] Bool (true/false, 1/0, yes/no, y/n, on/off)
 
-        - [ ] String
+    - [ ] Date (2024-01-15, ISO 8601 is common, but formats vary wildly)
+    
+    - [ ] Datetime (2024-01-15T14:30:00)
 
-        - [ ] Bool (true/false, 1/0, yes/no, y/n, on/off)
+    - [ ] Datetime with timezone (2024-01-15T14:30:00Z)
 
-        - [ ] Date (2024-01-15, ISO 8601 is common, but formats vary wildly)
-        
-        - [ ] Datetime (2024-01-15T14:30:00)
+    - [ ] Time (14:30:00)
 
-        - [ ] Datetime with timezone (2024-01-15T14:30:00Z)
-
-        - [ ] Time (14:30:00)
-
-        - [ ] Empty (NULL, N/A, \N, -, ,,)
+    - [ ] Empty (NULL, N/A, \N, -, ,,)
 
 - [ ] Semantic analyzer
 
