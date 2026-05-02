@@ -28,10 +28,11 @@ Source code
 - [x] Schema file parsing
 
 - [x] Csv data file parsing
-    
-- [ ] Add semantic analysis for csv data schema
+ 
+- [ ] ?Need to add Date data type
 
-- [ ] Add raw csv strings coercion to typed DataGraph
+- [ ] Add csv schema resolution (take schema ast and build CsvResolvedSchema
+      that maps each col to type descriptor)
     
     - [ ] Number
 
@@ -48,6 +49,11 @@ Source code
     - [ ] Time (14:30:00)
 
     - [ ] Empty (NULL, N/A, \N, -, ,,)
+
+- [ ] Add TypedDataGraph types for generic data representation (shared/ir)
+
+- [ ] Combine CsvResoledSchema with raw csv records to produce TypedDataGraph
+      IR that describes data in an agnostic way (binder)
 
 - [ ] Semantic analyzer
 

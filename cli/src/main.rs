@@ -27,6 +27,7 @@ use crate::out::msg_csv_parser;
 use crate::out::msg_fsys;
 use crate::out::msg_modes;
 use crate::out::msg_parser;
+use crate::out::msg_schema;
 use crate::out::utils::{panic_hook, print_bytecode};
 
 fn handle_lang_err(lang_err: &LangErr) {
@@ -35,6 +36,7 @@ fn handle_lang_err(lang_err: &LangErr) {
     match lang_err {
         Parser(err) => msg_parser::print_parser_err(err),
         CsvParser(err) => msg_csv_parser::print_csv_parser_err(err),
+        Schema(err) => msg_schema::print_schema_err(err),
     }
 }
 

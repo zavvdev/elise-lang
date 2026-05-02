@@ -7,10 +7,11 @@ resolver = "2"
 members = [
     "ast",
     "bytecode",
+    "binder",
     "cli",
     "compiler",
+    "frontend/csv",
     "frontend/parser",
-    "frontend/csv-parser",
     "frontend/semantic-analyzer",
     "runtime/vm",
     "shared",

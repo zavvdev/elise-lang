@@ -8,7 +8,7 @@ pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 
-use elise_csv_parser::{CsvParser, CsvParserRecord};
+use elise_csv::parser::{CsvParser, CsvParserRecord};
 use elise_parser::Prelude;
 use elise_shared::errors::LangErr;
 use rayon::scope;
@@ -73,20 +73,22 @@ pub fn run<'a>(
         }
     });
 
-    let source_code_ast = source_code_ast.unwrap()?;
+    let _source_code_ast = source_code_ast.unwrap()?;
     let schema_ast = schema_ast.unwrap()?;
     let parsed_data = parsed_data.unwrap();
 
     match parsed_data {
         DataParseResult::Csv(records) => {
             let records = records?;
-            // TODO: Build DataGraph according to schema
+            // TODO:
+            // - [ ] Resolve schema (frontend/csv/resolver)
+            // - [ ] Run csv binder with resolved schema
+            //    and csv parser records to produce
+            //    generic typed data graph.
+            println!("schema ast: {:#?}", schema_ast);
             println!("csv records: {:#?}", records);
         }
     }
-
-    println!("source_code_ast: {:#?}", source_code_ast);
-    println!("schema_ast: {:#?}", schema_ast);
 
     Ok(RunResult {
         config,

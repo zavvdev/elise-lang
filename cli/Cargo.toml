@@ -14,7 +14,7 @@ path = "src/lib.rs"
 
 [dependencies]
 elise-parser = { path = "../frontend/parser" }
-elise-csv-parser = { path = "../frontend/csv-parser" }
+elise-csv = { path = "../frontend/csv" }
 elise-shared = { path = "../shared" }
 colored.workspace = true
 serial_test.workspace = true
