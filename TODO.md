@@ -29,7 +29,7 @@ Source code
 
 - [x] Csv data file parsing
  
-- [ ] ?Need to add Date data type
+- [ ] Documentation
 
 - [ ] Add csv schema resolution (take schema ast and build CsvResolvedSchema
       that maps each col to type descriptor)
@@ -40,20 +40,12 @@ Source code
 
     - [ ] Bool (true/false, 1/0, yes/no, y/n, on/off)
 
-    - [ ] Date (2024-01-15, ISO 8601 is common, but formats vary wildly)
-    
-    - [ ] Datetime (2024-01-15T14:30:00)
-
-    - [ ] Datetime with timezone (2024-01-15T14:30:00Z)
-
-    - [ ] Time (14:30:00)
-
-    - [ ] Empty (NULL, N/A, \N, -, ,,)
+    - [ ] Empty (NULL, N/A, -, ,,)
 
 - [ ] Add TypedDataGraph types for generic data representation (shared/ir)
 
 - [ ] Combine CsvResoledSchema with raw csv records to produce TypedDataGraph
-      IR that describes data in an agnostic way (binder)
+      IR that describes data in agnostic (binder)
 
 - [ ] Semantic analyzer
 

@@ -44,11 +44,17 @@ test\:cli:
 check:
 	cargo check
 
-fmt\:check:
-	cargo fmt -- --check
+format\:check:
+	cargo fmt -- --check && cargo clippy -- -D warnings
 
-fmt:
-	cargo fmt
+format:
+	cargo fmt && cargo clippy --fix
 
 validate:
-	make check && make fmt:check && make test
+	make check && make format:check && make test
+
+doc:
+	cargo doc
+
+seedoc:
+	cargo doc --open
