@@ -73,7 +73,7 @@ impl Conf {
         Ok(path)
     }
 
-    fn validate_mode<'a>(mode: Option<&'a str>) -> Result<&'a str, ConfErr> {
+    fn validate_mode(mode: Option<&str>) -> Result<&str, ConfErr> {
         match mode {
             Some(mode) if ARG_V_MODES.contains(&mode) => Ok(mode),
             Some(mode) => Err(ConfErr::ArgInvalid(InvalidArg {
@@ -117,7 +117,7 @@ impl Conf {
     // extract values from the input.
     // If value of some argument wasn't provided, an empty string
     // has to be inserted as a value.
-    fn parse_args<'a>(args: &'a [String]) -> HashMap<&'a str, &'a str> {
+    fn parse_args(args: &[String]) -> HashMap<&str, &str> {
         let mut res = HashMap::new();
 
         for arg in args {
@@ -213,7 +213,7 @@ impl Conf {
         let parsed_args = Self::parse_args(args);
 
         // Must be an error if mode is invalid.
-        let mode = Self::validate_mode(parsed_args.get(ARG_FLAG_MODE).map(|mode| *mode))?;
+        let mode = Self::validate_mode(parsed_args.get(ARG_FLAG_MODE).copied())?;
 
         // At this point we have the full list of arguments with their values.
         // If some argument was not provided by user, it must be present in this variable with

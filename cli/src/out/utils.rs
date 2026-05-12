@@ -11,7 +11,7 @@ pub fn print_silent_err(message: &str, label: Option<&str>) {
 }
 
 pub fn print_error_at_code(source_code_slice: &str, row: usize, col: usize) {
-    if source_code_slice.len() > 0 {
+    if !source_code_slice.is_empty() {
         let location = format!("At {}:{}\n", row, col);
         eprintln!("{}", location.bold());
         eprintln!("{}", source_code_slice);
@@ -28,7 +28,6 @@ pub fn panic_hook(info: &std::panic::PanicHookInfo) {
 
 pub fn print_bytecode(bytecode: &str) {
     println!(
-        "{}\n{}\n{}",
-        "--- Bytecode start ---", bytecode, "--- Bytecode end ---"
+        "--- Bytecode start ---\n{}\n--- Bytecode end ---", bytecode
     );
 }

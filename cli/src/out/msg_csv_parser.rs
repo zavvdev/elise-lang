@@ -31,7 +31,7 @@ pub fn print_err(csv_parser_err: &CsvParserErr) {
             }
         }
         Io { kind, detail } => format!("Unable to read.\n{}, {}.", kind, detail),
-        Unknown => format!("Unknown failure."),
+        Unknown => "Unknown failure.".to_string(),
     };
 
     print_silent_err(&info, Some("Csv parser error"));

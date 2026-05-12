@@ -59,7 +59,7 @@ pub struct Prelude<'a> {
 impl<'a> Prelude<'a> {
     pub fn new(source_code: &'a str) -> Self {
         Self {
-            source_code: &source_code.as_bytes(),
+            source_code: source_code.as_bytes(),
             tok_pos: 0,
             depth_stack: vec![],
         }
@@ -78,7 +78,7 @@ impl<'a> Prelude<'a> {
             }
         }
 
-        if self.depth_stack.len() > 0 {
+        if !self.depth_stack.is_empty() {
             return Err(self.fail(ParserErr::UnexpEoFile));
         }
 
@@ -106,7 +106,7 @@ impl<'a> Prelude<'a> {
      * to be able to handle AstNode differently in some cases.
      */
     fn get_node_from_char(&mut self, c: &u8) -> Result<Option<AstNode>, LangErr> {
-        return if Self::is_separator(c) {
+        if Self::is_separator(c) {
             self.advance();
             Ok(None)
         } else if self.call_is_start(c) {
@@ -128,7 +128,7 @@ impl<'a> Prelude<'a> {
             self.identifier_consume()
         } else {
             Err(self.fail(ParserErr::UnexpTok))
-        };
+        }
     }
 
     // ==========================
@@ -171,7 +171,7 @@ impl<'a> Prelude<'a> {
     // ==========================
 
     fn number_is_digit(c: &u8) -> bool {
-        (b'0'..=b'9').contains(c)
+        c.is_ascii_digit()
     }
 
     fn number_is_start(c: &u8) -> bool {
@@ -335,7 +335,7 @@ impl<'a> Prelude<'a> {
     // ==========================
 
     fn identifier_is_start(c: &u8) -> bool {
-        matches!(*c, b'a'..=b'z') || matches!(*c, b'A'..=b'Z')
+        c.is_ascii_lowercase() || c.is_ascii_uppercase()
     }
 
     fn identifier_is_end(c: &u8) -> bool {
@@ -372,9 +372,9 @@ impl<'a> Prelude<'a> {
             _ => {
                 let re = Regex::new(IDENTIFIER_REGEX).unwrap();
                 if re.is_match(&primitive.value) {
-                    return Ok(Some(AstNode::Identifier(primitive)));
+                    Ok(Some(AstNode::Identifier(primitive)))
                 } else {
-                    return Err(self.fail(ParserErr::UnexpTok));
+                    Err(self.fail(ParserErr::UnexpTok))
                 }
             }
         }
@@ -544,7 +544,7 @@ impl<'a> Prelude<'a> {
 
     fn call_validate_name(&self, name: &str) -> Result<CallKind, LangErr> {
         // Anonymous function
-        if name.len() == 0 {
+        if name.is_empty() {
             return Ok(CallKind::Anon);
         }
         let re = Regex::new(IDENTIFIER_REGEX).unwrap();
@@ -657,15 +657,15 @@ impl<'a> Prelude<'a> {
         let re = Regex::new(IDENTIFIER_REGEX).unwrap();
 
         if re.is_match(&value) {
-            return Ok(Some(AstNode::Slot(Primitive {
+            Ok(Some(AstNode::Slot(Primitive {
                 value,
                 span: TokSpan {
                     start,
                     end: self.tok_pos,
                 },
-            })));
+            })))
         } else {
-            return Err(self.fail(ParserErr::UnexpTok));
+            Err(self.fail(ParserErr::UnexpTok))
         }
     }
 

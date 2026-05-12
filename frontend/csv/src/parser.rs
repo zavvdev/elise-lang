@@ -19,7 +19,7 @@ impl<'a> CsvParser<'a> {
     }
 
     fn map_error(kind: &ErrorKind) -> LangErr {
-        return LangErr::CsvParser(match kind {
+        LangErr::CsvParser(match kind {
             csv::ErrorKind::UnequalLengths {
                 pos,
                 expected_len,
@@ -38,7 +38,7 @@ impl<'a> CsvParser<'a> {
                 detail: io_err.to_string(),
             },
             _ => CsvParserErr::Unknown,
-        });
+        })
     }
 
     pub fn parse(&self) -> Result<Vec<CsvParserRecord>, LangErr> {

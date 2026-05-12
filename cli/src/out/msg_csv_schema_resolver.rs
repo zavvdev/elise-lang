@@ -7,19 +7,19 @@ pub fn print_err(schema_err: &CsvSchemaResolverErr) {
 
     let info: String = match schema_err {
         InvalDef { pos: _ } => {
-            format!("Invalid schema definition function")
+            "Invalid schema definition function".to_string()
         }
         InvalRowDef { pos: _ } => {
-            format!("Invalid row definition")
+            "Invalid row definition".to_string()
         }
         InvalRowName { pos: _ } => {
-            format!("Invalid column name")
+            "Invalid column name".to_string()
         }
         InvalRowTypeDef { pos: _ } => {
-            format!("Invalid column type definition")
+            "Invalid column type definition".to_string()
         }
         Unknown => {
-            format!("Unexpected error")
+            "Unexpected error".to_string()
         }
     };
     print_silent_err(&info, Some("Schema error"));

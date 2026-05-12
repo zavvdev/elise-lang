@@ -15,7 +15,6 @@
  */
 pub mod out;
 
-use elise;
 use elise::conf::{Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise::fsys::{read_files, write_file};
 use elise_shared::errors::LangErr;
@@ -51,11 +50,11 @@ fn cli_run(conf: &ModeRunConf) {
                 &read_res[0].content,
                 &read_res[1].content,
                 &read_res[2].content,
-                &conf,
+                conf,
             );
 
             if let Err(run_err) = &run_res {
-                return handle_lang_err(&run_err);
+                return handle_lang_err(run_err);
             }
 
             let run_res = run_res.unwrap();
@@ -81,10 +80,10 @@ fn cli_run(conf: &ModeRunConf) {
 fn cli_build(conf: &ModeBuildConf) {
     match read_files(&[&conf.source_code_path, &conf.data_schema_path]) {
         Ok(read_res) => {
-            let build_res = elise::build(&read_res[0].content, &read_res[1].content, &conf);
+            let build_res = elise::build(&read_res[0].content, &read_res[1].content, conf);
 
             if let Err(build_err) = &build_res {
-                return handle_lang_err(&build_err);
+                return handle_lang_err(build_err);
             }
 
             let build_res = build_res.unwrap();
@@ -102,10 +101,10 @@ fn cli_build(conf: &ModeBuildConf) {
 fn cli_exec(conf: &ModeExecConf) {
     match read_files(&[&conf.executable_path, &conf.data_path]) {
         Ok(read_res) => {
-            let exec_res = elise::exec(&read_res[0].content, &read_res[1].content, &conf);
+            let exec_res = elise::exec(&read_res[0].content, &read_res[1].content, conf);
 
             if let Err(exec_err) = &exec_res {
-                return handle_lang_err(&exec_err);
+                return handle_lang_err(exec_err);
             }
 
             let exec_res = exec_res.unwrap();
@@ -118,10 +117,10 @@ fn cli_exec(conf: &ModeExecConf) {
 fn cli_validate(conf: &ModeValidateConf) {
     match read_files(&[&conf.data_path, &conf.data_schema_path]) {
         Ok(read_res) => {
-            let validate_res = elise::validate(&read_res[0].content, &read_res[1].content, &conf);
+            let validate_res = elise::validate(&read_res[0].content, &read_res[1].content, conf);
 
             if let Err(validate_err) = &validate_res {
-                return handle_lang_err(&validate_err);
+                return handle_lang_err(validate_err);
             }
 
             let validate_res = validate_res.unwrap();
