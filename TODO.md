@@ -29,8 +29,6 @@ Source code
 
 - [x] Csv data file parsing
  
-- [ ] Documentation
-
 - [ ] Add csv schema resolution (take schema ast and build CsvResolvedSchema
       that maps each col to type descriptor)
     

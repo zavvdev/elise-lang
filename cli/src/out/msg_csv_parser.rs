@@ -2,7 +2,7 @@ use elise_shared::errors::errors_csv_parser::CsvParserErr;
 
 use crate::out::utils::print_silent_err;
 
-pub fn print_csv_parser_err(csv_parser_err: &CsvParserErr) {
+pub fn print_err(csv_parser_err: &CsvParserErr) {
     use CsvParserErr::*;
 
     let info: String = match csv_parser_err {

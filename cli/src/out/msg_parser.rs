@@ -2,7 +2,7 @@ use elise_shared::errors::errors_parser::ParserErr;
 
 use crate::out::utils::{print_error_at_code, print_silent_err};
 
-pub fn print_parser_err(parser_err: &ParserErr) {
+pub fn print_err(parser_err: &ParserErr) {
     use ParserErr::*;
 
     let info = match parser_err {

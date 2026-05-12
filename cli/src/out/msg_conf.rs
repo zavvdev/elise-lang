@@ -2,7 +2,7 @@ use elise::conf::ConfErr;
 
 use crate::out::utils::print_silent_err;
 
-pub fn print_conf_err(err: &ConfErr) {
+pub fn print_err(err: &ConfErr) {
     let msg = match err {
         ConfErr::ExtInvalid(ext) => format!("Invalid extension: '{}'", ext),
         ConfErr::ArgInvalid(arg) => format!(

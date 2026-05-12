@@ -24,19 +24,19 @@ use std::env;
 
 use crate::out::msg_conf;
 use crate::out::msg_csv_parser;
+use crate::out::msg_csv_schema_resolver;
 use crate::out::msg_fsys;
 use crate::out::msg_modes;
 use crate::out::msg_parser;
-use crate::out::msg_schema;
 use crate::out::utils::{panic_hook, print_bytecode};
 
 fn handle_lang_err(lang_err: &LangErr) {
     use LangErr::*;
 
     match lang_err {
-        Parser(err) => msg_parser::print_parser_err(err),
-        CsvParser(err) => msg_csv_parser::print_csv_parser_err(err),
-        Schema(err) => msg_schema::print_schema_err(err),
+        Parser(err) => msg_parser::print_err(err),
+        CsvParser(err) => msg_csv_parser::print_err(err),
+        CsvSchemaResolver(err) => msg_csv_schema_resolver::print_err(err),
     }
 }
 
@@ -67,13 +67,13 @@ fn cli_run(conf: &ModeRunConf) {
 
             if let Some(path) = run_res.config.output_path.as_ref() {
                 match write_file(path, &run_res.output) {
-                    Ok(_) => msg_fsys::print_fsys_saved_to(path),
-                    Err(err) => msg_fsys::print_fsys_file_writer_err(&err.message, path),
+                    Ok(_) => msg_fsys::print_saved_to(path),
+                    Err(err) => msg_fsys::print_file_writer_err(&err.message, path),
                 }
             }
         }
         Err(read_err) => {
-            msg_fsys::print_fsys_file_reader_err(&read_err.message, &read_err.path);
+            msg_fsys::print_file_reader_err(&read_err.message, &read_err.path);
         }
     };
 }
@@ -92,10 +92,10 @@ fn cli_build(conf: &ModeBuildConf) {
 
             match write_file(out_path, &build_res.executale_output) {
                 Ok(_) => msg_modes::print_build_result(out_path, build_res.ms),
-                Err(err) => msg_fsys::print_fsys_file_writer_err(&err.message, out_path),
+                Err(err) => msg_fsys::print_file_writer_err(&err.message, out_path),
             }
         }
-        Err(read_err) => msg_fsys::print_fsys_file_reader_err(&read_err.message, &read_err.path),
+        Err(read_err) => msg_fsys::print_file_reader_err(&read_err.message, &read_err.path),
     };
 }
 
@@ -111,7 +111,7 @@ fn cli_exec(conf: &ModeExecConf) {
             let exec_res = exec_res.unwrap();
             msg_modes::print_run_result(&exec_res.output, exec_res.ms);
         }
-        Err(read_err) => msg_fsys::print_fsys_file_reader_err(&read_err.message, &read_err.path),
+        Err(read_err) => msg_fsys::print_file_reader_err(&read_err.message, &read_err.path),
     };
 }
 
@@ -127,7 +127,7 @@ fn cli_validate(conf: &ModeValidateConf) {
             let validate_res = validate_res.unwrap();
             msg_modes::print_validate_result(validate_res.ms);
         }
-        Err(read_err) => msg_fsys::print_fsys_file_reader_err(&read_err.message, &read_err.path),
+        Err(read_err) => msg_fsys::print_file_reader_err(&read_err.message, &read_err.path),
     };
 }
 
@@ -142,7 +142,7 @@ fn main() {
     let config = Conf::new(&args);
 
     if let Err(conf_err) = config {
-        return msg_conf::print_conf_err(&conf_err);
+        return msg_conf::print_err(&conf_err);
     }
 
     match config.unwrap() {

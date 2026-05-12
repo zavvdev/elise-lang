@@ -8,7 +8,10 @@ pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 
-use elise_csv::parser::{CsvParser, CsvParserRecord};
+use elise_csv::{
+    parser::{CsvParser, CsvParserRecord},
+    schema_resolver::CsvSchemaResolver,
+};
 use elise_parser::Prelude;
 use elise_shared::errors::LangErr;
 use rayon::scope;
@@ -80,13 +83,10 @@ pub fn run<'a>(
     match parsed_data {
         DataParseResult::Csv(records) => {
             let records = records?;
-            // TODO:
-            // - [ ] Resolve schema (frontend/csv/resolver)
-            // - [ ] Run csv binder with resolved schema
-            //    and csv parser records to produce
-            //    generic typed data graph.
+            let resolved_schema = CsvSchemaResolver::new(&schema_ast).resolve()?;
             println!("schema ast: {:#?}", schema_ast);
             println!("csv records: {:#?}", records);
+            println!("csv resolved schema: {:#?}", resolved_schema);
         }
     }
 
