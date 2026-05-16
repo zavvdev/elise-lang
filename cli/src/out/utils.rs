@@ -27,7 +27,5 @@ pub fn panic_hook(info: &std::panic::PanicHookInfo) {
 }
 
 pub fn print_bytecode(bytecode: &str) {
-    println!(
-        "--- Bytecode start ---\n{}\n--- Bytecode end ---", bytecode
-    );
+    println!("--- Bytecode start ---\n{}\n--- Bytecode end ---", bytecode);
 }

@@ -6,21 +6,13 @@ pub fn print_err(schema_err: &CsvSchemaResolverErr) {
     use CsvSchemaResolverErr::*;
 
     let info: String = match schema_err {
-        InvalDef { pos: _ } => {
-            "Invalid schema definition function".to_string()
-        }
-        InvalRowDef { pos: _ } => {
-            "Invalid row definition".to_string()
-        }
-        InvalRowName { pos: _ } => {
-            "Invalid column name".to_string()
-        }
-        InvalRowTypeDef { pos: _ } => {
-            "Invalid column type definition".to_string()
-        }
-        Unknown => {
-            "Unexpected error".to_string()
-        }
+        EmptySchema => "Schema definition file cannot be empty".to_string(),
+        InvalDef { pos: _ } => "Invalid schema definition function".to_string(),
+        InvalRowDef { pos: _ } => "Invalid row definition".to_string(),
+        EmptyRow { pos: _ } => "Row definition does not have any column descriptors".to_string(),
+        InvalColName { pos: _ } => "Invalid column name".to_string(),
+        InvalColTypeDef { pos: _ } => "Invalid column type definition".to_string(),
+        Unknown => "Unexpected error".to_string(),
     };
     print_silent_err(&info, Some("Schema error"));
 }

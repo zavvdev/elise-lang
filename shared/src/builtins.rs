@@ -1,10 +1,8 @@
-/**
- * A collection of all built-in functions names.
- */
+// Schema related function names.
 
-pub const FN_SCHEMA: &str = "schema";
-pub const FN_ROW: &str = "row";
-pub const FN_NUMBER: &str = "number";
-pub const FN_STRING: &str = "string";
-pub const FN_BOOL: &str = "bool";
-pub const FN_OPTIONAL: &str = "optional";
+pub const SCH_FN_DEF: &str = "schema";
+pub const SCH_FN_ROW: &str = "row";
+pub const SCH_FN_NUMBER: &str = "number";
+pub const SCH_FN_STRING: &str = "string";
+pub const SCH_FN_BOOL: &str = "bool";
+pub const SCH_FN_OPTIONAL: &str = "optional";
