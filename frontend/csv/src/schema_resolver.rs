@@ -1,5 +1,4 @@
 use elise_ast::AstNode;
-use std::collections::HashMap;
 
 use elise_shared::errors::{
     LangErr,
