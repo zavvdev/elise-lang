@@ -12,7 +12,7 @@ use crate::config::{
 };
 
 use elise_ast::{AstNode, CallKind, Compound, Primitive, TokSpan};
-use elise_shared::errors::{
+use elise_errors::{
     LangErr,
     errors_parser::{ParserErr, ParserErrInfo},
 };
@@ -692,7 +692,7 @@ impl<'a> Prelude<'a> {
 mod tests {
     use crate::{AstNode, CallKind, Compound, Prelude, Primitive, TokSpan};
     use LangErr::Parser;
-    use elise_shared::errors::{
+    use elise_errors::{
         LangErr,
         errors_parser::{ParserErr, ParserErrInfo},
     };

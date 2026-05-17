@@ -17,7 +17,7 @@ pub mod out;
 
 use elise::conf::{Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise::fsys::{read_files, write_file};
-use elise_shared::errors::LangErr;
+use elise_errors::LangErr;
 
 use std::env;
 

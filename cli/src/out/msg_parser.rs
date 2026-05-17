@@ -1,4 +1,4 @@
-use elise_shared::errors::errors_parser::ParserErr;
+use elise_errors::errors_parser::ParserErr;
 
 use crate::out::utils::{print_error_at_code, print_silent_err};
 

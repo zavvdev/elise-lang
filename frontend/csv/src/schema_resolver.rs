@@ -1,6 +1,6 @@
 use elise_ast::AstNode;
 
-use elise_shared::errors::{
+use elise_errors::{
     LangErr,
     errors_csv_schema_resolver::{CsvSchemaResolverErr, CsvSchemaResolverErrPos},
 };
@@ -73,14 +73,12 @@ mod tests {
         CsvColDescriptor, CsvColType, CsvResolvedSchema, CsvSchemaResolver,
     };
     use elise_ast::{AstNode, CallKind, Compound, Primitive, TokSpan};
-    use elise_shared::{
-        builtins::{
-            SCH_FN_BOOL, SCH_FN_DEF, SCH_FN_NUMBER, SCH_FN_OPTIONAL, SCH_FN_ROW, SCH_FN_STRING,
-        },
-        errors::{
-            LangErr,
-            errors_csv_schema_resolver::{CsvSchemaResolverErr, CsvSchemaResolverErrPos},
-        },
+    use elise_builtins::schema::{
+        SCH_FN_BOOL, SCH_FN_DEF, SCH_FN_NUMBER, SCH_FN_OPTIONAL, SCH_FN_ROW, SCH_FN_STRING,
+    };
+    use elise_errors::{
+        LangErr,
+        errors_csv_schema_resolver::{CsvSchemaResolverErr, CsvSchemaResolverErrPos},
     };
 
     #[test]

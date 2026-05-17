@@ -90,8 +90,8 @@ version = "0.1.0"
 dependencies = [
  "colored",
  "elise-csv",
+ "elise-errors",
  "elise-parser",
- "elise-shared",
  "rayon",
  "serial_test",
 ]
@@ -105,8 +105,11 @@ name = "elise-binder"
 version = "0.1.0"
 dependencies = [
  "elise-csv",
- "elise-shared",
 ]
+
+[[package]]
+name = "elise-builtins"
+version = "0.1.0"
 
 [[package]]
 name = "elise-bytecode"
@@ -115,6 +118,11 @@ version = "0.1.0"
 [[package]]
 name = "elise-compiler"
 version = "0.1.0"
+dependencies = [
+ "elise-binder",
+ "elise-semantic-analyzer",
+ "regex",
+]
 
 [[package]]
 name = "elise-csv"
@@ -122,29 +130,39 @@ version = "0.1.0"
 dependencies = [
  "csv",
  "elise-ast",
- "elise-shared",
+ "elise-builtins",
+ "elise-errors",
 ]
+
+[[package]]
+name = "elise-errors"
+version = "0.1.0"
 
 [[package]]
 name = "elise-parser"
 version = "0.1.0"
 dependencies = [
  "elise-ast",
- "elise-shared",
+ "elise-errors",
  "regex",
 ]
 
 [[package]]
 name = "elise-semantic-analyzer"
 version = "0.1.0"
-
-[[package]]
-name = "elise-shared"
-version = "0.1.0"
+dependencies = [
+ "elise-ast",
+ "elise-errors",
+ "regex",
+]
 
 [[package]]
 name = "elise-vm"
 version = "0.1.0"
+dependencies = [
+ "elise-bytecode",
+ "regex",
+]
 
 [[package]]
 name = "futures-core"

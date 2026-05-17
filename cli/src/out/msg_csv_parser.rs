@@ -1,4 +1,4 @@
-use elise_shared::errors::errors_csv_parser::CsvParserErr;
+use elise_errors::errors_csv_parser::CsvParserErr;
 
 use crate::out::utils::print_silent_err;
 

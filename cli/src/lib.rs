@@ -13,7 +13,7 @@ use elise_csv::{
     schema_resolver::CsvSchemaResolver,
 };
 use elise_parser::Prelude;
-use elise_shared::errors::LangErr;
+use elise_errors::LangErr;
 use rayon::scope;
 use std::time::Instant;
 

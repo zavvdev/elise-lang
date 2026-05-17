@@ -5,3 +5,8 @@ edition = "2024"
 
 [lib]
 path = "src/lib.rs"
+
+[dependencies]
+elise-errors = { path = "../../shared/errors" }
+elise-ast = { path = "../ast" }
+regex.workspace = true

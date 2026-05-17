@@ -5,16 +5,17 @@
 resolver = "2"
 
 members = [
-    "ast",
-    "bytecode",
     "binder",
+    "bytecode",
     "cli",
     "compiler",
+    "frontend/ast",
     "frontend/csv",
     "frontend/parser",
     "frontend/semantic-analyzer",
     "runtime/vm",
-    "shared",
+    "shared/errors",
+    "shared/builtins",
 ]
 
 [workspace.dependencies]

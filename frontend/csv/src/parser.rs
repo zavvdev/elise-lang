@@ -1,5 +1,5 @@
 use csv::{ErrorKind, ReaderBuilder};
-use elise_shared::errors::{
+use elise_errors::{
     LangErr,
     errors_csv_parser::{CsvParserErr, Pos},
 };

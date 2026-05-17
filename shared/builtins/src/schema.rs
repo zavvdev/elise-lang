@@ -1,5 +1,3 @@
-// Schema related function names.
-
 pub const SCH_FN_DEF: &str = "schema";
 pub const SCH_FN_ROW: &str = "row";
 pub const SCH_FN_NUMBER: &str = "number";
