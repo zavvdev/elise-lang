@@ -12,8 +12,8 @@ use elise_csv::{
     parser::{CsvParser, CsvParserRecord},
     schema_resolver::CsvSchemaResolver,
 };
-use elise_parser::Prelude;
 use elise_errors::LangErr;
+use elise_parser::Prelude;
 use rayon::scope;
 use std::time::Instant;
 
