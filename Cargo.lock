@@ -152,6 +152,7 @@ name = "elise-semantic-analyzer"
 version = "0.1.0"
 dependencies = [
  "elise-ast",
+ "elise-builtins",
  "elise-errors",
  "regex",
 ]
