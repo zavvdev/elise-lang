@@ -28,6 +28,8 @@ Source code
 - [x] Schema file parsing
 
 - [x] Csv data file parsing
+
+    - [ ] Tests
  
 - [ ] Add csv schema resolution (take schema ast and build CsvResolvedSchema
       that maps each col to type descriptor)
@@ -39,6 +41,8 @@ Source code
     - [ ] Bool (true/false, 1/0, yes/no, y/n, on/off)
 
     - [ ] Empty (NULL, N/A, -, ,,)
+
+    - [ ] Tests
 
 - [ ] Add TypedDataGraph types for generic data representation (shared/ir)
 
