@@ -78,11 +78,11 @@ impl<'a> CsvSchemaResolver<'a> {
     }
 
     pub fn resolve(&self) -> Result<CsvResolvedSchema, LangErr> {
-        if self.schema_ast.len() == 0 {
+        if self.schema_ast.is_empty() {
             return Err(Self::err_empty());
         }
 
-        let schema_def = self.schema_ast.get(0);
+        let schema_def = self.schema_ast.first();
 
         if schema_def.is_none() {
             return Err(Self::err_root_missing());
@@ -90,7 +90,7 @@ impl<'a> CsvSchemaResolver<'a> {
 
         match schema_def.unwrap() {
             AstNode::Call((CallKind::Named(name), compound)) if name == SCH_FN_DEF => {
-                if compound.children.len() == 0 {
+                if compound.children.is_empty() {
                     return Err(Self::err_root_no_args());
                 }
             }

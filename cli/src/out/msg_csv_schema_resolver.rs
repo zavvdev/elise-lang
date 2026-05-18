@@ -9,7 +9,9 @@ pub fn print_err(schema_err: &CsvSchemaResolverErr) {
         Empty => "Schema definition file cannot be empty".to_string(),
         RootNoArgs => "Root .schema call arguments cannot be empty".to_string(),
         RootMissing => "Missing root .schema function call".to_string(),
-        RootInval => "Invalid root function. Use .schema function at the top level".to_string(),
+        RootInval { pos: _ } => {
+            "Invalid root function. Use .schema function at the top level".to_string()
+        }
         RootTooManyArgs { pos: _ } => {
             "Root .schema function should have only one argument".to_string()
         }
