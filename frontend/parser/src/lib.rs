@@ -91,7 +91,7 @@ impl<'a> Prelude<'a> {
             col: 1,
             source_code_slice: None,
         };
-        if let Ok(slice) = get_source_code_slice(self.source_code, self.tok_pos) {
+        if let Some(slice) = get_source_code_slice(self.source_code, self.tok_pos) {
             info = ParserErrInfo {
                 row: slice.row,
                 col: slice.col,

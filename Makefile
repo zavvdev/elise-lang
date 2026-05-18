@@ -59,5 +59,5 @@ validate:
 doc:
 	cargo doc
 
-seedoc:
+doc\:open:
 	cargo doc --open

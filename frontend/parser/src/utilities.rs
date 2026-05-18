@@ -7,7 +7,7 @@ pub struct SourceCodeSlice {
 }
 
 // Get source code substring for error report.
-pub fn get_source_code_slice(source_code: &[u8], char_pos: usize) -> Result<SourceCodeSlice, ()> {
+pub fn get_source_code_slice(source_code: &[u8], char_pos: usize) -> Option<SourceCodeSlice> {
     let mut row = 0;
     let mut col = 0;
 
@@ -39,15 +39,13 @@ pub fn get_source_code_slice(source_code: &[u8], char_pos: usize) -> Result<Sour
         }
     }
 
-    let source_code = from_utf8(source_code);
-
-    if source_code.is_ok() {
-        return Ok(SourceCodeSlice {
-            slice: source_code.unwrap()[previous_row_start..preview_row_end].to_string(),
+    if let Ok(source_code) = from_utf8(source_code) {
+        return Some(SourceCodeSlice {
+            slice: source_code[previous_row_start..preview_row_end].to_string(),
             row: row + 1,
             col: col + 1,
         });
     }
 
-    Err(())
+    None
 }
