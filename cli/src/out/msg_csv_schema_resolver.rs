@@ -6,18 +6,20 @@ pub fn print_err(schema_err: &CsvSchemaResolverErr) {
     use CsvSchemaResolverErr::*;
 
     let info: String = match schema_err {
-        EmptySchema => "Schema definition file cannot be empty".to_string(),
-        InvalDef { pos: _ } => "Invalid schema definition function".to_string(),
-        InvalRowDef { pos: _ } => "Invalid row definition".to_string(),
-        TooManySchemaDefArgs { pos: _ } => {
-            "Schema definition function should have only one argument".to_string()
+        Empty => "Schema definition file cannot be empty".to_string(),
+        RootNoArgs => "Root .schema call arguments cannot be empty".to_string(),
+        RootMissing => "Missing root .schema function call".to_string(),
+        RootInval => "Invalid root function. Use .schema function at the top level".to_string(),
+        RootTooManyArgs { pos: _ } => {
+            "Root .schema function should have only one argument".to_string()
         }
-        EmptyRow { pos: _ } => "Row definition does not have any column descriptors".to_string(),
+        RowInval { pos: _ } => "Invalid row definition".to_string(),
+        RowEmpty { pos: _ } => "Row definition cannot be empty".to_string(),
         RowInvalArgsLen { pos: _ } => {
-            "Arguments length for the row definition function must be even".to_string()
+            "Argument length for the row definition function must be even".to_string()
         }
-        InvalColName { pos: _ } => "Invalid column name".to_string(),
-        InvalColTypeDef { pos: _ } => "Invalid column type definition".to_string(),
+        ColInvalName { pos: _ } => "Invalid column name".to_string(),
+        ColInvalType { pos: _ } => "Invalid column type definition".to_string(),
         Unknown => "Unexpected error".to_string(),
     };
     print_silent_err(&info, Some("Schema error"));

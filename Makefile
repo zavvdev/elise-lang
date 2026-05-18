@@ -38,6 +38,9 @@ test:
 test\:parser:
 	cargo test -p elise-parser
 
+test\:frontend\:csv:
+	cargo test -p elise-csv
+
 test\:cli:
 	cargo test -p elise
 

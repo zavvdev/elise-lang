@@ -6,13 +6,15 @@ pub struct CsvSchemaResolverErrPos {
 
 #[derive(Debug, PartialEq)]
 pub enum CsvSchemaResolverErr {
-    EmptySchema,
-    InvalDef { pos: CsvSchemaResolverErrPos },
-    InvalRowDef { pos: CsvSchemaResolverErrPos },
-    TooManySchemaDefArgs { pos: CsvSchemaResolverErrPos },
-    EmptyRow { pos: CsvSchemaResolverErrPos },
+    Empty,
+    RootNoArgs,
+    RootMissing,
+    RootInval { pos: CsvSchemaResolverErrPos },
+    RootTooManyArgs { pos: CsvSchemaResolverErrPos },
+    RowInval { pos: CsvSchemaResolverErrPos },
+    RowEmpty { pos: CsvSchemaResolverErrPos },
     RowInvalArgsLen { pos: CsvSchemaResolverErrPos },
-    InvalColName { pos: CsvSchemaResolverErrPos },
-    InvalColTypeDef { pos: CsvSchemaResolverErrPos },
+    ColInvalName { pos: CsvSchemaResolverErrPos },
+    ColInvalType { pos: CsvSchemaResolverErrPos },
     Unknown,
 }
