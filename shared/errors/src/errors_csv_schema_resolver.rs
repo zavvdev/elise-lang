@@ -7,8 +7,8 @@ pub struct CsvSchemaResolverErrPos {
 #[derive(Debug, PartialEq)]
 pub enum CsvSchemaResolverErr {
     Empty,
-    RootNoArgs,
     RootMissing,
+    RootNoArgs { pos: CsvSchemaResolverErrPos },
     RootInval { pos: CsvSchemaResolverErrPos },
     RootTooManyArgs { pos: CsvSchemaResolverErrPos },
     RowInval { pos: CsvSchemaResolverErrPos },
