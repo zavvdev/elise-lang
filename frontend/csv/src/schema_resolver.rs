@@ -35,7 +35,7 @@ pub struct CsvResolvedSchema {
 
 // 1. [x] Check if schema ast is empty. Otherwise return EmptySchema error
 // 2. [x] Check if we have .schema function call at the top level. Otherwise return InvalDef error
-// 3. [ ] Check if we have a single child which is a .row function call. Otherwise return InvaliRowDef error
+// 3. [x] Check if we have a single child which is a .row function call. Otherwise return InvaliRowDef error
 // 4. [ ] Get the number of columns from .row call. If empty then return EmptyRow error
 // 5. [ ] Allocate a vector with length that equals to number of culumns
 // 6. [ ] Walk through .row function call children and check:
@@ -57,10 +57,6 @@ impl<'a> CsvSchemaResolver<'a> {
 
     fn err_unknown() -> LangErr {
         LangErr::CsvSchemaResolver(CsvSchemaResolverErr::Unknown)
-    }
-
-    fn err_empty() -> LangErr {
-        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::Empty)
     }
 
     fn err_root_missing() -> LangErr {
@@ -92,53 +88,37 @@ impl<'a> CsvSchemaResolver<'a> {
     }
 
     pub fn resolve(&self) -> Result<CsvResolvedSchema, LangErr> {
-        if self.schema_ast.is_empty() {
-            return Err(Self::err_empty());
-        }
+        let schema_root = self.schema_ast.first().ok_or_else(Self::err_root_missing)?;
 
-        let schema_root = self.schema_ast.first();
-
-        if schema_root.is_none() {
-            return Err(Self::err_root_missing());
-        }
-
-        let schema_root = schema_root.unwrap();
-
-        match schema_root {
-            AstNode::Call((CallKind::Named(name), compound)) if name == SCH_FN_DEF => {
-                let span = &compound.span;
-
-                if compound.children.is_empty() {
-                    return Err(Self::err_root_no_args(span.start, span.end));
-                }
-
-                if compound.children.len() > 1 {
-                    return Err(Self::err_root_too_many_args(span.start, span.end));
-                }
-
-                let row = compound.children.first();
-
-                if row.is_none() {
-                    return Err(Self::err_root_no_args(span.start, span.end));
-                }
-
-                let row = row.unwrap();
-
-                match &**row {
-                    AstNode::Call((CallKind::Named(row_call_name), row_compound))
-                        if row_call_name == SCH_FN_ROW =>
-                    {
-                        // TODO
-                    }
-                    _ => return Err(Self::error_row_inval(row.span().start, row.span().end)),
-                }
-            }
+        let root_call = match schema_root {
+            AstNode::Call((CallKind::Named(name), root_call)) if name == SCH_FN_DEF => root_call,
             _ => {
                 return Err(Self::err_root_inval(
                     schema_root.span().start,
                     schema_root.span().end,
                 ));
             }
+        };
+
+        let span = &root_call.span;
+        match root_call.children.len() {
+            0 => return Err(Self::err_root_no_args(span.start, span.end)),
+            2.. => return Err(Self::err_root_too_many_args(span.start, span.end)),
+            _ => {}
+        }
+
+        let row = root_call
+            .children
+            .first()
+            .ok_or_else(|| Self::err_root_no_args(span.start, span.end))?;
+
+        match &**row {
+            AstNode::Call((CallKind::Named(row_call_name), row_compound))
+                if row_call_name == SCH_FN_ROW =>
+            {
+                // TODO
+            }
+            _ => return Err(Self::error_row_inval(row.span().start, row.span().end)),
         }
 
         Err(Self::err_unknown())
@@ -171,7 +151,9 @@ mod tests {
         let result = CsvSchemaResolver::new(&ast).resolve();
         assert_eq!(
             result,
-            Err(LangErr::CsvSchemaResolver(CsvSchemaResolverErr::Empty))
+            Err(LangErr::CsvSchemaResolver(
+                CsvSchemaResolverErr::RootMissing
+            ))
         );
     }
 

@@ -6,7 +6,6 @@ pub fn print_err(schema_err: &CsvSchemaResolverErr) {
     use CsvSchemaResolverErr::*;
 
     let info: String = match schema_err {
-        Empty => "Schema definition file cannot be empty".to_string(),
         RootMissing => "Missing root .schema function call".to_string(),
         RootNoArgs { pos: _ } => "Root .schema call arguments cannot be empty".to_string(),
         RootInval { pos: _ } => {
