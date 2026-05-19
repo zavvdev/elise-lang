@@ -11,7 +11,7 @@ use crate::config::{
     T_RIGHT_SQR_BRACKET, T_SLOT_PREFIX, T_TRUE,
 };
 
-use elise_ast::{AstNode, CallKind, Compound, Primitive, TokSpan};
+use elise_ast::{AstNode, CallKind, Compound, KeyValuePair, Primitive, TokSpan};
 use elise_errors::{
     LangErr,
     errors_parser::{ParserErr, ParserErrInfo},
@@ -476,6 +476,8 @@ impl<'a> Prelude<'a> {
 
         let mut children: Vec<Box<AstNode>> = vec![];
         let mut key: Option<String> = None;
+        let mut key_start = 0;
+        let mut key_end = 0;
 
         while let Some(c) = self.peek() {
             if let Ok(eo_dict) = self.dict_check_end(&c) {
@@ -494,6 +496,8 @@ impl<'a> Prelude<'a> {
                 if key.is_none() {
                     match node {
                         AstNode::String(primitive) => {
+                            key_start = primitive.span.start;
+                            key_end = primitive.span.end;
                             key = Some(primitive.value);
                         }
                         _ => {
@@ -501,11 +505,22 @@ impl<'a> Prelude<'a> {
                         }
                     }
                 } else {
-                    children.push(Box::new(AstNode::DictPair((
-                        key.clone().unwrap(),
-                        Box::new(node),
-                    ))));
+                    let pair_end = node.span().end;
+                    children.push(Box::new(AstNode::DictPair(KeyValuePair {
+                        key: key.clone().unwrap(),
+                        key_span: TokSpan {
+                            start: key_start,
+                            end: key_end,
+                        },
+                        value: Box::new(node),
+                        span: TokSpan {
+                            start: key_start,
+                            end: pair_end,
+                        },
+                    })));
                     key = None;
+                    key_start = 0;
+                    key_end = 0;
                 }
             }
         }
@@ -692,6 +707,7 @@ impl<'a> Prelude<'a> {
 mod tests {
     use crate::{AstNode, CallKind, Compound, Prelude, Primitive, TokSpan};
     use LangErr::Parser;
+    use elise_ast::KeyValuePair;
     use elise_errors::{
         LangErr,
         errors_parser::{ParserErr, ParserErrInfo},
@@ -1199,73 +1215,93 @@ mod tests {
              "{ \"a\" 1, \"b\" \"2\", \"c\" false, \"d\" null, \"e\" [1, 2, 3], \"f\" { \"a2\" some_value } }",
          )
          .parse();
+
+        let pair_1 = Box::new(AstNode::DictPair(KeyValuePair {
+            key: "a".to_string(),
+            value: Box::new(AstNode::Number(Primitive {
+                value: "1".to_string(),
+                span: TokSpan { start: 6, end: 7 },
+            })),
+            key_span: TokSpan { start: 2, end: 5 },
+            span: TokSpan { start: 2, end: 7 },
+        }));
+
+        let pair_2 = Box::new(AstNode::DictPair(KeyValuePair {
+            key: "b".to_string(),
+            value: Box::new(AstNode::String(Primitive {
+                value: "2".to_string(),
+                span: TokSpan { start: 13, end: 16 },
+            })),
+            key_span: TokSpan { start: 9, end: 12 },
+            span: TokSpan { start: 9, end: 16 },
+        }));
+
+        let pair_3 = Box::new(AstNode::DictPair(KeyValuePair {
+            key: "c".to_string(),
+            value: Box::new(AstNode::Bool(Primitive {
+                value: "false".to_string(),
+                span: TokSpan { start: 22, end: 27 },
+            })),
+            key_span: TokSpan { start: 18, end: 21 },
+            span: TokSpan { start: 18, end: 27 },
+        }));
+
+        let pair_4 = Box::new(AstNode::DictPair(KeyValuePair {
+            key: "d".to_string(),
+            value: Box::new(AstNode::Null(Primitive {
+                value: "null".to_string(),
+                span: TokSpan { start: 33, end: 37 },
+            })),
+            key_span: TokSpan { start: 29, end: 32 },
+            span: TokSpan { start: 29, end: 37 },
+        }));
+
+        let pair_5 = Box::new(AstNode::DictPair(KeyValuePair {
+            key: "e".to_string(),
+            value: Box::new(AstNode::List(Compound {
+                span: TokSpan { start: 43, end: 52 },
+                children: vec![
+                    Box::new(AstNode::Number(Primitive {
+                        value: "1".to_string(),
+                        span: TokSpan { start: 44, end: 45 },
+                    })),
+                    Box::new(AstNode::Number(Primitive {
+                        value: "2".to_string(),
+                        span: TokSpan { start: 47, end: 48 },
+                    })),
+                    Box::new(AstNode::Number(Primitive {
+                        value: "3".to_string(),
+                        span: TokSpan { start: 50, end: 51 },
+                    })),
+                ],
+            })),
+            key_span: TokSpan { start: 39, end: 42 },
+            span: TokSpan { start: 39, end: 52 },
+        }));
+
+        let pair_6 = Box::new(AstNode::DictPair(KeyValuePair {
+            key: "f".to_string(),
+            value: Box::new(AstNode::Dict(Compound {
+                span: TokSpan { start: 58, end: 77 },
+                children: vec![Box::new(AstNode::DictPair(KeyValuePair {
+                    key: "a2".to_string(),
+                    value: Box::new(AstNode::Identifier(Primitive {
+                        value: "some_value".to_string(),
+                        span: TokSpan { start: 65, end: 75 },
+                    })),
+                    key_span: TokSpan { start: 60, end: 64 },
+                    span: TokSpan { start: 60, end: 75 },
+                }))],
+            })),
+            key_span: TokSpan { start: 54, end: 57 },
+            span: TokSpan { start: 54, end: 77 },
+        }));
+
         assert_eq!(
             ast,
             Ok(vec![AstNode::Dict(Compound {
                 span: TokSpan { start: 0, end: 79 },
-                children: vec![
-                    Box::new(AstNode::DictPair((
-                        "a".to_string(),
-                        Box::new(AstNode::Number(Primitive {
-                            value: "1".to_string(),
-                            span: TokSpan { start: 6, end: 7 }
-                        }))
-                    ))),
-                    Box::new(AstNode::DictPair((
-                        "b".to_string(),
-                        Box::new(AstNode::String(Primitive {
-                            value: "2".to_string(),
-                            span: TokSpan { start: 13, end: 16 }
-                        }))
-                    ))),
-                    Box::new(AstNode::DictPair((
-                        "c".to_string(),
-                        Box::new(AstNode::Bool(Primitive {
-                            value: "false".to_string(),
-                            span: TokSpan { start: 22, end: 27 }
-                        }))
-                    ))),
-                    Box::new(AstNode::DictPair((
-                        "d".to_string(),
-                        Box::new(AstNode::Null(Primitive {
-                            value: "null".to_string(),
-                            span: TokSpan { start: 33, end: 37 }
-                        }))
-                    ))),
-                    Box::new(AstNode::DictPair((
-                        "e".to_string(),
-                        Box::new(AstNode::List(Compound {
-                            span: TokSpan { start: 43, end: 52 },
-                            children: vec![
-                                Box::new(AstNode::Number(Primitive {
-                                    value: "1".to_string(),
-                                    span: TokSpan { start: 44, end: 45 }
-                                })),
-                                Box::new(AstNode::Number(Primitive {
-                                    value: "2".to_string(),
-                                    span: TokSpan { start: 47, end: 48 }
-                                })),
-                                Box::new(AstNode::Number(Primitive {
-                                    value: "3".to_string(),
-                                    span: TokSpan { start: 50, end: 51 }
-                                }))
-                            ]
-                        }))
-                    ))),
-                    Box::new(AstNode::DictPair((
-                        "f".to_string(),
-                        Box::new(AstNode::Dict(Compound {
-                            span: TokSpan { start: 58, end: 77 },
-                            children: vec![Box::new(AstNode::DictPair((
-                                "a2".to_string(),
-                                Box::new(AstNode::Identifier(Primitive {
-                                    value: "some_value".to_string(),
-                                    span: TokSpan { start: 65, end: 75 }
-                                }))
-                            )))]
-                        }))
-                    )))
-                ],
+                children: vec![pair_1, pair_2, pair_3, pair_4, pair_5, pair_6,],
             })])
         );
     }

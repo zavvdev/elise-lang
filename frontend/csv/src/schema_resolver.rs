@@ -82,19 +82,26 @@ impl<'a> CsvSchemaResolver<'a> {
             return Err(Self::err_empty());
         }
 
-        let schema_def = self.schema_ast.first();
+        let schema_root = self.schema_ast.first();
 
-        if schema_def.is_none() {
+        if schema_root.is_none() {
             return Err(Self::err_root_missing());
         }
 
-        match schema_def.unwrap() {
+        let schema_root = schema_root.unwrap();
+
+        match schema_root {
             AstNode::Call((CallKind::Named(name), compound)) if name == SCH_FN_DEF => {
                 if compound.children.is_empty() {
                     return Err(Self::err_root_no_args());
                 }
             }
-            _ => return Err(Self::err_root_inval(0, 3)), // TODO: Match AstNode and extract pos
+            _ => {
+                return Err(Self::err_root_inval(
+                    schema_root.span().start,
+                    schema_root.span().end,
+                ));
+            }
         }
 
         Err(Self::err_unknown())
