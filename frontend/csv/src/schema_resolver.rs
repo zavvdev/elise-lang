@@ -36,10 +36,10 @@ pub struct CsvResolvedSchema {
 // 1. [x] Check if schema ast is empty. Otherwise return EmptySchema error
 // 2. [x] Check if we have .schema function call at the top level. Otherwise return InvalDef error
 // 3. [x] Check if we have a single child which is a .row function call. Otherwise return InvaliRowDef error
-// 4. [ ] Get the number of columns from .row call. If empty then return EmptyRow error
+// 4. [x] Get the number of columns from .row call. If empty then return EmptyRow error
 // 5. [ ] Allocate a vector with length that equals to number of culumns
 // 6. [ ] Walk through .row function call children and check:
-//      - [ ] Number of arguments should be even
+//      - [x] Number of arguments should be even
 //      - [ ] Each odd argument should be an identifier. Otherwise return InvalColName  error
 //      - [ ] Each even argument should be a known schema function call (SCH_FN_*). Otherwise return
 //           InvalColTypeDef error
@@ -87,6 +87,18 @@ impl<'a> CsvSchemaResolver<'a> {
         })
     }
 
+    fn error_row_empty(start: usize, end: usize) -> LangErr {
+        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::RowEmpty {
+            pos: CsvSchemaResolverErrPos { start, end },
+        })
+    }
+
+    fn error_row_inval_args_len(start: usize, end: usize) -> LangErr {
+        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::RowInvalArgsLen {
+            pos: CsvSchemaResolverErrPos { start, end },
+        })
+    }
+
     pub fn resolve(&self) -> Result<CsvResolvedSchema, LangErr> {
         let schema_root = self.schema_ast.first().ok_or_else(Self::err_root_missing)?;
 
@@ -116,7 +128,20 @@ impl<'a> CsvSchemaResolver<'a> {
             AstNode::Call((CallKind::Named(row_call_name), row_compound))
                 if row_call_name == SCH_FN_ROW =>
             {
-                // TODO
+                let row_args_len = row_compound.children.len();
+                if row_args_len == 0 {
+                    return Err(Self::error_row_empty(
+                        row_compound.span.start,
+                        row_compound.span.end,
+                    ));
+                }
+
+                if row_args_len % 2 != 0 {
+                    return Err(Self::error_row_inval_args_len(
+                        row_compound.span.start,
+                        row_compound.span.end,
+                    ));
+                }
             }
             _ => return Err(Self::error_row_inval(row.span().start, row.span().end)),
         }
@@ -287,101 +312,78 @@ mod tests {
         assert_eq!(result, Err(LangErr::CsvSchemaResolver(err)));
     }
 
-    // #[test]
-    // fn should_return_error_if_row_is_invalid_call() {
-    //     let row_def = Box::new(AstNode::Call((
-    //         CallKind::Named("invalid".to_string()),
-    //         Compound {
-    //             span: TokSpan { start: 3, end: 6 },
-    //             children: vec![],
-    //         },
-    //     )));
-    //     let ast = vec![AstNode::Call((
-    //         CallKind::Named(SCH_FN_DEF.to_string()),
-    //         Compound {
-    //             span: TokSpan { start: 0, end: 8 },
-    //             children: vec![row_def],
-    //         },
-    //     ))];
-    //     let result = CsvSchemaResolver::new(&ast).resolve();
-    //     let err = CsvSchemaResolverErr::RowInval {
-    //         pos: CsvSchemaResolverErrPos { start: 3, end: 6 },
-    //     };
-    //     assert_eq!(result, Err(LangErr::CsvSchemaResolver(err)));
-    // }
+    #[test]
+    fn should_return_error_if_row_is_invalid_call() {
+        let row_def = Box::new(AstNode::Call((
+            CallKind::Named("invalid".to_string()),
+            Compound {
+                span: TokSpan { start: 3, end: 6 },
+                children: vec![],
+            },
+        )));
+        let ast = vec![AstNode::Call((
+            CallKind::Named(SCH_FN_DEF.to_string()),
+            Compound {
+                span: TokSpan { start: 0, end: 8 },
+                children: vec![row_def],
+            },
+        ))];
+        let result = CsvSchemaResolver::new(&ast).resolve();
+        let err = CsvSchemaResolverErr::RowInval {
+            pos: CsvSchemaResolverErrPos { start: 3, end: 6 },
+        };
+        assert_eq!(result, Err(LangErr::CsvSchemaResolver(err)));
+    }
 
-    // #[test]
-    // fn should_return_error_if_row_has_no_args() {
-    //     let row_def = Box::new(AstNode::Call((
-    //         CallKind::Named(SCH_FN_ROW.to_string()),
-    //         Compound {
-    //             span: TokSpan { start: 3, end: 6 },
-    //             children: vec![],
-    //         },
-    //     )));
-    //     let ast = vec![AstNode::Call((
-    //         CallKind::Named(SCH_FN_DEF.to_string()),
-    //         Compound {
-    //             span: TokSpan { start: 0, end: 3 },
-    //             children: vec![row_def],
-    //         },
-    //     ))];
-    //     let result = CsvSchemaResolver::new(&ast).resolve();
-    //     let err = CsvSchemaResolverErr::EmptyRow {
-    //         pos: CsvSchemaResolverErrPos { start: 3, end: 6 },
-    //     };
-    //     assert_eq!(result, Err(LangErr::CsvSchemaResolver(err)));
-    // }
-    //
-    // #[test]
-    // fn should_return_error_if_row_definition_is_invalid_fn() {
-    //     let row_def = Box::new(AstNode::Call((
-    //         CallKind::Named("some".to_string()),
-    //         Compound {
-    //             span: TokSpan { start: 3, end: 6 },
-    //             children: vec![],
-    //         },
-    //     )));
-    //     let ast = vec![AstNode::Call((
-    //         CallKind::Named(SCH_FN_DEF.to_string()),
-    //         Compound {
-    //             span: TokSpan { start: 0, end: 3 },
-    //             children: vec![row_def],
-    //         },
-    //     ))];
-    //     let result = CsvSchemaResolver::new(&ast).resolve();
-    //     let err = CsvSchemaResolverErr::RowInval {
-    //         pos: CsvSchemaResolverErrPos { start: 3, end: 6 },
-    //     };
-    //     assert_eq!(result, Err(LangErr::CsvSchemaResolver(err)));
-    // }
+    #[test]
+    fn should_return_error_if_row_has_no_args() {
+        let row_def = Box::new(AstNode::Call((
+            CallKind::Named(SCH_FN_ROW.to_string()),
+            Compound {
+                span: TokSpan { start: 3, end: 6 },
+                children: vec![],
+            },
+        )));
+        let ast = vec![AstNode::Call((
+            CallKind::Named(SCH_FN_DEF.to_string()),
+            Compound {
+                span: TokSpan { start: 0, end: 3 },
+                children: vec![row_def],
+            },
+        ))];
+        let result = CsvSchemaResolver::new(&ast).resolve();
+        let err = CsvSchemaResolverErr::RowEmpty {
+            pos: CsvSchemaResolverErrPos { start: 3, end: 6 },
+        };
+        assert_eq!(result, Err(LangErr::CsvSchemaResolver(err)));
+    }
 
-    // #[test]
-    // fn should_return_error_if_number_of_row_def_args_is_not_even() {
-    //     let row_def = Box::new(AstNode::Call((
-    //         CallKind::Named(SCH_FN_ROW.to_string()),
-    //         Compound {
-    //             span: TokSpan { start: 3, end: 6 },
-    //             children: vec![Box::new(AstNode::Identifier(Primitive {
-    //                 value: "some_value".to_string(),
-    //                 span: TokSpan { start: 9, end: 12 },
-    //             }))],
-    //         },
-    //     )));
-    //     let ast = vec![AstNode::Call((
-    //         CallKind::Named(SCH_FN_DEF.to_string()),
-    //         Compound {
-    //             span: TokSpan { start: 0, end: 3 },
-    //             children: vec![row_def],
-    //         },
-    //     ))];
-    //     let result = CsvSchemaResolver::new(&ast).resolve();
-    //     let err = CsvSchemaResolverErr::RowInvalArgsLen {
-    //         pos: CsvSchemaResolverErrPos { start: 3, end: 6 },
-    //     };
-    //     assert_eq!(result, Err(LangErr::CsvSchemaResolver(err)));
-    // }
-    //
+    #[test]
+    fn should_return_error_if_number_of_row_def_args_is_not_even() {
+        let row_def = Box::new(AstNode::Call((
+            CallKind::Named(SCH_FN_ROW.to_string()),
+            Compound {
+                span: TokSpan { start: 3, end: 6 },
+                children: vec![Box::new(AstNode::Identifier(Primitive {
+                    value: "some_value".to_string(),
+                    span: TokSpan { start: 9, end: 12 },
+                }))],
+            },
+        )));
+        let ast = vec![AstNode::Call((
+            CallKind::Named(SCH_FN_DEF.to_string()),
+            Compound {
+                span: TokSpan { start: 0, end: 3 },
+                children: vec![row_def],
+            },
+        ))];
+        let result = CsvSchemaResolver::new(&ast).resolve();
+        let err = CsvSchemaResolverErr::RowInvalArgsLen {
+            pos: CsvSchemaResolverErrPos { start: 3, end: 6 },
+        };
+        assert_eq!(result, Err(LangErr::CsvSchemaResolver(err)));
+    }
+
     // #[test]
     // fn should_return_error_if_odd_row_args_are_not_identifiers() {
     //     let row_children = vec![
