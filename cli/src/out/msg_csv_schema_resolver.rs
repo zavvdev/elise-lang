@@ -21,7 +21,9 @@ pub fn print_err(schema_err: &CsvSchemaResolverErr) {
         }
         ColInvalName { pos: _ } => "Invalid column name".to_string(),
         ColInvalType { pos: _ } => "Invalid column type definition".to_string(),
-        OptInvalArgsLen { pos: _ } => "Invalid number of arguments for .optional function".to_string(),
+        OptInvalArgsLen { pos: _ } => {
+            "Invalid number of arguments for .optional function".to_string()
+        }
     };
     print_silent_err(&info, Some("Schema error"));
 }
