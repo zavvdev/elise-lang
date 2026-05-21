@@ -15,5 +15,5 @@ pub enum CsvSchemaResolverErr {
     RowInvalArgsLen { pos: CsvSchemaResolverErrPos },
     ColInvalName { pos: CsvSchemaResolverErrPos },
     ColInvalType { pos: CsvSchemaResolverErrPos },
-    Unknown,
+    OptInvalArgsLen { pos: CsvSchemaResolverErrPos },
 }
