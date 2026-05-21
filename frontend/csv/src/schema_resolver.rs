@@ -122,7 +122,7 @@ impl<'a> CsvSchemaResolver<'a> {
             SCH_FN_BOOL => Ok(CsvColType::Bool),
             SCH_FN_NUMBER => Ok(CsvColType::Number),
             SCH_FN_STRING => Ok(CsvColType::String),
-            _ => return Err(Self::error_col_inval_type(start, end)),
+            _ => Err(Self::error_col_inval_type(start, end)),
         }
     }
 
@@ -136,7 +136,7 @@ impl<'a> CsvSchemaResolver<'a> {
             return Err(Self::error_row_empty(start, end));
         }
 
-        if row_args_len % 2 != 0 {
+        if !row_args_len.is_multiple_of(2) {
             return Err(Self::error_row_inval_args_len(start, end));
         }
 
@@ -181,7 +181,7 @@ impl<'a> CsvSchemaResolver<'a> {
                                 return Err(Self::error_opt_inval_arg_len(span.start, span.end));
                             }
 
-                            let opt_type = children.get(0).ok_or_else(|| {
+                            let opt_type = children.first().ok_or_else(|| {
                                 Self::error_opt_inval_arg_len(span.start, span.end)
                             })?;
 
