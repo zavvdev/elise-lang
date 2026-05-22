@@ -47,7 +47,7 @@ pub struct CsvResolvedSchema {
 //           InvalColTypeDef error
 //      - [x] If two prev steps pass then create CsvColDescriptor and insert it into previously
 //           created vector
-// 7. [ ] Each type function should not have any args.
+// 7. [x] Each type function should not have any args.
 // 8. [ ] REFACTOR THIS CODE!
 
 pub struct CsvSchemaResolver<'a> {
@@ -117,6 +117,12 @@ impl<'a> CsvSchemaResolver<'a> {
         })
     }
 
+    fn error_type_no_args(start: usize, end: usize) -> LangErr {
+        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::TypeNoArgs {
+            pos: CsvSchemaResolverErrPos { start, end },
+        })
+    }
+
     fn resolve_type(call_name: &str, start: usize, end: usize) -> Result<CsvColType, LangErr> {
         match call_name {
             SCH_FN_BOOL => Ok(CsvColType::Bool),
@@ -126,7 +132,6 @@ impl<'a> CsvSchemaResolver<'a> {
         }
     }
 
-    // TODO: check if type functions has no args.
     fn resolve_row(row_compound: &Compound) -> Result<CsvResolvedSchema, LangErr> {
         let row_args_len = row_compound.children.len();
         let start = row_compound.span.start;
@@ -188,9 +193,11 @@ impl<'a> CsvSchemaResolver<'a> {
                             match &**opt_type {
                                 AstNode::Call((
                                     CallKind::Named(name),
-                                    Compound { children: _, span },
+                                    Compound { children, span },
                                 )) => {
-                                    // TODO: Check if children is empty.
+                                    if children.len() > 0 {
+                                        return Err(Self::error_type_no_args(span.start, span.end));
+                                    }
                                     col_type =
                                         Some(Self::resolve_type(name, span.start, span.end)?);
                                 }
@@ -203,6 +210,9 @@ impl<'a> CsvSchemaResolver<'a> {
                             }
                         }
                         _ => {
+                            if children.len() > 0 {
+                                return Err(Self::error_type_no_args(span.start, span.end));
+                            }
                             optional = false;
                             col_type = Some(Self::resolve_type(name, span.start, span.end)?);
                         }
@@ -568,6 +578,45 @@ mod tests {
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
         let err = CsvSchemaResolverErr::ColInvalType {
+            pos: CsvSchemaResolverErrPos { start: 12, end: 15 },
+        };
+        assert_eq!(result, Err(LangErr::CsvSchemaResolver(err)));
+    }
+
+    #[test]
+    fn should_return_error_if_type_fns_have_args() {
+        let row_children = vec![
+            Box::new(AstNode::Identifier(Primitive {
+                value: "name".to_string(),
+                span: TokSpan { start: 9, end: 12 },
+            })),
+            Box::new(AstNode::Call((
+                CallKind::Named("number".to_string()),
+                Compound {
+                    children: vec![Box::new(AstNode::Number(Primitive {
+                        value: "1".to_string(),
+                        span: TokSpan { start: 0, end: 3 },
+                    }))],
+                    span: TokSpan { start: 12, end: 15 },
+                },
+            ))),
+        ];
+        let row_def = Box::new(AstNode::Call((
+            CallKind::Named(SCH_FN_ROW.to_string()),
+            Compound {
+                span: TokSpan { start: 3, end: 6 },
+                children: row_children,
+            },
+        )));
+        let ast = vec![AstNode::Call((
+            CallKind::Named(SCH_FN_DEF.to_string()),
+            Compound {
+                span: TokSpan { start: 0, end: 3 },
+                children: vec![row_def],
+            },
+        ))];
+        let result = CsvSchemaResolver::new(&ast).resolve();
+        let err = CsvSchemaResolverErr::TypeNoArgs {
             pos: CsvSchemaResolverErrPos { start: 12, end: 15 },
         };
         assert_eq!(result, Err(LangErr::CsvSchemaResolver(err)));

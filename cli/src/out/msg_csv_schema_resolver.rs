@@ -24,6 +24,9 @@ pub fn print_err(schema_err: &CsvSchemaResolverErr) {
         OptInvalArgsLen { pos: _ } => {
             "Invalid number of arguments for .optional function".to_string()
         }
+        TypeNoArgs { pos: _ } => {
+            "Type functions must not have arguments".to_string()
+        }
     };
     print_silent_err(&info, Some("Schema error"));
 }
