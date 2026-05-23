@@ -1,0 +1,17 @@
+# Base image — starts from an official Rust image (Debian under the hood)
+# with rustc, cargo, and rustup pre-installed.
+FROM rust:latest
+
+RUN rustup component add clippy rustfmt
+
+RUN useradd -m devuser
+
+USER devuser
+
+# Sets the working directory inside the container.
+# All subsequent commands (COPY, RUN, CMD) run from /app.
+# Creates the directory if it doesn't exist.
+WORKDIR /app
+
+# Default command when you run the container.
+CMD ["bash"]

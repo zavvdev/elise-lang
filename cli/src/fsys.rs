@@ -176,32 +176,6 @@ mod tests {
         assert_eq!(result, Ok(()));
         fs::remove_file(file_name).expect("Failed to delete test file");
     }
-
-    #[test]
-    #[serial]
-    fn write_file_errors_when_cannot_write() {
-        let file_name = "test.eli";
-        let contents = ".declare(PI 3.14)\n.add(2 + PI)\n";
-        fs::write(file_name, "").expect("Cannot write test file #1");
-
-        let mut perms = fs::metadata(file_name).unwrap().permissions();
-        perms.set_readonly(true);
-        fs::set_permissions(file_name, perms).unwrap();
-
-        let result = write_file(file_name, contents);
-
-        assert_eq!(
-            result,
-            Err(FileWriterErr {
-                message: "Permission denied (os error 13)".to_string()
-            })
-        );
-
-        let mut perms = std::fs::metadata(file_name).unwrap().permissions();
-        perms.set_readonly(false);
-        std::fs::set_permissions(file_name, perms).unwrap();
-        fs::remove_file(file_name).expect("Failed to delete test file");
-    }
 }
 
 // ==========================

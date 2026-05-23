@@ -4,7 +4,10 @@ build:
 build\:release:
 	cargo build --release
 
-# DEV PURPOSE START
+docker\:dev:
+	docker compose run --rm elise
+
+# LOCAL DEV TEST COMMANDS START
 
 elise-run:
 	./target/debug/elise --mode=run --source-code=sample.eli --data=data.csv --data-schema=sample.elt --print-bytecode
@@ -30,7 +33,7 @@ elise-validate:
 elise-validate\:release:
 	./target/debug/elise --mode=validate --data=data.csv --data-schema=sample.elt 
 
-# DEV PURPOSE END
+# LOCAL DEV TEST COMMANDS END
 
 test:
 	cargo test

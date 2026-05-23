@@ -27,29 +27,6 @@ pub struct CsvResolvedSchema {
     row: Vec<CsvColDescriptor>,
 }
 
-//.schema(
-//    .row(
-//        name     .string()
-//        age      .number()
-//        salary   .optional(.number())
-//        employed .bool()
-//    ))
-
-// 1. [x] Check if schema ast is empty. Otherwise return EmptySchema error
-// 2. [x] Check if we have .schema function call at the top level. Otherwise return InvalDef error
-// 3. [x] Check if we have a single child which is a .row function call. Otherwise return InvaliRowDef error
-// 4. [x] Get the number of columns from .row call. If empty then return EmptyRow error
-// 5. [x] Allocate a vector with length that equals to number of culumns
-// 6. [x] Walk through .row function call children and check:
-//      - [x] Number of arguments should be even
-//      - [x] Each odd argument should be an identifier. Otherwise return InvalColName  error
-//      - [x] Each even argument should be a known schema function call (SCH_FN_*). Otherwise return
-//           InvalColTypeDef error
-//      - [x] If two prev steps pass then create CsvColDescriptor and insert it into previously
-//           created vector
-// 7. [x] Each type function should not have any args.
-// 8. [ ] REFACTOR THIS CODE!
-
 pub struct CsvSchemaResolver<'a> {
     schema_ast: &'a Vec<AstNode>,
 }

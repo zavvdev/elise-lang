@@ -1,0 +1,17 @@
+services:
+  elise:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile.dev
+    volumes:
+      - .:/app
+      # Mount /target from the docker container as a named Docker volume,
+      # which intercepts that specific path and keeps it inside Docker 
+      # instead of the local file system. In other words, files from /target
+      # won't be transferred from the container to your local machine.
+      # Note: but an empty /target directory might be created locally.
+      - target-cache:/app/target
+    stdin_open: true
+    tty: true
+volumes:
+  target-cache:
