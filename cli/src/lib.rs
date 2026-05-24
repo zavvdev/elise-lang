@@ -82,10 +82,7 @@ pub fn run<'a>(
 
     match parsed_data {
         DataParseResult::Csv(records) => {
-            println!("data: {:#?}", records);
-            println!("schema ast: {:#?}", schema_ast);
             let records = records?;
-            // TODO: Move this schema resolution to a thread above
             let resolved_schema = CsvSchemaResolver::new(&schema_ast).resolve()?;
             println!("csv records: {:#?}", records);
             println!("csv resolved schema: {:#?}", resolved_schema);

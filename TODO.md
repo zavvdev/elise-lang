@@ -8,18 +8,6 @@ Source code
     -> Sonata (VM)
 
 -----
-
-1. Parse source code, data schema and data (csv) file in separate threads.
-
-2. Run semantic analysis on source code and schema file.
-
-3. Run type coercion for data file against schema and produce typed data structure that represents data.
-
-4. Compile
-
-5. Run VM
-
------
  
 - [x] CLI
   
@@ -31,23 +19,21 @@ Source code
 
     - [ ] Tests
  
-- [ ] Add csv schema resolution (take schema ast and build CsvResolvedSchema
+- [x] Add csv schema resolution (take schema ast and build CsvResolvedSchema
       that maps each col to type descriptor)
     
-    - [ ] Number
+    - [x] Number
 
-    - [ ] String
+    - [x] String
 
-    - [ ] Bool (true/false, 1/0, yes/no, y/n, on/off)
+    - [x] Bool (true/false, 1/0, yes/no, y/n, on/off)
 
-    - [ ] Empty (NULL, N/A, -, ,,)
+    - [x] Optional (NULL, N/A, -, ,,)
 
-    - [ ] Tests
-
-- [ ] Add TypedDataGraph types for generic data representation (shared/ir)
+    - [x] Tests
 
 - [ ] Combine CsvResoledSchema with raw csv records to produce TypedDataGraph
-      IR that describes data in agnostic (binder)
+      IR that describes data in agnostic way.
 
 - [ ] Semantic analyzer
 
