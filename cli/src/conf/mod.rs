@@ -173,7 +173,9 @@ impl Conf {
                 return Err(ConfErr::ArgRequired(arg.name.to_string()));
             }
 
-            if user_arg.is_none() && let Some(def) = arg.def {
+            if user_arg.is_none()
+                && let Some(def) = arg.def
+            {
                 res.insert(arg.name, def);
             } else if user_arg.is_some() {
                 let user_arg = user_arg.unwrap();
