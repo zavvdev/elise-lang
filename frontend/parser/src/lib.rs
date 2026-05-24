@@ -12,7 +12,7 @@ use crate::config::{
     T_RIGHT_SQR_BRACKET, T_SLOT_PREFIX, T_TRUE,
 };
 
-use elise_ast::{AstNode, CallKind, Compound, KeyValuePair, Primitive };
+use elise_ast::{AstNode, CallKind, Compound, KeyValuePair, Primitive};
 use elise_errors::{
     LangErr,
     errors_parser::{ParserErr, ParserErrInfo},
