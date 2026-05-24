@@ -177,8 +177,7 @@ impl Conf {
                 && let Some(def) = arg.def
             {
                 res.insert(arg.name, def);
-            } else if user_arg.is_some() {
-                let user_arg = user_arg.unwrap();
+            } else if let Some(user_arg) = user_arg {
                 match arg.ty {
                     ArgType::SourceFile(ext) => {
                         let file = Self::validate_source_file(user_arg, ext)?;
