@@ -18,11 +18,11 @@ use elise_errors::{
     errors_parser::{ParserErr, ParserErrInfo},
 };
 
-// ==========================
+// ==================================================================
 //
 //  PARSER START
 //
-// ==========================
+// ==================================================================
 
 /**
  * Finite automata states for parsing numbers.
@@ -132,11 +132,9 @@ impl<'a> Prelude<'a> {
         }
     }
 
-    // ==========================
-    //
+    // ==================================================================
     // TOKEN UTILITIES START
-    //
-    // ==========================
+    // ==================================================================
 
     fn peek_at(&self, pos: usize) -> Option<u8> {
         if pos >= self.source_code.len() {
@@ -159,17 +157,13 @@ impl<'a> Prelude<'a> {
         matches!(c, b' ' | b'\n' | b'\t' | b'\r') || *c == T_COMMA
     }
 
-    // ==========================
-    //
+    // ==================================================================
     // TOKEN UTILITIES END
-    //
-    // ==========================
+    // ==================================================================
 
-    // ==========================
-    //
+    // ==================================================================
     // NUMBER START
-    //
-    // ==========================
+    // ==================================================================
 
     fn number_is_digit(c: &u8) -> bool {
         c.is_ascii_digit()
@@ -262,17 +256,13 @@ impl<'a> Prelude<'a> {
         })))
     }
 
-    // ==========================
-    //
+    // ==================================================================
     // NUMBER END
-    //
-    // ==========================
+    // ==================================================================
 
-    // ==========================
-    //
+    // ==================================================================
     // STRING START
-    //
-    // ==========================
+    // ==================================================================
 
     fn string_is_start(char: &u8) -> bool {
         *char == T_DOUBLE_QT
@@ -323,17 +313,13 @@ impl<'a> Prelude<'a> {
         })))
     }
 
-    // ==========================
-    //
+    // ==================================================================
     // STRING END
-    //
-    // ==========================
+    // ==================================================================
 
-    // ==========================
-    //
+    // ==================================================================
     // IDENTIFIER START
-    //
-    // ==========================
+    // ==================================================================
 
     fn identifier_is_start(c: &u8) -> bool {
         c.is_ascii_lowercase() || c.is_ascii_uppercase()
@@ -381,17 +367,13 @@ impl<'a> Prelude<'a> {
         }
     }
 
-    // ==========================
-    //
+    // ==================================================================
     // IDENTIFIER END
-    //
-    // ==========================
+    // ==================================================================
 
-    // ==========================
-    //
+    // ==================================================================
     // LIST START
-    //
-    // ==========================
+    // ==================================================================
 
     fn list_is_start(&mut self, c: &u8) -> bool {
         if *c == T_LEFT_SQR_BRACKET {
@@ -440,17 +422,13 @@ impl<'a> Prelude<'a> {
         })))
     }
 
-    // ==========================
-    //
+    // ==================================================================
     // LIST END
-    //
-    // ==========================
+    // ==================================================================
 
-    // ==========================
-    //
+    // ==================================================================
     // DICT START
-    //
-    // ==========================
+    // ==================================================================
 
     fn dict_is_start(&mut self, c: &u8) -> bool {
         if *c == T_LEFT_CUR_BRACKET {
@@ -535,17 +513,13 @@ impl<'a> Prelude<'a> {
         })))
     }
 
-    // ==========================
-    //
+    // ==================================================================
     // DICT END
-    //
-    // ==========================
+    // ==================================================================
 
-    // ==========================
-    //
+    // ==================================================================
     // CALL START
-    //
-    // ==========================
+    // ==================================================================
 
     fn call_is_start(&self, char: &u8) -> bool {
         if let Some(next_char) = self.peek_at(self.tok_pos) {
@@ -627,17 +601,13 @@ impl<'a> Prelude<'a> {
         ))))
     }
 
-    // ==========================
-    //
+    // ==================================================================
     // CALL END
-    //
-    // ==========================
+    // ==================================================================
 
-    // ==========================
-    //
+    // ==================================================================
     // SLOT START
-    //
-    // ==========================
+    // ==================================================================
 
     fn slot_is_start(&self, char: &u8) -> bool {
         if let Some(next_char) = self.peek_at(self.tok_pos) {
@@ -685,24 +655,22 @@ impl<'a> Prelude<'a> {
         }
     }
 
-    // ==========================
-    //
+    // ==================================================================
     // SLOT END
-    //
-    // ==========================
+    // ==================================================================
 }
 
-// ==========================
+// ==================================================================
 //
 //  PARSER END
 //
-// ==========================
+// ==================================================================
 
-// ==========================
+// ==================================================================
 //
 //  TESTS START
 //
-// ==========================
+// ==================================================================
 
 #[cfg(test)]
 mod tests {
@@ -714,12 +682,12 @@ mod tests {
         errors_parser::{ParserErr, ParserErrInfo},
     };
 
-    // ==========================
+    // ==================================================================
     // NUMBER TESTS START
-    // ==========================
+    // ==================================================================
 
     #[test]
-    fn number_test_should_not_contain_non_numeric_tokens() {
+    fn number_should_not_contain_non_numeric_tokens() {
         let forbidded_tokens = vec![
             ("0a", 2),
             ("-0a", 3),
@@ -746,7 +714,7 @@ mod tests {
     }
 
     #[test]
-    fn number_test_should_not_allow_more_than_one_minus_token() {
+    fn number_should_not_allow_more_than_one_minus_token() {
         let forbidded_tokens = vec![("--1", 2), ("-1-2", 3), ("-2-3-", 3)];
 
         for (token, col) in forbidded_tokens {
@@ -762,7 +730,7 @@ mod tests {
     }
 
     #[test]
-    fn number_test_should_not_allow_more_than_one_period_token() {
+    fn number_should_not_allow_more_than_one_period_token() {
         let forbidded_tokens = vec![("0.2.3", 4), ("0.3.", 4)];
 
         for (token, col) in forbidded_tokens {
@@ -778,7 +746,7 @@ mod tests {
     }
 
     #[test]
-    fn number_test_should_not_allow_start_with_zero_which_not_float() {
+    fn number_should_not_allow_start_with_zero_which_not_float() {
         let forbidded_tokens = vec![("02", 2), ("00", 2)];
 
         for (token, col) in forbidded_tokens {
@@ -794,7 +762,7 @@ mod tests {
     }
 
     #[test]
-    fn number_test_should_not_allow_start_from_minus_if_nothing_follows() {
+    fn number_should_not_allow_start_from_minus_if_nothing_follows() {
         let code = "-".to_string();
         assert_eq!(
             Prelude::new(&code).parse(),
@@ -807,7 +775,7 @@ mod tests {
     }
 
     #[test]
-    fn number_test_should_parse_positive_numbers() {
+    fn number_should_parse_positive_numbers() {
         let numbers = vec![
             ("0", 1),
             ("1", 1),
@@ -835,7 +803,7 @@ mod tests {
     }
 
     #[test]
-    fn number_test_should_parse_negative_numbers() {
+    fn number_should_parse_negative_numbers() {
         let numbers = vec![
             ("-0", 2),
             ("-0.0", 4),
@@ -866,7 +834,7 @@ mod tests {
     }
 
     #[test]
-    fn number_test_should_parse_numbers_correctly_that_are_separated() {
+    fn number_should_parse_numbers_that_are_separated() {
         let ast = Prelude::new(
             "3
 56  -9   3.2",
@@ -896,7 +864,7 @@ mod tests {
     }
 
     #[test]
-    fn number_test_should_not_allow_invalod_scientific_notation_numbers() {
+    fn number_should_not_allow_invalod_scientific_notation_numbers() {
         let forbidded_tokens = vec![("1e1.2", 4), ("1e-", 4), ("1e", 3)];
 
         for (token, col) in forbidded_tokens {
@@ -912,7 +880,7 @@ mod tests {
     }
 
     #[test]
-    fn number_test_should_parse_scientific_numbers_correctly() {
+    fn number_should_parse_scientific_numbers() {
         let numbers = vec![
             ("0e0", 3),
             ("-0e0", 4),
@@ -944,16 +912,16 @@ mod tests {
         }
     }
 
-    // ==========================
+    // ==================================================================
     // NUMBER TESTS END
-    // ==========================
+    // ==================================================================
 
-    // ==========================
+    // ==================================================================
     // STRING TESTS START
-    // ==========================
+    // ==================================================================
 
     #[test]
-    fn string_test_should_not_allow_new_line() {
+    fn string_should_not_allow_new_line() {
         assert_eq!(
             Prelude::new(
                 "\"Hello
@@ -969,7 +937,7 @@ mod tests {
     }
 
     #[test]
-    fn string_test_should_parse_correctly() {
+    fn string_should_parse() {
         let strings = vec![
             ("\"\"", 2),
             ("\"Hello\"", 7),
@@ -995,16 +963,16 @@ mod tests {
         }
     }
 
-    // ==========================
+    // ==================================================================
     // STRING TESTS END
-    // ==========================
+    // ==================================================================
 
-    // ==========================
+    // ==================================================================
     // BOOL TESTS START
-    // ==========================
+    // ==================================================================
 
     #[test]
-    fn bool_test_should_parse_true_correctly() {
+    fn bool_should_parse_true() {
         let ast = Prelude::new("true").parse();
         assert_eq!(
             ast,
@@ -1016,7 +984,7 @@ mod tests {
     }
 
     #[test]
-    fn bool_test_should_parse_false_correctly() {
+    fn bool_should_parse_false() {
         let ast = Prelude::new("false").parse();
         assert_eq!(
             ast,
@@ -1027,16 +995,16 @@ mod tests {
         )
     }
 
-    // ==========================
+    // ==================================================================
     // BOOL TESTS END
-    // ==========================
+    // ==================================================================
 
-    // ==========================
+    // ==================================================================
     // NULL TESTS START
-    // ==========================
+    // ==================================================================
 
     #[test]
-    fn null_test_should_parse_null_correctly() {
+    fn null_should_parse() {
         let ast = Prelude::new("null").parse();
         assert_eq!(
             ast,
@@ -1047,16 +1015,16 @@ mod tests {
         )
     }
 
-    // ==========================
+    // ==================================================================
     // NULL TESTS END
-    // ==========================
+    // ==================================================================
 
-    // ==========================
+    // ==================================================================
     // IDENTIFIER TESTS START
-    // ==========================
+    // ==================================================================
 
     #[test]
-    fn identifier_test_should_reject_invalid_names() {
+    fn identifier_should_reject_invalid_names() {
         let identifiers: Vec<(&str, usize, fn(ParserErrInfo) -> ParserErr)> = vec![
             ("1asd", 2, ParserErr::InvalNum),
             ("!asd", 1, ParserErr::UnexpTok),
@@ -1089,7 +1057,7 @@ mod tests {
     }
 
     #[test]
-    fn identifier_test_should_parse_correctly() {
+    fn identifier_should_parse() {
         let identifiers = vec![
             ("asd", 3),
             ("asd?", 4),
@@ -1113,16 +1081,16 @@ mod tests {
         }
     }
 
-    // ==========================
+    // ==================================================================
     // IDENTIFIER TESTS END
-    // ==========================
+    // ==================================================================
 
-    // ==========================
+    // ==================================================================
     // LIST TESTS START
-    // ==========================
+    // ==================================================================
 
     #[test]
-    fn list_test_should_parse_empty() {
+    fn list_should_parse_empty() {
         let ast = Prelude::new("[]").parse();
         assert_eq!(
             ast,
@@ -1134,7 +1102,7 @@ mod tests {
     }
 
     #[test]
-    fn list_test_should_parse_nested_empty() {
+    fn list_should_parse_nested_empty() {
         let ast = Prelude::new("[[]]").parse();
         assert_eq!(
             ast,
@@ -1149,7 +1117,7 @@ mod tests {
     }
 
     #[test]
-    fn list_test_should_parse_non_empty() {
+    fn list_should_parse_non_empty() {
         let ast = Prelude::new("[1, \"hello\", null, false]").parse();
         assert_eq!(
             ast,
@@ -1178,7 +1146,7 @@ mod tests {
     }
 
     #[test]
-    fn list_test_not_allow_non_closed() {
+    fn list_should_not_allow_non_closed() {
         let code = "[[1, 3]";
         assert_eq!(
             Prelude::new(code).parse(),
@@ -1190,16 +1158,16 @@ mod tests {
         );
     }
 
-    // ==========================
+    // ==================================================================
     // LIST TESTS END
-    // ==========================
+    // ==================================================================
 
-    // ==========================
+    // ==================================================================
     // DICT TESTS START
-    // ==========================
+    // ==================================================================
 
     #[test]
-    fn dict_test_should_parse_empty() {
+    fn dict_should_parse_empty() {
         let ast = Prelude::new("{}").parse();
         assert_eq!(
             ast,
@@ -1211,7 +1179,7 @@ mod tests {
     }
 
     #[test]
-    fn dict_test_should_parse_non_empty() {
+    fn dict_should_parse_non_empty() {
         let ast = Prelude::new(
              "{ \"a\" 1, \"b\" \"2\", \"c\" false, \"d\" null, \"e\" [1, 2, 3], \"f\" { \"a2\" some_value } }",
          )
@@ -1308,7 +1276,7 @@ mod tests {
     }
 
     #[test]
-    fn dict_test_should_not_allow_invalid_pair() {
+    fn dict_should_not_allow_invalid_pair() {
         let code = "{ \"a\" 1, \"b\" }";
         assert_eq!(
             Prelude::new(code).parse(),
@@ -1321,7 +1289,7 @@ mod tests {
     }
 
     #[test]
-    fn dict_test_should_not_allow_invalid_key() {
+    fn dict_should_not_allow_invalid_key() {
         let inputs = vec![
             ("{ a 1 }", 4),
             ("{ 1 \"2\" }", 4),
@@ -1343,7 +1311,7 @@ mod tests {
     }
 
     #[test]
-    fn dict_test_should_not_allow_non_closed() {
+    fn dict_should_not_allow_non_closed() {
         let inputs: Vec<(&str, usize, fn(ParserErrInfo) -> ParserErr)> = vec![
             ("{ \"a\" 1 }}", 10, ParserErr::UnexpTok),
             ("{{ \"1\" \"2\" }", 13, ParserErr::UnexpDictKey),
@@ -1360,16 +1328,16 @@ mod tests {
         }
     }
 
-    // ==========================
+    // ==================================================================
     // DICT TESTS END
-    // ==========================
+    // ==================================================================
 
-    // ==========================
+    // ==================================================================
     // CALL TESTS START
-    // ==========================
+    // ==================================================================
 
     #[test]
-    fn call_test_should_parse_with_no_arguments() {
+    fn call_should_parse_with_no_arguments() {
         let ast = Prelude::new(".some-fn()").parse();
         assert_eq!(
             ast,
@@ -1384,7 +1352,7 @@ mod tests {
     }
 
     #[test]
-    fn call_test_should_parse_with_arguments() {
+    fn call_should_parse_with_arguments() {
         let ast = Prelude::new(".add(2 .div(4 2))").parse();
         assert_eq!(
             ast,
@@ -1420,7 +1388,7 @@ mod tests {
     }
 
     #[test]
-    fn call_test_should_parse_with_separators_after_name() {
+    fn call_should_parse_with_separators_after_name() {
         let inputs = vec![
             (".test ()", 8),
             (".test  ()", 9),
@@ -1450,7 +1418,7 @@ mod tests {
     }
 
     #[test]
-    fn call_test_should_not_allow_non_closed() {
+    fn call_should_not_allow_non_closed() {
         let code = ".some-fn(2 2 3))";
         assert_eq!(
             Prelude::new(code).parse(),
@@ -1463,7 +1431,7 @@ mod tests {
     }
 
     #[test]
-    fn call_test_should_not_allow_separator_after_call_symbol() {
+    fn call_should_not_allow_separator_after_call_symbol() {
         let code = ". some-fn()";
         assert_eq!(
             Prelude::new(code).parse(),
@@ -1476,7 +1444,7 @@ mod tests {
     }
 
     #[test]
-    fn call_test_should_reject_invalid_names() {
+    fn call_should_reject_invalid_names() {
         let identifiers = vec![
             ("1asd", 6),
             ("!asd", 6),
@@ -1510,7 +1478,7 @@ mod tests {
     }
 
     #[test]
-    fn call_test_should_not_allow_standalone_parens() {
+    fn call_should_not_allow_standalone_parens() {
         let code = "()";
         assert_eq!(
             Prelude::new(code).parse(),
@@ -1523,7 +1491,7 @@ mod tests {
     }
 
     #[test]
-    fn call_test_should_parse_anon() {
+    fn call_should_parse_anon() {
         assert_eq!(
             Prelude::new(".()").parse(),
             Ok(vec![AstNode::Call((
@@ -1536,16 +1504,16 @@ mod tests {
         );
     }
 
-    // ==========================
+    // ==================================================================
     // CALL TESTS END
-    // ==========================
+    // ==================================================================
 
-    // ==========================
+    // ==================================================================
     // SLOT TESTS START
-    // ==========================
+    // ==================================================================
 
     #[test]
-    fn slot_test_should_parse_correctly() {
+    fn slot_should_parse() {
         let slots = vec![
             ("@asd", 4),
             ("@asd?", 5),
@@ -1570,7 +1538,7 @@ mod tests {
     }
 
     #[test]
-    fn slot_test_should_reject_invalid_names() {
+    fn slot_should_reject_invalid_names() {
         let slots = vec![
             ("@1asd", 6),
             ("@!asd", 6),
@@ -1605,16 +1573,16 @@ mod tests {
         }
     }
 
-    // ==========================
+    // ==================================================================
     // SLOT TESTS END
-    // ==========================
+    // ==================================================================
 
-    // ==========================
+    // ==================================================================
     // DEPTH TESTS START
-    // ==========================
+    // ==================================================================
 
     #[test]
-    fn depth_test_should_reject_invalid_depth() {
+    fn depth_should_reject_invalid() {
         let depth_cases: Vec<(&str, usize, fn(ParserErrInfo) -> ParserErr)> = vec![
             (".a())", 5, ParserErr::UnexpTok),
             (".a(()", 4, ParserErr::UnexpTok),
@@ -1640,13 +1608,13 @@ mod tests {
         }
     }
 
-    // ==========================
+    // ==================================================================
     // DEPTH TESTS END
-    // ==========================
+    // ==================================================================
 }
 
-// ==========================
+// ==================================================================
 //
 //  TESTS END
 //
-// ==========================
+// ==================================================================
