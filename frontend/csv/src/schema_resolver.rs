@@ -1,11 +1,14 @@
-use elise_ast::{AstNode, CallKind, Compound, Primitive};
+use elise_ast::{AstNode, CallKind::*, Compound, Primitive};
 
 use elise_builtins::schema::{
-    SCH_FN_BOOL, SCH_FN_DEF, SCH_FN_NUMBER, SCH_FN_OPTIONAL, SCH_FN_ROW, SCH_FN_STRING,
+    SCHEMA_FN_BOOL, SCHEMA_FN_NUMBER, SCHEMA_FN_OPTIONAL, SCHEMA_FN_ROOT, SCHEMA_FN_ROW,
+    SCHEMA_FN_STRING,
 };
 use elise_errors::{
     LangErr,
-    errors_csv_schema_resolver::{CsvSchemaResolverErr, CsvSchemaResolverErrPos},
+    errors_csv_schema_resolver::{
+        CsvSchemaResolverErr, CsvSchemaResolverErr::*, CsvSchemaResolverErrPos,
+    },
 };
 
 #[derive(Debug, PartialEq)]
@@ -36,175 +39,119 @@ impl<'a> CsvSchemaResolver<'a> {
         Self { schema_ast }
     }
 
-    fn err_root_missing() -> LangErr {
-        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::RootMissing)
+    fn err(e: CsvSchemaResolverErr) -> LangErr {
+        LangErr::CsvSchemaResolver(e)
     }
 
-    fn err_root_no_args(start: usize, end: usize) -> LangErr {
-        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::RootNoArgs {
-            pos: CsvSchemaResolverErrPos { start, end },
-        })
-    }
-
-    fn err_root_inval(start: usize, end: usize) -> LangErr {
-        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::RootInval {
-            pos: CsvSchemaResolverErrPos { start, end },
-        })
-    }
-
-    fn err_root_too_many_args(start: usize, end: usize) -> LangErr {
-        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::RootTooManyArgs {
-            pos: CsvSchemaResolverErrPos { start, end },
-        })
-    }
-
-    fn error_row_inval(start: usize, end: usize) -> LangErr {
-        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::RowInval {
-            pos: CsvSchemaResolverErrPos { start, end },
-        })
-    }
-
-    fn error_row_empty(start: usize, end: usize) -> LangErr {
-        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::RowEmpty {
-            pos: CsvSchemaResolverErrPos { start, end },
-        })
-    }
-
-    fn error_row_inval_args_len(start: usize, end: usize) -> LangErr {
-        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::RowInvalArgsLen {
-            pos: CsvSchemaResolverErrPos { start, end },
-        })
-    }
-
-    fn error_col_inval_name(start: usize, end: usize) -> LangErr {
-        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::ColInvalName {
-            pos: CsvSchemaResolverErrPos { start, end },
-        })
-    }
-
-    fn error_col_inval_type(start: usize, end: usize) -> LangErr {
-        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::ColInvalType {
-            pos: CsvSchemaResolverErrPos { start, end },
-        })
-    }
-
-    fn error_opt_inval_arg_len(start: usize, end: usize) -> LangErr {
-        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::OptInvalArgsLen {
-            pos: CsvSchemaResolverErrPos { start, end },
-        })
-    }
-
-    fn error_type_no_args(start: usize, end: usize) -> LangErr {
-        LangErr::CsvSchemaResolver(CsvSchemaResolverErr::TypeNoArgs {
-            pos: CsvSchemaResolverErrPos { start, end },
-        })
+    fn err_pos(start: usize, end: usize) -> CsvSchemaResolverErrPos {
+        CsvSchemaResolverErrPos { start, end }
     }
 
     fn resolve_type(call_name: &str, start: usize, end: usize) -> Result<CsvColType, LangErr> {
         match call_name {
-            SCH_FN_BOOL => Ok(CsvColType::Bool),
-            SCH_FN_NUMBER => Ok(CsvColType::Number),
-            SCH_FN_STRING => Ok(CsvColType::String),
-            _ => Err(Self::error_col_inval_type(start, end)),
+            SCHEMA_FN_BOOL => Ok(CsvColType::Bool),
+            SCHEMA_FN_NUMBER => Ok(CsvColType::Number),
+            SCHEMA_FN_STRING => Ok(CsvColType::String),
+            _ => Err(Self::err(ColInvalType {
+                pos: Self::err_pos(start, end),
+            })),
         }
     }
 
-    fn resolve_row(row_compound: &Compound) -> Result<CsvResolvedSchema, LangErr> {
-        let row_args_len = row_compound.children.len();
-        let start = row_compound.span.start;
-        let end = row_compound.span.end;
+    fn resolve_col_name(col: &AstNode) -> Result<String, LangErr> {
+        match col {
+            // Column name must always be an identifier type.
+            AstNode::Identifier(Primitive { value, span: _ }) => Ok(value.clone()),
+            node => Err(Self::err(ColInvalName {
+                pos: Self::err_pos(node.span().start, node.span().end),
+            })),
+        }
+    }
+
+    fn resolve_literal_type(node: &AstNode) -> Result<CsvColType, LangErr> {
+        match node {
+            AstNode::Call((Named(name), Compound { children, span })) => {
+                if children.len() == 0 {
+                    return Self::resolve_type(name, span.start, span.end);
+                }
+                Err(Self::err(TypeNoArgs {
+                    pos: Self::err_pos(span.start, span.end),
+                }))
+            }
+            node => Err(Self::err(ColInvalType {
+                pos: Self::err_pos(node.span().start, node.span().end),
+            })),
+        }
+    }
+
+    fn resolve_col_type(ty: &AstNode) -> Result<(CsvColType, bool), LangErr> {
+        match ty {
+            // Column type must always be a function call.
+            AstNode::Call((Named(name), Compound { children, span })) => match name.as_str() {
+                SCHEMA_FN_OPTIONAL => {
+                    if children.len() != 1 {
+                        return Err(Self::err(OptInvalArgsLen {
+                            pos: Self::err_pos(span.start, span.end),
+                        }));
+                    }
+                    Ok((
+                        Self::resolve_literal_type(&**children.first().unwrap())?,
+                        true,
+                    ))
+                }
+                _ => Ok((Self::resolve_literal_type(ty)?, false)),
+            },
+            node => Err(Self::err(ColInvalType {
+                pos: Self::err_pos(node.span().start, node.span().end),
+            })),
+        }
+    }
+
+    fn resolve_row(call: &Compound) -> Result<CsvResolvedSchema, LangErr> {
+        let row_args_len = call.children.len();
+        let start = call.span.start;
+        let end = call.span.end;
 
         if row_args_len == 0 {
-            return Err(Self::error_row_empty(start, end));
+            return Err(Self::err(RowEmpty {
+                pos: Self::err_pos(start, end),
+            }));
         }
 
+        // Check if we have even number of arguments.
         if !row_args_len.is_multiple_of(2) {
-            return Err(Self::error_row_inval_args_len(start, end));
+            return Err(Self::err(RowInvalArgsLen {
+                pos: Self::err_pos(start, end),
+            }));
         }
 
-        let cols: Vec<_> = row_compound.children.iter().step_by(2).collect();
-        let types: Vec<_> = row_compound.children.iter().skip(1).step_by(2).collect();
+        // Since we know here that number of arguments is even,
+        // then we can extract each odd and even argument.
+        let cols: Vec<_> = call.children.iter().step_by(2).collect();
+        let types: Vec<_> = call.children.iter().skip(1).step_by(2).collect();
 
         let mut index = 0;
         let mut resolved_row: Vec<CsvColDescriptor> = vec![];
 
         while index < cols.len() {
-            let col = cols
-                .get(index)
-                .ok_or_else(|| Self::error_col_inval_name(start, end))?;
+            // Since we split arguments to cols and types and the number
+            // of arguments is even, then we have 2 vectors with the same
+            // length where items on the same index represent a key-value pair
+            // (column name -> column type).
+            let col = *cols.get(index).ok_or_else(|| {
+                Self::err(RowInvalArgs {
+                    pos: Self::err_pos(start, end),
+                })
+            })?;
 
-            let ty = types
-                .get(index)
-                .ok_or_else(|| Self::error_col_inval_type(start, end))?;
+            let ty = *types.get(index).ok_or_else(|| {
+                Self::err(RowInvalArgs {
+                    pos: Self::err_pos(start, end),
+                })
+            })?;
 
-            let mut col_name: Option<String> = None;
-            let mut col_type: Option<CsvColType> = None;
-            let mut optional = false;
-
-            match &***col {
-                AstNode::Identifier(Primitive { value, span: _ }) => {
-                    col_name = Some(value.clone());
-                }
-                node => {
-                    return Err(Self::error_col_inval_name(
-                        node.span().start,
-                        node.span().end,
-                    ));
-                }
-            }
-
-            match &***ty {
-                AstNode::Call((CallKind::Named(name), Compound { children, span })) => {
-                    match name.as_str() {
-                        SCH_FN_OPTIONAL => {
-                            optional = true;
-
-                            if children.len() != 1 {
-                                return Err(Self::error_opt_inval_arg_len(span.start, span.end));
-                            }
-
-                            let opt_type = children.first().ok_or_else(|| {
-                                Self::error_opt_inval_arg_len(span.start, span.end)
-                            })?;
-
-                            match &**opt_type {
-                                AstNode::Call((
-                                    CallKind::Named(name),
-                                    Compound { children, span },
-                                )) => {
-                                    if children.len() > 0 {
-                                        return Err(Self::error_type_no_args(span.start, span.end));
-                                    }
-                                    col_type =
-                                        Some(Self::resolve_type(name, span.start, span.end)?);
-                                }
-                                node => {
-                                    return Err(Self::error_col_inval_type(
-                                        node.span().start,
-                                        node.span().end,
-                                    ));
-                                }
-                            }
-                        }
-                        _ => {
-                            if children.len() > 0 {
-                                return Err(Self::error_type_no_args(span.start, span.end));
-                            }
-                            optional = false;
-                            col_type = Some(Self::resolve_type(name, span.start, span.end)?);
-                        }
-                    }
-                }
-                node => {
-                    return Err(Self::error_col_inval_type(
-                        node.span().start,
-                        node.span().end,
-                    ));
-                }
-            }
-
-            let col_name = col_name.ok_or_else(|| Self::error_col_inval_name(start, end))?;
-            let col_type = col_type.ok_or_else(|| Self::error_col_inval_type(start, end))?;
+            let col_name = Self::resolve_col_name(&**col)?;
+            let (col_type, optional) = Self::resolve_col_type(&**ty)?;
 
             resolved_row.push(CsvColDescriptor {
                 name: col_name,
@@ -219,37 +166,50 @@ impl<'a> CsvSchemaResolver<'a> {
     }
 
     pub fn resolve(&self) -> Result<CsvResolvedSchema, LangErr> {
-        let schema_root = self.schema_ast.first().ok_or_else(Self::err_root_missing)?;
+        // Root refers to a first function call that defines a schema.
+        let root = self
+            .schema_ast
+            .first()
+            .ok_or_else(|| Self::err(RootMissing))?;
 
-        let root_call = match schema_root {
-            AstNode::Call((CallKind::Named(name), root_call)) if name == SCH_FN_DEF => root_call,
-            _ => {
-                return Err(Self::err_root_inval(
-                    schema_root.span().start,
-                    schema_root.span().end,
-                ));
+        // Extract root node descriptor if it matches type and name.
+        let root_call = match root {
+            AstNode::Call((Named(name), call)) if name == SCHEMA_FN_ROOT => call,
+            node => {
+                return Err(Self::err(RootInval {
+                    pos: Self::err_pos(node.span().start, node.span().end),
+                }));
             }
         };
 
-        let span = &root_call.span;
+        // Root call should have only one children.
         match root_call.children.len() {
-            0 => return Err(Self::err_root_no_args(span.start, span.end)),
-            2.. => return Err(Self::err_root_too_many_args(span.start, span.end)),
+            0 => {
+                return Err(Self::err(RootNoArgs {
+                    pos: Self::err_pos(root_call.span.start, root_call.span.end),
+                }));
+            }
+            2.. => {
+                return Err(Self::err(RootTooManyArgs {
+                    pos: Self::err_pos(root_call.span.start, root_call.span.end),
+                }));
+            }
             _ => {}
         }
 
-        let row = root_call
-            .children
-            .first()
-            .ok_or_else(|| Self::err_root_no_args(span.start, span.end))?;
+        // Extract the first argument of the root call.
+        let row = root_call.children.first().ok_or_else(|| {
+            Self::err(RootNoArgs {
+                pos: Self::err_pos(root_call.span.start, root_call.span.end),
+            })
+        })?;
 
+        // Match row call name and resolve it.
         match &**row {
-            AstNode::Call((CallKind::Named(row_call_name), row_compound))
-                if row_call_name == SCH_FN_ROW =>
-            {
-                Self::resolve_row(row_compound)
-            }
-            _ => Err(Self::error_row_inval(row.span().start, row.span().end)),
+            AstNode::Call((Named(name), call)) if name == SCHEMA_FN_ROW => Self::resolve_row(call),
+            node => Err(Self::err(RowInval {
+                pos: Self::err_pos(node.span().start, node.span().end),
+            })),
         }
     }
 }
@@ -265,9 +225,10 @@ mod tests {
     use crate::schema_resolver::{
         CsvColDescriptor, CsvColType, CsvResolvedSchema, CsvSchemaResolver,
     };
-    use elise_ast::{AstNode, CallKind, Compound, Primitive, TokSpan};
+    use elise_ast::{AstNode, CallKind::*, Compound, Primitive, TokSpan};
     use elise_builtins::schema::{
-        SCH_FN_BOOL, SCH_FN_DEF, SCH_FN_NUMBER, SCH_FN_OPTIONAL, SCH_FN_ROW, SCH_FN_STRING,
+        SCHEMA_FN_BOOL, SCHEMA_FN_NUMBER, SCHEMA_FN_OPTIONAL, SCHEMA_FN_ROOT, SCHEMA_FN_ROW,
+        SCHEMA_FN_STRING,
     };
     use elise_errors::{
         LangErr,
@@ -289,7 +250,7 @@ mod tests {
     #[test]
     fn should_return_error_if_root_is_invalid() {
         let ast = vec![AstNode::Call((
-            CallKind::Named("invalid".to_string()),
+            Named("invalid".to_string()),
             Compound {
                 // We don't care about TokSpan values here since
                 // we just need to make sure that CsvSchemaResolvedErrPos
@@ -329,7 +290,7 @@ mod tests {
     #[test]
     fn should_return_error_if_root_is_anon() {
         let ast = vec![AstNode::Call((
-            CallKind::Anon,
+            Anon,
             Compound {
                 span: TokSpan { start: 0, end: 3 },
                 children: vec![],
@@ -349,7 +310,7 @@ mod tests {
     #[test]
     fn should_return_error_if_root_has_no_args() {
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 3 },
                 children: vec![],
@@ -369,21 +330,21 @@ mod tests {
     #[test]
     fn should_return_error_if_root_has_more_than_one_arg() {
         let row_def = Box::new(AstNode::Call((
-            CallKind::Named(SCH_FN_ROW.to_string()),
+            Named(SCHEMA_FN_ROW.to_string()),
             Compound {
                 span: TokSpan { start: 3, end: 6 },
                 children: vec![],
             },
         )));
         let redundant_def = Box::new(AstNode::Call((
-            CallKind::Named("row2".to_string()),
+            Named("row2".to_string()),
             Compound {
                 span: TokSpan { start: 6, end: 9 },
                 children: vec![],
             },
         )));
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 11 },
                 children: vec![row_def, redundant_def],
@@ -403,7 +364,7 @@ mod tests {
             span: TokSpan { start: 3, end: 6 },
         }));
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 8 },
                 children: vec![row_def],
@@ -419,14 +380,14 @@ mod tests {
     #[test]
     fn should_return_error_if_row_is_invalid_call() {
         let row_def = Box::new(AstNode::Call((
-            CallKind::Named("invalid".to_string()),
+            Named("invalid".to_string()),
             Compound {
                 span: TokSpan { start: 3, end: 6 },
                 children: vec![],
             },
         )));
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 8 },
                 children: vec![row_def],
@@ -442,14 +403,14 @@ mod tests {
     #[test]
     fn should_return_error_if_row_has_no_args() {
         let row_def = Box::new(AstNode::Call((
-            CallKind::Named(SCH_FN_ROW.to_string()),
+            Named(SCHEMA_FN_ROW.to_string()),
             Compound {
                 span: TokSpan { start: 3, end: 6 },
                 children: vec![],
             },
         )));
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 3 },
                 children: vec![row_def],
@@ -465,7 +426,7 @@ mod tests {
     #[test]
     fn should_return_error_if_number_of_row_def_args_is_not_even() {
         let row_def = Box::new(AstNode::Call((
-            CallKind::Named(SCH_FN_ROW.to_string()),
+            Named(SCHEMA_FN_ROW.to_string()),
             Compound {
                 span: TokSpan { start: 3, end: 6 },
                 children: vec![Box::new(AstNode::Identifier(Primitive {
@@ -475,7 +436,7 @@ mod tests {
             },
         )));
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 3 },
                 children: vec![row_def],
@@ -496,7 +457,7 @@ mod tests {
                 span: TokSpan { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call((
-                CallKind::Named(SCH_FN_NUMBER.to_string()),
+                Named(SCHEMA_FN_NUMBER.to_string()),
                 Compound {
                     children: vec![],
                     span: TokSpan { start: 12, end: 15 },
@@ -504,14 +465,14 @@ mod tests {
             ))),
         ];
         let row_def = Box::new(AstNode::Call((
-            CallKind::Named(SCH_FN_ROW.to_string()),
+            Named(SCHEMA_FN_ROW.to_string()),
             Compound {
                 span: TokSpan { start: 3, end: 6 },
                 children: row_children,
             },
         )));
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 3 },
                 children: vec![row_def],
@@ -532,7 +493,7 @@ mod tests {
                 span: TokSpan { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call((
-                CallKind::Named("some".to_string()),
+                Named("some".to_string()),
                 Compound {
                     children: vec![],
                     span: TokSpan { start: 12, end: 15 },
@@ -540,14 +501,14 @@ mod tests {
             ))),
         ];
         let row_def = Box::new(AstNode::Call((
-            CallKind::Named(SCH_FN_ROW.to_string()),
+            Named(SCHEMA_FN_ROW.to_string()),
             Compound {
                 span: TokSpan { start: 3, end: 6 },
                 children: row_children,
             },
         )));
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 3 },
                 children: vec![row_def],
@@ -568,7 +529,7 @@ mod tests {
                 span: TokSpan { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call((
-                CallKind::Named("number".to_string()),
+                Named("number".to_string()),
                 Compound {
                     children: vec![Box::new(AstNode::Number(Primitive {
                         value: "1".to_string(),
@@ -579,14 +540,14 @@ mod tests {
             ))),
         ];
         let row_def = Box::new(AstNode::Call((
-            CallKind::Named(SCH_FN_ROW.to_string()),
+            Named(SCHEMA_FN_ROW.to_string()),
             Compound {
                 span: TokSpan { start: 3, end: 6 },
                 children: row_children,
             },
         )));
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 3 },
                 children: vec![row_def],
@@ -607,7 +568,7 @@ mod tests {
                 span: TokSpan { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call((
-                CallKind::Named(SCH_FN_NUMBER.to_string()),
+                Named(SCHEMA_FN_NUMBER.to_string()),
                 Compound {
                     children: vec![],
                     span: TokSpan { start: 12, end: 15 },
@@ -615,14 +576,14 @@ mod tests {
             ))),
         ];
         let row_def = Box::new(AstNode::Call((
-            CallKind::Named(SCH_FN_ROW.to_string()),
+            Named(SCHEMA_FN_ROW.to_string()),
             Compound {
                 span: TokSpan { start: 3, end: 6 },
                 children: row_children,
             },
         )));
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 3 },
                 children: vec![row_def],
@@ -642,10 +603,10 @@ mod tests {
     #[test]
     fn should_resolve_schema_opt_value() {
         let type_opt = Box::new(AstNode::Call((
-            CallKind::Named(SCH_FN_OPTIONAL.to_string()),
+            Named(SCHEMA_FN_OPTIONAL.to_string()),
             Compound {
                 children: vec![Box::new(AstNode::Call((
-                    CallKind::Named(SCH_FN_NUMBER.to_string()),
+                    Named(SCHEMA_FN_NUMBER.to_string()),
                     Compound {
                         children: vec![],
                         span: TokSpan { start: 12, end: 15 },
@@ -662,14 +623,14 @@ mod tests {
             type_opt,
         ];
         let row_def = Box::new(AstNode::Call((
-            CallKind::Named(SCH_FN_ROW.to_string()),
+            Named(SCHEMA_FN_ROW.to_string()),
             Compound {
                 span: TokSpan { start: 3, end: 6 },
                 children: row_children,
             },
         )));
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 3 },
                 children: vec![row_def],
@@ -694,7 +655,7 @@ mod tests {
                 span: TokSpan { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call((
-                CallKind::Named(SCH_FN_NUMBER.to_string()),
+                Named(SCHEMA_FN_NUMBER.to_string()),
                 Compound {
                     children: vec![],
                     span: TokSpan { start: 12, end: 15 },
@@ -702,14 +663,14 @@ mod tests {
             ))),
         ];
         let row_def = Box::new(AstNode::Call((
-            CallKind::Named(SCH_FN_ROW.to_string()),
+            Named(SCHEMA_FN_ROW.to_string()),
             Compound {
                 span: TokSpan { start: 3, end: 6 },
                 children: row_children,
             },
         )));
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 3 },
                 children: vec![row_def],
@@ -734,7 +695,7 @@ mod tests {
                 span: TokSpan { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call((
-                CallKind::Named(SCH_FN_STRING.to_string()),
+                Named(SCHEMA_FN_STRING.to_string()),
                 Compound {
                     children: vec![],
                     span: TokSpan { start: 12, end: 15 },
@@ -742,14 +703,14 @@ mod tests {
             ))),
         ];
         let row_def = Box::new(AstNode::Call((
-            CallKind::Named(SCH_FN_ROW.to_string()),
+            Named(SCHEMA_FN_ROW.to_string()),
             Compound {
                 span: TokSpan { start: 3, end: 6 },
                 children: row_children,
             },
         )));
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 3 },
                 children: vec![row_def],
@@ -774,7 +735,7 @@ mod tests {
                 span: TokSpan { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call((
-                CallKind::Named(SCH_FN_BOOL.to_string()),
+                Named(SCHEMA_FN_BOOL.to_string()),
                 Compound {
                     children: vec![],
                     span: TokSpan { start: 12, end: 15 },
@@ -782,14 +743,14 @@ mod tests {
             ))),
         ];
         let row_def = Box::new(AstNode::Call((
-            CallKind::Named(SCH_FN_ROW.to_string()),
+            Named(SCHEMA_FN_ROW.to_string()),
             Compound {
                 span: TokSpan { start: 3, end: 6 },
                 children: row_children,
             },
         )));
         let ast = vec![AstNode::Call((
-            CallKind::Named(SCH_FN_DEF.to_string()),
+            Named(SCHEMA_FN_ROOT.to_string()),
             Compound {
                 span: TokSpan { start: 0, end: 3 },
                 children: vec![row_def],

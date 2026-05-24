@@ -58,9 +58,7 @@ pub fn write_file(path: &str, contents: &str) -> Result<(), FileWriterErr> {
 #[cfg(test)]
 mod tests {
 
-    use crate::fsys::{
-        FileDescriptor, FileReaderErr, FileWriterErr, read_file, read_files, write_file,
-    };
+    use crate::fsys::{FileDescriptor, FileReaderErr, read_file, read_files, write_file};
     // We need to use this crate here in order to make these tests run in serial order.
     // If we run them in parallel, we might end up in a situation when our tests
     // that expect some file to not be created has already been created by another test.

@@ -19,14 +19,13 @@ pub fn print_err(schema_err: &CsvSchemaResolverErr) {
         RowInvalArgsLen { pos: _ } => {
             "Argument length for the row definition function must be even".to_string()
         }
+        RowInvalArgs { pos: _ } => "Invalid arguments of the row definition function.".to_string(),
         ColInvalName { pos: _ } => "Invalid column name".to_string(),
         ColInvalType { pos: _ } => "Invalid column type definition".to_string(),
         OptInvalArgsLen { pos: _ } => {
             "Invalid number of arguments for .optional function".to_string()
         }
-        TypeNoArgs { pos: _ } => {
-            "Type functions must not have arguments".to_string()
-        }
+        TypeNoArgs { pos: _ } => "Type functions must not have arguments".to_string(),
     };
     print_silent_err(&info, Some("Schema error"));
 }
