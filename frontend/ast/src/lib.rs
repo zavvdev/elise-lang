@@ -1,11 +1,4 @@
-/**
- * Defines where specific token starts and ends.
- */
-#[derive(Debug, PartialEq)]
-pub struct TokSpan {
-    pub start: usize,
-    pub end: usize,
-}
+use elise_types::Span;
 
 /**
  * Primitive values cannot have children.
@@ -13,7 +6,7 @@ pub struct TokSpan {
 #[derive(Debug, PartialEq)]
 pub struct Primitive {
     pub value: String,
-    pub span: TokSpan,
+    pub span: Span,
 }
 
 /**
@@ -21,7 +14,7 @@ pub struct Primitive {
  */
 #[derive(Debug, PartialEq)]
 pub struct Compound {
-    pub span: TokSpan,
+    pub span: Span,
     pub children: Vec<Box<AstNode>>,
 }
 
@@ -36,12 +29,12 @@ pub struct KeyValuePair {
     pub key: String,
     // Span for key itself since we don't want
     // to keep the whole ast node as key.
-    pub key_span: TokSpan,
+    pub key_span: Span,
     // Value has its own span since it's AstNode.
     pub value: Box<AstNode>,
     // Span from the start of the key and
     // to the end of the value.
-    pub span: TokSpan,
+    pub span: Span,
 }
 
 /**
@@ -63,7 +56,7 @@ pub enum AstNode {
 }
 
 impl AstNode {
-    pub fn span(&self) -> &TokSpan {
+    pub fn span(&self) -> &Span {
         match self {
             AstNode::Call((_, c)) => &c.span,
             AstNode::Number(p)

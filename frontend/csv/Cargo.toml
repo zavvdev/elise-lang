@@ -10,4 +10,5 @@ path = "src/lib.rs"
 csv.workspace = true
 elise-errors = { path = "../../shared/errors" }
 elise-builtins = { path = "../../shared/builtins" }
+elise-types = { path = "../../shared/types" }
 elise-ast = { path = "../ast" }

@@ -25,23 +25,26 @@ Note: the same parser is used for both source and schema files. Schema syntax is
 Language builtin functionality. No dependencies.
 
 ### `shared/errors`
-Centralized `LangErr` enum wrapping all subsystem error kinds. No dependencies.
+Centralized `LangErr` enum wrapping all subsystem error kinds. Depends on `shared/types`.
+
+### `shared/types`
+Shared types. No dependencies.
 
 ### `frontend`
 Module that is responsible for syntax/grammar related manipulations.
 
 ### `frontend/ast`
-`AstNode` definitions. No dependencies. A frontend-internal artifact — never escapes into `compiler` or `runtime`.
+`AstNode` definitions. Depends on `shared/types`. A frontend-internal artifact — never escapes into `compiler` or `runtime`.
 
 ### `frontend/parser`
-Parses source `.eli` and schema `.elt` files into `AST`. Depends on `frontend/ast`, `shared/errors`.
+Parses source `.eli` and schema `.elt` files into `AST`. Depends on `frontend/ast`, `shared/errors`, `shared/types`.
 
 ### `frontend/csv`
 Two responsibilities:
 - CSV parser: reads data file → `CsvParserRecord`
 - Schema resolver: walks schema `AST` → `CsvResolvedSchema`
 
-Depends on `frontend/ast`, `shared/errors`, `shared/builtins`.
+Depends on `frontend/ast`, `shared/errors`, `shared/builtins`, `shared/types`.
 
 ### `frontend/semantic-analyzer`
 Walks source `AST`, resolves identifiers and types → `SemanticIR`. Depends on `frontend/ast`, `shared/errors`, `shared/builtins`
@@ -74,4 +77,4 @@ Composition root. Orchestrates the pipeline, handles all user-facing error displ
 - `bytecode` is written by `compiler` and read by `runtime/vm`. Placing it under either would create an incorrect dependency direction.
 
 **Cross-cutting concerns** — live in `shared/`. No single subsystem owns them; pulling them into any one crate would force incorrect dependencies across the graph.
-- `shared/builtins`, `shared/errors`
+- `shared/builtins`, `shared/errors`, `shared/types`.

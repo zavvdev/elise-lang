@@ -8,5 +8,6 @@ path = "src/lib.rs"
 
 [dependencies]
 elise-errors = { path = "../../shared/errors" }
+elise-types = { path = "../../shared/types" }
 elise-ast = { path = "../ast" }
 regex.workspace = true

@@ -99,6 +99,9 @@ dependencies = [
 [[package]]
 name = "elise-ast"
 version = "0.1.0"
+dependencies = [
+ "elise-types",
+]
 
 [[package]]
 name = "elise-binder"
@@ -132,11 +135,15 @@ dependencies = [
  "elise-ast",
  "elise-builtins",
  "elise-errors",
+ "elise-types",
 ]
 
 [[package]]
 name = "elise-errors"
 version = "0.1.0"
+dependencies = [
+ "elise-types",
+]
 
 [[package]]
 name = "elise-parser"
@@ -144,6 +151,7 @@ version = "0.1.0"
 dependencies = [
  "elise-ast",
  "elise-errors",
+ "elise-types",
  "regex",
 ]
 
@@ -156,6 +164,10 @@ dependencies = [
  "elise-errors",
  "regex",
 ]
+
+[[package]]
+name = "elise-types"
+version = "0.1.0"
 
 [[package]]
 name = "elise-vm"

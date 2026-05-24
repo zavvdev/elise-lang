@@ -1,21 +1,16 @@
-#[derive(Debug, PartialEq)]
-pub struct CsvSchemaResolverErrPos {
-    pub start: usize,
-    pub end: usize,
-}
+use elise_types::Span;
 
 #[derive(Debug, PartialEq)]
 pub enum CsvSchemaResolverErr {
-    RootMissing,
-    RootNoArgs { pos: CsvSchemaResolverErrPos },
-    RootInval { pos: CsvSchemaResolverErrPos },
-    RootTooManyArgs { pos: CsvSchemaResolverErrPos },
-    RowInval { pos: CsvSchemaResolverErrPos },
-    RowEmpty { pos: CsvSchemaResolverErrPos },
-    RowInvalArgsLen { pos: CsvSchemaResolverErrPos },
-    RowInvalArgs { pos: CsvSchemaResolverErrPos },
-    ColInvalName { pos: CsvSchemaResolverErrPos },
-    ColInvalType { pos: CsvSchemaResolverErrPos },
-    OptInvalArgsLen { pos: CsvSchemaResolverErrPos },
-    TypeNoArgs { pos: CsvSchemaResolverErrPos },
+    RootInval { span: Span },
+    RootArgsLen { span: Span },
+
+    RowInval { span: Span },
+    RowArgsLen { span: Span },
+
+    ColInvalName { span: Span },
+    ColInvalType { span: Span },
+    ColTypeNoArgs { span: Span },
+
+    OptArgsLen { span: Span },
 }

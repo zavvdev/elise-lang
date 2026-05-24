@@ -2,30 +2,35 @@ use elise_errors::errors_csv_schema_resolver::CsvSchemaResolverErr;
 
 use crate::out::utils::print_silent_err;
 
+// TODO: Use span
 pub fn print_err(schema_err: &CsvSchemaResolverErr) {
     use CsvSchemaResolverErr::*;
 
     let info: String = match schema_err {
-        RootMissing => "Missing root .schema function call".to_string(),
-        RootNoArgs { pos: _ } => "Root .schema call arguments cannot be empty".to_string(),
-        RootInval { pos: _ } => {
-            "Invalid root function. Use .schema function at the top level".to_string()
+        RootInval { span: _ } => {
+            "Schema definition must start with .schema function call at the top level".to_string()
         }
-        RootTooManyArgs { pos: _ } => {
-            "Root .schema function should have only one argument".to_string()
+
+        RootArgsLen { span: _ } => {
+            "Invalid number of arguments for .schema function call. It must have one argument"
+                .to_string()
         }
-        RowInval { pos: _ } => "Invalid row definition".to_string(),
-        RowEmpty { pos: _ } => "Row definition cannot be empty".to_string(),
-        RowInvalArgsLen { pos: _ } => {
-            "Argument length for the row definition function must be even".to_string()
+
+        RowInval { span: _ } => "Row must be defined using .row function".to_string(),
+
+        RowArgsLen { span: _ } => {
+            "Invalid number of arguments for .row function call. Number of arguments must be even".to_string()
         }
-        RowInvalArgs { pos: _ } => "Invalid arguments of the row definition function.".to_string(),
-        ColInvalName { pos: _ } => "Invalid column name".to_string(),
-        ColInvalType { pos: _ } => "Invalid column type definition".to_string(),
-        OptInvalArgsLen { pos: _ } => {
+
+        ColInvalName { span: _ } => "Invalid column name".to_string(),
+
+        ColInvalType { span: _ } => "Invalid column type definition".to_string(),
+        
+        ColTypeNoArgs { span: _ } => "Type functions must not have arguments".to_string(),
+
+        OptArgsLen { span: _ } => {
             "Invalid number of arguments for .optional function".to_string()
         }
-        TypeNoArgs { pos: _ } => "Type functions must not have arguments".to_string(),
     };
     print_silent_err(&info, Some("Schema error"));
 }

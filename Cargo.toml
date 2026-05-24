@@ -16,6 +16,7 @@ members = [
     "runtime/vm",
     "shared/errors",
     "shared/builtins",
+    "shared/types",
 ]
 
 [workspace.dependencies]
