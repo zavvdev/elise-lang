@@ -71,7 +71,7 @@ impl<'a> CsvSchemaResolver<'a> {
     fn resolve_literal_type(node: &AstNode) -> Result<CsvColType, LangErr> {
         match node {
             AstNode::Call((Named(name), Compound { children, span })) => {
-                if children.len() == 0 {
+                if children.is_empty() {
                     return Self::resolve_type(name, span.start, span.end);
                 }
                 Err(Self::err(TypeNoArgs {
@@ -95,7 +95,7 @@ impl<'a> CsvSchemaResolver<'a> {
                         }));
                     }
                     Ok((
-                        Self::resolve_literal_type(&**children.first().unwrap())?,
+                        Self::resolve_literal_type(children.first().unwrap())?,
                         true,
                     ))
                 }
@@ -150,8 +150,8 @@ impl<'a> CsvSchemaResolver<'a> {
                 })
             })?;
 
-            let col_name = Self::resolve_col_name(&**col)?;
-            let (col_type, optional) = Self::resolve_col_type(&**ty)?;
+            let col_name = Self::resolve_col_name(col)?;
+            let (col_type, optional) = Self::resolve_col_type(ty)?;
 
             resolved_row.push(CsvColDescriptor {
                 name: col_name,
