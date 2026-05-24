@@ -1,11 +1,7 @@
 use colored::Colorize;
 
 pub fn print_silent_err(message: &str, label: Option<&str>) {
-    let label = if label.is_some() {
-        label.unwrap()
-    } else {
-        "Error"
-    };
+    let label: &str = label.unwrap_or("Error");
     let error = format!("{}. {}", label.red().bold(), message);
     eprintln!("{}", error.red().bold());
 }

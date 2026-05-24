@@ -91,18 +91,18 @@ impl Conf {
         value.is_some() && *value.unwrap() == ARG_V_BOOL_TRUE
     }
 
-    fn arg_str<'a>(value: Option<&&str>) -> String {
-        if value.is_some() {
-            value.unwrap().to_string()
+    fn arg_str(value: Option<&&str>) -> String {
+        if let Some(some_value) = value {
+            some_value.to_string()
         } else {
             "".to_string()
         }
     }
 
     fn arg_any(value: Option<&&str>) -> Option<String> {
-        if value.is_some() {
-            let val = *value.unwrap();
-            Some(val.to_string())
+        if let Some(some_value) = value {
+            let next = *some_value;
+            Some(next.to_string())
         } else {
             None
         }
@@ -173,8 +173,8 @@ impl Conf {
                 return Err(ConfErr::ArgRequired(arg.name.to_string()));
             }
 
-            if user_arg.is_none() && arg.def.is_some() {
-                res.insert(arg.name, arg.def.unwrap());
+            if user_arg.is_none() && let Some(def) = arg.def {
+                res.insert(arg.name, def);
             } else if user_arg.is_some() {
                 let user_arg = user_arg.unwrap();
                 match arg.ty {
