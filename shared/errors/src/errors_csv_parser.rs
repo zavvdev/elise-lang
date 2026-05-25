@@ -1,5 +1,5 @@
 #[derive(Debug, PartialEq)]
-pub struct Pos {
+pub struct CsvParserErrPos {
     pub line: u64,
 }
 
@@ -7,12 +7,12 @@ pub struct Pos {
 #[derive(Debug, PartialEq)]
 pub enum CsvParserErr {
     UneqLen {
-        pos: Option<Pos>,
+        pos: Option<CsvParserErrPos>,
         expected_len: u64,
         actual_len: u64,
     },
     InvalidUtf8 {
-        pos: Option<Pos>,
+        pos: Option<CsvParserErrPos>,
         detail: String,
     },
     Io {

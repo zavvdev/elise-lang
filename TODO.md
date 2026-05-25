@@ -17,7 +17,7 @@ Source code
 
 - [x] Csv data file parsing
 
-    - [ ] Tests
+    - [x] Tests
  
 - [x] Add csv schema resolution (take schema ast and build CsvResolvedSchema
       that maps each col to type descriptor)
