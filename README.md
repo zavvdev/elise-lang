@@ -1,4 +1,4 @@
-# Elise: Schema-Specialized Execution Model
+# Elise: Bytecode-compiled DSL for typed data transformation pipelines
 
 /eˈliːs/ → pronounced like “eh-LEES”
 
@@ -6,18 +6,18 @@
 
 ## Overview
 
-Elise is a strongly-typed, schema-driven language for processing structured data efficiently. Programs are compiled against **schemas** rather than specific datasets, separating **code correctness** from **data correctness**.
+A schema-driven data transformation language that compiles type-optimized bytecode from pipeline expressions over structured data. Write once, run against any conforming dataset.
 
 ## File Types
 
-Only `.csv` files are supported for now.
+> **_NOTE:_** Only `.csv` files are supported for now.
 
-| Extension | Purpose                                             |
-| --------- | --------------------------------------------------- |
-| `.eli`    | Source code                                         |
-| `.elt`    | Schema / type definitions for input data            |
-| `.csv`    | Input data file                                     |
-| `.elc`    | Compiled, schema-specialized bytecode with metadata |
+| Extension | Purpose                                  |
+| --------- | ---------------------------------------- |
+| `.eli`    | Source code                              |
+| `.elt`    | Schema / type definitions for input data |
+| `.csv`    | Input data file                          |
+| `.elc`    | Generated file with compiled bytecode    |
 
 ## Execution Modes
 
@@ -34,8 +34,6 @@ elise --mode=run --source-code=sample.eli --data=data.csv --data-schema=data.elt
 - Executes immediately
 
 **Safety**: High
-
-**Performance**: Medium
 
 ### 2. Unsafe Execution (Maximum Performance)
 
@@ -60,8 +58,6 @@ elise --mode=exec --executable=program.elc --data=data.csv
 **Use case**: trusted, prevalidated data
 
 **Safety**: None ⚠️
-
-**Performance**: Maximum
 
 ### 3. Validation-Only Step
 
