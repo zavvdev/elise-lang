@@ -73,7 +73,7 @@ impl<'a> CsvParser<'a> {
             result.ty = CsvColType::Number;
         }
 
-        return Ok(result);
+        Ok(result)
     }
 
     pub fn parse(&self) -> Result<Vec<CsvParserRecord>, LangErr> {
@@ -84,7 +84,7 @@ impl<'a> CsvParser<'a> {
             .from_reader(self.data.as_bytes());
 
         for (row_index, result) in reader.records().enumerate() {
-            let str_record = result.or_else(|err| Err(Self::map_lib_error(err.kind())))?;
+            let str_record = result.map_err(|err| Self::map_lib_error(err.kind()))?;
             let mut row_record = CsvParserRecord { row: vec![] };
             for (col_index, col) in str_record.iter().enumerate() {
                 let annotated_col = Self::annotate_col(col, row_index, col_index)?;
