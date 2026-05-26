@@ -10,12 +10,7 @@ use elise_errors::{
 };
 use elise_types::Span;
 
-#[derive(Debug, PartialEq)]
-enum CsvColType {
-    Number,
-    String,
-    Bool,
-}
+use crate::types::CsvColType;
 
 #[derive(Debug, PartialEq)]
 struct CsvColDescriptor {

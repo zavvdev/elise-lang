@@ -7,14 +7,14 @@ pub fn print_err(csv_parser_err: &CsvParserErr) {
 
     let info: String = match csv_parser_err {
         UneqLen {
-            pos,
+            line,
             expected_len,
             actual_len,
         } => {
-            if let Some(pos) = pos {
+            if let Some(line) = line {
                 format!(
                     "Unequal length at line {}.\nExpected {}, got {}.",
-                    pos.line, expected_len, actual_len
+                    line, expected_len, actual_len
                 )
             } else {
                 format!(
@@ -23,9 +23,9 @@ pub fn print_err(csv_parser_err: &CsvParserErr) {
                 )
             }
         }
-        InvalidUtf8 { pos, detail } => {
-            if let Some(pos) = pos {
-                format!("Invalid utf-8 at line {}.\nDetails: {}.", pos.line, detail)
+        InvalidUtf8 { line, detail } => {
+            if let Some(line) = line {
+                format!("Invalid utf-8 at line {}.\nDetails: {}.", line, detail)
             } else {
                 format!("Invalid utf-8.\nDetails: {}.", detail)
             }

@@ -1,16 +1,23 @@
 use csv::{ErrorKind, ReaderBuilder};
-use elise_errors::{
-    LangErr,
-    errors_csv_parser::{CsvParserErr, CsvParserErrPos},
-};
+use elise_errors::{LangErr, errors_csv_parser::CsvParserErr};
+
+use crate::{config::CSV_BOOL_TOKENS_LOWER, types::CsvColType};
 
 pub struct CsvParser<'a> {
     data: &'a str,
 }
 
 #[derive(Debug, PartialEq)]
+pub struct CsvCol {
+    ty: CsvColType,
+    value: String,
+    row: usize,
+    col: usize,
+}
+
+#[derive(Debug, PartialEq)]
 pub struct CsvParserRecord {
-    pub row: Vec<String>,
+    pub row: Vec<CsvCol>,
 }
 
 impl<'a> CsvParser<'a> {
@@ -18,19 +25,19 @@ impl<'a> CsvParser<'a> {
         Self { data }
     }
 
-    fn map_error(kind: &ErrorKind) -> LangErr {
+    fn map_lib_error(kind: &ErrorKind) -> LangErr {
         LangErr::CsvParser(match kind {
             csv::ErrorKind::UnequalLengths {
                 pos,
                 expected_len,
                 len,
             } => CsvParserErr::UneqLen {
-                pos: pos.as_ref().map(|p| CsvParserErrPos { line: p.line() }),
+                line: pos.as_ref().map(|p| p.line()),
                 expected_len: *expected_len,
                 actual_len: *len,
             },
             csv::ErrorKind::Utf8 { pos, err } => CsvParserErr::InvalidUtf8 {
-                pos: pos.as_ref().map(|p| CsvParserErrPos { line: p.line() }),
+                line: pos.as_ref().map(|p| p.line()),
                 detail: err.to_string(),
             },
             csv::ErrorKind::Io(io_err) => CsvParserErr::Io {
@@ -41,6 +48,34 @@ impl<'a> CsvParser<'a> {
         })
     }
 
+    fn is_bool(value: &str) -> bool {
+        let lower_value = value.to_lowercase();
+        CSV_BOOL_TOKENS_LOWER.contains(&lower_value.as_str())
+    }
+
+    fn is_number(value: &str) -> bool {
+        value.parse::<i64>().is_ok() || value.parse::<f64>().is_ok()
+    }
+
+    fn annotate_col(value: &str, row_index: usize, col_index: usize) -> Result<CsvCol, LangErr> {
+        let mut result = CsvCol {
+            ty: CsvColType::String,
+            value: value.to_string(),
+            row: row_index + 1,
+            col: col_index + 1,
+        };
+
+        if Self::is_bool(value) {
+            result.ty = CsvColType::Bool;
+        }
+
+        if Self::is_number(value) {
+            result.ty = CsvColType::Number;
+        }
+
+        return Ok(result);
+    }
+
     pub fn parse(&self) -> Result<Vec<CsvParserRecord>, LangErr> {
         let mut records: Vec<CsvParserRecord> = vec![];
 
@@ -48,15 +83,14 @@ impl<'a> CsvParser<'a> {
             .has_headers(true)
             .from_reader(self.data.as_bytes());
 
-        for result in reader.records() {
-            match result {
-                Ok(rec) => records.push(CsvParserRecord {
-                    row: rec.iter().map(str::to_owned).collect::<Vec<String>>(),
-                }),
-                Err(err) => {
-                    return Err(Self::map_error(err.kind()));
-                }
+        for (row_index, result) in reader.records().enumerate() {
+            let str_record = result.or_else(|err| Err(Self::map_lib_error(err.kind())))?;
+            let mut row_record = CsvParserRecord { row: vec![] };
+            for (col_index, col) in str_record.iter().enumerate() {
+                let annotated_col = Self::annotate_col(col, row_index, col_index)?;
+                row_record.row.push(annotated_col);
             }
+            records.push(row_record);
         }
 
         Ok(records)
@@ -71,12 +105,11 @@ impl<'a> CsvParser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use elise_errors::{
-        LangErr,
-        errors_csv_parser::{CsvParserErr::*, CsvParserErrPos},
+    use crate::{
+        parser::{CsvCol, CsvParser, CsvParserRecord},
+        types::CsvColType,
     };
-
-    use crate::parser::{CsvParser, CsvParserRecord};
+    use elise_errors::{LangErr, errors_csv_parser::CsvParserErr::*};
 
     #[test]
     fn parse_should_return_parsed_records() {
@@ -84,15 +117,44 @@ mod tests {
         let parser = CsvParser::new(&data);
 
         let row1 = CsvParserRecord {
-            row: vec!["John".to_string(), "25".to_string()],
+            row: vec![
+                CsvCol {
+                    value: "John".to_string(),
+                    ty: CsvColType::String,
+                    row: 1,
+                    col: 1,
+                },
+                CsvCol {
+                    value: "25".to_string(),
+                    ty: CsvColType::Number,
+                    row: 1,
+                    col: 2,
+                },
+            ],
         };
 
         let row2 = CsvParserRecord {
-            row: vec!["Jane".to_string(), "26".to_string()],
+            row: vec![
+                CsvCol {
+                    value: "Jane".to_string(),
+                    ty: CsvColType::String,
+                    row: 2,
+                    col: 1,
+                },
+                CsvCol {
+                    value: "26".to_string(),
+                    ty: CsvColType::Number,
+                    row: 2,
+                    col: 2,
+                },
+            ],
         };
 
         assert_eq!(parser.parse(), Ok(vec![row1, row2]));
     }
+
+    // TODO: Add tests for parsing numbers (including scientific)
+    // booleans (all variants) and strings;
 
     #[test]
     fn parse_should_parse_empty() {
@@ -109,7 +171,7 @@ mod tests {
         assert_eq!(
             parser.parse(),
             Err(LangErr::CsvParser(UneqLen {
-                pos: Some(CsvParserErrPos { line: 2 }),
+                line: Some(2),
                 expected_len: 2,
                 actual_len: 1
             }))
