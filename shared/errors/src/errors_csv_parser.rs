@@ -4,7 +4,6 @@ pub enum CsvParserErr {
     // =================================
     // Lib types start.
     // =================================
-
     UneqLen {
         line: Option<u64>,
         expected_len: u64,
@@ -18,10 +17,9 @@ pub enum CsvParserErr {
         kind: String,
         detail: String,
     },
-    
+
     // =================================
     // Lib types end.
     // =================================
-    
     Unknown,
 }
