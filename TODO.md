@@ -34,6 +34,8 @@ Source code
 
 - [x] Extend parsed csv data with type annotations
 
+- [ ] Add missing tests for csv parser
+
 - [ ] Combine CsvResoledSchema with raw csv records to produce TypedDataGraph
       IR that describes data in agnostic way.
 
