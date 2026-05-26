@@ -32,12 +32,6 @@ Source code
 
     - [x] Tests
 
-- [ ] Remove print-bytecode flag from run mode.
-
-- [ ] Add emit flag for run mode that will save bytecode to file
-
-- [ ] Add list of all available cli flags in README
-
 - [ ] Combine CsvResoledSchema with raw csv records to produce TypedDataGraph
       IR that describes data in agnostic way.
 
