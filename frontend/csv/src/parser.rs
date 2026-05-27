@@ -1,7 +1,8 @@
 use csv::{ErrorKind, ReaderBuilder};
 use elise_errors::{LangErr, errors_csv_parser::CsvParserErr};
+use elise_types::DataSourceFieldType;
 
-use crate::{config::CSV_BOOL_TOKENS_LOWER, types::CsvColType};
+use crate::{config::CSV_BOOL_TOKENS_LOWER};
 
 pub struct CsvParser<'a> {
     data: &'a str,
@@ -9,7 +10,7 @@ pub struct CsvParser<'a> {
 
 #[derive(Debug, PartialEq)]
 pub struct CsvCol {
-    ty: CsvColType,
+    ty: DataSourceFieldType,
     value: String,
     row: usize,
     col: usize,
@@ -59,18 +60,18 @@ impl<'a> CsvParser<'a> {
 
     fn annotate_col(value: &str, row_index: usize, col_index: usize) -> Result<CsvCol, LangErr> {
         let mut result = CsvCol {
-            ty: CsvColType::String,
+            ty: DataSourceFieldType::String,
             value: value.to_string(),
             row: row_index + 1,
             col: col_index + 1,
         };
 
         if Self::is_bool(value) {
-            result.ty = CsvColType::Bool;
+            result.ty = DataSourceFieldType::Bool;
         }
 
         if Self::is_number(value) {
-            result.ty = CsvColType::Number;
+            result.ty = DataSourceFieldType::Number;
         }
 
         Ok(result)
@@ -107,9 +108,9 @@ impl<'a> CsvParser<'a> {
 mod tests {
     use crate::{
         parser::{CsvCol, CsvParser, CsvParserRecord},
-        types::CsvColType,
     };
     use elise_errors::{LangErr, errors_csv_parser::CsvParserErr::*};
+use elise_types::DataSourceFieldType;
 
     #[test]
     fn parse_should_parse_number() {
@@ -139,7 +140,7 @@ mod tests {
                 .enumerate()
                 .map(|(i, n)| CsvCol {
                     value: n.to_string(),
-                    ty: CsvColType::Number,
+                    ty: DataSourceFieldType::Number,
                     row: 1,
                     col: i + 1,
                 })
@@ -167,7 +168,7 @@ mod tests {
                 .enumerate()
                 .map(|(i, n)| CsvCol {
                     value: n.to_string(),
-                    ty: CsvColType::Bool,
+                    ty: DataSourceFieldType::Bool,
                     row: 1,
                     col: i + 1,
                 })
@@ -187,7 +188,7 @@ mod tests {
             Ok(vec![CsvParserRecord {
                 row: vec![CsvCol {
                     value: "John".to_string(),
-                    ty: CsvColType::String,
+                    ty: DataSourceFieldType::String,
                     row: 1,
                     col: 1,
                 }],

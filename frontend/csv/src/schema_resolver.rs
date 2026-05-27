@@ -8,14 +8,12 @@ use elise_errors::{
     LangErr,
     errors_csv_schema_resolver::{CsvSchemaResolverErr, CsvSchemaResolverErr::*},
 };
-use elise_types::Span;
-
-use crate::types::CsvColType;
+use elise_types::{DataSourceFieldType, Span};
 
 #[derive(Debug, PartialEq)]
 struct CsvColDescriptor {
     name: String,
-    ty: CsvColType,
+    ty: DataSourceFieldType,
     opt: bool,
 }
 
@@ -41,11 +39,11 @@ impl<'a> CsvSchemaResolver<'a> {
         Span { start, end }
     }
 
-    fn resolve_type(call_name: &str, start: usize, end: usize) -> Result<CsvColType, LangErr> {
+    fn resolve_type(call_name: &str, start: usize, end: usize) -> Result<DataSourceFieldType, LangErr> {
         match call_name {
-            SCHEMA_FN_BOOL => Ok(CsvColType::Bool),
-            SCHEMA_FN_NUMBER => Ok(CsvColType::Number),
-            SCHEMA_FN_STRING => Ok(CsvColType::String),
+            SCHEMA_FN_BOOL => Ok(DataSourceFieldType::Bool),
+            SCHEMA_FN_NUMBER => Ok(DataSourceFieldType::Number),
+            SCHEMA_FN_STRING => Ok(DataSourceFieldType::String),
             _ => Err(Self::err(ColInvalType {
                 span: Self::err_span(start, end),
             })),
@@ -62,7 +60,7 @@ impl<'a> CsvSchemaResolver<'a> {
         }
     }
 
-    fn resolve_literal_type(node: &AstNode) -> Result<CsvColType, LangErr> {
+    fn resolve_literal_type(node: &AstNode) -> Result<DataSourceFieldType, LangErr> {
         match node {
             AstNode::Call((Named(name), Compound { children, span })) => {
                 if children.is_empty() {
@@ -78,7 +76,7 @@ impl<'a> CsvSchemaResolver<'a> {
         }
     }
 
-    fn resolve_col_type(ty: &AstNode) -> Result<(CsvColType, bool), LangErr> {
+    fn resolve_col_type(ty: &AstNode) -> Result<(DataSourceFieldType, bool), LangErr> {
         match ty {
             // Column type must always be a function call.
             AstNode::Call((Named(name), Compound { children, span })) => match name.as_str() {
@@ -189,7 +187,7 @@ impl<'a> CsvSchemaResolver<'a> {
 #[cfg(test)]
 mod tests {
     use crate::schema_resolver::{
-        CsvColDescriptor, CsvColType, CsvResolvedSchema, CsvSchemaResolver,
+        CsvColDescriptor, DataSourceFieldType, CsvResolvedSchema, CsvSchemaResolver,
     };
     use elise_ast::{AstNode, CallKind::*, Compound, Primitive};
     use elise_builtins::schema::{
@@ -522,7 +520,7 @@ mod tests {
         let resolved = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
                 name: "name".to_string(),
-                ty: CsvColType::Number,
+                ty: DataSourceFieldType::Number,
                 opt: false,
             }],
         };
@@ -578,7 +576,7 @@ mod tests {
         let resolved = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
                 name: "name".to_string(),
-                ty: CsvColType::Number,
+                ty: DataSourceFieldType::Number,
                 opt: true,
             }],
         };
@@ -626,7 +624,7 @@ mod tests {
         let resolved = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
                 name: "age".to_string(),
-                ty: CsvColType::Number,
+                ty: DataSourceFieldType::Number,
                 opt: false,
             }],
         };
@@ -713,7 +711,7 @@ mod tests {
         let resolved = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
                 name: "name".to_string(),
-                ty: CsvColType::String,
+                ty: DataSourceFieldType::String,
                 opt: false,
             }],
         };
@@ -800,7 +798,7 @@ mod tests {
         let resolved = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
                 name: "employed".to_string(),
-                ty: CsvColType::Bool,
+                ty: DataSourceFieldType::Bool,
                 opt: false,
             }],
         };
