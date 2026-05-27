@@ -112,49 +112,88 @@ mod tests {
     use elise_errors::{LangErr, errors_csv_parser::CsvParserErr::*};
 
     #[test]
-    fn parse_should_return_parsed_records() {
-        let data = "name,age\n\"John\",\"25\"\n\"Jane\",\"26\"";
+    fn parse_should_parse_number() {
+        let row = vec![
+            "42",
+            "4.2",
+            "-42",
+            "-4.2",
+            "1e3",
+            "1E-3",
+            "1.5e10",
+            "1.504E101",
+            "-1e3",
+            "-1E-3",
+            "-1.5e10",
+            "-1.504E101",
+        ];
+
+        let head: Vec<String> = (0..row.len()).map(|i| format!("n{}", i)).collect();
+
+        let csv = format!("{}\n{}", head.join(","), row.join(","));
+        let parser = CsvParser::new(&csv);
+
+        let result = CsvParserRecord {
+            row: row
+                .iter()
+                .enumerate()
+                .map(|(i, n)| CsvCol {
+                    value: n.to_string(),
+                    ty: CsvColType::Number,
+                    row: 1,
+                    col: i + 1,
+                })
+                .collect(),
+        };
+
+        assert_eq!(parser.parse(), Ok(vec![result]));
+    }
+
+    #[test]
+    fn parse_should_parse_bool() {
+        let row = vec![
+            "true", "True", "TRUE", "false", "False", "FALSE", "yes", "Yes", "YES", "no", "No",
+            "NO", "on", "On", "ON", "off", "Off", "OFF", "y", "Y", "n", "N",
+        ];
+
+        let head: Vec<String> = (0..row.len()).map(|i| format!("n{}", i)).collect();
+
+        let csv = format!("{}\n{}", head.join(","), row.join(","));
+        let parser = CsvParser::new(&csv);
+
+        let result = CsvParserRecord {
+            row: row
+                .iter()
+                .enumerate()
+                .map(|(i, n)| CsvCol {
+                    value: n.to_string(),
+                    ty: CsvColType::Bool,
+                    row: 1,
+                    col: i + 1,
+                })
+                .collect(),
+        };
+
+        assert_eq!(parser.parse(), Ok(vec![result]));
+    }
+
+    #[test]
+    fn parse_should_parse_string() {
+        let data = "name\n\"John\"";
         let parser = CsvParser::new(&data);
 
-        let row1 = CsvParserRecord {
-            row: vec![
-                CsvCol {
+        assert_eq!(
+            parser.parse(),
+            Ok(vec![CsvParserRecord {
+                row: vec![CsvCol {
                     value: "John".to_string(),
                     ty: CsvColType::String,
                     row: 1,
                     col: 1,
-                },
-                CsvCol {
-                    value: "25".to_string(),
-                    ty: CsvColType::Number,
-                    row: 1,
-                    col: 2,
-                },
-            ],
-        };
-
-        let row2 = CsvParserRecord {
-            row: vec![
-                CsvCol {
-                    value: "Jane".to_string(),
-                    ty: CsvColType::String,
-                    row: 2,
-                    col: 1,
-                },
-                CsvCol {
-                    value: "26".to_string(),
-                    ty: CsvColType::Number,
-                    row: 2,
-                    col: 2,
-                },
-            ],
-        };
-
-        assert_eq!(parser.parse(), Ok(vec![row1, row2]));
+                }],
+            }])
+        );
     }
-
-    // TODO: Add tests for parsing numbers (including scientific)
-    // booleans (all variants) and strings;
 
     #[test]
     fn parse_should_parse_empty() {

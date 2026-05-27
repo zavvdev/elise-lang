@@ -17,26 +17,10 @@ Source code
 
 - [x] Csv data file parsing
 
-    - [x] Tests
- 
 - [x] Add csv schema resolution (take schema ast and build CsvResolvedSchema
       that maps each col to type descriptor)
     
-    - [x] Number
-
-    - [x] String
-
-    - [x] Bool (true/false, 1/0, yes/no, y/n, on/off)
-
-    - [x] Optional (NULL, N/A, -, ,,)
-
-    - [x] Tests
-
-- [x] Extend parsed csv data with type annotations
-
-- [ ] Add missing tests for csv parser
-
-- [ ] Combine CsvResoledSchema with raw csv records to produce TypedDataGraph
+- [ ] Combine CsvResoledSchema with parsed csv records to produce TypedDataGraph
       IR that describes data in agnostic way.
 
 - [ ] Semantic analyzer

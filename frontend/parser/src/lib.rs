@@ -1354,34 +1354,36 @@ mod tests {
     #[test]
     fn call_should_parse_with_arguments() {
         let ast = Prelude::new(".add(2 .div(4 2))").parse();
+        let nested_children = vec![
+            Box::new(AstNode::Number(Primitive {
+                value: "4".to_string(),
+                span: Span { start: 12, end: 13 },
+            })),
+            Box::new(AstNode::Number(Primitive {
+                value: "2".to_string(),
+                span: Span { start: 14, end: 15 },
+            })),
+        ];
+        let children = vec![
+            Box::new(AstNode::Number(Primitive {
+                value: "2".to_string(),
+                span: Span { start: 5, end: 6 },
+            })),
+            Box::new(AstNode::Call((
+                CallKind::Named("div".to_string()),
+                Compound {
+                    span: Span { start: 7, end: 16 },
+                    children: nested_children,
+                },
+            ))),
+        ];
         assert_eq!(
             ast,
             Ok(vec![AstNode::Call((
                 CallKind::Named("add".to_string()),
                 Compound {
                     span: Span { start: 0, end: 17 },
-                    children: vec![
-                        Box::new(AstNode::Number(Primitive {
-                            value: "2".to_string(),
-                            span: Span { start: 5, end: 6 }
-                        })),
-                        Box::new(AstNode::Call((
-                            CallKind::Named("div".to_string()),
-                            Compound {
-                                span: Span { start: 7, end: 16 },
-                                children: vec![
-                                    Box::new(AstNode::Number(Primitive {
-                                        value: "4".to_string(),
-                                        span: Span { start: 12, end: 13 }
-                                    })),
-                                    Box::new(AstNode::Number(Primitive {
-                                        value: "2".to_string(),
-                                        span: Span { start: 14, end: 15 }
-                                    }))
-                                ]
-                            }
-                        )))
-                    ],
+                    children,
                 }
             ))])
         );

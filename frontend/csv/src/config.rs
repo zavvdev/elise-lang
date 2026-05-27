@@ -1,3 +1,1 @@
-pub const CSV_BOOL_TOKENS_LOWER: [&str; 10] = [
-    "true", "false", "yes", "no", "on", "off", "1", "0", "y", "n",
-];
+pub const CSV_BOOL_TOKENS_LOWER: [&str; 8] = ["true", "false", "yes", "no", "on", "off", "y", "n"];
