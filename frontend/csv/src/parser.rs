@@ -2,7 +2,7 @@ use csv::{ErrorKind, ReaderBuilder};
 use elise_errors::{LangErr, errors_csv_parser::CsvParserErr};
 use elise_types::DataSourceFieldType;
 
-use crate::{config::CSV_BOOL_TOKENS_LOWER};
+use crate::config::CSV_BOOL_TOKENS_LOWER;
 
 pub struct CsvParser<'a> {
     data: &'a str,
@@ -106,11 +106,9 @@ impl<'a> CsvParser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        parser::{CsvCol, CsvParser, CsvParserRecord},
-    };
+    use crate::parser::{CsvCol, CsvParser, CsvParserRecord};
     use elise_errors::{LangErr, errors_csv_parser::CsvParserErr::*};
-use elise_types::DataSourceFieldType;
+    use elise_types::DataSourceFieldType;
 
     #[test]
     fn parse_should_parse_number() {

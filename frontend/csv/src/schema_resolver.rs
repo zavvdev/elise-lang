@@ -39,7 +39,11 @@ impl<'a> CsvSchemaResolver<'a> {
         Span { start, end }
     }
 
-    fn resolve_type(call_name: &str, start: usize, end: usize) -> Result<DataSourceFieldType, LangErr> {
+    fn resolve_type(
+        call_name: &str,
+        start: usize,
+        end: usize,
+    ) -> Result<DataSourceFieldType, LangErr> {
         match call_name {
             SCHEMA_FN_BOOL => Ok(DataSourceFieldType::Bool),
             SCHEMA_FN_NUMBER => Ok(DataSourceFieldType::Number),
@@ -187,7 +191,7 @@ impl<'a> CsvSchemaResolver<'a> {
 #[cfg(test)]
 mod tests {
     use crate::schema_resolver::{
-        CsvColDescriptor, DataSourceFieldType, CsvResolvedSchema, CsvSchemaResolver,
+        CsvColDescriptor, CsvResolvedSchema, CsvSchemaResolver, DataSourceFieldType,
     };
     use elise_ast::{AstNode, CallKind::*, Compound, Primitive};
     use elise_builtins::schema::{
