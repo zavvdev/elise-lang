@@ -76,9 +76,11 @@ pub fn run<'a>(
         }
     });
 
-    let _source_code_ast = source_code_ast.unwrap()?;
+    let source_code_ast = source_code_ast.unwrap()?;
     let schema_ast = schema_ast.unwrap()?;
     let parsed_data = parsed_data.unwrap();
+
+    println!("source: {:#?}", source_code_ast);
 
     match parsed_data {
         DataParseResult::Csv(records) => {

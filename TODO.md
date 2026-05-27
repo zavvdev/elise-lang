@@ -19,7 +19,16 @@ Source code
 
 - [x] Add csv schema resolution (take schema ast and build CsvResolvedSchema
       that maps each col to type descriptor)
-  
+
+- [ ] Review how we work with source code in Prelude. We need to convert into bytes right after
+      file has been read and always pass a vector of bytes.
+
+- [ ] Review Span in Prelude. It looks like it points on physical visible chars. We need to
+      carry bytes positions.
+
+- [ ] Optimize regex usage in Prelude. It executes every time we construct identifier.
+      We might also can replace it with raw byte checks.
+
 - [ ] Provide source code for schema errors (we might need to improve error handling in general)
       Move source code slicer into shard; slice source in in cli where it gets handled
 
