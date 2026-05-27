@@ -16,6 +16,7 @@ path = "src/lib.rs"
 elise-parser = { path = "../frontend/parser" }
 elise-csv = { path = "../frontend/csv" }
 elise-errors = { path = "../shared/errors" }
+elise-types = { path = "../shared/types" }
 colored.workspace = true
 serial_test.workspace = true
 rayon.workspace = true

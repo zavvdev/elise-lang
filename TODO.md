@@ -19,7 +19,9 @@ Source code
 
 - [x] Add csv schema resolution (take schema ast and build CsvResolvedSchema
       that maps each col to type descriptor)
-    
+  
+- [ ] Provide source code for schema errors (we might need to improve error handling in general)
+
 - [ ] Combine CsvResoledSchema with parsed csv records to produce TypedDataGraph
       IR that describes data in agnostic way.
 
