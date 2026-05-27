@@ -21,6 +21,7 @@ Source code
       that maps each col to type descriptor)
   
 - [ ] Provide source code for schema errors (we might need to improve error handling in general)
+      Move source code slicer into shard; slice source in in cli where it gets handled
 
 - [ ] Combine CsvResoledSchema with parsed csv records to produce TypedDataGraph
       IR that describes data in agnostic way.

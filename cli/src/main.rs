@@ -47,8 +47,11 @@ fn cli_run(conf: &ModeRunConf) {
     ]) {
         Ok(read_res) => {
             let run_res = elise::run(
+                // source code
                 &read_res[0].content,
+                // data
                 &read_res[1].content,
+                // data schema
                 &read_res[2].content,
                 conf,
             );
