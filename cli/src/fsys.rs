@@ -7,43 +7,48 @@
 use std::fs;
 
 #[derive(PartialEq, Debug)]
-pub struct FileDescriptor {
+pub struct FileDescriptor<T> {
     pub path: String,
-    pub content: String,
+    pub content: T,
 }
 
 #[derive(PartialEq, Debug)]
-pub struct FileReaderErr {
+pub struct FileRwErr {
     pub message: String,
     pub path: String,
 }
 
-#[derive(PartialEq, Debug)]
-pub struct FileWriterErr {
-    pub message: String,
-}
-
-fn read_file(path: &str) -> Result<FileDescriptor, FileReaderErr> {
+pub fn read_file_string(path: &str) -> Result<FileDescriptor<String>, FileRwErr> {
     match fs::read_to_string(path) {
         Ok(content) => Ok(FileDescriptor {
             path: path.to_string(),
             content,
         }),
-        Err(e) => Err(FileReaderErr {
+        Err(e) => Err(FileRwErr {
             message: e.to_string(),
             path: path.to_string(),
         }),
     }
 }
 
-pub fn read_files(paths: &[&str]) -> Result<Vec<FileDescriptor>, FileReaderErr> {
-    paths.iter().map(|path| read_file(path)).collect()
+pub fn read_file_bytes(path: &str) -> Result<FileDescriptor<Vec<u8>>, FileRwErr> {
+    match fs::read(path) {
+        Ok(content) => Ok(FileDescriptor {
+            path: path.to_string(),
+            content,
+        }),
+        Err(e) => Err(FileRwErr {
+            message: e.to_string(),
+            path: path.to_string(),
+        }),
+    }
 }
 
-pub fn write_file(path: &str, contents: &str) -> Result<(), FileWriterErr> {
+pub fn write_file(path: &str, contents: &str) -> Result<(), FileRwErr> {
     match fs::write(path, contents) {
-        Err(err) => Err(FileWriterErr {
+        Err(err) => Err(FileRwErr {
             message: err.to_string(),
+            path: path.to_string(),
         }),
         _ => Ok(()),
     }
@@ -58,7 +63,7 @@ pub fn write_file(path: &str, contents: &str) -> Result<(), FileWriterErr> {
 #[cfg(test)]
 mod tests {
 
-    use crate::fsys::{FileDescriptor, FileReaderErr, read_file, read_files, write_file};
+    use crate::fsys::{FileDescriptor, FileRwErr, read_file_bytes, read_file_string, write_file};
     // We need to use this crate here in order to make these tests run in serial order.
     // If we run them in parallel, we might end up in a situation when our tests
     // that expect some file to not be created has already been created by another test.
@@ -68,12 +73,12 @@ mod tests {
 
     #[test]
     #[serial]
-    fn read_file_reads_successfully() {
+    fn read_file_string_should_read_successfully() {
         let file_name = "test.eli";
         let contents = ".declare(PI 3.14)\n.add(2 + PI)\n";
 
         fs::write(file_name, contents).expect("Cannot create test file");
-        let result = read_file(file_name);
+        let result = read_file_string(file_name);
 
         assert_eq!(
             result,
@@ -87,12 +92,12 @@ mod tests {
 
     #[test]
     #[serial]
-    fn read_file_returns_error_if_not_found() {
+    fn read_file_string_should_return_error_if_not_found() {
         let file_name = "test.eli";
-        let result = read_file(file_name);
+        let result = read_file_string(file_name);
         assert_eq!(
             result,
-            Err(FileReaderErr {
+            Err(FileRwErr {
                 message: "No such file or directory (os error 2)".to_string(),
                 path: file_name.to_string(),
             })
@@ -101,56 +106,35 @@ mod tests {
 
     #[test]
     #[serial]
-    fn read_files_reads_multiple_files_successfully() {
-        let file_name1 = "test.eli";
-        let file_name2 = "test2.eli";
+    fn read_file_bytes_should_read_successfully() {
+        let file_name = "test.eli";
+        let contents = "abc";
 
-        let contents1 = ".declare(PI 3.14)\n.add(2 + PI)\n";
-        let contents2 = ".declare(PI 3.14)\n.add(2 + PI)\n";
-
-        fs::write(file_name1, contents1).expect("Cannot write test file #1");
-        fs::write(file_name2, contents2).expect("Cannot write test file #2");
-
-        let result = read_files(&[&file_name1, &file_name2]);
+        fs::write(file_name, contents).expect("Cannot create test file");
+        let result = read_file_bytes(file_name);
 
         assert_eq!(
             result,
-            Ok(vec![
-                FileDescriptor {
-                    path: file_name1.to_string(),
-                    content: contents1.to_string(),
-                },
-                FileDescriptor {
-                    path: file_name2.to_string(),
-                    content: contents2.to_string(),
-                }
-            ])
+            Ok(FileDescriptor {
+                path: file_name.to_string(),
+                content: vec![97, 98, 99],
+            })
         );
-
-        fs::remove_file(file_name1).expect("Failed to delete test file #1");
-        fs::remove_file(file_name2).expect("Failed to delete test file #2");
+        fs::remove_file(file_name).expect("Failed to delete test file");
     }
 
     #[test]
     #[serial]
-    fn read_files_returns_error_if_any_not_found() {
-        let file_name1 = "test.eli";
-        let file_name2 = "test2.eli";
-        let contents1 = ".declare(PI 3.14)\n.add(2 + PI)\n";
-
-        fs::write(file_name1, contents1).expect("Cannot write test file #1");
-
-        let result = read_files(&[&file_name1, &file_name2]);
-
+    fn read_file_bytes_should_return_error_if_not_found() {
+        let file_name = "test.eli";
+        let result = read_file_string(file_name);
         assert_eq!(
             result,
-            Err(FileReaderErr {
+            Err(FileRwErr {
                 message: "No such file or directory (os error 2)".to_string(),
-                path: file_name2.to_string(),
+                path: file_name.to_string(),
             })
         );
-
-        fs::remove_file(file_name1).expect("Failed to delete test file #1");
     }
 
     #[test]

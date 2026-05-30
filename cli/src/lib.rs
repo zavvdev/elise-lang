@@ -58,9 +58,9 @@ enum DataParseResult {
 }
 
 pub fn run<'a>(
-    source_code: &'a str,
+    source_code: &'a [u8],
     data: &'a str,
-    data_schema: &'a str,
+    data_schema: &'a [u8],
     config: &'a ModeRunConf,
 ) -> Result<RunResult<'a>, LangErr> {
     let start = Instant::now();
@@ -100,8 +100,8 @@ pub fn run<'a>(
 }
 
 pub fn build<'a>(
-    _source_code: &'a str,
-    _data_schema: &'a str,
+    _source_code: &'a [u8],
+    _data_schema: &'a [u8],
     config: &'a ModeBuildConf,
 ) -> Result<BuildResult<'a>, LangErr> {
     let start = Instant::now();
@@ -116,7 +116,7 @@ pub fn build<'a>(
 }
 
 pub fn exec<'a>(
-    _executable: &'a str,
+    _executable: &'a [u8],
     _data: &'a str,
     config: &'a ModeExecConf,
 ) -> Result<ExecResult<'a>, LangErr> {
@@ -133,7 +133,7 @@ pub fn exec<'a>(
 
 pub fn validate<'a>(
     _data: &'a str,
-    _data_schema: &'a str,
+    _data_schema: &'a [u8],
     config: &'a ModeValidateConf,
 ) -> Result<ValidateResult<'a>, LangErr> {
     let start = Instant::now();

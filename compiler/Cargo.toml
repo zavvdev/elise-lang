@@ -9,4 +9,3 @@ path = "src/lib.rs"
 [dependencies]
 elise-binder = { path = "../binder" }
 elise-semantic-analyzer = { path = "../frontend/semantic-analyzer" }
-regex.workspace = true

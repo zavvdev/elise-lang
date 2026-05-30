@@ -16,7 +16,7 @@
 pub mod out;
 
 use elise::conf::{Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
-use elise::fsys::{read_files, write_file};
+use elise::fsys::{read_file_bytes, read_file_string, write_file};
 use elise_errors::LangErr;
 
 use std::env;
@@ -29,7 +29,7 @@ use crate::out::msg_modes;
 use crate::out::msg_parser;
 use crate::out::utils::{panic_hook, print_bytecode};
 
-fn handle_lang_err(lang_err: &LangErr) {
+fn handle_lang_err(lang_err: &LangErr) -> ! {
     use LangErr::*;
 
     match lang_err {
@@ -37,30 +37,25 @@ fn handle_lang_err(lang_err: &LangErr) {
         CsvParser(err) => msg_csv_parser::print_err(err),
         CsvSchemaResolver(err) => msg_csv_schema_resolver::print_err(err),
     }
+
+    std::process::exit(1);
 }
 
 fn cli_run(conf: &ModeRunConf) {
-    match read_files(&[
-        &conf.source_code_path,
-        &conf.data_path,
-        &conf.data_schema_path,
-    ]) {
-        Ok(read_res) => {
+    match (
+        read_file_bytes(&conf.source_code_path),
+        read_file_bytes(&conf.data_schema_path),
+        read_file_string(&conf.data_path),
+    ) {
+        (Ok(source_code_desc), Ok(schema_source_code_desc), Ok(data_desc)) => {
             let run_res = elise::run(
-                // source code
-                &read_res[0].content,
-                // data
-                &read_res[1].content,
-                // data schema
-                &read_res[2].content,
+                &source_code_desc.content,
+                &data_desc.content,
+                &schema_source_code_desc.content,
                 conf,
-            );
+            )
+            .unwrap_or_else(|e| handle_lang_err(&e));
 
-            if let Err(run_err) = &run_res {
-                return handle_lang_err(run_err);
-            }
-
-            let run_res = run_res.unwrap();
             msg_modes::print_run_result(&run_res.output, run_res.ms);
 
             if run_res.config.print_bytecode {
@@ -70,66 +65,99 @@ fn cli_run(conf: &ModeRunConf) {
             if let Some(path) = run_res.config.output_path.as_ref() {
                 match write_file(path, &run_res.output) {
                     Ok(_) => msg_fsys::print_saved_to(path),
-                    Err(err) => msg_fsys::print_file_writer_err(&err.message, path),
+                    Err(err) => msg_fsys::print_file_rw_err(&err.message, &err.path, false),
                 }
             }
         }
-        Err(read_err) => {
-            msg_fsys::print_file_reader_err(&read_err.message, &read_err.path);
+        (Err(source_code_read_err), _, _) => msg_fsys::print_file_rw_err(
+            &source_code_read_err.message,
+            &source_code_read_err.path,
+            true,
+        ),
+        (_, Err(schema_source_code_read_err), _) => msg_fsys::print_file_rw_err(
+            &schema_source_code_read_err.message,
+            &schema_source_code_read_err.path,
+            true,
+        ),
+        (_, _, Err(data_read_err)) => {
+            msg_fsys::print_file_rw_err(&data_read_err.message, &data_read_err.path, true)
         }
-    };
+    }
 }
 
 fn cli_build(conf: &ModeBuildConf) {
-    match read_files(&[&conf.source_code_path, &conf.data_schema_path]) {
-        Ok(read_res) => {
-            let build_res = elise::build(&read_res[0].content, &read_res[1].content, conf);
+    match (
+        read_file_bytes(&conf.source_code_path),
+        read_file_bytes(&conf.data_schema_path),
+    ) {
+        (Ok(source_code_desc), Ok(schema_source_code_desc)) => {
+            let build_res = elise::build(
+                &source_code_desc.content,
+                &schema_source_code_desc.content,
+                conf,
+            )
+            .unwrap_or_else(|e| handle_lang_err(&e));
 
-            if let Err(build_err) = &build_res {
-                return handle_lang_err(build_err);
-            }
-
-            let build_res = build_res.unwrap();
             let out_path = &build_res.config.executable_output_path;
 
             match write_file(out_path, &build_res.executale_output) {
                 Ok(_) => msg_modes::print_build_result(out_path, build_res.ms),
-                Err(err) => msg_fsys::print_file_writer_err(&err.message, out_path),
+                Err(err) => msg_fsys::print_file_rw_err(&err.message, &err.path, false),
             }
         }
-        Err(read_err) => msg_fsys::print_file_reader_err(&read_err.message, &read_err.path),
+        (Err(source_code_read_err), _) => msg_fsys::print_file_rw_err(
+            &source_code_read_err.message,
+            &source_code_read_err.path,
+            true,
+        ),
+        (_, Err(schema_source_code_read_err)) => msg_fsys::print_file_rw_err(
+            &schema_source_code_read_err.message,
+            &schema_source_code_read_err.path,
+            true,
+        ),
     };
 }
 
 fn cli_exec(conf: &ModeExecConf) {
-    match read_files(&[&conf.executable_path, &conf.data_path]) {
-        Ok(read_res) => {
-            let exec_res = elise::exec(&read_res[0].content, &read_res[1].content, conf);
+    match (
+        read_file_bytes(&conf.executable_path),
+        read_file_string(&conf.data_path),
+    ) {
+        (Ok(executable_desc), Ok(data_desc)) => {
+            let exec_res = elise::exec(&executable_desc.content, &data_desc.content, conf)
+                .unwrap_or_else(|e| handle_lang_err(&e));
 
-            if let Err(exec_err) = &exec_res {
-                return handle_lang_err(exec_err);
-            }
-
-            let exec_res = exec_res.unwrap();
             msg_modes::print_run_result(&exec_res.output, exec_res.ms);
         }
-        Err(read_err) => msg_fsys::print_file_reader_err(&read_err.message, &read_err.path),
+        (Err(executable_read_err), _) => msg_fsys::print_file_rw_err(
+            &executable_read_err.message,
+            &executable_read_err.path,
+            true,
+        ),
+        (_, Err(data_read_err)) => {
+            msg_fsys::print_file_rw_err(&data_read_err.message, &data_read_err.path, true)
+        }
     };
 }
 
 fn cli_validate(conf: &ModeValidateConf) {
-    match read_files(&[&conf.data_path, &conf.data_schema_path]) {
-        Ok(read_res) => {
-            let validate_res = elise::validate(&read_res[0].content, &read_res[1].content, conf);
+    match (
+        read_file_string(&conf.data_path),
+        read_file_bytes(&conf.data_schema_path),
+    ) {
+        (Ok(data_desc), Ok(schema_source_code_desc)) => {
+            let validate_res =
+                elise::validate(&data_desc.content, &schema_source_code_desc.content, conf)
+                    .unwrap_or_else(|e| handle_lang_err(&e));
 
-            if let Err(validate_err) = &validate_res {
-                return handle_lang_err(validate_err);
-            }
-
-            let validate_res = validate_res.unwrap();
             msg_modes::print_validate_result(validate_res.ms);
         }
-        Err(read_err) => msg_fsys::print_file_reader_err(&read_err.message, &read_err.path),
+        (Err(data_read_err), _) => {
+            msg_fsys::print_file_rw_err(&data_read_err.message, &data_read_err.path, true)
+        }
+        (_, Err(schema_read_err)) => {
+            msg_fsys::print_file_rw_err(&schema_read_err.message, &schema_read_err.path, true)
+        }
     };
 }
 

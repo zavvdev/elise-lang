@@ -3,11 +3,10 @@ pub mod utilities;
 
 use crate::utilities::get_source_code_slice;
 use elise_types::Span;
-use regex::Regex;
 use std::str::from_utf8;
 
 use crate::config::{
-    IDENTIFIER_REGEX, T_CALL_PREFIX, T_COMMA, T_DOUBLE_QT, T_FALSE, T_LEFT_CUR_BRACKET,
+    T_CALL_PREFIX, T_COMMA, T_DOUBLE_QT, T_FALSE, T_LEFT_CUR_BRACKET,
     T_LEFT_PAREN, T_LEFT_SQR_BRACKET, T_MINUS, T_NULL, T_RIGHT_CUR_BRACKET, T_RIGHT_PAREN,
     T_RIGHT_SQR_BRACKET, T_SLOT_PREFIX, T_TRUE,
 };
@@ -58,9 +57,9 @@ pub struct Prelude<'a> {
 }
 
 impl<'a> Prelude<'a> {
-    pub fn new(source_code: &'a str) -> Self {
+    pub fn new(source_code: &'a [u8]) -> Self {
         Self {
-            source_code: source_code.as_bytes(),
+            source_code,
             tok_pos: 0,
             depth_stack: vec![],
         }
@@ -291,6 +290,7 @@ impl<'a> Prelude<'a> {
             self.advance();
         }
 
+        // Preserve UTF-8 encoding for string.
         let value = from_utf8(&self.source_code[tok_start + 1..self.tok_pos - 1]);
 
         if value.is_err() {
@@ -299,8 +299,6 @@ impl<'a> Prelude<'a> {
 
         let value = value.unwrap();
 
-        // Taking surrogate pairs and other code points
-        // that represent one lexeme into account.
         // We add 2 in order to include quote start and end.
         let tok_end = tok_start + value.chars().count() + 2;
 
@@ -327,6 +325,18 @@ impl<'a> Prelude<'a> {
 
     fn identifier_is_end(c: &u8) -> bool {
         Self::is_separator(c) || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
+    }
+
+    fn identifier_is_valid(s: &str) -> bool {
+        let mut chars = s.chars();
+        match chars.next() {
+            Some(c) => {
+                c.is_ascii_alphabetic()
+                    && chars
+                        .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '?' | '!' | '_'))
+            }
+            None => false,
+        }
     }
 
     fn identifier_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
@@ -357,8 +367,7 @@ impl<'a> Prelude<'a> {
             T_TRUE | T_FALSE => Ok(Some(AstNode::Bool(primitive))),
             T_NULL => Ok(Some(AstNode::Null(primitive))),
             _ => {
-                let re = Regex::new(IDENTIFIER_REGEX).unwrap();
-                if re.is_match(&primitive.value) {
+                if Self::identifier_is_valid(&primitive.value) {
                     Ok(Some(AstNode::Identifier(primitive)))
                 } else {
                     Err(self.fail(ParserErr::UnexpTok))
@@ -537,8 +546,7 @@ impl<'a> Prelude<'a> {
         if name.is_empty() {
             return Ok(CallKind::Anon);
         }
-        let re = Regex::new(IDENTIFIER_REGEX).unwrap();
-        if !name.is_empty() && re.is_match(name) {
+        if !name.is_empty() && Self::identifier_is_valid(name) {
             Ok(CallKind::Named(name.to_string()))
         } else {
             Err(self.fail(ParserErr::InvalFnName))
@@ -640,9 +648,7 @@ impl<'a> Prelude<'a> {
             .unwrap()
             .to_string();
 
-        let re = Regex::new(IDENTIFIER_REGEX).unwrap();
-
-        if re.is_match(&value) {
+        if Self::identifier_is_valid(&value) {
             Ok(Some(AstNode::Slot(Primitive {
                 value,
                 span: Span {
@@ -703,7 +709,7 @@ mod tests {
 
         for (token, col) in forbidded_tokens {
             assert_eq!(
-                Prelude::new(token).parse(),
+                Prelude::new(token.as_bytes()).parse(),
                 Err(Parser(ParserErr::InvalNum(ParserErrInfo {
                     row: 1,
                     col,
@@ -719,7 +725,7 @@ mod tests {
 
         for (token, col) in forbidded_tokens {
             assert_eq!(
-                Prelude::new(token).parse(),
+                Prelude::new(token.as_bytes()).parse(),
                 Err(Parser(ParserErr::InvalNum(ParserErrInfo {
                     row: 1,
                     col,
@@ -735,7 +741,7 @@ mod tests {
 
         for (token, col) in forbidded_tokens {
             assert_eq!(
-                Prelude::new(token).parse(),
+                Prelude::new(token.as_bytes()).parse(),
                 Err(Parser(ParserErr::InvalNum(ParserErrInfo {
                     row: 1,
                     col,
@@ -751,7 +757,7 @@ mod tests {
 
         for (token, col) in forbidded_tokens {
             assert_eq!(
-                Prelude::new(token).parse(),
+                Prelude::new(token.as_bytes()).parse(),
                 Err(Parser(ParserErr::InvalNum(ParserErrInfo {
                     row: 1,
                     col,
@@ -765,7 +771,7 @@ mod tests {
     fn number_should_not_allow_start_from_minus_if_nothing_follows() {
         let code = "-".to_string();
         assert_eq!(
-            Prelude::new(&code).parse(),
+            Prelude::new(&code.as_bytes()).parse(),
             Err(Parser(ParserErr::InvalNum(ParserErrInfo {
                 row: 1,
                 col: 2,
@@ -791,7 +797,7 @@ mod tests {
             ("101", 3),
         ];
         for (number, end) in numbers {
-            let ast = Prelude::new(number).parse();
+            let ast = Prelude::new(number.as_bytes()).parse();
             assert_eq!(
                 ast,
                 Ok(vec![AstNode::Number(Primitive {
@@ -822,7 +828,7 @@ mod tests {
             ("-101", 4),
         ];
         for (number, end) in numbers {
-            let ast = Prelude::new(number).parse();
+            let ast = Prelude::new(number.as_bytes()).parse();
             assert_eq!(
                 ast,
                 Ok(vec![AstNode::Number(Primitive {
@@ -837,7 +843,8 @@ mod tests {
     fn number_should_parse_numbers_that_are_separated() {
         let ast = Prelude::new(
             "3
-56  -9   3.2",
+56  -9   3.2"
+                .as_bytes(),
         )
         .parse();
         assert_eq!(
@@ -869,7 +876,7 @@ mod tests {
 
         for (token, col) in forbidded_tokens {
             assert_eq!(
-                Prelude::new(token).parse(),
+                Prelude::new(token.as_bytes()).parse(),
                 Err(Parser(ParserErr::InvalNum(ParserErrInfo {
                     row: 1,
                     col,
@@ -901,7 +908,7 @@ mod tests {
             ("-2.30e-502", 10),
         ];
         for (number, end) in numbers {
-            let ast = Prelude::new(number).parse();
+            let ast = Prelude::new(number.as_bytes()).parse();
             assert_eq!(
                 ast,
                 Ok(vec![AstNode::Number(Primitive {
@@ -926,6 +933,7 @@ mod tests {
             Prelude::new(
                 "\"Hello
             World\""
+                    .as_bytes()
             )
             .parse(),
             Err(Parser(ParserErr::InvalStr(ParserErrInfo {
@@ -946,7 +954,7 @@ mod tests {
             ("\"123 2323 😄😄\"", 13),
         ];
         for (string, end) in strings {
-            let ast = Prelude::new(string).parse();
+            let ast = Prelude::new(string.as_bytes()).parse();
             assert_eq!(
                 ast,
                 Ok(vec![AstNode::String(Primitive {
@@ -973,7 +981,7 @@ mod tests {
 
     #[test]
     fn bool_should_parse_true() {
-        let ast = Prelude::new("true").parse();
+        let ast = Prelude::new("true".as_bytes()).parse();
         assert_eq!(
             ast,
             Ok(vec![AstNode::Bool(Primitive {
@@ -985,7 +993,7 @@ mod tests {
 
     #[test]
     fn bool_should_parse_false() {
-        let ast = Prelude::new("false").parse();
+        let ast = Prelude::new("false".as_bytes()).parse();
         assert_eq!(
             ast,
             Ok(vec![AstNode::Bool(Primitive {
@@ -1005,7 +1013,7 @@ mod tests {
 
     #[test]
     fn null_should_parse() {
-        let ast = Prelude::new("null").parse();
+        let ast = Prelude::new("null".as_bytes()).parse();
         assert_eq!(
             ast,
             Ok(vec![AstNode::Null(Primitive {
@@ -1046,7 +1054,7 @@ mod tests {
         ];
         for (identifier, col, err) in identifiers {
             assert_eq!(
-                Prelude::new(identifier).parse(),
+                Prelude::new(identifier.as_bytes()).parse(),
                 Err(Parser(err(ParserErrInfo {
                     row: 1,
                     col,
@@ -1070,7 +1078,7 @@ mod tests {
             ("asd_", 4),
         ];
         for (identifier, end) in identifiers {
-            let ast = Prelude::new(identifier).parse();
+            let ast = Prelude::new(identifier.as_bytes()).parse();
             assert_eq!(
                 ast,
                 Ok(vec![AstNode::Identifier(Primitive {
@@ -1091,7 +1099,7 @@ mod tests {
 
     #[test]
     fn list_should_parse_empty() {
-        let ast = Prelude::new("[]").parse();
+        let ast = Prelude::new("[]".as_bytes()).parse();
         assert_eq!(
             ast,
             Ok(vec![AstNode::List(Compound {
@@ -1103,7 +1111,7 @@ mod tests {
 
     #[test]
     fn list_should_parse_nested_empty() {
-        let ast = Prelude::new("[[]]").parse();
+        let ast = Prelude::new("[[]]".as_bytes()).parse();
         assert_eq!(
             ast,
             Ok(vec![AstNode::List(Compound {
@@ -1118,7 +1126,7 @@ mod tests {
 
     #[test]
     fn list_should_parse_non_empty() {
-        let ast = Prelude::new("[1, \"hello\", null, false]").parse();
+        let ast = Prelude::new("[1, \"hello\", null, false]".as_bytes()).parse();
         assert_eq!(
             ast,
             Ok(vec![AstNode::List(Compound {
@@ -1149,7 +1157,7 @@ mod tests {
     fn list_should_not_allow_non_closed() {
         let code = "[[1, 3]";
         assert_eq!(
-            Prelude::new(code).parse(),
+            Prelude::new(code.as_bytes()).parse(),
             Err(Parser(ParserErr::UnexpEoFile(ParserErrInfo {
                 row: 1,
                 col: 8,
@@ -1168,7 +1176,7 @@ mod tests {
 
     #[test]
     fn dict_should_parse_empty() {
-        let ast = Prelude::new("{}").parse();
+        let ast = Prelude::new("{}".as_bytes()).parse();
         assert_eq!(
             ast,
             Ok(vec![AstNode::Dict(Compound {
@@ -1181,7 +1189,7 @@ mod tests {
     #[test]
     fn dict_should_parse_non_empty() {
         let ast = Prelude::new(
-             "{ \"a\" 1, \"b\" \"2\", \"c\" false, \"d\" null, \"e\" [1, 2, 3], \"f\" { \"a2\" some_value } }",
+             "{ \"a\" 1, \"b\" \"2\", \"c\" false, \"d\" null, \"e\" [1, 2, 3], \"f\" { \"a2\" some_value } }".as_bytes(),
          )
          .parse();
 
@@ -1279,7 +1287,7 @@ mod tests {
     fn dict_should_not_allow_invalid_pair() {
         let code = "{ \"a\" 1, \"b\" }";
         assert_eq!(
-            Prelude::new(code).parse(),
+            Prelude::new(code.as_bytes()).parse(),
             Err(Parser(ParserErr::InvalDictPair(ParserErrInfo {
                 row: 1,
                 col: 14,
@@ -1300,7 +1308,7 @@ mod tests {
         ];
         for (input, col) in inputs {
             assert_eq!(
-                Prelude::new(input).parse(),
+                Prelude::new(input.as_bytes()).parse(),
                 Err(Parser(ParserErr::UnexpDictKey(ParserErrInfo {
                     row: 1,
                     col,
@@ -1318,7 +1326,7 @@ mod tests {
         ];
         for (input, col, err) in inputs {
             assert_eq!(
-                Prelude::new(input).parse(),
+                Prelude::new(input.as_bytes()).parse(),
                 Err(Parser(err(ParserErrInfo {
                     row: 1,
                     col,
@@ -1338,7 +1346,7 @@ mod tests {
 
     #[test]
     fn call_should_parse_with_no_arguments() {
-        let ast = Prelude::new(".some-fn()").parse();
+        let ast = Prelude::new(".some-fn()".as_bytes()).parse();
         assert_eq!(
             ast,
             Ok(vec![AstNode::Call((
@@ -1353,7 +1361,7 @@ mod tests {
 
     #[test]
     fn call_should_parse_with_arguments() {
-        let ast = Prelude::new(".add(2 .div(4 2))").parse();
+        let ast = Prelude::new(".add(2 .div(4 2))".as_bytes()).parse();
         let nested_children = vec![
             Box::new(AstNode::Number(Primitive {
                 value: "4".to_string(),
@@ -1407,7 +1415,7 @@ mod tests {
         ];
         for (input, end) in inputs {
             assert_eq!(
-                Prelude::new(input).parse(),
+                Prelude::new(input.as_bytes()).parse(),
                 Ok(vec![AstNode::Call((
                     CallKind::Named("test".to_string()),
                     Compound {
@@ -1423,7 +1431,7 @@ mod tests {
     fn call_should_not_allow_non_closed() {
         let code = ".some-fn(2 2 3))";
         assert_eq!(
-            Prelude::new(code).parse(),
+            Prelude::new(code.as_bytes()).parse(),
             Err(Parser(ParserErr::UnexpTok(ParserErrInfo {
                 row: 1,
                 col: 16,
@@ -1436,7 +1444,7 @@ mod tests {
     fn call_should_not_allow_separator_after_call_symbol() {
         let code = ". some-fn()";
         assert_eq!(
-            Prelude::new(code).parse(),
+            Prelude::new(code.as_bytes()).parse(),
             Err(Parser(ParserErr::InvalFnName(ParserErrInfo {
                 row: 1,
                 col: 10,
@@ -1469,7 +1477,7 @@ mod tests {
         ];
         for (identifier, col) in identifiers {
             assert_eq!(
-                Prelude::new(&format!(".{}()", identifier)).parse(),
+                Prelude::new(&format!(".{}()", identifier).as_bytes()).parse(),
                 Err(Parser(ParserErr::InvalFnName(ParserErrInfo {
                     row: 1,
                     col,
@@ -1483,7 +1491,7 @@ mod tests {
     fn call_should_not_allow_standalone_parens() {
         let code = "()";
         assert_eq!(
-            Prelude::new(code).parse(),
+            Prelude::new(code.as_bytes()).parse(),
             Err(Parser(ParserErr::UnexpTok(ParserErrInfo {
                 row: 1,
                 col: 1,
@@ -1495,7 +1503,7 @@ mod tests {
     #[test]
     fn call_should_parse_anon() {
         assert_eq!(
-            Prelude::new(".()").parse(),
+            Prelude::new(".()".as_bytes()).parse(),
             Ok(vec![AstNode::Call((
                 CallKind::Anon,
                 Compound {
@@ -1528,7 +1536,7 @@ mod tests {
             ("@asd_", 5),
         ];
         for (slot, end) in slots {
-            let ast = Prelude::new(slot).parse();
+            let ast = Prelude::new(slot.as_bytes()).parse();
             assert_eq!(
                 ast,
                 Ok(vec![AstNode::Slot(Primitive {
@@ -1565,7 +1573,7 @@ mod tests {
         ];
         for (slot, col) in slots {
             assert_eq!(
-                Prelude::new(slot).parse(),
+                Prelude::new(slot.as_bytes()).parse(),
                 Err(Parser(ParserErr::UnexpTok(ParserErrInfo {
                     row: 1,
                     col,
@@ -1600,7 +1608,7 @@ mod tests {
         ];
         for (depth_case, col, err) in depth_cases {
             assert_eq!(
-                Prelude::new(depth_case).parse(),
+                Prelude::new(depth_case.as_bytes()).parse(),
                 Err(Parser(err(ParserErrInfo {
                     row: 1,
                     col,

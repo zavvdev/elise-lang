@@ -10,4 +10,3 @@ path = "src/lib.rs"
 elise-errors = { path = "../../shared/errors" }
 elise-builtins = { path = "../../shared/builtins" }
 elise-ast = { path = "../ast" }
-regex.workspace = true
