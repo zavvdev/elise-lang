@@ -1,11 +1,13 @@
 use elise_errors::errors_csv_schema_resolver::CsvSchemaResolverErr;
 use elise_types::Span;
 
-use colored::Colorize;
+use crate::out::utils;
 
-use crate::out::utils::print_silent_err;
+use crate::out::utils::{
+    get_source_code_slice, print_error_source_code_pos, print_error_source_code_slice,
+};
 
-pub fn print_err(schema_err: &CsvSchemaResolverErr) {
+pub fn print_err(schema_err: &CsvSchemaResolverErr, schema_source_code: &[u8]) {
     use CsvSchemaResolverErr::*;
 
     let (msg, span): (&str, &Span) = match schema_err {
@@ -34,8 +36,11 @@ pub fn print_err(schema_err: &CsvSchemaResolverErr) {
 
         OptArgsLen { span } => ("Invalid number of arguments for .optional function", span),
     };
-    print_silent_err(msg, Some("Schema error"));
-    let location = format!("At {}:{}\n", span.start, span.end);
-    eprintln!("{}", location.bold());
-    // TODO: Provide source code.
+
+    utils::print_err(msg, Some("Schema error"));
+
+    if let Some(code) = &get_source_code_slice(schema_source_code, span.start) {
+        print_error_source_code_pos(code.row, code.col);
+        print_error_source_code_slice(&code.slice, code.col);
+    };
 }

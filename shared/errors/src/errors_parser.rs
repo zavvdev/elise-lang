@@ -1,11 +1,6 @@
 #[derive(Debug, PartialEq)]
 pub struct ParserErrInfo {
-    pub row: usize,
-    pub col: usize,
-    // This field should not store the whole source code.
-    // Instead we just keep a slice of it where exactly
-    // an error happened.
-    pub source_code_slice: Option<String>,
+    pub pos: usize,
 }
 
 #[derive(Debug, PartialEq)]

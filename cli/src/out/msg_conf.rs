@@ -1,6 +1,6 @@
 use elise::conf::ConfErr;
 
-use crate::out::utils::print_silent_err;
+use crate::out::utils;
 
 pub fn print_err(err: &ConfErr) {
     let msg = match err {
@@ -11,5 +11,5 @@ pub fn print_err(err: &ConfErr) {
         ),
         ConfErr::ArgRequired(arg) => format!("Argument required: '{}'", arg),
     };
-    print_silent_err(&msg, Some("Config error"));
+    utils::print_err(&msg, Some("Config error"));
 }

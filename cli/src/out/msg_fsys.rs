@@ -1,4 +1,4 @@
-use crate::out::utils::print_silent_err;
+use crate::out::utils;
 
 pub fn print_file_rw_err(msg: &str, path: &str, read: bool) {
     let label = if read {
@@ -6,7 +6,7 @@ pub fn print_file_rw_err(msg: &str, path: &str, read: bool) {
     } else {
         Some("File writer error")
     };
-    print_silent_err(&format!("{} ({})", msg, path), label);
+    utils::print_err(&format!("{} ({})", msg, path), label);
 }
 
 pub fn print_saved_to(path: &str) {

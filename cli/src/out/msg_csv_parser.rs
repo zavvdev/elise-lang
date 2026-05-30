@@ -1,6 +1,6 @@
 use elise_errors::errors_csv_parser::CsvParserErr;
 
-use crate::out::utils::print_silent_err;
+use crate::out::utils;
 
 pub fn print_err(csv_parser_err: &CsvParserErr) {
     use CsvParserErr::*;
@@ -34,5 +34,5 @@ pub fn print_err(csv_parser_err: &CsvParserErr) {
         Unknown => "Unknown failure.".to_string(),
     };
 
-    print_silent_err(&info, Some("Csv parser error"));
+    utils::print_err(&info, Some("Csv parser error"));
 }

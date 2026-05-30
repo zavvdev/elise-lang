@@ -1,8 +1,8 @@
+use crate::out::utils::{self, print_error_source_code_slice};
+use crate::out::utils::{get_source_code_slice, print_error_source_code_pos};
 use elise_errors::errors_parser::ParserErr;
 
-use crate::out::utils::{print_error_at_code, print_silent_err};
-
-pub fn print_err(parser_err: &ParserErr) {
+pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
     use ParserErr::*;
 
     let info = match parser_err {
@@ -18,11 +18,10 @@ pub fn print_err(parser_err: &ParserErr) {
         InvalFnName(err_info) => ("Invalid function name", err_info),
     };
 
-    let source_code = match &info.1.source_code_slice {
-        Some(code) => code,
-        None => "",
-    };
+    utils::print_err(info.0, Some("Parser error"));
 
-    print_silent_err(info.0, Some("Parser error"));
-    print_error_at_code(source_code, info.1.row, info.1.col);
+    if let Some(code) = &get_source_code_slice(source_code, info.1.pos) {
+        print_error_source_code_pos(code.row, code.col);
+        print_error_source_code_slice(&code.slice, code.col);
+    };
 }

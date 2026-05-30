@@ -1,7 +1,5 @@
 pub mod config;
-pub mod utilities;
 
-use crate::utilities::get_source_code_slice;
 use elise_types::Span;
 use std::str::from_utf8;
 
@@ -86,19 +84,7 @@ impl<'a> Prelude<'a> {
     }
 
     fn fail(&self, variant: fn(ParserErrInfo) -> ParserErr) -> LangErr {
-        let mut info = ParserErrInfo {
-            row: 1,
-            col: 1,
-            source_code_slice: None,
-        };
-        if let Some(slice) = get_source_code_slice(self.source_code, self.tok_pos) {
-            info = ParserErrInfo {
-                row: slice.row,
-                col: slice.col,
-                source_code_slice: Some(slice.slice),
-            }
-        }
-        LangErr::Parser(variant(info))
+        LangErr::Parser(variant(ParserErrInfo { pos: self.tok_pos }))
     }
 
     /**
@@ -695,74 +681,58 @@ mod tests {
     #[test]
     fn number_should_not_contain_non_numeric_tokens() {
         let forbidded_tokens = vec![
-            ("0a", 2),
-            ("-0a", 3),
-            ("0.a", 3),
-            ("-0.a", 4),
-            ("1a", 2),
-            ("1.a", 3),
-            ("-1a", 3),
-            ("-1.a", 4),
-            ("12a2", 3),
-            ("0.2a", 4),
+            ("0a", 1),
+            ("-0a", 2),
+            ("0.a", 2),
+            ("-0.a", 3),
+            ("1a", 1),
+            ("1.a", 2),
+            ("-1a", 2),
+            ("-1.a", 3),
+            ("12a2", 2),
+            ("0.2a", 3),
         ];
 
-        for (token, col) in forbidded_tokens {
+        for (token, pos) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token.as_bytes()).parse(),
-                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
-                    row: 1,
-                    col,
-                    source_code_slice: Some(token.to_string())
-                })))
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo { pos })))
             );
         }
     }
 
     #[test]
     fn number_should_not_allow_more_than_one_minus_token() {
-        let forbidded_tokens = vec![("--1", 2), ("-1-2", 3), ("-2-3-", 3)];
+        let forbidded_tokens = vec![("--1", 1), ("-1-2", 2), ("-2-3-", 2)];
 
-        for (token, col) in forbidded_tokens {
+        for (token, pos) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token.as_bytes()).parse(),
-                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
-                    row: 1,
-                    col,
-                    source_code_slice: Some(token.to_string())
-                })))
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo { pos })))
             );
         }
     }
 
     #[test]
     fn number_should_not_allow_more_than_one_period_token() {
-        let forbidded_tokens = vec![("0.2.3", 4), ("0.3.", 4)];
+        let forbidded_tokens = vec![("0.2.3", 3), ("0.3.", 3)];
 
-        for (token, col) in forbidded_tokens {
+        for (token, pos) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token.as_bytes()).parse(),
-                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
-                    row: 1,
-                    col,
-                    source_code_slice: Some(token.to_string())
-                })))
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo { pos })))
             );
         }
     }
 
     #[test]
     fn number_should_not_allow_start_with_zero_which_not_float() {
-        let forbidded_tokens = vec![("02", 2), ("00", 2)];
+        let forbidded_tokens = vec![("02", 1), ("00", 1)];
 
-        for (token, col) in forbidded_tokens {
+        for (token, pos) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token.as_bytes()).parse(),
-                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
-                    row: 1,
-                    col,
-                    source_code_slice: Some(token.to_string())
-                })))
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo { pos })))
             );
         }
     }
@@ -772,11 +742,7 @@ mod tests {
         let code = "-".to_string();
         assert_eq!(
             Prelude::new(&code.as_bytes()).parse(),
-            Err(Parser(ParserErr::InvalNum(ParserErrInfo {
-                row: 1,
-                col: 2,
-                source_code_slice: Some(code)
-            })))
+            Err(Parser(ParserErr::InvalNum(ParserErrInfo { pos: 1 })))
         );
     }
 
@@ -871,17 +837,13 @@ mod tests {
     }
 
     #[test]
-    fn number_should_not_allow_invalod_scientific_notation_numbers() {
-        let forbidded_tokens = vec![("1e1.2", 4), ("1e-", 4), ("1e", 3)];
+    fn number_should_not_allow_invalid_scientific_notation_numbers() {
+        let forbidded_tokens = vec![("1e1.2", 3), ("1e-", 3), ("1e", 2)];
 
-        for (token, col) in forbidded_tokens {
+        for (token, pos) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token.as_bytes()).parse(),
-                Err(Parser(ParserErr::InvalNum(ParserErrInfo {
-                    row: 1,
-                    col,
-                    source_code_slice: Some(token.to_string()),
-                })))
+                Err(Parser(ParserErr::InvalNum(ParserErrInfo { pos })))
             );
         }
     }
@@ -936,11 +898,7 @@ mod tests {
                     .as_bytes()
             )
             .parse(),
-            Err(Parser(ParserErr::InvalStr(ParserErrInfo {
-                row: 1,
-                col: 7,
-                source_code_slice: Some("\"Hello\n".to_string()),
-            })))
+            Err(Parser(ParserErr::InvalStr(ParserErrInfo { pos: 6 })))
         );
     }
 
@@ -1034,32 +992,28 @@ mod tests {
     #[test]
     fn identifier_should_reject_invalid_names() {
         let identifiers: Vec<(&str, usize, fn(ParserErrInfo) -> ParserErr)> = vec![
-            ("1asd", 2, ParserErr::InvalNum),
-            ("!asd", 1, ParserErr::UnexpTok),
-            ("#asd", 1, ParserErr::UnexpTok),
-            ("$asd", 1, ParserErr::UnexpTok),
-            ("%asd", 1, ParserErr::UnexpTok),
-            ("^asd", 1, ParserErr::UnexpTok),
-            ("&asd", 1, ParserErr::UnexpTok),
-            ("*asd", 1, ParserErr::UnexpTok),
-            ("-asd", 2, ParserErr::InvalNum),
-            ("_asd", 1, ParserErr::UnexpTok),
-            ("=asd", 1, ParserErr::UnexpTok),
-            ("+asd", 1, ParserErr::UnexpTok),
-            ("?asd", 1, ParserErr::UnexpTok),
-            ("?asd", 1, ParserErr::UnexpTok),
-            (">asd", 1, ParserErr::UnexpTok),
-            ("<asd", 1, ParserErr::UnexpTok),
-            ("/asd", 1, ParserErr::UnexpTok),
+            ("1asd", 1, ParserErr::InvalNum),
+            ("!asd", 0, ParserErr::UnexpTok),
+            ("#asd", 0, ParserErr::UnexpTok),
+            ("$asd", 0, ParserErr::UnexpTok),
+            ("%asd", 0, ParserErr::UnexpTok),
+            ("^asd", 0, ParserErr::UnexpTok),
+            ("&asd", 0, ParserErr::UnexpTok),
+            ("*asd", 0, ParserErr::UnexpTok),
+            ("-asd", 1, ParserErr::InvalNum),
+            ("_asd", 0, ParserErr::UnexpTok),
+            ("=asd", 0, ParserErr::UnexpTok),
+            ("+asd", 0, ParserErr::UnexpTok),
+            ("?asd", 0, ParserErr::UnexpTok),
+            ("?asd", 0, ParserErr::UnexpTok),
+            (">asd", 0, ParserErr::UnexpTok),
+            ("<asd", 0, ParserErr::UnexpTok),
+            ("/asd", 0, ParserErr::UnexpTok),
         ];
-        for (identifier, col, err) in identifiers {
+        for (identifier, pos, err) in identifiers {
             assert_eq!(
                 Prelude::new(identifier.as_bytes()).parse(),
-                Err(Parser(err(ParserErrInfo {
-                    row: 1,
-                    col,
-                    source_code_slice: Some(identifier.to_string()),
-                })))
+                Err(Parser(err(ParserErrInfo { pos })))
             );
         }
     }
@@ -1158,11 +1112,7 @@ mod tests {
         let code = "[[1, 3]";
         assert_eq!(
             Prelude::new(code.as_bytes()).parse(),
-            Err(Parser(ParserErr::UnexpEoFile(ParserErrInfo {
-                row: 1,
-                col: 8,
-                source_code_slice: Some(code.to_string()),
-            })))
+            Err(Parser(ParserErr::UnexpEoFile(ParserErrInfo { pos: 7 })))
         );
     }
 
@@ -1288,32 +1238,24 @@ mod tests {
         let code = "{ \"a\" 1, \"b\" }";
         assert_eq!(
             Prelude::new(code.as_bytes()).parse(),
-            Err(Parser(ParserErr::InvalDictPair(ParserErrInfo {
-                row: 1,
-                col: 14,
-                source_code_slice: Some(code.to_string()),
-            })))
+            Err(Parser(ParserErr::InvalDictPair(ParserErrInfo { pos: 13 })))
         );
     }
 
     #[test]
     fn dict_should_not_allow_invalid_key() {
         let inputs = vec![
-            ("{ a 1 }", 4),
-            ("{ 1 \"2\" }", 4),
-            ("{ null false }", 7),
-            ("{ false true }", 8),
-            ("{ [] \"`\" }", 5),
-            ("{ {} a }", 5),
+            ("{ a 1 }", 3),
+            ("{ 1 \"2\" }", 3),
+            ("{ null false }", 6),
+            ("{ false true }", 7),
+            ("{ [] \"`\" }", 4),
+            ("{ {} a }", 4),
         ];
-        for (input, col) in inputs {
+        for (input, pos) in inputs {
             assert_eq!(
                 Prelude::new(input.as_bytes()).parse(),
-                Err(Parser(ParserErr::UnexpDictKey(ParserErrInfo {
-                    row: 1,
-                    col,
-                    source_code_slice: Some(input.to_string()),
-                })))
+                Err(Parser(ParserErr::UnexpDictKey(ParserErrInfo { pos })))
             );
         }
     }
@@ -1321,17 +1263,13 @@ mod tests {
     #[test]
     fn dict_should_not_allow_non_closed() {
         let inputs: Vec<(&str, usize, fn(ParserErrInfo) -> ParserErr)> = vec![
-            ("{ \"a\" 1 }}", 10, ParserErr::UnexpTok),
-            ("{{ \"1\" \"2\" }", 13, ParserErr::UnexpDictKey),
+            ("{ \"a\" 1 }}", 9, ParserErr::UnexpTok),
+            ("{{ \"1\" \"2\" }", 12, ParserErr::UnexpDictKey),
         ];
-        for (input, col, err) in inputs {
+        for (input, pos, err) in inputs {
             assert_eq!(
                 Prelude::new(input.as_bytes()).parse(),
-                Err(Parser(err(ParserErrInfo {
-                    row: 1,
-                    col,
-                    source_code_slice: Some(input.to_string()),
-                })))
+                Err(Parser(err(ParserErrInfo { pos })))
             );
         }
     }
@@ -1432,11 +1370,7 @@ mod tests {
         let code = ".some-fn(2 2 3))";
         assert_eq!(
             Prelude::new(code.as_bytes()).parse(),
-            Err(Parser(ParserErr::UnexpTok(ParserErrInfo {
-                row: 1,
-                col: 16,
-                source_code_slice: Some(code.to_string()),
-            })))
+            Err(Parser(ParserErr::UnexpTok(ParserErrInfo { pos: 15 })))
         );
     }
 
@@ -1445,44 +1379,36 @@ mod tests {
         let code = ". some-fn()";
         assert_eq!(
             Prelude::new(code.as_bytes()).parse(),
-            Err(Parser(ParserErr::InvalFnName(ParserErrInfo {
-                row: 1,
-                col: 10,
-                source_code_slice: Some(code.to_string()),
-            })))
+            Err(Parser(ParserErr::InvalFnName(ParserErrInfo { pos: 9 })))
         );
     }
 
     #[test]
     fn call_should_reject_invalid_names() {
         let identifiers = vec![
-            ("1asd", 6),
-            ("!asd", 6),
-            ("@asd", 6),
-            ("#asd", 6),
-            ("$asd", 6),
-            ("%asd", 6),
-            ("^asd", 6),
-            ("&asd", 6),
-            ("*asd", 6),
-            ("-asd", 6),
-            ("_asd", 6),
-            ("=asd", 6),
-            ("+asd", 6),
-            ("?asd", 6),
-            ("?asd", 6),
-            (">asd", 6),
-            ("<asd", 6),
-            ("/asd", 6),
+            ("1asd", 5),
+            ("!asd", 5),
+            ("@asd", 5),
+            ("#asd", 5),
+            ("$asd", 5),
+            ("%asd", 5),
+            ("^asd", 5),
+            ("&asd", 5),
+            ("*asd", 5),
+            ("-asd", 5),
+            ("_asd", 5),
+            ("=asd", 5),
+            ("+asd", 5),
+            ("?asd", 5),
+            ("?asd", 5),
+            (">asd", 5),
+            ("<asd", 5),
+            ("/asd", 5),
         ];
-        for (identifier, col) in identifiers {
+        for (identifier, pos) in identifiers {
             assert_eq!(
                 Prelude::new(&format!(".{}()", identifier).as_bytes()).parse(),
-                Err(Parser(ParserErr::InvalFnName(ParserErrInfo {
-                    row: 1,
-                    col,
-                    source_code_slice: Some(format!(".{}()", identifier)),
-                })))
+                Err(Parser(ParserErr::InvalFnName(ParserErrInfo { pos })))
             );
         }
     }
@@ -1492,11 +1418,7 @@ mod tests {
         let code = "()";
         assert_eq!(
             Prelude::new(code.as_bytes()).parse(),
-            Err(Parser(ParserErr::UnexpTok(ParserErrInfo {
-                row: 1,
-                col: 1,
-                source_code_slice: Some(code.to_string()),
-            })))
+            Err(Parser(ParserErr::UnexpTok(ParserErrInfo { pos: 0 })))
         );
     }
 
@@ -1550,35 +1472,31 @@ mod tests {
     #[test]
     fn slot_should_reject_invalid_names() {
         let slots = vec![
-            ("@1asd", 6),
-            ("@!asd", 6),
-            ("@@asd", 6),
-            ("@#asd", 6),
-            ("@$asd", 6),
-            ("@%asd", 6),
-            ("@^asd", 6),
-            ("@&asd", 6),
-            ("@*asd", 6),
-            ("@-asd", 6),
-            ("@_asd", 6),
-            ("@=asd", 6),
-            ("@+asd", 6),
-            ("@?asd", 6),
-            ("@?asd", 6),
-            ("@>asd", 6),
-            ("@<asd", 6),
-            ("@/asd", 6),
-            ("@@asd", 6),
-            ("@ asd", 2),
+            ("@1asd", 5),
+            ("@!asd", 5),
+            ("@@asd", 5),
+            ("@#asd", 5),
+            ("@$asd", 5),
+            ("@%asd", 5),
+            ("@^asd", 5),
+            ("@&asd", 5),
+            ("@*asd", 5),
+            ("@-asd", 5),
+            ("@_asd", 5),
+            ("@=asd", 5),
+            ("@+asd", 5),
+            ("@?asd", 5),
+            ("@?asd", 5),
+            ("@>asd", 5),
+            ("@<asd", 5),
+            ("@/asd", 5),
+            ("@@asd", 5),
+            ("@ asd", 1),
         ];
-        for (slot, col) in slots {
+        for (slot, pos) in slots {
             assert_eq!(
                 Prelude::new(slot.as_bytes()).parse(),
-                Err(Parser(ParserErr::UnexpTok(ParserErrInfo {
-                    row: 1,
-                    col,
-                    source_code_slice: Some(slot.to_string()),
-                })))
+                Err(Parser(ParserErr::UnexpTok(ParserErrInfo { pos })))
             );
         }
     }
@@ -1594,26 +1512,22 @@ mod tests {
     #[test]
     fn depth_should_reject_invalid() {
         let depth_cases: Vec<(&str, usize, fn(ParserErrInfo) -> ParserErr)> = vec![
-            (".a())", 5, ParserErr::UnexpTok),
-            (".a(()", 4, ParserErr::UnexpTok),
-            (".a().a()))", 9, ParserErr::UnexpTok),
-            ("()()))", 1, ParserErr::UnexpTok),
-            ("())", 1, ParserErr::UnexpTok),
-            ("(()", 1, ParserErr::UnexpTok),
-            ("[]]", 3, ParserErr::UnexpTok),
-            ("[][[][][]]][[", 11, ParserErr::UnexpTok),
-            ("[{}}]", 4, ParserErr::UnexpTok),
-            ("[{{{{}]", 7, ParserErr::UnexpDictKey),
-            ("[{{}]", 5, ParserErr::UnexpDictKey),
+            (".a())", 4, ParserErr::UnexpTok),
+            (".a(()", 3, ParserErr::UnexpTok),
+            (".a().a()))", 8, ParserErr::UnexpTok),
+            ("()()))", 0, ParserErr::UnexpTok),
+            ("())", 0, ParserErr::UnexpTok),
+            ("(()", 0, ParserErr::UnexpTok),
+            ("[]]", 2, ParserErr::UnexpTok),
+            ("[][[][][]]][[", 10, ParserErr::UnexpTok),
+            ("[{}}]", 3, ParserErr::UnexpTok),
+            ("[{{{{}]", 6, ParserErr::UnexpDictKey),
+            ("[{{}]", 4, ParserErr::UnexpDictKey),
         ];
-        for (depth_case, col, err) in depth_cases {
+        for (depth_case, pos, err) in depth_cases {
             assert_eq!(
                 Prelude::new(depth_case.as_bytes()).parse(),
-                Err(Parser(err(ParserErrInfo {
-                    row: 1,
-                    col,
-                    source_code_slice: Some(depth_case.to_string()),
-                })))
+                Err(Parser(err(ParserErrInfo { pos })))
             );
         }
     }
