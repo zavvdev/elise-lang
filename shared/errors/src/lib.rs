@@ -8,7 +8,8 @@ use errors_parser::ParserErr;
 
 #[derive(Debug, PartialEq)]
 pub enum LangErr {
-    Parser(ParserErr),
+    ParserSource(ParserErr),
+    ParserSchema(ParserErr),
     CsvParser(CsvParserErr),
     CsvSchemaResolver(CsvSchemaResolverErr),
 }

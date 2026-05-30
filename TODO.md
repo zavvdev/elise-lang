@@ -32,7 +32,16 @@ Source code
 - [ ] Parser doesn't know which kind of code he's parsing. For example, if we parse source code
       then error prints source code slice of the source code. But when we parse schema and
       get ParserErr, error reports row/col of the schema source code but slice is created
-      from source code.
+      from source code. We need to get rid of LangErr returned by every module and make them return
+      error enum they are related to. For example, Prelude should return ParserErr, not LangErr.
+      And then we can map it to LangErr:
+      pub enum LangErr {
+        SourceParser(ParserErr),  // was: Parser(ParserErr)
+        SchemaParser(ParserErr),
+        // ...
+      }
+      let source_code_ast = source_code_ast.unwrap().map_err(LangErr::SourceParser)?;
+      let schema_ast = schema_ast.unwrap().map_err(LangErr::SchemaParser)?;
 
 - [ ] Combine CsvResolvedSchema with parsed csv records to produce TypedDataGraph
       IR that describes data in agnostic way.
