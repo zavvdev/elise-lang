@@ -1,5 +1,5 @@
 use csv::{ErrorKind, ReaderBuilder};
-use elise_errors::{LangErr, errors_csv_parser::CsvParserErr};
+use elise_errors::errors_csv_parser::CsvParserErr;
 use elise_types::DataSourceFieldType;
 
 use crate::config::CSV_BOOL_TOKENS_LOWER;
@@ -26,8 +26,8 @@ impl<'a> CsvParser<'a> {
         Self { data }
     }
 
-    fn map_lib_error(kind: &ErrorKind) -> LangErr {
-        LangErr::CsvParser(match kind {
+    fn map_lib_error(kind: &ErrorKind) -> CsvParserErr {
+        match kind {
             csv::ErrorKind::UnequalLengths {
                 pos,
                 expected_len,
@@ -46,7 +46,7 @@ impl<'a> CsvParser<'a> {
                 detail: io_err.to_string(),
             },
             _ => CsvParserErr::Unknown,
-        })
+        }
     }
 
     fn is_bool(value: &str) -> bool {
@@ -58,7 +58,7 @@ impl<'a> CsvParser<'a> {
         value.parse::<i64>().is_ok() || value.parse::<f64>().is_ok()
     }
 
-    fn annotate_col(value: &str, row_index: usize, col_index: usize) -> Result<CsvCol, LangErr> {
+    fn annotate_col(value: &str, row_index: usize, col_index: usize) -> Result<CsvCol, CsvParserErr> {
         let mut result = CsvCol {
             ty: DataSourceFieldType::String,
             value: value.to_string(),
@@ -77,7 +77,7 @@ impl<'a> CsvParser<'a> {
         Ok(result)
     }
 
-    pub fn parse(&self) -> Result<Vec<CsvParserRecord>, LangErr> {
+    pub fn parse(&self) -> Result<Vec<CsvParserRecord>, CsvParserErr> {
         let mut records: Vec<CsvParserRecord> = vec![];
 
         let mut reader = ReaderBuilder::new()
@@ -107,7 +107,7 @@ impl<'a> CsvParser<'a> {
 #[cfg(test)]
 mod tests {
     use crate::parser::{CsvCol, CsvParser, CsvParserRecord};
-    use elise_errors::{LangErr, errors_csv_parser::CsvParserErr::*};
+    use elise_errors::{errors_csv_parser::CsvParserErr::*};
     use elise_types::DataSourceFieldType;
 
     #[test]
@@ -208,11 +208,11 @@ mod tests {
 
         assert_eq!(
             parser.parse(),
-            Err(LangErr::CsvParser(UneqLen {
+            Err(UneqLen {
                 line: Some(2),
                 expected_len: 2,
                 actual_len: 1
-            }))
+            })
         );
     }
 }

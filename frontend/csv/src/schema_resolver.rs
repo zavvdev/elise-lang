@@ -4,10 +4,7 @@ use elise_builtins::schema::{
     SCHEMA_FN_BOOL, SCHEMA_FN_NUMBER, SCHEMA_FN_OPTIONAL, SCHEMA_FN_ROOT, SCHEMA_FN_ROW,
     SCHEMA_FN_STRING,
 };
-use elise_errors::{
-    LangErr,
-    errors_csv_schema_resolver::{CsvSchemaResolverErr, CsvSchemaResolverErr::*},
-};
+use elise_errors::errors_csv_schema_resolver::{CsvSchemaResolverErr, CsvSchemaResolverErr::*};
 use elise_types::{DataSourceFieldType, Span};
 
 #[derive(Debug, PartialEq)]
@@ -31,10 +28,6 @@ impl<'a> CsvSchemaResolver<'a> {
         Self { schema_ast }
     }
 
-    fn err(e: CsvSchemaResolverErr) -> LangErr {
-        LangErr::CsvSchemaResolver(e)
-    }
-
     fn err_span(start: usize, end: usize) -> Span {
         Span { start, end }
     }
@@ -43,44 +36,44 @@ impl<'a> CsvSchemaResolver<'a> {
         call_name: &str,
         start: usize,
         end: usize,
-    ) -> Result<DataSourceFieldType, LangErr> {
+    ) -> Result<DataSourceFieldType, CsvSchemaResolverErr> {
         match call_name {
             SCHEMA_FN_BOOL => Ok(DataSourceFieldType::Bool),
             SCHEMA_FN_NUMBER => Ok(DataSourceFieldType::Number),
             SCHEMA_FN_STRING => Ok(DataSourceFieldType::String),
-            _ => Err(Self::err(ColInvalType {
+            _ => Err(ColInvalType {
                 span: Self::err_span(start, end),
-            })),
+            }),
         }
     }
 
-    fn resolve_col_name(col: &AstNode) -> Result<String, LangErr> {
+    fn resolve_col_name(col: &AstNode) -> Result<String, CsvSchemaResolverErr> {
         match col {
             // Column name must always be an identifier type.
             AstNode::Identifier(Primitive { value, span: _ }) => Ok(value.clone()),
-            node => Err(Self::err(ColInvalName {
+            node => Err(ColInvalName {
                 span: Self::err_span(node.span().start, node.span().end),
-            })),
+            }),
         }
     }
 
-    fn resolve_literal_type(node: &AstNode) -> Result<DataSourceFieldType, LangErr> {
+    fn resolve_literal_type(node: &AstNode) -> Result<DataSourceFieldType, CsvSchemaResolverErr> {
         match node {
             AstNode::Call((Named(name), Compound { children, span })) => {
                 if children.is_empty() {
                     return Self::resolve_type(name, span.start, span.end);
                 }
-                Err(Self::err(ColTypeNoArgs {
+                Err(ColTypeNoArgs {
                     span: Self::err_span(span.start, span.end),
-                }))
+                })
             }
-            node => Err(Self::err(ColInvalType {
+            node => Err(ColInvalType {
                 span: Self::err_span(node.span().start, node.span().end),
-            })),
+            }),
         }
     }
 
-    fn resolve_col_type(ty: &AstNode) -> Result<(DataSourceFieldType, bool), LangErr> {
+    fn resolve_col_type(ty: &AstNode) -> Result<(DataSourceFieldType, bool), CsvSchemaResolverErr> {
         match ty {
             // Column type must always be a function call.
             AstNode::Call((Named(name), Compound { children, span })) => match name.as_str() {
@@ -88,28 +81,28 @@ impl<'a> CsvSchemaResolver<'a> {
                     if children.len() == 1 {
                         return Ok((Self::resolve_literal_type(children.first().unwrap())?, true));
                     }
-                    Err(Self::err(OptArgsLen {
+                    Err(OptArgsLen {
                         span: Self::err_span(span.start, span.end),
-                    }))
+                    })
                 }
                 _ => Ok((Self::resolve_literal_type(ty)?, false)),
             },
-            node => Err(Self::err(ColInvalType {
+            node => Err(ColInvalType {
                 span: Self::err_span(node.span().start, node.span().end),
-            })),
+            }),
         }
     }
 
-    fn resolve_row(call: &Compound) -> Result<CsvResolvedSchema, LangErr> {
+    fn resolve_row(call: &Compound) -> Result<CsvResolvedSchema, CsvSchemaResolverErr> {
         let row_args_len = call.children.len();
         let start = call.span.start;
         let end = call.span.end;
 
         // Check if we have even number of arguments.
         if !row_args_len.is_multiple_of(2) || row_args_len == 0 {
-            return Err(Self::err(RowArgsLen {
+            return Err(RowArgsLen {
                 span: Self::err_span(start, end),
-            }));
+            });
         }
 
         // Since we know here that number of arguments is even,
@@ -143,21 +136,19 @@ impl<'a> CsvSchemaResolver<'a> {
         Ok(CsvResolvedSchema { row: resolved_row })
     }
 
-    pub fn resolve(&self) -> Result<CsvResolvedSchema, LangErr> {
+    pub fn resolve(&self) -> Result<CsvResolvedSchema, CsvSchemaResolverErr> {
         // Root refers to a first function call that defines a schema.
-        let root = self.schema_ast.first().ok_or_else(|| {
-            Self::err(RootInval {
-                span: Self::err_span(1, 1),
-            })
+        let root = self.schema_ast.first().ok_or_else(|| RootInval {
+            span: Self::err_span(1, 1),
         })?;
 
         // Extract root node descriptor if it matches type and name.
         let root_call = match root {
             AstNode::Call((Named(name), call)) if name == SCHEMA_FN_ROOT => call,
             node => {
-                return Err(Self::err(RootInval {
+                return Err(RootInval {
                     span: Self::err_span(node.span().start, node.span().end),
-                }));
+                });
             }
         };
 
@@ -165,9 +156,9 @@ impl<'a> CsvSchemaResolver<'a> {
         match root_call.children.len() {
             1 => {}
             _ => {
-                return Err(Self::err(RootArgsLen {
+                return Err(RootArgsLen {
                     span: Self::err_span(root_call.span.start, root_call.span.end),
-                }));
+                });
             }
         }
 
@@ -175,9 +166,9 @@ impl<'a> CsvSchemaResolver<'a> {
 
         match &**row {
             AstNode::Call((Named(name), call)) if name == SCHEMA_FN_ROW => Self::resolve_row(call),
-            node => Err(Self::err(RowInval {
+            node => Err(RowInval {
                 span: Self::err_span(node.span().start, node.span().end),
-            })),
+            }),
         }
     }
 }
@@ -198,7 +189,7 @@ mod tests {
         SCHEMA_FN_BOOL, SCHEMA_FN_NUMBER, SCHEMA_FN_OPTIONAL, SCHEMA_FN_ROOT, SCHEMA_FN_ROW,
         SCHEMA_FN_STRING,
     };
-    use elise_errors::{LangErr, errors_csv_schema_resolver::CsvSchemaResolverErr::*};
+    use elise_errors::{errors_csv_schema_resolver::CsvSchemaResolverErr::*};
     use elise_types::Span;
 
     // We don't care about Span values here since
@@ -216,9 +207,9 @@ mod tests {
     fn root_should_return_error_if_file_empty() {
         let ast = vec![];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(RootInval {
+        let err = Err(RootInval {
             span: Span { start: 1, end: 1 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -232,9 +223,9 @@ mod tests {
             },
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(RootInval {
+        let err = Err(RootInval {
             span: Span { start: 0, end: 3 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -245,9 +236,9 @@ mod tests {
             value: "123".to_string(),
         })];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(RootInval {
+        let err = Err(RootInval {
             span: Span { start: 0, end: 3 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -261,9 +252,9 @@ mod tests {
             },
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(RootInval {
+        let err = Err(RootInval {
             span: Span { start: 0, end: 3 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -277,9 +268,9 @@ mod tests {
             },
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(RootArgsLen {
+        let err = Err(RootArgsLen {
             span: Span { start: 0, end: 3 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -307,9 +298,9 @@ mod tests {
             },
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(RootArgsLen {
+        let err = Err(RootArgsLen {
             span: Span { start: 0, end: 11 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -331,9 +322,9 @@ mod tests {
             },
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(RowInval {
+        let err = Err(RowInval {
             span: Span { start: 3, end: 6 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -354,9 +345,9 @@ mod tests {
             },
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(RowInval {
+        let err = Err(RowInval {
             span: Span { start: 3, end: 6 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -377,9 +368,9 @@ mod tests {
             },
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(RowArgsLen {
+        let err = Err(RowArgsLen {
             span: Span { start: 3, end: 6 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -403,9 +394,9 @@ mod tests {
             },
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(RowArgsLen {
+        let err = Err(RowArgsLen {
             span: Span { start: 3, end: 6 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -439,9 +430,9 @@ mod tests {
             },
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(ColInvalName {
+        let err = Err(ColInvalName {
             span: Span { start: 9, end: 12 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -475,9 +466,9 @@ mod tests {
             },
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(ColInvalType {
+        let err = Err(ColInvalType {
             span: Span { start: 12, end: 15 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -668,9 +659,9 @@ mod tests {
             },
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(ColTypeNoArgs {
+        let err = Err(ColTypeNoArgs {
             span: Span { start: 12, end: 15 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -755,9 +746,9 @@ mod tests {
             },
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(ColTypeNoArgs {
+        let err = Err(ColTypeNoArgs {
             span: Span { start: 12, end: 15 },
-        }));
+        });
         assert_eq!(result, err);
     }
 
@@ -842,9 +833,9 @@ mod tests {
             },
         ))];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(LangErr::CsvSchemaResolver(ColTypeNoArgs {
+        let err = Err(ColTypeNoArgs {
             span: Span { start: 12, end: 15 },
-        }));
+        });
         assert_eq!(result, err);
     }
 

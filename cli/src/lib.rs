@@ -12,7 +12,7 @@ use elise_csv::{
     parser::{CsvParser, CsvParserRecord},
     schema_resolver::CsvSchemaResolver,
 };
-use elise_errors::LangErr;
+use elise_errors::{LangErr, LangErr::*, errors_csv_parser::CsvParserErr};
 use elise_parser::Prelude;
 use rayon::scope;
 use std::time::Instant;
@@ -54,7 +54,7 @@ pub enum HandleResultStatus {
 }
 
 enum DataParseResult {
-    Csv(Result<Vec<CsvParserRecord>, LangErr>),
+    Csv(Result<Vec<CsvParserRecord>, CsvParserErr>),
 }
 
 pub fn run<'a>(
@@ -68,11 +68,20 @@ pub fn run<'a>(
     let (mut source_code_ast, mut schema_ast, mut parsed_data) = (None, None, None);
 
     scope(|s| {
-        s.spawn(|_| source_code_ast = Some(Prelude::new(source_code).parse()));
-        s.spawn(|_| schema_ast = Some(Prelude::new(data_schema).parse()));
+        s.spawn(|_| {
+            let ast = Prelude::new(source_code).parse().map_err(ParserSource);
+            source_code_ast = Some(ast);
+        });
+        s.spawn(|_| {
+            let ast = Prelude::new(data_schema).parse().map_err(ParserSchema);
+            schema_ast = Some(ast);
+        });
 
         if config.data_path.ends_with(FILE_EXT_CSV) {
-            s.spawn(|_| parsed_data = Some(DataParseResult::Csv(CsvParser::new(data).parse())));
+            s.spawn(|_| {
+                let parsed = CsvParser::new(data).parse();
+                parsed_data = Some(DataParseResult::Csv(parsed));
+            });
         }
     });
 
@@ -84,10 +93,12 @@ pub fn run<'a>(
 
     match parsed_data {
         DataParseResult::Csv(records) => {
-            let records = records?;
-            let resolved_schema = CsvSchemaResolver::new(&schema_ast).resolve()?;
-            println!("csv records: {:#?}", records);
-            println!("csv resolved schema: {:#?}", resolved_schema);
+            let rec = records.map_err(CsvParser)?;
+            let res = CsvSchemaResolver::new(&schema_ast)
+                .resolve()
+                .map_err(CsvSchemaResolver)?;
+            println!("csv records: {:#?}", rec);
+            println!("csv resolved schema: {:#?}", res);
         }
     }
 

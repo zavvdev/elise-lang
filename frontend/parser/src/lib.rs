@@ -10,10 +10,7 @@ use crate::config::{
 };
 
 use elise_ast::{AstNode, CallKind, Compound, KeyValuePair, Primitive};
-use elise_errors::{
-    LangErr,
-    errors_parser::{ParserErr, ParserErrInfo},
-};
+use elise_errors::errors_parser::{ParserErr, ParserErrInfo};
 
 // ==================================================================
 //
@@ -67,7 +64,7 @@ impl<'a> Prelude<'a> {
      * We do not use this method for recursive parsing. It should only
      * be used by the end user that wants to get the whole parsing result.
      */
-    pub fn parse(&mut self) -> Result<Vec<AstNode>, LangErr> {
+    pub fn parse(&mut self) -> Result<Vec<AstNode>, ParserErr> {
         let mut ast: Vec<AstNode> = vec![];
 
         while let Some(c) = self.peek() {
@@ -83,15 +80,15 @@ impl<'a> Prelude<'a> {
         Ok(ast)
     }
 
-    fn fail(&self, variant: fn(ParserErrInfo) -> ParserErr) -> LangErr {
-        LangErr::Parser(variant(ParserErrInfo { pos: self.tok_pos }))
+    fn fail(&self, variant: fn(ParserErrInfo) -> ParserErr) -> ParserErr {
+        variant(ParserErrInfo { pos: self.tok_pos })
     }
 
     /**
      * This function was decomposed from parse function in order
      * to be able to handle AstNode differently in some cases.
      */
-    fn get_node_from_char(&mut self, c: &u8) -> Result<Option<AstNode>, LangErr> {
+    fn get_node_from_char(&mut self, c: &u8) -> Result<Option<AstNode>, ParserErr> {
         if Self::is_separator(c) {
             self.advance();
             Ok(None)
@@ -162,7 +159,7 @@ impl<'a> Prelude<'a> {
         Self::is_separator(c) || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
     }
 
-    fn number_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
+    fn number_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let mut state = FstNumState::Start;
         let tok_start = self.tok_pos;
 
@@ -261,7 +258,7 @@ impl<'a> Prelude<'a> {
         *char == b'\n'
     }
 
-    fn string_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
+    fn string_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let tok_start = self.tok_pos;
         self.advance();
 
@@ -325,7 +322,7 @@ impl<'a> Prelude<'a> {
         }
     }
 
-    fn identifier_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
+    fn identifier_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let start = self.tok_pos;
 
         while let Some(c) = self.peek() {
@@ -389,7 +386,7 @@ impl<'a> Prelude<'a> {
         Ok(false)
     }
 
-    fn list_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
+    fn list_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let start = self.tok_pos;
         self.advance();
         let mut children: Vec<Box<AstNode>> = vec![];
@@ -444,7 +441,7 @@ impl<'a> Prelude<'a> {
         Ok(false)
     }
 
-    fn dict_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
+    fn dict_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let start = self.tok_pos;
         self.advance();
 
@@ -527,7 +524,7 @@ impl<'a> Prelude<'a> {
         *char == T_RIGHT_PAREN
     }
 
-    fn call_validate_name(&self, name: &str) -> Result<CallKind, LangErr> {
+    fn call_validate_name(&self, name: &str) -> Result<CallKind, ParserErr> {
         // Anonymous function
         if name.is_empty() {
             return Ok(CallKind::Anon);
@@ -539,7 +536,7 @@ impl<'a> Prelude<'a> {
         }
     }
 
-    fn call_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
+    fn call_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let call_start = self.tok_pos;
 
         // Go to the start of the function name.
@@ -614,7 +611,7 @@ impl<'a> Prelude<'a> {
         Self::is_separator(c) || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
     }
 
-    fn slot_consume(&mut self) -> Result<Option<AstNode>, LangErr> {
+    fn slot_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let start = self.tok_pos;
 
         // Exclude slot prefix.
@@ -667,12 +664,8 @@ impl<'a> Prelude<'a> {
 #[cfg(test)]
 mod tests {
     use crate::{AstNode, CallKind, Compound, Prelude, Primitive, Span};
-    use LangErr::Parser;
     use elise_ast::KeyValuePair;
-    use elise_errors::{
-        LangErr,
-        errors_parser::{ParserErr, ParserErrInfo},
-    };
+    use elise_errors::errors_parser::{ParserErr, ParserErrInfo};
 
     // ==================================================================
     // NUMBER TESTS START
@@ -696,7 +689,7 @@ mod tests {
         for (token, pos) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token.as_bytes()).parse(),
-                Err(Parser(ParserErr::InvalNum(ParserErrInfo { pos })))
+                Err(ParserErr::InvalNum(ParserErrInfo { pos }))
             );
         }
     }
@@ -708,7 +701,7 @@ mod tests {
         for (token, pos) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token.as_bytes()).parse(),
-                Err(Parser(ParserErr::InvalNum(ParserErrInfo { pos })))
+                Err(ParserErr::InvalNum(ParserErrInfo { pos }))
             );
         }
     }
@@ -720,7 +713,7 @@ mod tests {
         for (token, pos) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token.as_bytes()).parse(),
-                Err(Parser(ParserErr::InvalNum(ParserErrInfo { pos })))
+                Err(ParserErr::InvalNum(ParserErrInfo { pos }))
             );
         }
     }
@@ -732,7 +725,7 @@ mod tests {
         for (token, pos) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token.as_bytes()).parse(),
-                Err(Parser(ParserErr::InvalNum(ParserErrInfo { pos })))
+                Err(ParserErr::InvalNum(ParserErrInfo { pos }))
             );
         }
     }
@@ -742,7 +735,7 @@ mod tests {
         let code = "-".to_string();
         assert_eq!(
             Prelude::new(&code.as_bytes()).parse(),
-            Err(Parser(ParserErr::InvalNum(ParserErrInfo { pos: 1 })))
+            Err(ParserErr::InvalNum(ParserErrInfo { pos: 1 }))
         );
     }
 
@@ -843,7 +836,7 @@ mod tests {
         for (token, pos) in forbidded_tokens {
             assert_eq!(
                 Prelude::new(token.as_bytes()).parse(),
-                Err(Parser(ParserErr::InvalNum(ParserErrInfo { pos })))
+                Err(ParserErr::InvalNum(ParserErrInfo { pos }))
             );
         }
     }
@@ -898,7 +891,7 @@ mod tests {
                     .as_bytes()
             )
             .parse(),
-            Err(Parser(ParserErr::InvalStr(ParserErrInfo { pos: 6 })))
+            Err(ParserErr::InvalStr(ParserErrInfo { pos: 6 }))
         );
     }
 
@@ -1013,7 +1006,7 @@ mod tests {
         for (identifier, pos, err) in identifiers {
             assert_eq!(
                 Prelude::new(identifier.as_bytes()).parse(),
-                Err(Parser(err(ParserErrInfo { pos })))
+                Err(err(ParserErrInfo { pos }))
             );
         }
     }
@@ -1112,7 +1105,7 @@ mod tests {
         let code = "[[1, 3]";
         assert_eq!(
             Prelude::new(code.as_bytes()).parse(),
-            Err(Parser(ParserErr::UnexpEoFile(ParserErrInfo { pos: 7 })))
+            Err(ParserErr::UnexpEoFile(ParserErrInfo { pos: 7 }))
         );
     }
 
@@ -1238,7 +1231,7 @@ mod tests {
         let code = "{ \"a\" 1, \"b\" }";
         assert_eq!(
             Prelude::new(code.as_bytes()).parse(),
-            Err(Parser(ParserErr::InvalDictPair(ParserErrInfo { pos: 13 })))
+            Err(ParserErr::InvalDictPair(ParserErrInfo { pos: 13 }))
         );
     }
 
@@ -1255,7 +1248,7 @@ mod tests {
         for (input, pos) in inputs {
             assert_eq!(
                 Prelude::new(input.as_bytes()).parse(),
-                Err(Parser(ParserErr::UnexpDictKey(ParserErrInfo { pos })))
+                Err(ParserErr::UnexpDictKey(ParserErrInfo { pos }))
             );
         }
     }
@@ -1269,7 +1262,7 @@ mod tests {
         for (input, pos, err) in inputs {
             assert_eq!(
                 Prelude::new(input.as_bytes()).parse(),
-                Err(Parser(err(ParserErrInfo { pos })))
+                Err(err(ParserErrInfo { pos }))
             );
         }
     }
@@ -1370,7 +1363,7 @@ mod tests {
         let code = ".some-fn(2 2 3))";
         assert_eq!(
             Prelude::new(code.as_bytes()).parse(),
-            Err(Parser(ParserErr::UnexpTok(ParserErrInfo { pos: 15 })))
+            Err(ParserErr::UnexpTok(ParserErrInfo { pos: 15 }))
         );
     }
 
@@ -1379,7 +1372,7 @@ mod tests {
         let code = ". some-fn()";
         assert_eq!(
             Prelude::new(code.as_bytes()).parse(),
-            Err(Parser(ParserErr::InvalFnName(ParserErrInfo { pos: 9 })))
+            Err(ParserErr::InvalFnName(ParserErrInfo { pos: 9 }))
         );
     }
 
@@ -1408,7 +1401,7 @@ mod tests {
         for (identifier, pos) in identifiers {
             assert_eq!(
                 Prelude::new(&format!(".{}()", identifier).as_bytes()).parse(),
-                Err(Parser(ParserErr::InvalFnName(ParserErrInfo { pos })))
+                Err(ParserErr::InvalFnName(ParserErrInfo { pos }))
             );
         }
     }
@@ -1418,7 +1411,7 @@ mod tests {
         let code = "()";
         assert_eq!(
             Prelude::new(code.as_bytes()).parse(),
-            Err(Parser(ParserErr::UnexpTok(ParserErrInfo { pos: 0 })))
+            Err(ParserErr::UnexpTok(ParserErrInfo { pos: 0 }))
         );
     }
 
@@ -1496,7 +1489,7 @@ mod tests {
         for (slot, pos) in slots {
             assert_eq!(
                 Prelude::new(slot.as_bytes()).parse(),
-                Err(Parser(ParserErr::UnexpTok(ParserErrInfo { pos })))
+                Err(ParserErr::UnexpTok(ParserErrInfo { pos }))
             );
         }
     }
@@ -1527,7 +1520,7 @@ mod tests {
         for (depth_case, pos, err) in depth_cases {
             assert_eq!(
                 Prelude::new(depth_case.as_bytes()).parse(),
-                Err(Parser(err(ParserErrInfo { pos })))
+                Err(err(ParserErrInfo { pos }))
             );
         }
     }
