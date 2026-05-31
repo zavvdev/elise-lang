@@ -189,7 +189,7 @@ mod tests {
         SCHEMA_FN_BOOL, SCHEMA_FN_NUMBER, SCHEMA_FN_OPTIONAL, SCHEMA_FN_ROOT, SCHEMA_FN_ROW,
         SCHEMA_FN_STRING,
     };
-    use elise_errors::{errors_csv_schema_resolver::CsvSchemaResolverErr::*};
+    use elise_errors::errors_csv_schema_resolver::CsvSchemaResolverErr::*;
     use elise_types::Span;
 
     // We don't care about Span values here since

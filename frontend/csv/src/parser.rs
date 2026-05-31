@@ -58,7 +58,11 @@ impl<'a> CsvParser<'a> {
         value.parse::<i64>().is_ok() || value.parse::<f64>().is_ok()
     }
 
-    fn annotate_col(value: &str, row_index: usize, col_index: usize) -> Result<CsvCol, CsvParserErr> {
+    fn annotate_col(
+        value: &str,
+        row_index: usize,
+        col_index: usize,
+    ) -> Result<CsvCol, CsvParserErr> {
         let mut result = CsvCol {
             ty: DataSourceFieldType::String,
             value: value.to_string(),
@@ -107,7 +111,7 @@ impl<'a> CsvParser<'a> {
 #[cfg(test)]
 mod tests {
     use crate::parser::{CsvCol, CsvParser, CsvParserRecord};
-    use elise_errors::{errors_csv_parser::CsvParserErr::*};
+    use elise_errors::errors_csv_parser::CsvParserErr::*;
     use elise_types::DataSourceFieldType;
 
     #[test]
