@@ -20,6 +20,8 @@ Source code
 - [x] Add csv schema resolution (take schema ast and build CsvResolvedSchema
       that maps each col to type descriptor)
 
+- [ ] Add support for escape chars in string literals
+
 - [ ] Combine CsvResolvedSchema with parsed csv records to produce TypedDataGraph
       IR that describes data in agnostic way.
 
@@ -40,6 +42,8 @@ Source code
 - [ ] VM
 
     - [ ] ...
+
+- [ ] Research on how to read files effectively
 
 - [ ] Optimizations
 

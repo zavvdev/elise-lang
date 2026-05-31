@@ -1,8 +1,9 @@
-/**
- * This file represents configuration type
- * that must include all necessary information
- * for the program in order to start execution.
- */
+//! # Config module
+//!
+//! This module represents configuration
+//! that must include all necessary information
+//! for the program in order to start execution.
+
 pub mod config;
 
 use std::collections::HashMap;
@@ -108,15 +109,15 @@ impl Conf {
         }
     }
 
-    // Takes a reference to the list of original argument strings
-    // and returns a hash-map of parsed data. Lifetimes tied to the
-    // original owned array of arguments that was created when
-    // Conf::new was called, so we don't re-allocate but keeping
-    // original arguments alive until we construct Conf struct from them.
-    // This function should not perform any validation. It just
-    // extract values from the input.
-    // If value of some argument wasn't provided, an empty string
-    // has to be inserted as a value.
+    /// Takes a reference to the list of original argument strings
+    /// and returns a hash-map of parsed data. Lifetimes tied to the
+    /// original owned array of arguments that was created when
+    /// Conf::new was called, so we don't re-allocate but keeping
+    /// original arguments alive until we construct Conf struct from them.
+    /// This function should not perform any validation. It just
+    /// extract values from the input.
+    /// If value of some argument wasn't provided, an empty string
+    /// has to be inserted as a value.
     fn parse_args(args: &[String]) -> HashMap<&str, &str> {
         let mut res = HashMap::new();
 
@@ -133,17 +134,17 @@ impl Conf {
         res
     }
 
-    // Takes a reference to the hash-map created by parse_args
-    // and returns a new hash-map. Both hash-maps are tied to the
-    // lifetime of the original vector of strings that is owned by
-    // the Conf::new caller.
-    // This must build the final HashMap of arguments that must
-    // contain all possible arguments as key-value pairs with valid values.
-    //
-    // If any argument is required but not provided, this function must return an error.
-    // If any argument is provided but has invalid value, this function must return an error.
-    // If any argument is not provided and not required it must be set to
-    // the respective default value if available.
+    /// Takes a reference to the hash-map created by parse_args
+    /// and returns a new hash-map. Both hash-maps are tied to the
+    /// lifetime of the original vector of strings that is owned by
+    /// the Conf::new caller.
+    /// This must build the final HashMap of arguments that must
+    /// contain all possible arguments as key-value pairs with valid values.
+    ///
+    /// If any argument is required but not provided, this function must return an error.
+    /// If any argument is provided but has invalid value, this function must return an error.
+    /// If any argument is not provided and not required it must be set to
+    /// the respective default value if available.
     fn build_valid_args<'a>(
         user_args: &HashMap<&'a str, &'a str>,
         mode: &str,
@@ -205,9 +206,9 @@ impl Conf {
         Ok(res)
     }
 
-    // Takes a reference to the array of strings that are raw arguments.
-    // We don't own the data here, so the original owned data just reused and not
-    // copied.
+    /// Takes a reference to the array of strings that are raw arguments.
+    /// We don't own the data here, so the original owned data just reused and not
+    /// copied.
     pub fn new(args: &[String]) -> Result<Self, ConfErr> {
         // Parse raw arguments. This variable contains only arguments that were provided by
         // user. So if some argument is not provided, it won't be present in this data structure.

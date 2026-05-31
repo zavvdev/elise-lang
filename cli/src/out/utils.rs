@@ -8,6 +8,7 @@ pub struct SourceCodeSlice {
     pub col: usize,
 }
 
+/// Slices the source code in order to preview an error at `char_pos`.
 pub fn get_source_code_slice(source_code: &[u8], char_pos: usize) -> Option<SourceCodeSlice> {
     if source_code.is_empty() {
         return None;
