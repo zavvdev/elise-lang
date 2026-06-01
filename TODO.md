@@ -20,12 +20,6 @@ Source code
 - [x] Add csv schema resolution (take schema ast and build CsvResolvedSchema
       that maps each col to type descriptor)
 
-- [x] Add support for escape chars in string literals
-
-- [x] Span is wrong for strings with UTF-8 chars like emoji
-
-- [ ] Update error reporting with code snippet
-
 - [ ] Combine CsvResolvedSchema with parsed csv records to produce TypedDataGraph
       IR that describes data in agnostic way.
 

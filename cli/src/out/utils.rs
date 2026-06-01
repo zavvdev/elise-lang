@@ -8,52 +8,72 @@ pub struct SourceCodeSlice {
     pub col: usize,
 }
 
-/// Slices the source code in order to preview an error at `char_pos`.
-pub fn get_source_code_slice(source_code: &[u8], char_pos: usize) -> Option<SourceCodeSlice> {
+/// Slices the source code in order to preview an error at `byte_pos`.
+pub fn get_source_code_slice(source_code: &[u8], byte_pos: usize) -> Option<SourceCodeSlice> {
+    // The idea is to show a source code slice for the user with the
+    // exact position that caused error. You can see an example below:
+    //
+    // At 4:14
+    //  .fn(allowance-predicate [row]
+    //    .eq(.get(1row, "can-smoke")), true))
+    //
+    // -------------^
+    //
+    // Instead of showing a slice from start of the row to the `byte_pos`,
+    // we also preview one row above + current row until the end.
     if source_code.is_empty() {
         return None;
     }
 
-    let mut row = 0;
-    let mut col = 0;
+    // Early from_utf8 conversion done once upfront so we can iterate chars.
+    // This also lets us return None early if the input isn't valid UTF-8.
+    let source_str = from_utf8(source_code).ok()?;
 
-    let mut previous_row_start = 0;
-    let mut preview_row_start = 0;
-    let mut preview_row_end = 0;
+    // Row number at which we have an error.
+    let mut error_row: usize = 0;
+    // Character column, not byte offset.
+    let mut error_col: usize = 0;
 
-    let mut found = false;
+    // Byte offset where the line preceding the error line starts.
+    let mut preceding_line_start: usize = 0;
+    // Byte offset where the error line starts.
+    let mut error_line_start: usize = 0;
+    // Byte offset where the error line ends (advances as we scan).
+    let mut error_line_end: usize = 0;
 
-    for c in source_code {
-        if preview_row_end == char_pos {
-            found = true;
+    let mut error_pos_found = false;
+
+    // Iterate over chars in order to preserve Unicode characters
+    // even if they consist of more than one byte.
+    // So `ch` here is one visible character.
+    for ch in source_str.chars() {
+        if error_line_end == byte_pos {
+            error_pos_found = true;
         }
+        // len_utf8 returns the number of bytes this `ch` would need if encoded in UTF-8.
+        // That number of bytes is always between 1 and 4, inclusive.
+        let ch_byte_len = ch.len_utf8();
+        error_line_end += ch_byte_len;
 
-        preview_row_end += 1;
-
-        if *c == b'\n' {
-            if found {
+        if ch == '\n' {
+            if error_pos_found {
                 break;
             }
-
-            previous_row_start = preview_row_start;
-            preview_row_start = preview_row_end;
-
-            row += 1;
-            col = 0;
-        } else if !found {
-            col += 1;
+            preceding_line_start = error_line_start;
+            error_line_start = error_line_end;
+            error_row += 1;
+            error_col = 0;
+        } else if !error_pos_found {
+            // Count characters, not bytes.
+            error_col += 1;
         }
     }
 
-    if let Ok(source_code) = from_utf8(source_code) {
-        return Some(SourceCodeSlice {
-            slice: source_code[previous_row_start..preview_row_end].to_string(),
-            row: row + 1,
-            col: col + 1,
-        });
-    }
-
-    None
+    Some(SourceCodeSlice {
+        slice: source_str[preceding_line_start..error_line_end].to_string(),
+        row: error_row + 1,
+        col: error_col + 1,
+    })
 }
 
 pub fn print_err(message: &str, label: Option<&str>) {
