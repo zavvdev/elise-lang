@@ -14,6 +14,7 @@ pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
         UnexpDictKey(err_info) => ("Unexpected dictionary key", err_info),
         InvalNum(err_info) => ("Invalid number", err_info),
         InvalStr(err_info) => ("Invalid string", err_info),
+        UntermStr(err_info) => ("Unterminated string", err_info),
         InvalDictPair(err_info) => ("Invalid dictionary key value pair", err_info),
         InvalFnName(err_info) => ("Invalid function name", err_info),
     };

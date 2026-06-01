@@ -246,30 +246,66 @@ impl<'a> Prelude<'a> {
         *char == b'\n' || *char == b'\r'
     }
 
+    fn string_is_escape(char: &u8) -> bool {
+        *char == b'\\'
+    }
+
+    fn string_decode_escape(char: Option<u8>) -> Option<u8> {
+        let c = char?;
+        Some(match c {
+            b'\\' => b'\\',
+            b'r' => b'\r',
+            b'n' => b'\n',
+            b't' => b'\t',
+            b'0' => b'\0',
+            b'"' => b'"',
+            any => any,
+        })
+    }
+
     /// Consumes a string literal preserving UTF-8 encoding.
     /// Regardless of the contents, Span will always point
     /// to the start and end position of bytes instead of
     /// encoded characters.
     fn string_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
+        // Capture start pos before advancing forward in order to
+        // construct valid Span.
         let start = self.tok_pos;
+        let mut closed = false;
+        let mut slice: Vec<u8> = vec![];
+        // Skip open quotes.
         self.advance();
 
         while let Some(c) = self.peek() {
+            let mut next_byte = c;
+
             if Self::string_is_end(&c) {
+                closed = true;
                 self.advance();
                 break;
             }
             if Self::string_is_forbidden_char(&c) {
                 return Err(self.fail(ParserErr::InvalStr));
             }
+            if Self::string_is_escape(&c) {
+                // Skip escaping back slash.
+                self.advance();
+                if let Some(esc) = Self::string_decode_escape(self.peek()) {
+                    next_byte = esc;
+                }
+            }
+            slice.push(next_byte);
             self.advance();
         }
 
+        if !closed {
+            return Err(self.fail(ParserErr::UntermStr));
+        }
+
         let end = self.tok_pos;
-        let slice = &self.source_code[start + 1..end - 1];
 
         // Preserve UTF-8 encoding for string.
-        let value = std::str::from_utf8(slice).map_err(|_| self.fail(ParserErr::InvalStr))?;
+        let value = std::str::from_utf8(&slice).map_err(|_| self.fail(ParserErr::InvalStr))?;
 
         Ok(Some(AstNode::String(Primitive {
             value: value.to_owned(),
@@ -869,8 +905,8 @@ mod tests {
     fn string_should_not_allow_new_line() {
         assert_eq!(
             Prelude::new(
-                "\"Hello
-            World\""
+                r#""Hello
+            World""#
                     .as_bytes()
             )
             .parse(),
@@ -879,15 +915,26 @@ mod tests {
     }
 
     #[test]
+    fn string_should_not_allow_unterminated() {
+        let strings = vec![(r#""Hello"#, 6), (r#""Hello\""#, 8)];
+        for (string, end) in strings {
+            assert_eq!(
+                Prelude::new(string.as_bytes()).parse(),
+                Err(ParserErr::UntermStr(ParserErrInfo { pos: end }))
+            );
+        }
+    }
+
+    #[test]
     fn string_should_parse() {
         let strings = vec![
-            ("\"\"", 2),
-            ("\"Hello\"", 7),
-            ("\"Hello World\"", 13),
-            ("\"Hello       world!\"", 20),
+            (r#""""#, 2),
+            (r#""Hello""#, 7),
+            (r#""Hello World""#, 13),
+            (r#""Hello       world!""#, 20),
             // Span is always bytes aware.
-            // Each this emoji is 4 bytes.
-            ("\"123 2323 😄😄\"", 19),
+            // Each of these emojis are 4 bytes.
+            (r#""123 2323 😄😄""#, 19),
         ];
         for (string, end) in strings {
             let ast = Prelude::new(string.as_bytes()).parse();
@@ -901,6 +948,29 @@ mod tests {
                         .get(1)
                         .unwrap()
                         .to_string(),
+                    span: Span { start: 0, end },
+                })])
+            );
+        }
+    }
+
+    #[test]
+    fn string_should_parse_escape_chars() {
+        let strings = vec![
+            (r#""\"""#, "\"", 4),
+            (r#""Hello\r""#, "Hello\r", 9),
+            (r#""Hello\n""#, "Hello\n", 9),
+            (r#""Hello\0""#, "Hello\0", 9),
+            (r#""Hello\\""#, "Hello\\", 9),
+            (r#""Hello\tworld!""#, "Hello\tworld!", 15),
+            (r#""\y""#, "y", 4),
+        ];
+        for (string, expected, end) in strings {
+            let ast = Prelude::new(string.as_bytes()).parse();
+            assert_eq!(
+                ast,
+                Ok(vec![AstNode::String(Primitive {
+                    value: expected.to_string(),
                     span: Span { start: 0, end },
                 })])
             );

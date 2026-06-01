@@ -1,3 +1,8 @@
+//! # Ast type definitions module
+//!
+//! This module consists of AST related type definitions
+//! and implementations.
+
 use elise_types::Span;
 
 /// Represents a primitive value that does not
@@ -15,6 +20,7 @@ pub struct Primitive {
 /// lists, dictionaries or functions.
 #[derive(Debug, PartialEq)]
 pub struct Compound {
+    // Slice of bytes.
     pub span: Span,
     pub children: Vec<Box<AstNode>>,
 }
@@ -27,6 +33,7 @@ pub enum CallKind {
     Anon,
 }
 
+/// Dictionary key-value pair representation.
 #[derive(Debug, PartialEq)]
 pub struct KeyValuePair {
     pub key: String,

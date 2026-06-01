@@ -1,5 +1,3 @@
-"hello\""
-
 .define(AGE-BOUNDARY 18)
 
 .fn(allowance-predicate [row]

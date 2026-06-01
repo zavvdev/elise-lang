@@ -13,6 +13,7 @@ pub enum ParserErr {
     UnexpDictKey(ParserErrInfo),
     InvalNum(ParserErrInfo),
     InvalStr(ParserErrInfo),
+    UntermStr(ParserErrInfo),
     InvalDictPair(ParserErrInfo),
     InvalFnName(ParserErrInfo),
 }
