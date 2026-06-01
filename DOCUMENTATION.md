@@ -78,3 +78,20 @@ Composition root. Orchestrates the pipeline, handles all user-facing error displ
 
 **Cross-cutting concerns** — live in `shared/`. No single subsystem owns them; pulling them into any one crate would force incorrect dependencies across the graph.
 - `shared/builtins`, `shared/errors`, `shared/types`.
+
+## Design decisions
+
+### General execution pipeline
+
+```
+Source code
+    -> Prelude (parser)
+    -> Harmony (semantic-analyzer)
+    -> Maestro (compiler)
+    -> Score (bytecode)
+    -> Sonata (VM)
+```
+
+### Lexing & Parsing
+
+Elise syntax is designed to be Code as Data where source is already shaped like an AST. Given that, lexing and parsing are combined into a single Parser step in order to reduce number of iterations and build AST right away.
