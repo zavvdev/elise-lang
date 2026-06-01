@@ -13,7 +13,7 @@
 - [x] Add csv schema resolution (take schema ast and build CsvResolvedSchema
       that maps each col to type descriptor)
 
-- [ ] Combine CsvResolvedSchema with parsed csv records to produce TypedDataGraph
+- [ ] Combine CsvResolvedSchema with parsed csv records to produce DataBindingTable 
       IR that describes data in agnostic way.
 
 - [ ] Semantic analyzer
@@ -40,7 +40,7 @@
 
 ### Deterministic Finite Automata theory
 
-1. - [ ] [Basics](https://cs.stanford.edu/people/eroberts/courses/soco/projects/2004-05/automata-theory/basics.html#fsm)
+1. - [x] [Basics](https://cs.stanford.edu/people/eroberts/courses/soco/projects/2004-05/automata-theory/basics.html#fsm)
 
 2. - [ ] [Theory of computation](https://www.geeksforgeeks.org/theory-of-computation/theory-of-computation-automata-tutorials/)
 
