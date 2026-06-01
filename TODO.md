@@ -1,5 +1,41 @@
 # TODO
 
+## Things to implement
+ 
+- [x] CLI
+  
+- [x] Parser
+
+- [x] Schema file parsing
+
+- [x] Csv data file parsing
+
+- [x] Add csv schema resolution (take schema ast and build CsvResolvedSchema
+      that maps each col to type descriptor)
+
+- [ ] Combine CsvResolvedSchema with parsed csv records to produce TypedDataGraph
+      IR that describes data in agnostic way.
+
+- [ ] Semantic analyzer
+
+    - [ ] Source code
+
+    - [ ] Schema
+
+- [ ] Compiler
+
+    - [ ] ...
+
+- [ ] VM
+
+    - [ ] ...
+
+- [ ] Optimizations
+    
+    - [ ] Research on how to read files effectively
+    
+        - [ ] Read data file in chunks (streaming parser)
+
 ## Things to learn
 
 ### Deterministic Finite Automata theory
@@ -49,39 +85,3 @@
 2. - [ ] [How to write a streaming parser](https://jsoneditoronline.org/indepth/parse/streaming-parser/)
 
 ...
-
-## Things to implement
- 
-- [x] CLI
-  
-- [x] Parser
-
-- [x] Schema file parsing
-
-- [x] Csv data file parsing
-
-- [x] Add csv schema resolution (take schema ast and build CsvResolvedSchema
-      that maps each col to type descriptor)
-
-- [ ] Combine CsvResolvedSchema with parsed csv records to produce TypedDataGraph
-      IR that describes data in agnostic way.
-
-- [ ] Semantic analyzer
-
-    - [ ] Source code
-
-    - [ ] Schema
-
-- [ ] Compiler
-
-    - [ ] ...
-
-- [ ] VM
-
-    - [ ] ...
-
-- [ ] Optimizations
-    
-    - [ ] Research on how to read files effectively
-    
-        - [ ] Read data file in chunks (streaming parser)
