@@ -18,11 +18,9 @@ use elise_errors::errors_parser::{ParserErr, ParserErrInfo};
 //
 // ==================================================================
 
-/**
- * Finite automata states for parsing numbers.
- */
+/// Deterministic Finite Automata states for parsing numbers.
 #[derive(Debug)]
-enum FstNumState {
+enum DfaNumState {
     Start,
     Sign,
     Zero,
@@ -34,17 +32,10 @@ enum FstNumState {
     Expon,
 }
 
-/**
- * Since strings and chars in Rust are UTF-8 encoded,
- * which means that even if our char fits into 1 byte (ASCII)
- * we still have 4 bytes allocated for it. So we split our
- * source code input into raw bytes which takes less memory
- * space and compare tokens as bytes.
- * For preserving UTF-8 encodings for Elise Strings we just
- * slice string bytes and convert to UTF-8 that particular
- * slice of bytes.
- */
 pub struct Prelude<'a> {
+    // We expect to have a single char per byte (ASCII) for the
+    // language itself. String literals should support UTF-8 and
+    // they must be converted using `from_utf8` in place.
     source_code: &'a [u8],
     tok_pos: usize,
     // Track open and closed brackets via stack.
@@ -56,14 +47,13 @@ impl<'a> Prelude<'a> {
         Self {
             source_code,
             tok_pos: 0,
+            // For tracking open/closed parens.
             depth_stack: vec![],
         }
     }
 
-    /**
-     * We do not use this method for recursive parsing. It should only
-     * be used by the end user that wants to get the whole parsing result.
-     */
+    /// We do not use this method for recursive parsing. It should only
+    /// be used by the end user that wants to get the whole parsing result.
     pub fn parse(&mut self) -> Result<Vec<AstNode>, ParserErr> {
         let mut ast: Vec<AstNode> = vec![];
 
@@ -84,10 +74,8 @@ impl<'a> Prelude<'a> {
         variant(ParserErrInfo { pos: self.tok_pos })
     }
 
-    /**
-     * This function was decomposed from parse function in order
-     * to be able to handle AstNode differently in some cases.
-     */
+    /// This function was decomposed from parse function in order
+    /// to be able to handle AstNode differently in some cases.
     fn get_node_from_char(&mut self, c: &u8) -> Result<Option<AstNode>, ParserErr> {
         if Self::is_separator(c) {
             self.advance();
@@ -160,11 +148,11 @@ impl<'a> Prelude<'a> {
     }
 
     fn number_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
-        let mut state = FstNumState::Start;
+        let mut state = DfaNumState::Start;
         let tok_start = self.tok_pos;
 
         while let Some(c) = self.peek() {
-            use FstNumState::*;
+            use DfaNumState::*;
 
             state = match (&state, c) {
                 (Start, T_MINUS) => {
@@ -216,7 +204,7 @@ impl<'a> Prelude<'a> {
 
         // Return an error we ended up with invalid state.
         match state {
-            FstNumState::Zero | FstNumState::Int | FstNumState::Frac | FstNumState::Scient => {}
+            DfaNumState::Zero | DfaNumState::Int | DfaNumState::Frac | DfaNumState::Scient => {}
             _ => {
                 return Err(self.fail(ParserErr::InvalNum));
             }
@@ -255,11 +243,15 @@ impl<'a> Prelude<'a> {
     }
 
     fn string_is_forbidden_char(char: &u8) -> bool {
-        *char == b'\n'
+        *char == b'\n' || *char == b'\r'
     }
 
+    /// Consumes a string literal preserving UTF-8 encoding.
+    /// Regardless of the contents, Span will always point
+    /// to the start and end position of bytes instead of
+    /// encoded characters.
     fn string_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
-        let tok_start = self.tok_pos;
+        let start = self.tok_pos;
         self.advance();
 
         while let Some(c) = self.peek() {
@@ -273,24 +265,15 @@ impl<'a> Prelude<'a> {
             self.advance();
         }
 
+        let end = self.tok_pos;
+        let slice = &self.source_code[start + 1..end - 1];
+
         // Preserve UTF-8 encoding for string.
-        let value = from_utf8(&self.source_code[tok_start + 1..self.tok_pos - 1]);
-
-        if value.is_err() {
-            return Err(self.fail(ParserErr::InvalStr));
-        }
-
-        let value = value.unwrap();
-
-        // We add 2 in order to include quote start and end.
-        let tok_end = tok_start + value.chars().count() + 2;
+        let value = std::str::from_utf8(slice).map_err(|_| self.fail(ParserErr::InvalStr))?;
 
         Ok(Some(AstNode::String(Primitive {
-            value: value.to_string(),
-            span: Span {
-                start: tok_start,
-                end: tok_end,
-            },
+            value: value.to_owned(),
+            span: Span { start, end },
         })))
     }
 
@@ -902,7 +885,9 @@ mod tests {
             ("\"Hello\"", 7),
             ("\"Hello World\"", 13),
             ("\"Hello       world!\"", 20),
-            ("\"123 2323 😄😄\"", 13),
+            // Span is always bytes aware.
+            // Each this emoji is 4 bytes.
+            ("\"123 2323 😄😄\"", 19),
         ];
         for (string, end) in strings {
             let ast = Prelude::new(string.as_bytes()).parse();

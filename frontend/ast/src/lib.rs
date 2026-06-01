@@ -1,23 +1,26 @@
 use elise_types::Span;
 
-/**
- * Primitive values cannot have children.
- */
+/// Represents a primitive value that does not
+/// have any nested values inside. Numbers, strings, bools etc.
 #[derive(Debug, PartialEq)]
 pub struct Primitive {
+    // Interpreted runtime string. Encoding aware.
     pub value: String,
+    // Pointer to the original source of bytes.
+    // Does not aware of any encoding.
     pub span: Span,
 }
 
-/**
- * Any other value that needs to have nested values.
- */
+/// Represents a value that consists of other values like
+/// lists, dictionaries or functions.
 #[derive(Debug, PartialEq)]
 pub struct Compound {
     pub span: Span,
     pub children: Vec<Box<AstNode>>,
 }
 
+/// Different kinds of functions.
+/// We support named and anonymous for now.
 #[derive(Debug, PartialEq)]
 pub enum CallKind {
     Named(String),
@@ -37,10 +40,6 @@ pub struct KeyValuePair {
     pub span: Span,
 }
 
-/**
- * We treat DictPair as an AstNode in order to be consistent
- * and always provide ast nodes as children for compound values.
- */
 #[derive(Debug, PartialEq)]
 pub enum AstNode {
     Call((CallKind, Compound)),
@@ -50,6 +49,8 @@ pub enum AstNode {
     Null(Primitive),
     List(Compound),
     Dict(Compound),
+    // We treat DictPair as an AstNode in order to be consistent
+    // and always provide ast nodes as children for compound values.
     DictPair(KeyValuePair),
     Identifier(Primitive),
     Slot(Primitive),

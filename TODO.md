@@ -22,6 +22,8 @@ Source code
 
 - [ ] Add support for escape chars in string literals
 
+- [x] Span is wrong for strings with UTF-8 chars like emoji
+
 - [ ] Combine CsvResolvedSchema with parsed csv records to produce TypedDataGraph
       IR that describes data in agnostic way.
 
