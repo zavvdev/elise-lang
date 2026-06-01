@@ -129,9 +129,9 @@ This data structure is data agnostic and can be used for `csv` and `json`.
 
 ### Compilation Stage
 
-During compilation stage, we create some `ConstantPool` structure which is represented as a Vector, and a `ResolutionCash` (names can be different) HashMap.
+During compilation stage, we create some `ConstantPool` structure which is represented as a Vector, and a `ResolutionCache` (names can be different) HashMap.
 
-When we walk AST and encounter data access procedure, we build a `Path` from `PathSegments` and resolve metadata from `DataBindingTable` using that `Path`. Now when we have a data, we push it into `ConstantPool` and obtain an index (last element). Then we cash that index into `ResolutionCash` (Path -> Index) so we don't need to construct it every time. Once we resolved the data, we can drop it from DataBindingTable which will be discarded eventually since it's not needed after compilation stage.
+When we walk AST and encounter data access procedure, we build a `Path` from `PathSegments` and resolve metadata from `DataBindingTable` using that `Path`. Now when we have a data, we push it into `ConstantPool` and obtain an index (last element). Then we cache that index into `ResolutionCache` (Path -> Index) so we don't need to construct it every time. Once we resolved the data, we can drop it from DataBindingTable which will be discarded eventually since it's not needed after compilation stage.
 
 So our compiler now can emit bytecode where data load procedures point to a `ConstantPool` index.
 And after the compilation we can also serialize that `ConstantPool` into a deserializable data for further usage in VM.
