@@ -1,7 +1,9 @@
+pub mod errors_binder;
 pub mod errors_csv_parser;
 pub mod errors_csv_schema_resolver;
 pub mod errors_parser;
 
+use errors_binder::BinderErr;
 use errors_csv_parser::CsvParserErr;
 use errors_csv_schema_resolver::CsvSchemaResolverErr;
 use errors_parser::ParserErr;
@@ -12,4 +14,5 @@ pub enum LangErr {
     ParserSchema(ParserErr),
     CsvParser(CsvParserErr),
     CsvSchemaResolver(CsvSchemaResolverErr),
+    Binder(BinderErr),
 }

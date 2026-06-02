@@ -9,11 +9,13 @@ pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 
+use elise_binder::binder_csv::CsvDataBinder;
+use elise_binder::binding_table::Binder;
 use elise_csv::{
     parser::{CsvParser, CsvParserRecord},
     schema_resolver::CsvSchemaResolver,
 };
-use elise_errors::{LangErr, LangErr::*, errors_csv_parser::CsvParserErr};
+use elise_errors::{LangErr, errors_csv_parser::CsvParserErr};
 use elise_parser::Prelude;
 use rayon::scope;
 use std::time::Instant;
@@ -78,13 +80,17 @@ pub fn run<'a>(
             // Map ParserErr to LangErr::ParserSource in order to differentiate
             // between data being parsed since we can use Prelude for parsing
             // source code or schema source code.
-            let ast = Prelude::new(source_code).parse().map_err(ParserSource);
+            let ast = Prelude::new(source_code)
+                .parse()
+                .map_err(LangErr::ParserSource);
             source_code_ast = Some(ast);
         });
         s.spawn(|_| {
             // Map ParserErr to LangErr::ParserSchema since data schema syntax
             // is the same as a source code syntax.
-            let ast = Prelude::new(data_schema).parse().map_err(ParserSchema);
+            let ast = Prelude::new(data_schema)
+                .parse()
+                .map_err(LangErr::ParserSchema);
             schema_ast = Some(ast);
         });
 
@@ -96,20 +102,25 @@ pub fn run<'a>(
         }
     });
 
-    let source_code_ast = source_code_ast.unwrap()?;
+    let _source_code_ast = source_code_ast.unwrap()?;
     let schema_ast = schema_ast.unwrap()?;
     let parsed_data = parsed_data.unwrap();
 
-    println!("source: {:#?}", source_code_ast);
-
     match parsed_data {
         DataParseResult::Csv(records) => {
-            let rec = records.map_err(CsvParser)?;
+            let rec = records.map_err(LangErr::CsvParser)?;
             let res = CsvSchemaResolver::new(&schema_ast)
                 .resolve()
-                .map_err(CsvSchemaResolver)?;
+                .map_err(LangErr::CsvSchemaResolver)?;
+
             println!("csv records: {:#?}", rec);
             println!("csv resolved schema: {:#?}", res);
+
+            let binding = CsvDataBinder::new(rec, res)
+                .bind()
+                .map_err(LangErr::Binder)?;
+
+            println!("csv binding table: {:#?}", binding);
         }
     }
 

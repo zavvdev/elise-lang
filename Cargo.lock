@@ -80,6 +80,7 @@ name = "elise"
 version = "0.1.0"
 dependencies = [
  "colored",
+ "elise-binder",
  "elise-csv",
  "elise-errors",
  "elise-parser",
@@ -100,6 +101,8 @@ name = "elise-binder"
 version = "0.1.0"
 dependencies = [
  "elise-csv",
+ "elise-errors",
+ "elise-types",
 ]
 
 [[package]]

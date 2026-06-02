@@ -8,3 +8,5 @@ path = "src/lib.rs"
 
 [dependencies]
 elise-csv = { path = "../frontend/csv" }
+elise-types = { path = "../shared/types" }
+elise-errors = { path = "../shared/errors" }

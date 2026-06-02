@@ -21,13 +21,13 @@ use elise_errors::LangErr;
 
 use std::env;
 
-use crate::out::msg_conf;
 use crate::out::msg_csv_parser;
 use crate::out::msg_csv_schema_resolver;
 use crate::out::msg_fsys;
 use crate::out::msg_modes;
 use crate::out::msg_parser;
 use crate::out::utils::{panic_hook, print_bytecode};
+use crate::out::{msg_binder, msg_conf};
 
 fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &[u8]) -> ! {
     use LangErr::*;
@@ -37,6 +37,7 @@ fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &
         ParserSchema(err) => msg_parser::print_err(err, schema_source_code),
         CsvParser(err) => msg_csv_parser::print_err(err),
         CsvSchemaResolver(err) => msg_csv_schema_resolver::print_err(err, schema_source_code),
+        Binder(err) => msg_binder::print_err(err),
     }
 
     std::process::exit(1);

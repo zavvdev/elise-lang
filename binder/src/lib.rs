@@ -1,2 +1,2 @@
 pub mod binder_csv;
-pub mod data_graph;
+pub mod binding_table;

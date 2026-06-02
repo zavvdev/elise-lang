@@ -115,13 +115,13 @@ This structure represents a mapping between **data access paths** and their corr
 ```rust
 enum PathSegment {
     Index(usize),
-    Field(SymbolId),
+    Field(String),
 }
 
 type Path = Vec<PathSegment>;
 
-struct DataBindingTable = {
-    table: HashMap<Path, Descriptor>,
+struct DataBindingTable {
+    table: HashMap<Path, DataDescriptor>,
 }
 ```
 
