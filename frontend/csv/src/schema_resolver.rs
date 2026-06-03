@@ -8,15 +8,15 @@ use elise_errors::errors_csv_schema_resolver::{CsvSchemaResolverErr, CsvSchemaRe
 use elise_types::{DataSourceFieldType, Span};
 
 #[derive(Debug, PartialEq)]
-struct CsvColDescriptor {
-    name: String,
-    ty: DataSourceFieldType,
-    opt: bool,
+pub struct CsvColDescriptor {
+    pub name: String,
+    pub ty: DataSourceFieldType,
+    pub opt: bool,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct CsvResolvedSchema {
-    row: Vec<CsvColDescriptor>,
+    pub row: Vec<CsvColDescriptor>,
 }
 
 pub struct CsvSchemaResolver<'a> {

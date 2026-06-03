@@ -12,7 +12,7 @@ use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise_binder::binder_csv::CsvDataBinder;
 use elise_binder::binding_table::Binder;
 use elise_csv::{
-    parser::{CsvParser, CsvParserRecord},
+    parser::{CsvParser, CsvRow},
     schema_resolver::CsvSchemaResolver,
 };
 use elise_errors::{LangErr, errors_csv_parser::CsvParserErr};
@@ -60,7 +60,7 @@ pub struct ValidateResult<'a> {
 
 /// Result of the data parsing operation.
 enum DataParseResult {
-    Csv(Result<Vec<CsvParserRecord>, CsvParserErr>),
+    Csv(Result<Vec<CsvRow>, CsvParserErr>),
 }
 
 /// Entry point for running the program in 'RUN' mode.

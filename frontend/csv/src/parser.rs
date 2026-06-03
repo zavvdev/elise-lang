@@ -10,15 +10,15 @@ pub struct CsvParser<'a> {
 
 #[derive(Debug, PartialEq)]
 pub struct CsvCol {
-    ty: DataSourceFieldType,
-    value: String,
-    row: usize,
-    col: usize,
+    pub ty: DataSourceFieldType,
+    pub value: String,
+    pub row: usize,
+    pub col: usize,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct CsvParserRecord {
-    pub row: Vec<CsvCol>,
+pub struct CsvRow {
+    pub cols: Vec<CsvCol>,
 }
 
 impl<'a> CsvParser<'a> {
@@ -81,8 +81,8 @@ impl<'a> CsvParser<'a> {
         Ok(result)
     }
 
-    pub fn parse(&self) -> Result<Vec<CsvParserRecord>, CsvParserErr> {
-        let mut records: Vec<CsvParserRecord> = vec![];
+    pub fn parse(&self) -> Result<Vec<CsvRow>, CsvParserErr> {
+        let mut records: Vec<CsvRow> = vec![];
 
         let mut reader = ReaderBuilder::new()
             .has_headers(true)
@@ -90,10 +90,10 @@ impl<'a> CsvParser<'a> {
 
         for (row_index, result) in reader.records().enumerate() {
             let str_record = result.map_err(|err| Self::map_lib_error(err.kind()))?;
-            let mut row_record = CsvParserRecord { row: vec![] };
+            let mut row_record = CsvRow { cols: vec![] };
             for (col_index, col) in str_record.iter().enumerate() {
                 let annotated_col = Self::annotate_col(col, row_index, col_index)?;
-                row_record.row.push(annotated_col);
+                row_record.cols.push(annotated_col);
             }
             records.push(row_record);
         }
@@ -110,7 +110,7 @@ impl<'a> CsvParser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{CsvCol, CsvParser, CsvParserRecord};
+    use crate::parser::{CsvCol, CsvParser, CsvRow };
     use elise_errors::errors_csv_parser::CsvParserErr::*;
     use elise_types::DataSourceFieldType;
 
@@ -136,8 +136,8 @@ mod tests {
         let csv = format!("{}\n{}", head.join(","), row.join(","));
         let parser = CsvParser::new(&csv);
 
-        let result = CsvParserRecord {
-            row: row
+        let result = CsvRow {
+            cols: row
                 .iter()
                 .enumerate()
                 .map(|(i, n)| CsvCol {
@@ -164,8 +164,8 @@ mod tests {
         let csv = format!("{}\n{}", head.join(","), row.join(","));
         let parser = CsvParser::new(&csv);
 
-        let result = CsvParserRecord {
-            row: row
+        let result = CsvRow {
+            cols: row
                 .iter()
                 .enumerate()
                 .map(|(i, n)| CsvCol {
@@ -187,8 +187,8 @@ mod tests {
 
         assert_eq!(
             parser.parse(),
-            Ok(vec![CsvParserRecord {
-                row: vec![CsvCol {
+            Ok(vec![CsvRow {
+                cols: vec![CsvCol {
                     value: "John".to_string(),
                     ty: DataSourceFieldType::String,
                     row: 1,
