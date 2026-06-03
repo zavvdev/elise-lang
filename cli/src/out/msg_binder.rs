@@ -10,6 +10,7 @@ pub fn print_err(parser_err: &BinderErr) {
             "Data row length does not match the length of the row inside the schema",
             Some(info),
         ),
+        TypeMismatch(info) => ("Invalid data type", Some(info)),
     };
 
     utils::print_err(msg, Some("Binder error"));

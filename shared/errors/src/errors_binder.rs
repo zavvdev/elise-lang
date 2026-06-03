@@ -9,4 +9,5 @@ pub struct BinderErrInfo {
 pub enum BinderErr {
     NoData,
     RowLenMismatch(BinderErrInfo),
+    TypeMismatch(BinderErrInfo),
 }
