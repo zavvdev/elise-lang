@@ -1,6 +1,7 @@
 use crate::out::utils::{self};
 use elise_errors::errors_binder::BinderErr;
 
+// TODO: Add descriptive error messages.
 pub fn print_err(parser_err: &BinderErr) {
     use BinderErr::*;
 

@@ -8,7 +8,7 @@ pub struct Span {
 }
 
 /// Types for data that is being transformed (csv, json)
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum DataSourceFieldType {
     Number,
     String,

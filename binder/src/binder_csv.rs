@@ -40,15 +40,16 @@ impl Binder<Rows, Schema> for CsvDataBinder {
                         col: col.col,
                     }));
                 }
-                
-                // TODO: Fix
+
+                let path = vec![Index(col_idx), Field(col_schema.name.clone())];
+
                 table.insert(
-                    (Index(col_idx), Field(col_schema.name)),
+                    path,
                     DataDescriptor {
-                        ty: col_schema.ty,
-                        value: col.value,
+                        ty: col_schema.ty.clone(),
+                        value: col.value.clone(),
                     },
-                )
+                );
             }
         }
 

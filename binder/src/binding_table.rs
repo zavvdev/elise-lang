@@ -15,7 +15,7 @@ use elise_types::DataSourceFieldType;
 /// We can represent any data access path
 /// using these segments by replicating
 /// nesting.
-#[derive(Debug)]
+#[derive(Debug, Eq, Hash, PartialEq)]
 pub enum PathSegment {
     // We can use index for cases when user iterates
     // over some iterable data and we can track indexes
