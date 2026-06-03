@@ -110,7 +110,7 @@ impl<'a> CsvParser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{CsvCol, CsvParser, CsvRow };
+    use crate::parser::{CsvCol, CsvParser, CsvRow};
     use elise_errors::errors_csv_parser::CsvParserErr::*;
     use elise_types::DataSourceFieldType;
 
