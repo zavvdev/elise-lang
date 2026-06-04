@@ -17,10 +17,7 @@ pub fn print_err(parser_err: &BinderErr) {
             utils::print_err_source_code_pos(info.row, info.col);
         }
         TypeMismatch(info) => {
-            utils::print_err(
-                "Type mismatch",
-                label,
-            );
+            utils::print_err("Type mismatch", label);
             utils::print_err_source_code_pos(info.pos.row, info.pos.col);
             utils::print_err_type_mismatch(&info.expected, &info.got);
         }
