@@ -31,7 +31,7 @@ pub type Path = Vec<PathSegment>;
 
 /// Provides some basic information for the compiler about
 /// underlying data.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct DataDescriptor {
     // We don't keep parsed values in enum options.
     pub ty: DataSourceFieldType,
@@ -50,7 +50,7 @@ pub struct DataDescriptor {
 /// compiler which will be discarded either after compilation or
 /// in process of compilation since compiler is going to build
 /// its own constant pool for data access.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct DataBindingTable {
     pub table: HashMap<Path, DataDescriptor>,
 }

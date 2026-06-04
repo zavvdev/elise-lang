@@ -47,6 +47,9 @@ test\:frontend\:csv:
 test\:cli:
 	cargo test -p elise
 
+test\:binder:
+	cargo test -p elise-binder
+
 check:
 	cargo check
 

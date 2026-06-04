@@ -1,13 +1,21 @@
+use elise_types::DataSourceFieldType;
+
 #[derive(Debug, PartialEq)]
-pub struct BinderErrInfo {
+pub struct PosInfo {
     pub row: usize,
     pub col: usize,
 }
 
-// TODO: We need to have an error descriptor that includes info about row and col.
+#[derive(Debug, PartialEq)]
+pub struct TypeMismatchInfo {
+    pub pos: PosInfo,
+    pub expected: DataSourceFieldType,
+    pub got: DataSourceFieldType,
+}
+
 #[derive(Debug, PartialEq)]
 pub enum BinderErr {
     NoData,
-    RowLenMismatch(BinderErrInfo),
-    TypeMismatch(BinderErrInfo),
+    RowLenMismatch(PosInfo),
+    TypeMismatch(TypeMismatchInfo),
 }

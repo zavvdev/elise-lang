@@ -1,21 +1,28 @@
 use crate::out::utils::{self};
 use elise_errors::errors_binder::BinderErr;
 
-// TODO: Add descriptive error messages.
 pub fn print_err(parser_err: &BinderErr) {
     use BinderErr::*;
+    let label = Some("Binder error");
 
-    let (msg, info) = match parser_err {
-        NoData => ("No data provided", None),
-        RowLenMismatch(info) => (
-            "Data row length does not match the length of the row inside the schema",
-            Some(info),
-        ),
-        TypeMismatch(info) => ("Invalid data type", Some(info)),
+    match parser_err {
+        NoData => {
+            utils::print_err("No data provided", label);
+        }
+        RowLenMismatch(info) => {
+            utils::print_err(
+                "Row length does not match the length of the schema row",
+                label,
+            );
+            utils::print_err_source_code_pos(info.row, info.col);
+        }
+        TypeMismatch(info) => {
+            utils::print_err(
+                "Type mismatch",
+                label,
+            );
+            utils::print_err_source_code_pos(info.pos.row, info.pos.col);
+            utils::print_err_type_mismatch(&info.expected, &info.got);
+        }
     };
-
-    utils::print_err(msg, Some("Binder error"));
-    if let Some(info) = info {
-        utils::print_error_source_code_pos(info.row, info.col);
-    }
 }

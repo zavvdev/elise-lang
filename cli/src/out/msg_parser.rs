@@ -1,5 +1,5 @@
-use crate::out::utils::{self, print_error_source_code_slice};
-use crate::out::utils::{get_source_code_slice, print_error_source_code_pos};
+use crate::out::utils::{self, print_err_source_code_slice};
+use crate::out::utils::{get_source_code_slice, print_err_source_code_pos};
 use elise_errors::errors_parser::ParserErr;
 
 pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
@@ -22,7 +22,7 @@ pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
     utils::print_err(info.0, Some("Parser error"));
 
     if let Some(code) = &get_source_code_slice(source_code, info.1.pos) {
-        print_error_source_code_pos(code.row, code.col);
-        print_error_source_code_slice(&code.slice, code.col);
+        print_err_source_code_pos(code.row, code.col);
+        print_err_source_code_slice(&code.slice, code.col);
     };
 }

@@ -4,7 +4,7 @@ use elise_types::Span;
 use crate::out::utils;
 
 use crate::out::utils::{
-    get_source_code_slice, print_error_source_code_pos, print_error_source_code_slice,
+    get_source_code_slice, print_err_source_code_pos, print_err_source_code_slice,
 };
 
 pub fn print_err(schema_err: &CsvSchemaResolverErr, schema_source_code: &[u8]) {
@@ -40,7 +40,7 @@ pub fn print_err(schema_err: &CsvSchemaResolverErr, schema_source_code: &[u8]) {
     utils::print_err(msg, Some("Schema error"));
 
     if let Some(code) = &get_source_code_slice(schema_source_code, span.start) {
-        print_error_source_code_pos(code.row, code.col);
-        print_error_source_code_slice(&code.slice, code.col);
+        print_err_source_code_pos(code.row, code.col);
+        print_err_source_code_slice(&code.slice, code.col);
     };
 }

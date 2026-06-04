@@ -10,7 +10,7 @@ Steps 1–3 run in parallel:
 
 Then sequentially:
 
-4. `binder` validates and coerces `CsvParserRecord` against `CsvResolvedSchema` → `DataBindingTable` which is data agnostic IR 
+4. `binder` validates `CsvParserRecord` against `CsvResolvedSchema` → `DataBindingTable` which is data agnostic IR 
 5. `frontend/semantic-analyzer` walks source `AST` → `SemanticIR`
 6. `compiler` takes `SemanticIR` + `DataBindingTable` and produces `bytecode` with serialized `DataBindingTable` (agnostic data representation for VM)
 7. `runtime/vm` deserializes data and executes `bytecode`
@@ -50,7 +50,7 @@ Depends on `frontend/ast`, `shared/errors`, `shared/builtins`, `shared/types`.
 Walks source `AST`, resolves identifiers and types → `SemanticIR`. Depends on `frontend/ast`, `shared/errors`, `shared/builtins`
 
 ### `binder`
-Validates and coerces `CsvParserRecord` against `CsvResolvedSchema` and produces `DataBindingTable`. Depends on `frontend/csv`.
+Validates `CsvParserRecord` against `CsvResolvedSchema` and produces `DataBindingTable`. Depends on `frontend/csv`.
 
 ### `compiler`
 Takes `SemanticIR` + `DataBindingTable`, emits `bytecode`. Depends on `binder`, `frontend/semantic-analyzer`. Has no knowledge of `ast` or `runtime`.

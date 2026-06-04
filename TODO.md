@@ -16,6 +16,11 @@
 - [ ] Combine CsvResolvedSchema with parsed csv records to produce DataBindingTable 
       IR that describes data in agnostic way.
 
+    - [ ] Validate optional values (we probably need to update CsvParser in order to support
+          optional values. Optional is a value with empty string or whitespaces)
+
+        - [ ] Add Empty type for data
+
 - [ ] Semantic analyzer
 
     - [ ] Source code
