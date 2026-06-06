@@ -40,7 +40,7 @@ separator you use and how much of them, you just have to use it to separate expr
 <normal-number> ::= <integer> | <float>
 <integer> ::= ('+' | '-')? <digit>+
 <float> ::= <integer> '.' <digit>+
-<scientific-number> ::= <normal-number> <scientific-exponent> <integer>
+<scientific-number> ::= <normal-number><scientific-exponent><integer>
 
 <digit> ::= '0'..'9'
 <letter> ::= 'a'..'z' | 'A'..'Z'
