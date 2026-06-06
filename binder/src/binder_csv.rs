@@ -46,7 +46,7 @@ impl CsvDataBinder {
         if Self::is_bool(value) {
             return Self::coerce_bool(value);
         }
-        return value.to_string();
+        value.to_string()
     }
 }
 
