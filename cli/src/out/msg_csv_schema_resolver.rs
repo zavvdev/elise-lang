@@ -35,8 +35,11 @@ pub fn print_err(schema_err: &CsvSchemaResolverErr, schema_source_code: &[u8]) {
         ColTypeNoArgs { span } => ("Type functions must not have arguments", span),
 
         OptArgsLen { span } => ("Invalid number of arguments for .optional function", span),
-        
-        OptEmpty { span } => ("Empty type cannot be optional since it's already represents an empty value that cannot have an alternative", span),
+
+        OptEmpty { span } => (
+            "Empty type cannot be optional since it's already represents an empty value that cannot have an alternative",
+            span,
+        ),
     };
 
     utils::print_err(msg, Some("Schema error"));

@@ -14,7 +14,9 @@ pub fn print_err(csv_parser_err: &CsvParserErr) {
             if let Some(line) = line {
                 format!(
                     "Unequal length at line {}.\nExpected {}, got {}.",
-                    line + 1, expected_len, actual_len
+                    line + 1,
+                    expected_len,
+                    actual_len
                 )
             } else {
                 format!(

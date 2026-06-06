@@ -27,7 +27,7 @@ use crate::out::msg_fsys;
 use crate::out::msg_modes;
 use crate::out::msg_parser;
 use crate::out::utils::{panic_hook, print_bytecode};
-use crate::out::{msg_csv_binder, msg_conf};
+use crate::out::{msg_conf, msg_csv_binder};
 
 fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &[u8]) -> ! {
     use LangErr::*;
