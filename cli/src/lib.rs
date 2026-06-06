@@ -113,12 +113,9 @@ pub fn run<'a>(
                 .resolve()
                 .map_err(LangErr::CsvSchemaResolver)?;
 
-            println!("csv records: {:#?}", rec);
-            println!("csv resolved schema: {:#?}", res);
-
             let binding = CsvDataBinder::new(rec, res)
                 .bind()
-                .map_err(LangErr::Binder)?;
+                .map_err(LangErr::CsvBinder)?;
 
             println!("csv binding table: {:#?}", binding);
         }

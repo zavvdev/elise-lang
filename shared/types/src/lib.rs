@@ -13,4 +13,5 @@ pub enum DataSourceFieldType {
     Number,
     String,
     Bool,
+    Empty,
 }

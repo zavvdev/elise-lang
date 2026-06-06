@@ -8,7 +8,6 @@
 
 use std::collections::HashMap;
 
-use elise_errors::errors_binder::BinderErr;
 use elise_types::DataSourceFieldType;
 
 /// Building blocks of the HashMap key.
@@ -56,7 +55,7 @@ pub struct DataBindingTable {
 }
 
 /// Must be implemented for any binder of any data type.
-pub trait Binder<D, S> {
+pub trait Binder<D, S, E> {
     fn new(data: D, schema: S) -> Self;
-    fn bind(&self) -> Result<DataBindingTable, BinderErr>;
+    fn bind(&self) -> Result<DataBindingTable, E>;
 }

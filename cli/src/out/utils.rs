@@ -72,8 +72,8 @@ pub fn get_source_code_slice(source_code: &[u8], byte_pos: usize) -> Option<Sour
 
     Some(SourceCodeSlice {
         slice: source_str[preceding_line_start..error_line_end].to_string(),
-        row: error_row + 1,
-        col: error_col + 1,
+        row: error_row,
+        col: error_col,
     })
 }
 
@@ -82,6 +82,7 @@ fn match_data_type(ty: &DataSourceFieldType) -> String {
         DataSourceFieldType::Number => "Number".to_string(),
         DataSourceFieldType::String => "String".to_string(),
         DataSourceFieldType::Bool => "Boolean".to_string(),
+        DataSourceFieldType::Empty => "Empty".to_string(),
     }
 }
 
@@ -92,7 +93,7 @@ pub fn print_err(message: &str, label: Option<&str>) {
 }
 
 pub fn print_err_source_code_pos(row: usize, col: usize) {
-    let location = format!("At {}:{}\n", row, col);
+    let location = format!("At {}:{}\n", row + 1, col + 1);
     eprintln!("{}", location.bold());
 }
 
@@ -106,7 +107,7 @@ pub fn print_err_type_mismatch(expected: &DataSourceFieldType, got: &DataSourceF
 pub fn print_err_source_code_slice(source_code_slice: &str, col: usize) {
     if !source_code_slice.is_empty() {
         eprintln!("{}", source_code_slice);
-        let arrow = "-".repeat(col - 1) + "^";
+        let arrow = "-".repeat(col) + "^";
         eprintln!("{}\n", arrow.red().bold());
     }
 }

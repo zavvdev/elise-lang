@@ -14,7 +14,7 @@ pub fn print_err(csv_parser_err: &CsvParserErr) {
             if let Some(line) = line {
                 format!(
                     "Unequal length at line {}.\nExpected {}, got {}.",
-                    line, expected_len, actual_len
+                    line + 1, expected_len, actual_len
                 )
             } else {
                 format!(
@@ -25,7 +25,7 @@ pub fn print_err(csv_parser_err: &CsvParserErr) {
         }
         InvalidUtf8 { line, detail } => {
             if let Some(line) = line {
-                format!("Invalid utf-8 at line {}.\nDetails: {}.", line, detail)
+                format!("Invalid utf-8 at line {}.\nDetails: {}.", line + 1, detail)
             } else {
                 format!("Invalid utf-8.\nDetails: {}.", detail)
             }

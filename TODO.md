@@ -13,13 +13,10 @@
 - [x] Add csv schema resolution (take schema ast and build CsvResolvedSchema
       that maps each col to type descriptor)
 
-- [ ] Combine CsvResolvedSchema with parsed csv records to produce DataBindingTable 
+- [x] Combine CsvResolvedSchema with parsed csv records to produce DataBindingTable 
       IR that describes data in agnostic way.
 
-    - [ ] Validate optional values (we probably need to update CsvParser in order to support
-          optional values. Optional is a value with empty string or whitespaces)
-
-        - [ ] Add Empty type for data
+- [ ] Add .empty type for schema. Disallow optional for it
 
 - [ ] Semantic analyzer
 

@@ -2,7 +2,7 @@ use csv::{ErrorKind, ReaderBuilder};
 use elise_errors::errors_csv_parser::CsvParserErr;
 use elise_types::DataSourceFieldType;
 
-use crate::config::CSV_BOOL_TOKENS_LOWER;
+use crate::config::{CSV_BOOL_FALSE_TOKENS_LOWER, CSV_BOOL_TRUE_TOKENS_LOWER};
 
 pub struct CsvParser<'a> {
     data: &'a str,
@@ -33,7 +33,7 @@ impl<'a> CsvParser<'a> {
                 expected_len,
                 len,
             } => CsvParserErr::UneqLen {
-                line: pos.as_ref().map(|p| p.line()),
+                line: pos.as_ref().map(|p| p.line() - 1),
                 expected_len: *expected_len,
                 actual_len: *len,
             },
@@ -51,11 +51,16 @@ impl<'a> CsvParser<'a> {
 
     fn is_bool(value: &str) -> bool {
         let lower_value = value.to_lowercase();
-        CSV_BOOL_TOKENS_LOWER.contains(&lower_value.as_str())
+        CSV_BOOL_TRUE_TOKENS_LOWER.contains(&lower_value.as_str())
+            || CSV_BOOL_FALSE_TOKENS_LOWER.contains(&lower_value.as_str())
     }
 
     fn is_number(value: &str) -> bool {
         value.parse::<i64>().is_ok() || value.parse::<f64>().is_ok()
+    }
+
+    fn is_empty(value: &str) -> bool {
+        value.trim().is_empty()
     }
 
     fn annotate_col(
@@ -66,8 +71,8 @@ impl<'a> CsvParser<'a> {
         let mut result = CsvCol {
             ty: DataSourceFieldType::String,
             value: value.to_string(),
-            row: row_index + 1,
-            col: col_index + 1,
+            row: row_index,
+            col: col_index,
         };
 
         if Self::is_bool(value) {
@@ -76,6 +81,11 @@ impl<'a> CsvParser<'a> {
 
         if Self::is_number(value) {
             result.ty = DataSourceFieldType::Number;
+        }
+
+        if Self::is_empty(value) {
+            result.ty = DataSourceFieldType::Empty;
+            result.value = "".to_string();
         }
 
         Ok(result)
@@ -143,8 +153,8 @@ mod tests {
                 .map(|(i, n)| CsvCol {
                     value: n.to_string(),
                     ty: DataSourceFieldType::Number,
-                    row: 1,
-                    col: i + 1,
+                    row: 0,
+                    col: i,
                 })
                 .collect(),
         };
@@ -171,8 +181,8 @@ mod tests {
                 .map(|(i, n)| CsvCol {
                     value: n.to_string(),
                     ty: DataSourceFieldType::Bool,
-                    row: 1,
-                    col: i + 1,
+                    row: 0,
+                    col: i,
                 })
                 .collect(),
         };
@@ -182,6 +192,32 @@ mod tests {
 
     #[test]
     fn parse_should_parse_string() {
+        let data = "empty1,empty2\n\"\",\"   \"";
+        let parser = CsvParser::new(&data);
+
+        assert_eq!(
+            parser.parse(),
+            Ok(vec![CsvRow {
+                cols: vec![
+                    CsvCol {
+                        value: "".to_string(),
+                        ty: DataSourceFieldType::Empty,
+                        row: 0,
+                        col: 0,
+                    },
+                    CsvCol {
+                        value: "".to_string(),
+                        ty: DataSourceFieldType::Empty,
+                        row: 0,
+                        col: 1,
+                    }
+                ],
+            }])
+        );
+    }
+
+    #[test]
+    fn parse_should_parse_empty() {
         let data = "name\n\"John\"";
         let parser = CsvParser::new(&data);
 
@@ -191,15 +227,15 @@ mod tests {
                 cols: vec![CsvCol {
                     value: "John".to_string(),
                     ty: DataSourceFieldType::String,
-                    row: 1,
-                    col: 1,
+                    row: 0,
+                    col: 0,
                 }],
             }])
         );
     }
 
     #[test]
-    fn parse_should_parse_empty() {
+    fn parse_should_parse_empty_csv() {
         let data = "name,age";
         let parser = CsvParser::new(&data);
         assert_eq!(parser.parse(), Ok(vec![]));
@@ -213,7 +249,7 @@ mod tests {
         assert_eq!(
             parser.parse(),
             Err(UneqLen {
-                line: Some(2),
+                line: Some(1),
                 expected_len: 2,
                 actual_len: 1
             })

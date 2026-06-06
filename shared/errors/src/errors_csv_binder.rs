@@ -14,7 +14,7 @@ pub struct TypeMismatchInfo {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum BinderErr {
+pub enum CsvBinderErr {
     NoData,
     RowLenMismatch(PosInfo),
     TypeMismatch(TypeMismatchInfo),
