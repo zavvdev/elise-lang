@@ -1,3 +1,3 @@
 name,age,salary,employed
-John,33,5e4,false
+John,33,,false
 Jane,34,,no

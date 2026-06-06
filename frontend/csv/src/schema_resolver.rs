@@ -1,8 +1,8 @@
 use elise_ast::{AstNode, CallKind::*, Compound, Primitive};
 
 use elise_builtins::schema::{
-    SCHEMA_FN_BOOL, SCHEMA_FN_NUMBER, SCHEMA_FN_OPTIONAL, SCHEMA_FN_ROOT, SCHEMA_FN_ROW,
-    SCHEMA_FN_STRING,
+    SCHEMA_FN_BOOL, SCHEMA_FN_EMPTY, SCHEMA_FN_NUMBER, SCHEMA_FN_OPTIONAL, SCHEMA_FN_ROOT,
+    SCHEMA_FN_ROW, SCHEMA_FN_STRING,
 };
 use elise_errors::errors_csv_schema_resolver::{CsvSchemaResolverErr, CsvSchemaResolverErr::*};
 use elise_types::{DataSourceFieldType, Span};
@@ -41,6 +41,7 @@ impl<'a> CsvSchemaResolver<'a> {
             SCHEMA_FN_BOOL => Ok(DataSourceFieldType::Bool),
             SCHEMA_FN_NUMBER => Ok(DataSourceFieldType::Number),
             SCHEMA_FN_STRING => Ok(DataSourceFieldType::String),
+            SCHEMA_FN_EMPTY => Ok(DataSourceFieldType::Empty),
             _ => Err(ColInvalType {
                 span: Self::err_span(start, end),
             }),
@@ -79,7 +80,13 @@ impl<'a> CsvSchemaResolver<'a> {
             AstNode::Call((Named(name), Compound { children, span })) => match name.as_str() {
                 SCHEMA_FN_OPTIONAL => {
                     if children.len() == 1 {
-                        return Ok((Self::resolve_literal_type(children.first().unwrap())?, true));
+                        let literal_type = Self::resolve_literal_type(children.first().unwrap())?;
+                        if literal_type != DataSourceFieldType::Empty {
+                            return Ok((literal_type, true));
+                        }
+                        return Err(OptEmpty {
+                            span: Self::err_span(span.start, span.end),
+                        });
                     }
                     Err(OptArgsLen {
                         span: Self::err_span(span.start, span.end),
@@ -186,8 +193,8 @@ mod tests {
     };
     use elise_ast::{AstNode, CallKind::*, Compound, Primitive};
     use elise_builtins::schema::{
-        SCHEMA_FN_BOOL, SCHEMA_FN_NUMBER, SCHEMA_FN_OPTIONAL, SCHEMA_FN_ROOT, SCHEMA_FN_ROW,
-        SCHEMA_FN_STRING,
+        SCHEMA_FN_BOOL, SCHEMA_FN_EMPTY, SCHEMA_FN_NUMBER, SCHEMA_FN_OPTIONAL, SCHEMA_FN_ROOT,
+        SCHEMA_FN_ROW, SCHEMA_FN_STRING,
     };
     use elise_errors::errors_csv_schema_resolver::CsvSchemaResolverErr::*;
     use elise_types::Span;
@@ -529,6 +536,50 @@ mod tests {
     // ==================================================================
     // TESTS OPTIONAL VALUE START
     // ==================================================================
+
+    #[test]
+    fn optional_should_reject_empty_type() {
+        let opt_children = vec![Box::new(AstNode::Call((
+            Named(SCHEMA_FN_EMPTY.to_string()),
+            Compound {
+                children: vec![],
+                span: Span { start: 12, end: 15 },
+            },
+        )))];
+        let type_opt = Box::new(AstNode::Call((
+            Named(SCHEMA_FN_OPTIONAL.to_string()),
+            Compound {
+                children: opt_children,
+                span: Span { start: 15, end: 18 },
+            },
+        )));
+        let row_children = vec![
+            Box::new(AstNode::Identifier(Primitive {
+                value: "name".to_string(),
+                span: Span { start: 9, end: 12 },
+            })),
+            type_opt,
+        ];
+        let row_def = Box::new(AstNode::Call((
+            Named(SCHEMA_FN_ROW.to_string()),
+            Compound {
+                span: Span { start: 3, end: 6 },
+                children: row_children,
+            },
+        )));
+        let ast = vec![AstNode::Call((
+            Named(SCHEMA_FN_ROOT.to_string()),
+            Compound {
+                span: Span { start: 0, end: 3 },
+                children: vec![row_def],
+            },
+        ))];
+        let result = CsvSchemaResolver::new(&ast).resolve();
+        let err = Err(OptEmpty {
+            span: Span { start: 15, end: 18 },
+        });
+        assert_eq!(result, err);
+    }
 
     #[test]
     fn optional_should_resolve() {

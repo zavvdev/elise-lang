@@ -10,13 +10,11 @@
 
 - [x] Csv data file parsing
 
-- [x] Add csv schema resolution (take schema ast and build CsvResolvedSchema
+- [x] Csv schema resolution (take schema AST and build CsvResolvedSchema
       that maps each col to type descriptor)
 
 - [x] Combine CsvResolvedSchema with parsed csv records to produce DataBindingTable 
       IR that describes data in agnostic way.
-
-- [ ] Add .empty type for schema. Disallow optional for it
 
 - [ ] Semantic analyzer
 

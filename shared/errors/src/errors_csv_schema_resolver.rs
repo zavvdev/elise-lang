@@ -13,4 +13,6 @@ pub enum CsvSchemaResolverErr {
     ColTypeNoArgs { span: Span },
 
     OptArgsLen { span: Span },
+
+    OptEmpty { span: Span }
 }
