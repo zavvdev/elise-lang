@@ -1,3 +1,4 @@
+
 pub mod config;
 
 use elise_types::Span;
@@ -42,6 +43,7 @@ pub struct Prelude<'a> {
     depth_stack: Vec<u8>,
 }
 
+// Top-Down, Leftmost, Non-backtracking, Recursive
 impl<'a> Prelude<'a> {
     pub fn new(source_code: &'a [u8]) -> Self {
         Self {

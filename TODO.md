@@ -38,6 +38,8 @@
 
 ## Things to learn
 
+1. - [ ] [Compilers](https://pgrandinetti.github.io/compilers/)
+
 ### Deterministic Finite Automata theory
 
 1. - [x] [Basics](https://cs.stanford.edu/people/eroberts/courses/soco/projects/2004-05/automata-theory/basics.html#fsm)
@@ -66,17 +68,9 @@
 
 7. - [ ] [Intro to parsing theory](https://aiju.de/misc/parsing)
 
-8. - [ ] [LL(1) parsing](https://www.geeksforgeeks.org/compiler-design/construction-of-ll1-parsing-table/)
+8. - [x] [LL(1) Grammar](https://www.tutorialspoint.com/compiler_design/compiler_design_ll1_grammar.htm) 
 
-9. - [ ] [LL(1) parsing (video)](https://www.youtube.com/watch?v=clkHOgZUGWU)
-
-10. - [ ] [LL(1) parsing table](https://www.youtube.com/watch?v=DT-cbznw9aY)
-
-11. - [ ] [First and Follow](https://www.youtube.com/watch?v=oOCromcWnfc)
-
-12. - [ ] [LL(1) parsing](https://andrewbegel.com/cs164/ll1.html)
-
-13. - [ ] [LL(1) parsing](https://groups.seas.harvard.edu/courses/cs153/2019fa/lectures/Lec10-LL-Parsing.pdf)
+9. - [x] [Left-recursive PEG Grammars](https://medium.com/@gvanrossum_83706/left-recursive-peg-grammars-65dab3c580e1) 
 
 ### Streamable Parser (for parsing large files)
 
