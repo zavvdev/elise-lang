@@ -14,3 +14,5 @@
      .concat(
         "Can smoke count: "
         .string(.count(who-can-smoke))))
+
+.dict({ "a", 1, "b", 2 })
