@@ -16,6 +16,8 @@
 - [x] Combine CsvResolvedSchema with parsed csv records to produce DataBindingTable 
       IR that describes data in agnostic way.
 
+- [ ] Update Grammar in order to have LL(1)
+
 - [ ] Semantic analyzer
 
     - [ ] Source code
