@@ -107,15 +107,11 @@ impl<'a> Prelude<'a> {
     // TOKEN UTILITIES START
     // ==================================================================
 
-    fn peek_at(&self, pos: usize) -> Option<u8> {
-        if pos >= self.source_code.len() {
+    fn peek(&self) -> Option<u8> {
+        if self.tok_pos >= self.source_code.len() {
             return None;
         }
-        self.source_code.get(pos).copied()
-    }
-
-    fn peek(&self) -> Option<u8> {
-        self.peek_at(self.tok_pos)
+        self.source_code.get(self.tok_pos).copied()
     }
 
     fn advance(&mut self) -> Option<u8> {
@@ -534,7 +530,7 @@ impl<'a> Prelude<'a> {
     // ==================================================================
 
     fn call_is_start(&self, char: &u8) -> bool {
-        if let Some(next_char) = self.peek_at(self.tok_pos) {
+        if let Some(next_char) = self.peek() {
             return *char == L_CALL_PREFIX && !Self::is_separator(&next_char);
         }
         false
@@ -621,7 +617,7 @@ impl<'a> Prelude<'a> {
     // ==================================================================
 
     fn slot_is_start(&self, char: &u8) -> bool {
-        if let Some(next_char) = self.peek_at(self.tok_pos) {
+        if let Some(next_char) = self.peek() {
             return *char == L_SLOT_PREFIX && !Self::is_separator(&next_char);
         }
         false
