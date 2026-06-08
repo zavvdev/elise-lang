@@ -1,13 +1,12 @@
-
 pub mod config;
 
 use elise_types::Span;
 use std::str::from_utf8;
 
 use crate::config::{
-    T_CALL_PREFIX, T_COMMA, T_DOUBLE_QT, T_FALSE, T_LEFT_CUR_BRACKET, T_LEFT_PAREN,
-    T_LEFT_SQR_BRACKET, T_MINUS, T_NULL, T_RIGHT_CUR_BRACKET, T_RIGHT_PAREN, T_RIGHT_SQR_BRACKET,
-    T_SLOT_PREFIX, T_TRUE,
+    L_CALL_PREFIX, L_COMMA, L_DOUBLE_QT, L_FALSE, L_LEFT_CUR_BRACKET, L_LEFT_PAREN,
+    L_LEFT_SQR_BRACKET, L_MINUS, L_NULL, L_RIGHT_CUR_BRACKET, L_RIGHT_PAREN, L_RIGHT_SQR_BRACKET,
+    L_SLOT_PREFIX, L_TRUE,
 };
 
 use elise_ast::{AstNode, CallKind, Compound, KeyValuePair, Primitive};
@@ -126,7 +125,7 @@ impl<'a> Prelude<'a> {
     }
 
     fn is_separator(c: &u8) -> bool {
-        matches!(c, b' ' | b'\n' | b'\t' | b'\r') || *c == T_COMMA
+        matches!(c, b' ' | b'\n' | b'\t' | b'\r') || *c == L_COMMA
     }
 
     // ==================================================================
@@ -142,11 +141,11 @@ impl<'a> Prelude<'a> {
     }
 
     fn number_is_start(c: &u8) -> bool {
-        Self::number_is_digit(c) || *c == T_MINUS
+        Self::number_is_digit(c) || *c == L_MINUS
     }
 
     fn number_is_end(c: &u8) -> bool {
-        Self::is_separator(c) || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
+        Self::is_separator(c) || *c == L_RIGHT_PAREN || *c == L_RIGHT_SQR_BRACKET
     }
 
     fn number_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
@@ -157,7 +156,7 @@ impl<'a> Prelude<'a> {
             use DfaNumState::*;
 
             state = match (&state, c) {
-                (Start, T_MINUS) => {
+                (Start, L_MINUS) => {
                     self.advance();
                     Sign
                 }
@@ -189,7 +188,7 @@ impl<'a> Prelude<'a> {
                     self.advance();
                     Scient
                 }
-                (Expon, T_MINUS) => {
+                (Expon, L_MINUS) => {
                     self.advance();
                     ScientMinus
                 }
@@ -237,11 +236,11 @@ impl<'a> Prelude<'a> {
     // ==================================================================
 
     fn string_is_start(char: &u8) -> bool {
-        *char == T_DOUBLE_QT
+        *char == L_DOUBLE_QT
     }
 
     fn string_is_end(char: &u8) -> bool {
-        *char == T_DOUBLE_QT
+        *char == L_DOUBLE_QT
     }
 
     fn string_is_forbidden_char(char: &u8) -> bool {
@@ -328,7 +327,7 @@ impl<'a> Prelude<'a> {
     }
 
     fn identifier_is_end(c: &u8) -> bool {
-        Self::is_separator(c) || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
+        Self::is_separator(c) || *c == L_RIGHT_PAREN || *c == L_RIGHT_SQR_BRACKET
     }
 
     fn identifier_is_valid(s: &str) -> bool {
@@ -368,8 +367,8 @@ impl<'a> Prelude<'a> {
 
         match primitive.value.as_str() {
             // Identify known identifiers.
-            T_TRUE | T_FALSE => Ok(Some(AstNode::Bool(primitive))),
-            T_NULL => Ok(Some(AstNode::Null(primitive))),
+            L_TRUE | L_FALSE => Ok(Some(AstNode::Bool(primitive))),
+            L_NULL => Ok(Some(AstNode::Null(primitive))),
             _ => {
                 if Self::identifier_is_valid(&primitive.value) {
                     Ok(Some(AstNode::Identifier(primitive)))
@@ -389,17 +388,17 @@ impl<'a> Prelude<'a> {
     // ==================================================================
 
     fn list_is_start(&mut self, c: &u8) -> bool {
-        if *c == T_LEFT_SQR_BRACKET {
-            self.depth_stack.push(T_LEFT_SQR_BRACKET);
+        if *c == L_LEFT_SQR_BRACKET {
+            self.depth_stack.push(L_LEFT_SQR_BRACKET);
             return true;
         }
         false
     }
 
     fn list_check_end(&mut self, c: &u8) -> Result<bool, ()> {
-        if *c == T_RIGHT_SQR_BRACKET {
+        if *c == L_RIGHT_SQR_BRACKET {
             let last_entry = self.depth_stack.pop();
-            if last_entry.is_none() || last_entry.unwrap() != T_LEFT_SQR_BRACKET {
+            if last_entry.is_none() || last_entry.unwrap() != L_LEFT_SQR_BRACKET {
                 return Err(());
             }
             return Ok(true);
@@ -444,17 +443,17 @@ impl<'a> Prelude<'a> {
     // ==================================================================
 
     fn dict_is_start(&mut self, c: &u8) -> bool {
-        if *c == T_LEFT_CUR_BRACKET {
-            self.depth_stack.push(T_LEFT_CUR_BRACKET);
+        if *c == L_LEFT_CUR_BRACKET {
+            self.depth_stack.push(L_LEFT_CUR_BRACKET);
             return true;
         }
         false
     }
 
     fn dict_check_end(&mut self, c: &u8) -> Result<bool, ()> {
-        if *c == T_RIGHT_CUR_BRACKET {
+        if *c == L_RIGHT_CUR_BRACKET {
             let last_entry = self.depth_stack.pop();
-            if last_entry.is_none() || last_entry.unwrap() != T_LEFT_CUR_BRACKET {
+            if last_entry.is_none() || last_entry.unwrap() != L_LEFT_CUR_BRACKET {
                 return Err(());
             }
             return Ok(true);
@@ -536,13 +535,13 @@ impl<'a> Prelude<'a> {
 
     fn call_is_start(&self, char: &u8) -> bool {
         if let Some(next_char) = self.peek_at(self.tok_pos) {
-            return *char == T_CALL_PREFIX && !Self::is_separator(&next_char);
+            return *char == L_CALL_PREFIX && !Self::is_separator(&next_char);
         }
         false
     }
 
     fn call_is_end(&self, char: &u8) -> bool {
-        *char == T_RIGHT_PAREN
+        *char == L_RIGHT_PAREN
     }
 
     fn call_validate_name(&self, name: &str) -> Result<CallKind, ParserErr> {
@@ -566,8 +565,8 @@ impl<'a> Prelude<'a> {
         let call_name_start = self.tok_pos;
 
         while let Some(c) = self.peek() {
-            if c == T_LEFT_PAREN {
-                self.depth_stack.push(T_LEFT_PAREN);
+            if c == L_LEFT_PAREN {
+                self.depth_stack.push(L_LEFT_PAREN);
                 break;
             } else {
                 self.advance();
@@ -587,7 +586,7 @@ impl<'a> Prelude<'a> {
         while let Some(c) = self.peek() {
             if self.call_is_end(&c) {
                 let last_entry = self.depth_stack.pop();
-                if last_entry.is_none() || last_entry.unwrap() != T_LEFT_PAREN {
+                if last_entry.is_none() || last_entry.unwrap() != L_LEFT_PAREN {
                     return Err(self.fail(ParserErr::UnexpEoFn));
                 }
                 self.advance();
@@ -623,13 +622,13 @@ impl<'a> Prelude<'a> {
 
     fn slot_is_start(&self, char: &u8) -> bool {
         if let Some(next_char) = self.peek_at(self.tok_pos) {
-            return *char == T_SLOT_PREFIX && !Self::is_separator(&next_char);
+            return *char == L_SLOT_PREFIX && !Self::is_separator(&next_char);
         }
         false
     }
 
     fn slot_is_end(c: &u8) -> bool {
-        Self::is_separator(c) || *c == T_RIGHT_PAREN || *c == T_RIGHT_SQR_BRACKET
+        Self::is_separator(c) || *c == L_RIGHT_PAREN || *c == L_RIGHT_SQR_BRACKET
     }
 
     fn slot_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
