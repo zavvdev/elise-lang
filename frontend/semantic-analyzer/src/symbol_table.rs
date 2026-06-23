@@ -18,6 +18,12 @@ pub struct SymbolTable {
     next_id: TSymbolId,
 }
 
+impl Default for SymbolTable {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SymbolTable {
     pub fn new() -> Self {
         Self {
