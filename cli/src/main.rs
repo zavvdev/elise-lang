@@ -21,11 +21,11 @@ use elise_errors::LangErr;
 
 use std::env;
 
-use crate::out::{msg_common, msg_csv_schema_resolver};
 use crate::out::msg_fsys;
 use crate::out::msg_modes;
 use crate::out::msg_parser;
 use crate::out::utils::{panic_hook, print_bytecode};
+use crate::out::{msg_common, msg_csv_schema_resolver};
 use crate::out::{msg_conf, msg_csv_binder};
 use crate::out::{msg_csv_parser, msg_semantic_analyzer};
 
