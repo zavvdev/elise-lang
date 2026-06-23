@@ -20,6 +20,20 @@
 
     - [ ] Source code
 
+        - [ ] Add lang data types
+
+        - [ ] Add ScopeStack for Harmony
+
+        - [ ] Add semantics for .const
+        
+        - [ ] Add semantics for .var
+        
+        - [ ] Add semantics for .mul
+        
+        - [ ] Add semantics for .add
+
+        - [ ] Add identifier scope resolution
+
 - [ ] Compiler
 
     - [ ] ...

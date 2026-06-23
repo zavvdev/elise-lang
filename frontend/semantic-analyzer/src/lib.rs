@@ -25,6 +25,7 @@ pub struct HIR {
 
 pub struct Harmony<'a> {
     pub ast: &'a Vec<AstNode>,
+    // TODO: Add ScopeStack
 }
 
 impl<'a> Harmony<'a> {

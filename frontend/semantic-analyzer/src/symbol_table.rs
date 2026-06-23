@@ -9,6 +9,7 @@ pub struct SymbolId(TSymbolId);
 pub struct SymbolDescriptor {
     pub name: String,
     pub ty: String, // TODO: Update to enum.
+    pub value: String,
     pub is_captured: bool,
 }
 
@@ -32,12 +33,13 @@ impl SymbolTable {
         }
     }
 
-    pub fn fresh(&mut self, name: String, ty: String) -> SymbolId {
+    pub fn fresh(&mut self, name: String, ty: String, value: String) -> SymbolId {
         let symbol_id = SymbolId(self.next_id);
 
         let symbol_descriptor = SymbolDescriptor {
             name,
             ty,
+            value,
             is_captured: false,
         };
 
