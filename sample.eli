@@ -1,18 +1,4 @@
-.define(AGE-BOUNDARY 18)
+.const (PI 3.1415)
 
-.fn(allowance-predicate [row]
-   .eq(.get(row, "can-smoke"), true))
-
-.fn(allowance-setter [row]
-   .let([age .get(row, "age")]
-      .if(.greater-eq(age AGE-BOUNDARY)
-         .set(row, "can-smoke", true)
-         .set(row, "can-smoke", false))))
-
-.let([users         .map(@data allowance-setter)
-      who-can-smoke .filter(users allowance-predicate)]
-     .concat(
-        "Can smoke count: "
-        .string(.count(who-can-smoke))))
-
-.dict({ "a", 1, "b", 2 })
+.var ([x 12, y 38] 
+    .mul (PI, .add(x y)))

@@ -9,14 +9,15 @@ pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 
-use elise_binder::binder_csv::CsvDataBinder;
 use elise_binder::binding_table::Binder;
+use elise_binder::{binder_csv::CsvDataBinder, binding_table::DataBindingTable};
 use elise_csv::{
     parser::{CsvParser, CsvRow},
     schema_resolver::CsvSchemaResolver,
 };
 use elise_errors::{LangErr, errors_csv_parser::CsvParserErr};
 use elise_parser::Prelude;
+use elise_semantic_analyzer::Harmony;
 use rayon::scope;
 use std::time::Instant;
 
@@ -102,9 +103,10 @@ pub fn run<'a>(
         }
     });
 
-    let _source_code_ast = source_code_ast.unwrap()?;
+    let source_code_ast = source_code_ast.unwrap()?;
     let schema_ast = schema_ast.unwrap()?;
     let parsed_data = parsed_data.unwrap();
+    let mut data_binding: Option<DataBindingTable> = None;
 
     match parsed_data {
         DataParseResult::Csv(records) => {
@@ -113,13 +115,20 @@ pub fn run<'a>(
                 .resolve()
                 .map_err(LangErr::CsvSchemaResolver)?;
 
-            let binding = CsvDataBinder::new(rec, res)
-                .bind()
-                .map_err(LangErr::CsvBinder)?;
-
-            println!("csv binding table: {:#?}", binding);
+            data_binding = Some(
+                CsvDataBinder::new(rec, res)
+                    .bind()
+                    .map_err(LangErr::CsvBinder)?,
+            );
         }
     }
+
+    let hir = Harmony::new(&source_code_ast)
+        .analyze()
+        .map_err(LangErr::SemanticAnalyzer)?;
+
+    println!("DATA BINDING: {:#?}", data_binding);
+    println!("HIR: {:#?}", hir);
 
     Ok(RunResult {
         config,

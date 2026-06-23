@@ -84,6 +84,7 @@ dependencies = [
  "elise-csv",
  "elise-errors",
  "elise-parser",
+ "elise-semantic-analyzer",
  "elise-types",
  "rayon",
  "serial_test",
