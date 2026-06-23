@@ -16,23 +16,23 @@
 - [x] Combine CsvResolvedSchema with parsed csv records to produce DataBindingTable 
       IR that describes data in agnostic way.
 
-- [ ] Semantic analyzer
+- [ ] Semantic analyzer (preserve as much types as you can)
 
-    - [ ] Source code
+    - [ ] Add lang data types
 
-        - [ ] Add lang data types
+        - [ ] Int, Float (for now)
 
-        - [ ] Add ScopeStack for Harmony
+    - [ ] Add ScopeStack for Harmony
 
-        - [ ] Add semantics for .const
-        
-        - [ ] Add semantics for .var
-        
-        - [ ] Add semantics for .mul
-        
-        - [ ] Add semantics for .add
+    - [ ] Add semantics for .const
 
-        - [ ] Add identifier scope resolution
+    - [ ] Add semantics for .var
+
+    - [ ] Add semantics for .mul
+
+    - [ ] Add semantics for .add
+
+    - [ ] Add identifier scope resolution
 
 - [ ] Compiler
 
