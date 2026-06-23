@@ -9,13 +9,13 @@ pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 
+use elise_binder::binder_csv::CsvDataBinder;
 use elise_binder::binding_table::Binder;
-use elise_binder::{binder_csv::CsvDataBinder};
 use elise_csv::{
     parser::{CsvParser, CsvRow},
     schema_resolver::CsvSchemaResolver,
 };
-use elise_errors::{LangErr, errors_csv_parser::CsvParserErr};
+use elise_errors::{LangErr, errors_common::CommonErr, errors_csv_parser::CsvParserErr};
 use elise_parser::Prelude;
 use elise_semantic_analyzer::Harmony;
 use rayon::scope;
@@ -105,7 +105,7 @@ pub fn run<'a>(
 
     let source_code_ast = source_code_ast.unwrap()?;
     let schema_ast = schema_ast.unwrap()?;
-    let parsed_data = parsed_data.unwrap();
+    let parsed_data = parsed_data.ok_or(LangErr::Common(CommonErr::MissingParserData))?;
 
     let data_binding = match parsed_data {
         DataParseResult::Csv(records) => {

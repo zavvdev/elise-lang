@@ -1,3 +1,4 @@
+pub mod errors_common;
 pub mod errors_csv_binder;
 pub mod errors_csv_parser;
 pub mod errors_csv_schema_resolver;
@@ -10,8 +11,11 @@ use errors_csv_schema_resolver::CsvSchemaResolverErr;
 use errors_parser::ParserErr;
 use errors_semantic_analyzer::SemanticAnalyzerErr;
 
+use crate::errors_common::CommonErr;
+
 #[derive(Debug, PartialEq)]
 pub enum LangErr {
+    Common(CommonErr),
     ParserSource(ParserErr),
     ParserSchema(ParserErr),
     SemanticAnalyzer(SemanticAnalyzerErr),

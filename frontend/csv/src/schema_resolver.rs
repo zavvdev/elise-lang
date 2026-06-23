@@ -195,7 +195,7 @@ mod tests {
         CsvColDescriptor, CsvResolvedSchema, CsvSchemaResolver, DataSourceFieldType,
     };
     use elise_ast::{AstNode, CallKind::*, Compound, Primitive};
-    use elise_builtins::schema::{
+    use elise_builtins::lexemes::{
         SCHEMA_FN_BOOL_LEXEME, SCHEMA_FN_EMPTY_LEXEME, SCHEMA_FN_NUMBER_LEXEME,
         SCHEMA_FN_OPTIONAL_LEXEME, SCHEMA_FN_ROOT_LEXEME, SCHEMA_FN_ROW_LEXEME,
         SCHEMA_FN_STRING_LEXEME,
