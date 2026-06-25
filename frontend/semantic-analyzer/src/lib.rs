@@ -25,12 +25,13 @@ pub struct HIR {
 
 pub struct Harmony<'a> {
     pub ast: &'a Vec<AstNode>,
+    pub data_binding_table: &'a DataBindingTable,
     // TODO: Add ScopeStack
 }
 
 impl<'a> Harmony<'a> {
-    pub fn new(ast: &'a Vec<AstNode>) -> Self {
-        Self { ast }
+    pub fn new(ast: &'a Vec<AstNode>, data_binding_table: &'a DataBindingTable) -> Self {
+        Self { ast, data_binding_table }
     }
 
     pub fn analyze(&self) -> Result<HIR, SemanticAnalyzerErr> {

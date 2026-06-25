@@ -203,4 +203,14 @@ x = .get(@data, 2, "name")  → "Charlie"
 
 ---
 
+# Optimization strategy trouble
+
+Since we have a second execution mode which allows us to execute bytecode against different kinds of
+datasets, we can't use the same strategy for semantic analysis for run and exec modes because run
+mode relies on DataBindingTable as well in order to perform optimizations like constant folding.
+
+So we probably need to have some kind of branching for semantic analysis.
+
+---
+
 ## .const

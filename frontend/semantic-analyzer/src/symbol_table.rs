@@ -1,4 +1,27 @@
+//! # Symbol Table
+//!
+//! Maps identifiers to their semantic descriptors during compilation.
+//!
+//! The symbol table is a compile-time only structure — it is built during
+//! semantic analysis and consumed by the bytecode emitter. It is discarded
+//! after emission and never reaches the VM.
+//!
+//! Its sole purpose is to answer questions about identifiers:
+//!   - Does this identifier exist in the current scope?
+//!   - What type is it?
+//!
+//! It does NOT store values. Values are either folded into AAST nodes
+//! as compile-time constants or resolved at runtime by the VM via
+//! LOAD_SYM / LOAD_FIELD opcodes.
+//!
+//! AAST reference nodes store only a SymbolId. When the emitter needs
+//! type information for a referenced identifier it looks it up here
+//! via that SymbolId rather than traversing the AAST to find the
+//! definition node.
+
 use std::collections::HashMap;
+
+use elise_types::LangType;
 
 type TSymbolId = u32;
 
@@ -8,9 +31,7 @@ pub struct SymbolId(TSymbolId);
 #[derive(Debug)]
 pub struct SymbolDescriptor {
     pub name: String,
-    pub ty: String, // TODO: Update to enum.
-    pub value: String,
-    pub is_captured: bool,
+    pub ty: LangType,
 }
 
 #[derive(Debug)]
@@ -33,14 +54,12 @@ impl SymbolTable {
         }
     }
 
-    pub fn fresh(&mut self, name: String, ty: String, value: String) -> SymbolId {
+    pub fn fresh(&mut self, name: String, ty: LangType) -> SymbolId {
         let symbol_id = SymbolId(self.next_id);
 
         let symbol_descriptor = SymbolDescriptor {
             name,
             ty,
-            value,
-            is_captured: false,
         };
 
         self.symbols.insert(symbol_id.clone(), symbol_descriptor);

@@ -18,10 +18,13 @@
 
 - [ ] Semantic analyzer (preserve as much types as you can)
 
-    - [ ] Add lang data types
+    - [x] Add lang data types
 
-        - [ ] Int, Float (for now)
+        - [x] Int, Float (for now)
 
+    - [ ] We need to have a dependency on binder from semantic analyzer.
+          Probably need to restructure binder since it depens on frontend module.
+    
     - [ ] Add ScopeStack for Harmony
 
     - [ ] Add semantics for .const

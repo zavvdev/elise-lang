@@ -121,7 +121,7 @@ pub fn run<'a>(
         }
     };
 
-    let hir = Harmony::new(&source_code_ast)
+    let hir = Harmony::new(&source_code_ast, &data_binding)
         .analyze()
         .map_err(LangErr::SemanticAnalyzer)?;
 

@@ -7,11 +7,18 @@ pub struct Span {
     pub end: usize,
 }
 
-/// Types for data that is being transformed (csv, json)
+/// Types for data that is being transformed (csv, json).
 #[derive(Debug, PartialEq, Clone)]
 pub enum DataSourceFieldType {
     Number,
     String,
     Bool,
     Empty,
+}
+
+/// Language data types.
+#[derive(Debug)]
+pub enum LangType {
+    Int,
+    Float,
 }
