@@ -1,10 +1,6 @@
 use std::collections::HashMap;
 
-use elise_csv::{
-    config::{CSV_BOOL_FALSE_TOKENS_LOWER, CSV_BOOL_TRUE_TOKENS_LOWER},
-    parser::CsvRow,
-    schema_resolver::CsvResolvedSchema,
-};
+use elise_binder::{Binder, DataBindingTable, DataDescriptor, Path, PathSegment::*};
 use elise_errors::errors_csv_binder::{
     CsvBinderErr::{self, *},
     PosInfo, TypeMismatchInfo,
@@ -12,9 +8,14 @@ use elise_errors::errors_csv_binder::{
 use elise_types::DataSourceFieldType;
 
 use crate::{
-    binding_table::{Binder, DataBindingTable, DataDescriptor, Path, PathSegment::*},
-    config::{BOOL_FALSE_COERCED, BOOL_TRUE_COERCED},
+    csv_config::{CSV_BOOL_FALSE_TOKENS_LOWER, CSV_BOOL_TRUE_TOKENS_LOWER},
+    csv_parser::CsvRow,
+    csv_schema_resolver::CsvResolvedSchema,
 };
+
+const BOOL_TRUE_COERCED: &str = "true";
+
+const BOOL_FALSE_COERCED: &str = "false";
 
 pub struct CsvDataBinder {
     pub rows: Vec<CsvRow>,
@@ -115,16 +116,15 @@ impl Binder<Rows, Schema, CsvBinderErr> for CsvDataBinder {
 mod tests {
     use std::collections::HashMap;
 
-    use elise_csv::parser::{CsvCol, CsvRow};
-    use elise_csv::schema_resolver::{CsvColDescriptor, CsvResolvedSchema};
     use elise_errors::errors_csv_binder::PosInfo;
     use elise_errors::errors_csv_binder::{CsvBinderErr::*, TypeMismatchInfo};
     use elise_types::DataSourceFieldType;
 
-    use crate::binder_csv::CsvDataBinder;
-    use crate::binding_table::PathSegment::{Field, Index};
-    use crate::binding_table::{Binder, DataBindingTable, DataDescriptor};
-    use crate::config::{BOOL_FALSE_COERCED, BOOL_TRUE_COERCED};
+    use crate::csv_binder::CsvDataBinder;
+    use crate::csv_binder::{BOOL_FALSE_COERCED, BOOL_TRUE_COERCED};
+    use crate::csv_parser::{CsvCol, CsvRow};
+    use crate::csv_schema_resolver::{CsvColDescriptor, CsvResolvedSchema};
+    use elise_binder::{Binder, DataBindingTable, DataDescriptor, PathSegment::*};
 
     #[test]
     fn bind_should_return_error_if_schema_row_len_bigger_than_csv_row_len() {

@@ -8,16 +8,16 @@ pub mod conf;
 pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
+use elise_binder::Binder;
 
-use elise_binder::binder_csv::CsvDataBinder;
-use elise_binder::binding_table::Binder;
 use elise_csv::{
-    parser::{CsvParser, CsvRow},
-    schema_resolver::CsvSchemaResolver,
+    csv_binder::CsvDataBinder,
+    csv_parser::{CsvParser, CsvRow},
+    csv_schema_resolver::CsvSchemaResolver,
 };
 use elise_errors::{LangErr, errors_common::CommonErr, errors_csv_parser::CsvParserErr};
 use elise_parser::Prelude;
-use elise_semantic_analyzer::Harmony;
+use elise_semanalyzer::Harmony;
 use rayon::scope;
 use std::time::Instant;
 

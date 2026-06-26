@@ -1,9 +1,9 @@
-pub mod config;
+pub mod parser_config;
 
 use elise_types::Span;
 use std::str::from_utf8;
 
-use crate::config::{
+use crate::parser_config::{
     L_CALL_PREFIX, L_COMMA, L_DOUBLE_QT, L_FALSE, L_LEFT_CUR_BRACKET, L_LEFT_PAREN,
     L_LEFT_SQR_BRACKET, L_MINUS, L_NULL, L_RIGHT_CUR_BRACKET, L_RIGHT_PAREN, L_RIGHT_SQR_BRACKET,
     L_SLOT_PREFIX, L_TRUE,

@@ -10,7 +10,7 @@ Steps 1–3 run in parallel:
 
 Then sequentially:
 
-4. `binder` validates `CsvParserRecord` against `CsvResolvedSchema` → `DataBindingTable` which is data agnostic IR 
+4. `frontend/binder` validates `CsvParserRecord` against `CsvResolvedSchema` → `DataBindingTable` which is data agnostic IR 
 5. `frontend/semantic-analyzer` walks source `AST` → `SemanticIR`
 6. `compiler` takes `SemanticIR` + `DataBindingTable` and produces `bytecode` with serialized `DataBindingTable` (agnostic data representation for VM)
 7. `runtime/vm` deserializes data and executes `bytecode`

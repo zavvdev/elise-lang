@@ -5,10 +5,12 @@
 pub mod symbol_table;
 
 use elise_ast::AstNode;
+use elise_binder::DataBindingTable;
 use elise_errors::errors_semantic_analyzer::SemanticAnalyzerErr;
 
 use crate::symbol_table::SymbolTable;
 
+// TODO: Update
 #[derive(Debug)]
 pub enum AAstNode {
     FConst,
@@ -31,7 +33,10 @@ pub struct Harmony<'a> {
 
 impl<'a> Harmony<'a> {
     pub fn new(ast: &'a Vec<AstNode>, data_binding_table: &'a DataBindingTable) -> Self {
-        Self { ast, data_binding_table }
+        Self {
+            ast,
+            data_binding_table,
+        }
     }
 
     pub fn analyze(&self) -> Result<HIR, SemanticAnalyzerErr> {

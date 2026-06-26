@@ -57,10 +57,7 @@ impl SymbolTable {
     pub fn fresh(&mut self, name: String, ty: LangType) -> SymbolId {
         let symbol_id = SymbolId(self.next_id);
 
-        let symbol_descriptor = SymbolDescriptor {
-            name,
-            ty,
-        };
+        let symbol_descriptor = SymbolDescriptor { name, ty };
 
         self.symbols.insert(symbol_id.clone(), symbol_descriptor);
         self.next_id += 1;

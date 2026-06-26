@@ -22,9 +22,6 @@
 
         - [x] Int, Float (for now)
 
-    - [ ] We need to have a dependency on binder from semantic analyzer.
-          Probably need to restructure binder since it depens on frontend module.
-    
     - [ ] Add ScopeStack for Harmony
 
     - [ ] Add semantics for .const

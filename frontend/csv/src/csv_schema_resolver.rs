@@ -191,7 +191,7 @@ impl<'a> CsvSchemaResolver<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::schema_resolver::{
+    use crate::csv_schema_resolver::{
         CsvColDescriptor, CsvResolvedSchema, CsvSchemaResolver, DataSourceFieldType,
     };
     use elise_ast::{AstNode, CallKind::*, Compound, Primitive};

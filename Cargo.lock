@@ -84,7 +84,7 @@ dependencies = [
  "elise-csv",
  "elise-errors",
  "elise-parser",
- "elise-semantic-analyzer",
+ "elise-semanalyzer",
  "elise-types",
  "rayon",
  "serial_test",
@@ -101,7 +101,6 @@ dependencies = [
 name = "elise-binder"
 version = "0.1.0"
 dependencies = [
- "elise-csv",
  "elise-errors",
  "elise-types",
 ]
@@ -119,7 +118,7 @@ name = "elise-compiler"
 version = "0.1.0"
 dependencies = [
  "elise-binder",
- "elise-semantic-analyzer",
+ "elise-semanalyzer",
 ]
 
 [[package]]
@@ -128,6 +127,7 @@ version = "0.1.0"
 dependencies = [
  "csv",
  "elise-ast",
+ "elise-binder",
  "elise-builtins",
  "elise-errors",
  "elise-types",
@@ -150,10 +150,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "elise-semantic-analyzer"
+name = "elise-semanalyzer"
 version = "0.1.0"
 dependencies = [
  "elise-ast",
+ "elise-binder",
  "elise-builtins",
  "elise-errors",
  "elise-types",

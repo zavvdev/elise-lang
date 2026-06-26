@@ -13,9 +13,9 @@ path = "src/main.rs"
 path = "src/lib.rs"
 
 [dependencies]
-elise-binder = { path = "../binder" }
+elise-binder = { path = "../frontend/binder" }
 elise-parser = { path = "../frontend/parser" }
-elise-semantic-analyzer = { path = "../frontend/semantic-analyzer" }
+elise-semanalyzer = { path = "../frontend/semanalyzer" }
 elise-csv = { path = "../frontend/csv" }
 elise-errors = { path = "../shared/errors" }
 elise-types = { path = "../shared/types" }

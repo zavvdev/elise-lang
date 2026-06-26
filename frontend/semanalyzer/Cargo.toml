@@ -1,5 +1,5 @@
 [package]
-name = "elise-semantic-analyzer"
+name = "elise-semanalyzer"
 version = "0.1.0"
 edition = "2024"
 
@@ -11,3 +11,4 @@ elise-errors = { path = "../../shared/errors" }
 elise-types = { path = "../../shared/types" }
 elise-builtins = { path = "../../shared/builtins" }
 elise-ast = { path = "../ast" }
+elise-binder = { path = "../binder" }

@@ -7,5 +7,5 @@ edition = "2024"
 path = "src/lib.rs"
 
 [dependencies]
-elise-binder = { path = "../binder" }
-elise-semantic-analyzer = { path = "../frontend/semantic-analyzer" }
+elise-binder = { path = "../frontend/binder" }
+elise-semanalyzer = { path = "../frontend/semanalyzer" }
