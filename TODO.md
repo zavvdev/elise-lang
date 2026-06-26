@@ -26,7 +26,7 @@
 
     - [ ] Add semantics for .const
 
-    - [ ] Add semantics for .var
+    - [ ] Add semantics for .let
 
     - [ ] Add semantics for .mul
 

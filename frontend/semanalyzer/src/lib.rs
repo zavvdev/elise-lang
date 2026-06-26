@@ -1,7 +1,8 @@
-/// .const (PI 3.1415)
-///
-/// .var ([x 12, y 38]
-///    .mul (PI, .add(x y)))
+// .const (PI 3.1415)
+//
+// .let ([x 12, y 38]
+//    .mul (PI, .add(x y)))
+
 pub mod symbol_table;
 
 use elise_ast::AstNode;

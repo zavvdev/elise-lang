@@ -110,7 +110,7 @@ Fold eagerly wherever all operands are known at compile time:
 .const(PI 3.1415)
   → SymbolDescriptor { ty: Float, const_value: Some(Float(3.1415)) }
 
-.var([x 12, y 20] .mul(PI .add(x y)))
+.let([x 12, y 20] .mul(PI .add(x y)))
   → .add(12, 20)        = Const(Int(32))
   → .mul(3.1415, 32)    = Const(Float(100.528))
   → x, y, result all get const_value populated
@@ -130,7 +130,7 @@ pub struct SemanticAnalyzer {
 
 This enables:
 
-- **Type resolution from schema** — `.var(x .get(@data, "price")` looks up `[Field("price")]`
+- **Type resolution from schema** — `.let(x .get(@data, "price")` looks up `[Field("price")]`
   in `BindingTable` → gets `ty: Float` → populates `SymbolDescriptor.ty` without inference.
 - **Compile-time value folding for data refs** — when a data path is fully static
   (no dynamic indices) and the value is being assigned to a symbol, read the value
@@ -167,13 +167,13 @@ Assignment context   → check BindingTable now:
 ### Example
 
 ```
-.var(x .get(@data, 0, "name"))   → index 0 is a literal
+.let(x .get(@data, 0, "name"))   → index 0 is a literal
                                    path [Index(0), Field("name")] is fully static
                                    BindingTable lookup → "Alice"
                                    x → { ty: String, const_value: Some(Str("Alice")) }
                                    emitter: constant pool entry, no LOAD_FIELD
 
-.var(x .get(@data, i, "name"))   → i is a runtime symbol
+.let(x .get(@data, i, "name"))   → i is a runtime symbol
                                    path is dynamic → cannot fold
                                    x → { ty: String, const_value: None }
                                    emitter: LOAD_SLOT @data → LOAD_FIELD [i, "name"]
@@ -184,7 +184,7 @@ For the last case we can apply loop unrolling optimization:
 ```
 @data has 3 rows (known from BindingTable)
 
-.var(x .get(@data, i, "name"))  in a loop over @data → unroll at compile time:
+.let(x .get(@data, i, "name"))  in a loop over @data → unroll at compile time:
 
 x = .get(@data, 0, "name")  → "Alice"
 x = .get(@data, 1, "name")  → "Bob"  
