@@ -10,6 +10,12 @@ pub struct ScopeStack {
     pub scopes: Vec<Scope>,
 }
 
+impl Default for ScopeStack {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ScopeStack {
     pub fn new() -> Self {
         Self { scopes: vec![] }
@@ -26,12 +32,8 @@ impl ScopeStack {
     }
 
     pub fn define(&mut self, identifier_name: String, symbol_id: SymbolId) {
-        let last_scope = self.scopes.last_mut();
-        if !last_scope.is_none() {
-            last_scope
-                .unwrap()
-                .bindings
-                .insert(identifier_name, symbol_id);
+        if let Some(last_scope) = self.scopes.last_mut() {
+            last_scope.bindings.insert(identifier_name, symbol_id);
         }
     }
 

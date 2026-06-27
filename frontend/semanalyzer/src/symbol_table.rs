@@ -64,7 +64,7 @@ impl SymbolTable {
             is_captured: false,
         };
 
-        self.symbols.insert(symbol_id.clone(), symbol_descriptor);
+        self.symbols.insert(symbol_id, symbol_descriptor);
         self.next_id += 1;
 
         symbol_id

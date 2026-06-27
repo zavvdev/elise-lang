@@ -22,7 +22,11 @@
 
         - [x] Int, Float (for now)
 
-    - [ ] Add ScopeStack for Harmony
+    - [x] Add ScopeStack for Harmony
+
+    - [ ] Add tests for SymbolTable
+
+    - [ ] Add tests for ScopeStack
 
     - [ ] Add semantics for .define
 
@@ -33,7 +37,9 @@
     - [ ] Add semantics for .add
 
     - [ ] Add identifier scope resolution
-
+    
+    - [ ] Add tests for Harmony
+    
 - [ ] Compiler
 
     - [ ] ...
