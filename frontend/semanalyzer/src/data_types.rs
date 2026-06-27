@@ -1,11 +1,11 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum LangPrimitiveType {
     Int,
     Float,
     // TODO: Add more
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum LangType {
     Primitive(LangPrimitiveType),
     // TODO: Add compounds

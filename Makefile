@@ -50,6 +50,9 @@ test\:cli:
 test\:binder:
 	cargo test -p elise-binder
 
+test\:semanalyzer:
+	cargo test -p elise-semanalyzer
+
 check:
 	cargo check
 

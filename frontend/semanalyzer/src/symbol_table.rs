@@ -10,9 +10,8 @@
 //!   - Does this identifier exist in the current scope?
 //!   - What type is it?
 //!
-//! It does NOT store values. Values are either folded into AAST nodes
-//! as compile-time constants or resolved at runtime by the VM via
-//! LOAD_SYM / LOAD_FIELD opcodes.
+//! It does NOT store values. Values are folded into AAST nodes
+//! as compile-time constants.
 //!
 //! AAST reference nodes store only a SymbolId. When the emitter needs
 //! type information for a referenced identifier it looks it up here
@@ -26,7 +25,7 @@ use crate::data_types::LangType;
 type TSymbolId = u32;
 
 #[derive(Hash, Eq, PartialEq, Clone, Debug, Copy)]
-pub struct SymbolId(TSymbolId);
+pub struct SymbolId(pub TSymbolId);
 
 #[derive(Debug)]
 pub struct SymbolDescriptor {
@@ -68,5 +67,30 @@ impl SymbolTable {
         self.next_id += 1;
 
         symbol_id
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{data_types::{LangPrimitiveType, LangType}, symbol_table::{SymbolId, SymbolTable}};
+
+    #[test]
+    fn should_create_empty_table() {
+        let table = SymbolTable::new();
+        assert_eq!(table.symbols.capacity(), 0);
+        assert_eq!(table.next_id, 0);
+    }
+
+    #[test]
+    fn should_create_new_entry() {
+        let mut table = SymbolTable::new();
+        assert_eq!(table.symbols.capacity(), 0);
+        let id = table.fresh("name".to_string(), LangType::Primitive(LangPrimitiveType::Int));
+        assert_eq!(id, SymbolId(0));
+        assert_eq!(table.next_id, 1);
+        let descriptor = table.symbols.get(&id).unwrap();
+        assert_eq!(descriptor.name, "name".to_string());
+        assert_eq!(descriptor.ty, LangType::Primitive(LangPrimitiveType::Int));
+        assert_eq!(descriptor.is_captured,false );
     }
 }

@@ -24,9 +24,9 @@
 
     - [x] Add ScopeStack for Harmony
 
-    - [ ] Add tests for SymbolTable
+    - [x] Add tests for SymbolTable
 
-    - [ ] Add tests for ScopeStack
+    - [x] Add tests for ScopeStack
 
     - [ ] Add semantics for .define
 
