@@ -72,7 +72,10 @@ impl SymbolTable {
 
 #[cfg(test)]
 mod tests {
-    use crate::{data_types::{LangPrimitiveType, LangType}, symbol_table::{SymbolId, SymbolTable}};
+    use crate::{
+        data_types::{LangPrimitiveType, LangType},
+        symbol_table::{SymbolId, SymbolTable},
+    };
 
     #[test]
     fn should_create_empty_table() {
@@ -85,12 +88,15 @@ mod tests {
     fn should_create_new_entry() {
         let mut table = SymbolTable::new();
         assert_eq!(table.symbols.capacity(), 0);
-        let id = table.fresh("name".to_string(), LangType::Primitive(LangPrimitiveType::Int));
+        let id = table.fresh(
+            "name".to_string(),
+            LangType::Primitive(LangPrimitiveType::Int),
+        );
         assert_eq!(id, SymbolId(0));
         assert_eq!(table.next_id, 1);
         let descriptor = table.symbols.get(&id).unwrap();
         assert_eq!(descriptor.name, "name".to_string());
         assert_eq!(descriptor.ty, LangType::Primitive(LangPrimitiveType::Int));
-        assert_eq!(descriptor.is_captured,false );
+        assert_eq!(descriptor.is_captured, false);
     }
 }
