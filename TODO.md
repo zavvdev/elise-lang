@@ -24,7 +24,7 @@
 
     - [ ] Add ScopeStack for Harmony
 
-    - [ ] Add semantics for .const
+    - [ ] Add semantics for .define
 
     - [ ] Add semantics for .let
 

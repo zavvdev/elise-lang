@@ -21,17 +21,19 @@
 
 use std::collections::HashMap;
 
-use elise_types::LangType;
+use crate::data_types::LangType;
 
 type TSymbolId = u32;
 
-#[derive(Hash, Eq, PartialEq, Clone, Debug)]
+#[derive(Hash, Eq, PartialEq, Clone, Debug, Copy)]
 pub struct SymbolId(TSymbolId);
 
 #[derive(Debug)]
 pub struct SymbolDescriptor {
     pub name: String,
     pub ty: LangType,
+    // True if any closure captures it.
+    pub is_captured: bool,
 }
 
 #[derive(Debug)]
@@ -56,8 +58,11 @@ impl SymbolTable {
 
     pub fn fresh(&mut self, name: String, ty: LangType) -> SymbolId {
         let symbol_id = SymbolId(self.next_id);
-
-        let symbol_descriptor = SymbolDescriptor { name, ty };
+        let symbol_descriptor = SymbolDescriptor {
+            name,
+            ty,
+            is_captured: false,
+        };
 
         self.symbols.insert(symbol_id.clone(), symbol_descriptor);
         self.next_id += 1;

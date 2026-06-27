@@ -15,10 +15,3 @@ pub enum DataSourceFieldType {
     Bool,
     Empty,
 }
-
-/// Language data types.
-#[derive(Debug)]
-pub enum LangType {
-    Int,
-    Float,
-}

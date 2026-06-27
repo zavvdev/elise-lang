@@ -42,7 +42,6 @@ pub enum LiteralValue {
 pub struct SymbolDescriptor {
     pub name: String,
     pub ty: LangType,
-    pub const_value: Option<LiteralValue>,  // Some only when value is known at compile time
     pub is_captured: bool,
 }
 ```
@@ -82,11 +81,11 @@ Walk the AST. When an identifier is encountered:
 
 ### 2. Known Function Validation
 
-For built-ins (`.var`, `.const`, `.add`, `.mul`, `.get`, etc.) check:
+For built-ins (`.let`, `.define`, `.add`, `.mul`, `.get`, etc.) check:
 
 - **Arity** — correct number of arguments.
 - **Type rules** — e.g. `.add` requires numeric operands.
-- **Semantic constraints** — `.const` requires a literal value, not a runtime ref.
+- **Semantic constraints** — `.define` requires a literal value, not a runtime ref.
 
 ### 3. Number Literal Resolution (Parser → Semantic)
 
@@ -107,7 +106,7 @@ is a question of meaning, not syntax.
 Fold eagerly wherever all operands are known at compile time:
 
 ```
-.const(PI 3.1415)
+.define(PI 3.1415)
   → SymbolDescriptor { ty: Float, const_value: Some(Float(3.1415)) }
 
 .let([x 12, y 20] .mul(PI .add(x y)))
@@ -213,4 +212,4 @@ So we probably need to have some kind of branching for semantic analysis.
 
 ---
 
-## .const
+## .define
