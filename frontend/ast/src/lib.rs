@@ -8,7 +8,7 @@ use elise_types::Span;
 /// Represents a primitive value that does not
 /// have any nested values inside. Numbers, strings, bools etc.
 #[derive(Debug, PartialEq)]
-pub struct Primitive {
+pub struct AstPrimitive {
     // Interpreted runtime string. Encoding aware.
     pub value: String,
     // Pointer to the original source of bytes.
@@ -19,7 +19,7 @@ pub struct Primitive {
 /// Represents a value that consists of other values like
 /// lists, dictionaries or functions.
 #[derive(Debug, PartialEq)]
-pub struct Compound {
+pub struct AstCompound {
     // Slice of bytes.
     pub span: Span,
     pub children: Vec<Box<AstNode>>,
@@ -28,14 +28,14 @@ pub struct Compound {
 /// Different kinds of functions.
 /// We support named and anonymous for now.
 #[derive(Debug, PartialEq)]
-pub enum CallKind {
+pub enum AstCallKind {
     Named(String),
     Anon,
 }
 
 /// Dictionary key-value pair representation.
 #[derive(Debug, PartialEq)]
-pub struct KeyValuePair {
+pub struct AstKeyValuePair {
     pub key: String,
     // Span for key itself since we don't want
     // to keep the whole ast node as key.
@@ -49,18 +49,18 @@ pub struct KeyValuePair {
 
 #[derive(Debug, PartialEq)]
 pub enum AstNode {
-    Call((CallKind, Compound)),
-    Number(Primitive),
-    String(Primitive),
-    Bool(Primitive),
-    Null(Primitive),
-    List(Compound),
-    Dict(Compound),
+    Call((AstCallKind, AstCompound)),
+    Number(AstPrimitive),
+    String(AstPrimitive),
+    Bool(AstPrimitive),
+    Null(AstPrimitive),
+    List(AstCompound),
+    Dict(AstCompound),
     // We treat DictPair as an AstNode in order to be consistent
     // and always provide ast nodes as children for compound values.
-    DictPair(KeyValuePair),
-    Identifier(Primitive),
-    Slot(Primitive),
+    DictPair(AstKeyValuePair),
+    Identifier(AstPrimitive),
+    Slot(AstPrimitive),
 }
 
 impl AstNode {

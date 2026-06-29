@@ -127,6 +127,7 @@ pub fn run<'a>(
 
     println!("DATA BINDING: {:#?}", data_binding);
     println!("HIR: {:#?}", hir);
+    println!("------ AST: {:#?}", source_code_ast);
 
     Ok(RunResult {
         config,

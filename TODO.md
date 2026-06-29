@@ -36,6 +36,8 @@
 
     - [ ] Add semantics for .add
 
+    - [ ] Add semantics for numbers (Int, Float)
+
     - [ ] Add identifier scope resolution
     
     - [ ] Add tests for Harmony

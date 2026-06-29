@@ -9,7 +9,7 @@ use crate::parser_config::{
     L_SLOT_PREFIX, L_TRUE,
 };
 
-use elise_ast::{AstNode, CallKind, Compound, KeyValuePair, Primitive};
+use elise_ast::{AstCallKind, AstCompound, AstKeyValuePair, AstNode, AstPrimitive};
 use elise_errors::errors_parser::{ParserErr, ParserErrInfo};
 
 // ==================================================================
@@ -214,7 +214,7 @@ impl<'a> Prelude<'a> {
             return Err(self.fail(ParserErr::InvalNum));
         }
 
-        Ok(Some(AstNode::Number(Primitive {
+        Ok(Some(AstNode::Number(AstPrimitive {
             value: value.unwrap().to_string(),
             span: Span {
                 start: tok_start,
@@ -304,7 +304,7 @@ impl<'a> Prelude<'a> {
         // Preserve UTF-8 encoding for string.
         let value = std::str::from_utf8(&slice).map_err(|_| self.fail(ParserErr::InvalStr))?;
 
-        Ok(Some(AstNode::String(Primitive {
+        Ok(Some(AstNode::String(AstPrimitive {
             value: value.to_owned(),
             span: Span { start, end },
         })))
@@ -353,7 +353,7 @@ impl<'a> Prelude<'a> {
             .unwrap()
             .to_string();
 
-        let primitive = Primitive {
+        let primitive = AstPrimitive {
             value,
             span: Span {
                 start,
@@ -421,7 +421,7 @@ impl<'a> Prelude<'a> {
             }
         }
 
-        Ok(Some(AstNode::List(Compound {
+        Ok(Some(AstNode::List(AstCompound {
             span: Span {
                 start,
                 end: self.tok_pos,
@@ -493,7 +493,7 @@ impl<'a> Prelude<'a> {
                     }
                 } else {
                     let pair_end = node.span().end;
-                    children.push(Box::new(AstNode::DictPair(KeyValuePair {
+                    children.push(Box::new(AstNode::DictPair(AstKeyValuePair {
                         key: key.clone().unwrap(),
                         key_span: Span {
                             start: key_start,
@@ -512,7 +512,7 @@ impl<'a> Prelude<'a> {
             }
         }
 
-        Ok(Some(AstNode::Dict(Compound {
+        Ok(Some(AstNode::Dict(AstCompound {
             span: Span {
                 start,
                 end: self.tok_pos,
@@ -540,13 +540,13 @@ impl<'a> Prelude<'a> {
         *char == L_RIGHT_PAREN
     }
 
-    fn call_validate_name(&self, name: &str) -> Result<CallKind, ParserErr> {
+    fn call_validate_name(&self, name: &str) -> Result<AstCallKind, ParserErr> {
         // Anonymous function
         if name.is_empty() {
-            return Ok(CallKind::Anon);
+            return Ok(AstCallKind::Anon);
         }
         if !name.is_empty() && Self::identifier_is_valid(name) {
-            Ok(CallKind::Named(name.to_string()))
+            Ok(AstCallKind::Named(name.to_string()))
         } else {
             Err(self.fail(ParserErr::InvalFnName))
         }
@@ -598,7 +598,7 @@ impl<'a> Prelude<'a> {
 
         Ok(Some(AstNode::Call((
             call_name,
-            Compound {
+            AstCompound {
                 span: Span {
                     start: call_start,
                     end: call_end,
@@ -648,7 +648,7 @@ impl<'a> Prelude<'a> {
             .to_string();
 
         if Self::identifier_is_valid(&value) {
-            Ok(Some(AstNode::Slot(Primitive {
+            Ok(Some(AstNode::Slot(AstPrimitive {
                 value,
                 span: Span {
                     start,
@@ -679,8 +679,8 @@ impl<'a> Prelude<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{AstNode, CallKind, Compound, Prelude, Primitive, Span};
-    use elise_ast::KeyValuePair;
+    use crate::{AstCallKind, AstCompound, AstNode, AstPrimitive, Prelude, Span};
+    use elise_ast::AstKeyValuePair;
     use elise_errors::errors_parser::{ParserErr, ParserErrInfo};
 
     // ==================================================================
@@ -775,7 +775,7 @@ mod tests {
             let ast = Prelude::new(number.as_bytes()).parse();
             assert_eq!(
                 ast,
-                Ok(vec![AstNode::Number(Primitive {
+                Ok(vec![AstNode::Number(AstPrimitive {
                     value: number.to_string(),
                     span: Span { start: 0, end },
                 })])
@@ -806,7 +806,7 @@ mod tests {
             let ast = Prelude::new(number.as_bytes()).parse();
             assert_eq!(
                 ast,
-                Ok(vec![AstNode::Number(Primitive {
+                Ok(vec![AstNode::Number(AstPrimitive {
                     value: number.to_string(),
                     span: Span { start: 0, end },
                 })])
@@ -825,19 +825,19 @@ mod tests {
         assert_eq!(
             ast,
             Ok(vec![
-                AstNode::Number(Primitive {
+                AstNode::Number(AstPrimitive {
                     value: "3".to_string(),
                     span: Span { start: 0, end: 1 },
                 }),
-                AstNode::Number(Primitive {
+                AstNode::Number(AstPrimitive {
                     value: "56".to_string(),
                     span: Span { start: 2, end: 4 },
                 }),
-                AstNode::Number(Primitive {
+                AstNode::Number(AstPrimitive {
                     value: "-9".to_string(),
                     span: Span { start: 6, end: 8 },
                 }),
-                AstNode::Number(Primitive {
+                AstNode::Number(AstPrimitive {
                     value: "3.2".to_string(),
                     span: Span { start: 11, end: 14 },
                 }),
@@ -882,7 +882,7 @@ mod tests {
             let ast = Prelude::new(number.as_bytes()).parse();
             assert_eq!(
                 ast,
-                Ok(vec![AstNode::Number(Primitive {
+                Ok(vec![AstNode::Number(AstPrimitive {
                     value: number.to_string(),
                     span: Span { start: 0, end },
                 })])
@@ -937,7 +937,7 @@ mod tests {
             let ast = Prelude::new(string.as_bytes()).parse();
             assert_eq!(
                 ast,
-                Ok(vec![AstNode::String(Primitive {
+                Ok(vec![AstNode::String(AstPrimitive {
                     value: string
                         .split("\"")
                         .into_iter()
@@ -966,7 +966,7 @@ mod tests {
             let ast = Prelude::new(string.as_bytes()).parse();
             assert_eq!(
                 ast,
-                Ok(vec![AstNode::String(Primitive {
+                Ok(vec![AstNode::String(AstPrimitive {
                     value: expected.to_string(),
                     span: Span { start: 0, end },
                 })])
@@ -987,7 +987,7 @@ mod tests {
         let ast = Prelude::new("true".as_bytes()).parse();
         assert_eq!(
             ast,
-            Ok(vec![AstNode::Bool(Primitive {
+            Ok(vec![AstNode::Bool(AstPrimitive {
                 value: "true".to_string(),
                 span: Span { start: 0, end: 4 }
             })])
@@ -999,7 +999,7 @@ mod tests {
         let ast = Prelude::new("false".as_bytes()).parse();
         assert_eq!(
             ast,
-            Ok(vec![AstNode::Bool(Primitive {
+            Ok(vec![AstNode::Bool(AstPrimitive {
                 value: "false".to_string(),
                 span: Span { start: 0, end: 5 }
             })])
@@ -1019,7 +1019,7 @@ mod tests {
         let ast = Prelude::new("null".as_bytes()).parse();
         assert_eq!(
             ast,
-            Ok(vec![AstNode::Null(Primitive {
+            Ok(vec![AstNode::Null(AstPrimitive {
                 value: "null".to_string(),
                 span: Span { start: 0, end: 4 }
             })])
@@ -1080,7 +1080,7 @@ mod tests {
             let ast = Prelude::new(identifier.as_bytes()).parse();
             assert_eq!(
                 ast,
-                Ok(vec![AstNode::Identifier(Primitive {
+                Ok(vec![AstNode::Identifier(AstPrimitive {
                     value: identifier.to_string(),
                     span: Span { start: 0, end },
                 })])
@@ -1101,7 +1101,7 @@ mod tests {
         let ast = Prelude::new("[]".as_bytes()).parse();
         assert_eq!(
             ast,
-            Ok(vec![AstNode::List(Compound {
+            Ok(vec![AstNode::List(AstCompound {
                 span: Span { start: 0, end: 2 },
                 children: vec![],
             })])
@@ -1113,9 +1113,9 @@ mod tests {
         let ast = Prelude::new("[[]]".as_bytes()).parse();
         assert_eq!(
             ast,
-            Ok(vec![AstNode::List(Compound {
+            Ok(vec![AstNode::List(AstCompound {
                 span: Span { start: 0, end: 4 },
-                children: vec![Box::new(AstNode::List(Compound {
+                children: vec![Box::new(AstNode::List(AstCompound {
                     span: Span { start: 1, end: 3 },
                     children: vec![],
                 }))],
@@ -1128,22 +1128,22 @@ mod tests {
         let ast = Prelude::new("[1, \"hello\", null, false]".as_bytes()).parse();
         assert_eq!(
             ast,
-            Ok(vec![AstNode::List(Compound {
+            Ok(vec![AstNode::List(AstCompound {
                 span: Span { start: 0, end: 25 },
                 children: vec![
-                    Box::new(AstNode::Number(Primitive {
+                    Box::new(AstNode::Number(AstPrimitive {
                         value: "1".to_string(),
                         span: Span { start: 1, end: 2 },
                     })),
-                    Box::new(AstNode::String(Primitive {
+                    Box::new(AstNode::String(AstPrimitive {
                         value: "hello".to_string(),
                         span: Span { start: 4, end: 11 },
                     })),
-                    Box::new(AstNode::Null(Primitive {
+                    Box::new(AstNode::Null(AstPrimitive {
                         value: "null".to_string(),
                         span: Span { start: 13, end: 17 },
                     })),
-                    Box::new(AstNode::Bool(Primitive {
+                    Box::new(AstNode::Bool(AstPrimitive {
                         value: "false".to_string(),
                         span: Span { start: 19, end: 24 },
                     }))
@@ -1174,7 +1174,7 @@ mod tests {
         let ast = Prelude::new("{}".as_bytes()).parse();
         assert_eq!(
             ast,
-            Ok(vec![AstNode::Dict(Compound {
+            Ok(vec![AstNode::Dict(AstCompound {
                 span: Span { start: 0, end: 2 },
                 children: vec![],
             })])
@@ -1188,9 +1188,9 @@ mod tests {
          )
          .parse();
 
-        let pair_1 = Box::new(AstNode::DictPair(KeyValuePair {
+        let pair_1 = Box::new(AstNode::DictPair(AstKeyValuePair {
             key: "a".to_string(),
-            value: Box::new(AstNode::Number(Primitive {
+            value: Box::new(AstNode::Number(AstPrimitive {
                 value: "1".to_string(),
                 span: Span { start: 6, end: 7 },
             })),
@@ -1198,9 +1198,9 @@ mod tests {
             span: Span { start: 2, end: 7 },
         }));
 
-        let pair_2 = Box::new(AstNode::DictPair(KeyValuePair {
+        let pair_2 = Box::new(AstNode::DictPair(AstKeyValuePair {
             key: "b".to_string(),
-            value: Box::new(AstNode::String(Primitive {
+            value: Box::new(AstNode::String(AstPrimitive {
                 value: "2".to_string(),
                 span: Span { start: 13, end: 16 },
             })),
@@ -1208,9 +1208,9 @@ mod tests {
             span: Span { start: 9, end: 16 },
         }));
 
-        let pair_3 = Box::new(AstNode::DictPair(KeyValuePair {
+        let pair_3 = Box::new(AstNode::DictPair(AstKeyValuePair {
             key: "c".to_string(),
-            value: Box::new(AstNode::Bool(Primitive {
+            value: Box::new(AstNode::Bool(AstPrimitive {
                 value: "false".to_string(),
                 span: Span { start: 22, end: 27 },
             })),
@@ -1218,9 +1218,9 @@ mod tests {
             span: Span { start: 18, end: 27 },
         }));
 
-        let pair_4 = Box::new(AstNode::DictPair(KeyValuePair {
+        let pair_4 = Box::new(AstNode::DictPair(AstKeyValuePair {
             key: "d".to_string(),
-            value: Box::new(AstNode::Null(Primitive {
+            value: Box::new(AstNode::Null(AstPrimitive {
                 value: "null".to_string(),
                 span: Span { start: 33, end: 37 },
             })),
@@ -1228,20 +1228,20 @@ mod tests {
             span: Span { start: 29, end: 37 },
         }));
 
-        let pair_5 = Box::new(AstNode::DictPair(KeyValuePair {
+        let pair_5 = Box::new(AstNode::DictPair(AstKeyValuePair {
             key: "e".to_string(),
-            value: Box::new(AstNode::List(Compound {
+            value: Box::new(AstNode::List(AstCompound {
                 span: Span { start: 43, end: 52 },
                 children: vec![
-                    Box::new(AstNode::Number(Primitive {
+                    Box::new(AstNode::Number(AstPrimitive {
                         value: "1".to_string(),
                         span: Span { start: 44, end: 45 },
                     })),
-                    Box::new(AstNode::Number(Primitive {
+                    Box::new(AstNode::Number(AstPrimitive {
                         value: "2".to_string(),
                         span: Span { start: 47, end: 48 },
                     })),
-                    Box::new(AstNode::Number(Primitive {
+                    Box::new(AstNode::Number(AstPrimitive {
                         value: "3".to_string(),
                         span: Span { start: 50, end: 51 },
                     })),
@@ -1251,13 +1251,13 @@ mod tests {
             span: Span { start: 39, end: 52 },
         }));
 
-        let pair_6 = Box::new(AstNode::DictPair(KeyValuePair {
+        let pair_6 = Box::new(AstNode::DictPair(AstKeyValuePair {
             key: "f".to_string(),
-            value: Box::new(AstNode::Dict(Compound {
+            value: Box::new(AstNode::Dict(AstCompound {
                 span: Span { start: 58, end: 77 },
-                children: vec![Box::new(AstNode::DictPair(KeyValuePair {
+                children: vec![Box::new(AstNode::DictPair(AstKeyValuePair {
                     key: "a2".to_string(),
-                    value: Box::new(AstNode::Identifier(Primitive {
+                    value: Box::new(AstNode::Identifier(AstPrimitive {
                         value: "some_value".to_string(),
                         span: Span { start: 65, end: 75 },
                     })),
@@ -1271,7 +1271,7 @@ mod tests {
 
         assert_eq!(
             ast,
-            Ok(vec![AstNode::Dict(Compound {
+            Ok(vec![AstNode::Dict(AstCompound {
                 span: Span { start: 0, end: 79 },
                 children: vec![pair_1, pair_2, pair_3, pair_4, pair_5, pair_6,],
             })])
@@ -1333,8 +1333,8 @@ mod tests {
         assert_eq!(
             ast,
             Ok(vec![AstNode::Call((
-                CallKind::Named("some-fn".to_string()),
-                Compound {
+                AstCallKind::Named("some-fn".to_string()),
+                AstCompound {
                     span: Span { start: 0, end: 10 },
                     children: vec![],
                 }
@@ -1346,23 +1346,23 @@ mod tests {
     fn call_should_parse_with_arguments() {
         let ast = Prelude::new(".add(2 .div(4 2))".as_bytes()).parse();
         let nested_children = vec![
-            Box::new(AstNode::Number(Primitive {
+            Box::new(AstNode::Number(AstPrimitive {
                 value: "4".to_string(),
                 span: Span { start: 12, end: 13 },
             })),
-            Box::new(AstNode::Number(Primitive {
+            Box::new(AstNode::Number(AstPrimitive {
                 value: "2".to_string(),
                 span: Span { start: 14, end: 15 },
             })),
         ];
         let children = vec![
-            Box::new(AstNode::Number(Primitive {
+            Box::new(AstNode::Number(AstPrimitive {
                 value: "2".to_string(),
                 span: Span { start: 5, end: 6 },
             })),
             Box::new(AstNode::Call((
-                CallKind::Named("div".to_string()),
-                Compound {
+                AstCallKind::Named("div".to_string()),
+                AstCompound {
                     span: Span { start: 7, end: 16 },
                     children: nested_children,
                 },
@@ -1371,8 +1371,8 @@ mod tests {
         assert_eq!(
             ast,
             Ok(vec![AstNode::Call((
-                CallKind::Named("add".to_string()),
-                Compound {
+                AstCallKind::Named("add".to_string()),
+                AstCompound {
                     span: Span { start: 0, end: 17 },
                     children,
                 }
@@ -1400,8 +1400,8 @@ mod tests {
             assert_eq!(
                 Prelude::new(input.as_bytes()).parse(),
                 Ok(vec![AstNode::Call((
-                    CallKind::Named("test".to_string()),
-                    Compound {
+                    AstCallKind::Named("test".to_string()),
+                    AstCompound {
                         span: Span { start: 0, end },
                         children: vec![],
                     }
@@ -1472,8 +1472,8 @@ mod tests {
         assert_eq!(
             Prelude::new(".()".as_bytes()).parse(),
             Ok(vec![AstNode::Call((
-                CallKind::Anon,
-                Compound {
+                AstCallKind::Anon,
+                AstCompound {
                     span: Span { start: 0, end: 3 },
                     children: vec![],
                 }
@@ -1506,7 +1506,7 @@ mod tests {
             let ast = Prelude::new(slot.as_bytes()).parse();
             assert_eq!(
                 ast,
-                Ok(vec![AstNode::Slot(Primitive {
+                Ok(vec![AstNode::Slot(AstPrimitive {
                     value: slot[1..].to_string(),
                     span: Span { start: 0, end },
                 })])

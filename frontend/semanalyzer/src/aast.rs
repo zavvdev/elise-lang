@@ -11,6 +11,12 @@ use elise_types::Span;
 
 use crate::symbol_table::SymbolId;
 
+#[derive(Debug)]
+pub struct AAstPrimitive {
+    pub value: String,
+    pub span: Span,
+}
+
 /// AAstNode must store primitive values as String type instead of
 /// parsed values since emitter only needs to know the type in order
 /// to emit a correct opcode. Parsing to correct value must be done
@@ -38,4 +44,6 @@ pub enum AAstNode {
         operands: Vec<Box<AAstNode>>,
         span: Span,
     },
+    Int(AAstPrimitive),
+    Float(AAstPrimitive),
 }

@@ -62,6 +62,9 @@ format\:check:
 format:
 	cargo fmt && cargo clippy --fix
 
+format\:force:
+	cargo fmt && cargo clippy --fix --allow-dirty
+
 validate:
 	make check && make format:check && make test
 
