@@ -88,7 +88,7 @@ impl<'a> Harmony<'a> {
     }
 
     fn annotate_call(
-        _call_king: &AstCallKind,
+        _call_kind: &AstCallKind,
         _compound: &AstCompound,
         _symbol_table: &mut SymbolTable,
     ) -> Option<AAstNode> {
