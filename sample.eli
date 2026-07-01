@@ -1,4 +1,1 @@
-.define (PI 3.1415)
-
-.let ([x 12, y 38] 
-    .mul (PI, .add(x y)))
+23 23.3

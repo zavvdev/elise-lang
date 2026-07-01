@@ -35,7 +35,11 @@ use elise_ast::{AstCallKind, AstCompound, AstNode, AstPrimitive};
 use elise_binder::DataBindingTable;
 use elise_errors::errors_semantic_analyzer::SemanticAnalyzerErr;
 
-use crate::{aast::AAstNode, scope_stack::ScopeStack, symbol_table::SymbolTable};
+use crate::{
+    aast::{AAstNode, AAstPrimitive},
+    scope_stack::ScopeStack,
+    symbol_table::SymbolTable,
+};
 
 #[derive(Debug)]
 pub struct HIR {
@@ -78,11 +82,11 @@ impl<'a> Harmony<'a> {
 
     fn get_aast_node(ast_node: &AstNode, symbol_table: &mut SymbolTable) -> Option<AAstNode> {
         match ast_node {
+            AstNode::Number(primitive) => Some(Self::annotate_number(primitive)),
+            AstNode::Identifier(primitive) => Self::annotate_identifier(primitive, symbol_table),
             AstNode::Call((call_kind, compound)) => {
                 Self::annotate_call(call_kind, compound, symbol_table)
             }
-            AstNode::Identifier(primitive) => Self::annotate_identifier(primitive, symbol_table),
-            AstNode::Number(primitive) => Self::annotate_number(primitive, symbol_table),
             _ => None,
         }
     }
@@ -102,11 +106,15 @@ impl<'a> Harmony<'a> {
         None
     }
 
-    fn annotate_number(
-        _primitive: &AstPrimitive,
-        _symbol_table: &mut SymbolTable,
-    ) -> Option<AAstNode> {
-        None
+    fn annotate_number(primitive: &AstPrimitive) -> AAstNode {
+        let aast_prim = AAstPrimitive {
+            value: primitive.value.clone(),
+            span: primitive.span.clone(),
+        };
+        if primitive.value.contains(".") {
+            return AAstNode::Float(aast_prim);
+        }
+        AAstNode::Int(aast_prim)
     }
 }
 
@@ -122,11 +130,84 @@ mod tests {
     //  NUMBER TESTS START
     // ==================================================================
 
-    #[test]
-    fn number_should_annotate_integers() {}
+    use std::collections::HashMap;
+
+    use elise_ast::{AstNode, AstPrimitive};
+    use elise_binder::DataBindingTable;
+    use elise_types::Span;
+
+    use crate::{
+        Harmony,
+        aast::{AAstNode, AAstPrimitive},
+    };
 
     #[test]
-    fn number_should_annotate_floats() {}
+    fn number_should_annotate_integers() {
+        let ast = vec![
+            AstNode::Number(AstPrimitive {
+                value: "32".to_string(),
+                span: Span { start: 1, end: 1 },
+            }),
+            AstNode::Number(AstPrimitive {
+                value: "32e-2".to_string(),
+                span: Span { start: 2, end: 2 },
+            }),
+        ];
+
+        let bindings = DataBindingTable {
+            table: HashMap::new(),
+        };
+
+        let aast = Harmony::new(&ast, &bindings).analyze();
+
+        assert_eq!(
+            aast.unwrap().aast,
+            vec![
+                AAstNode::Int(AAstPrimitive {
+                    value: "32".to_string(),
+                    span: Span { start: 1, end: 1 }
+                }),
+                AAstNode::Int(AAstPrimitive {
+                    value: "32e-2".to_string(),
+                    span: Span { start: 2, end: 2 }
+                })
+            ]
+        );
+    }
+
+    #[test]
+    fn number_should_annotate_floats() {
+        let ast = vec![
+            AstNode::Number(AstPrimitive {
+                value: "3.2".to_string(),
+                span: Span { start: 1, end: 1 },
+            }),
+            AstNode::Number(AstPrimitive {
+                value: "3.2E-2".to_string(),
+                span: Span { start: 2, end: 2 },
+            }),
+        ];
+
+        let bindings = DataBindingTable {
+            table: HashMap::new(),
+        };
+
+        let aast = Harmony::new(&ast, &bindings).analyze();
+
+        assert_eq!(
+            aast.unwrap().aast,
+            vec![
+                AAstNode::Float(AAstPrimitive {
+                    value: "3.2".to_string(),
+                    span: Span { start: 1, end: 1 }
+                }),
+                AAstNode::Float(AAstPrimitive {
+                    value: "3.2E-2".to_string(),
+                    span: Span { start: 2, end: 2 }
+                })
+            ]
+        )
+    }
 
     // ==================================================================
     //  NUMBER TESTS END

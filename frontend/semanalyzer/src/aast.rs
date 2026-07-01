@@ -11,7 +11,7 @@ use elise_types::Span;
 
 use crate::symbol_table::SymbolId;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct AAstPrimitive {
     pub value: String,
     pub span: Span,
@@ -21,7 +21,7 @@ pub struct AAstPrimitive {
 /// parsed values since emitter only needs to know the type in order
 /// to emit a correct opcode. Parsing to correct value must be done
 /// only during VM bytecode execution.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum AAstNode {
     Define {
         symbol_id: SymbolId,
