@@ -30,18 +30,28 @@
 
     - [ ] Add semantics for .define
 
+        - [ ] Tests
+
     - [ ] Add semantics for .let
+
+        - [ ] Tests
 
     - [ ] Add semantics for .mul
 
+        - [ ] Tests
+
     - [ ] Add semantics for .add
 
-    - [ ] Add semantics for numbers (Int, Float)
+        - [ ] Tests
+
+    - [x] Add semantics for numbers (Int, Float)
+
+        - [x] Tests
 
     - [ ] Add identifier scope resolution
-    
-    - [ ] Add tests for Harmony
-    
+
+        - [ ] Tests
+
 - [ ] Compiler
 
     - [ ] ...
