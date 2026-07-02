@@ -83,7 +83,9 @@ impl<'a> Harmony<'a> {
     fn get_aast_node(ast_node: &AstNode, symbol_table: &mut SymbolTable) -> Option<AAstNode> {
         match ast_node {
             AstNode::Number(primitive) => Some(Self::annotate_number(primitive)),
-            AstNode::Identifier(primitive) => Self::annotate_identifier(primitive, symbol_table),
+            AstNode::Identifier(primitive) => {
+                Self::annotate_identifier_reference(primitive, symbol_table)
+            }
             AstNode::Call((call_kind, compound)) => {
                 Self::annotate_call(call_kind, compound, symbol_table)
             }
@@ -98,7 +100,7 @@ impl<'a> Harmony<'a> {
     ) -> Option<AAstNode> {
         None
     }
-    
+
     /// This function annotates identifier references only.
     /// It means that it captures only identifiers that are
     /// already in scope and just referenced. For example:
