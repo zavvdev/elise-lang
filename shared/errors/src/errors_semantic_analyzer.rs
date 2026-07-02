@@ -1,4 +1,7 @@
+use elise_types::Span;
+
 #[derive(Debug, PartialEq)]
 pub enum SemanticAnalyzerErr {
-    UnknownSymbol,
+    SymbolUndefined { span: Span },
+    SymbolDuplicate { span: Span },
 }

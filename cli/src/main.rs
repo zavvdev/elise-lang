@@ -36,7 +36,7 @@ fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &
         Common(err) => msg_common::print_err(err),
         ParserSource(err) => msg_parser::print_err(err, source_code),
         ParserSchema(err) => msg_parser::print_err(err, schema_source_code),
-        SemanticAnalyzer(err) => msg_semantic_analyzer::print_err(err),
+        SemanticAnalyzer(err) => msg_semantic_analyzer::print_err(err, source_code),
         CsvParser(err) => msg_csv_parser::print_err(err),
         CsvSchemaResolver(err) => msg_csv_schema_resolver::print_err(err, schema_source_code),
         CsvBinder(err) => msg_csv_binder::print_err(err),
