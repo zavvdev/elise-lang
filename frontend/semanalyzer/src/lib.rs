@@ -98,8 +98,21 @@ impl<'a> Harmony<'a> {
     ) -> Option<AAstNode> {
         None
     }
-
-    fn annotate_identifier(
+    
+    /// This function annotates identifier references only.
+    /// It means that it captures only identifiers that are
+    /// already in scope and just referenced. For example:
+    ///
+    /// .define (PI 3.1415)
+    /// .let ([distance 43]
+    ///    .add (PI distance))
+    ///
+    /// This function takes care of `PI` and `distance` in .add
+    /// function call only. Resolution for identifier definition
+    /// has to be done in respective functions for handling
+    /// semantics for expressions that can define identifiers
+    /// line `.let` and `.define`.
+    fn annotate_identifier_reference(
         _primitive: &AstPrimitive,
         _symbol_table: &mut SymbolTable,
     ) -> Option<AAstNode> {
