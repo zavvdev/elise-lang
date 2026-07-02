@@ -17,6 +17,22 @@
 //! type information for a referenced identifier it looks it up here
 //! via that SymbolId rather than traversing the AAST to find the
 //! definition node.
+//!
+//! ## Why we can't store type information inside AAstNode directly?
+//!
+//! AAST nodes represent structure (what the program says), while the
+//! symbol table represents meaning (what identifiers refer to).
+//! These are different concerns. What happens with a reference to an identifier:
+//! let x: Int = 42
+//! let y = x + 1   // <-- this reference to x
+//! The AAST node for x in the second line is just a name — a ReferenceNode("x").
+//! We have two options:
+//! Option A — no symbol table: Store type info directly on the reference node.
+//! But to do that, we'd have to resolve x during AST construction (or do a full
+//! traversal every time the emitter needs the type). Worse, if x is referenced 50
+//! times, we have 50 copies of the same type metadata scattered across the tree.
+//! Option B — symbol table: The reference node stores only a SymbolId. The symbol
+//! table holds the type once. The emitter does a O(1) lookup.
 
 use std::collections::HashMap;
 
