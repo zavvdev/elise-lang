@@ -44,6 +44,11 @@ pub enum AAstNode {
         operands: Vec<Box<AAstNode>>,
         span: Span,
     },
+    SymbolRef {
+        symbol_id: SymbolId,
+        span: Span,
+        depth: usize,
+    },
     Int(AAstPrimitive),
     Float(AAstPrimitive),
 }

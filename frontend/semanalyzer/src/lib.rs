@@ -33,7 +33,7 @@ pub mod symbol_table;
 
 use elise_ast::{AstCallKind, AstCompound, AstNode, AstPrimitive};
 use elise_binder::DataBindingTable;
-use elise_errors::errors_semantic_analyzer::SemanticAnalyzerErr;
+use elise_errors::errors_semanalyzer::SemanalyzerErr;
 
 use crate::{
     aast::{AAstNode, AAstPrimitive},
@@ -67,38 +67,41 @@ impl<'a> Harmony<'a> {
         }
     }
 
-    pub fn analyze(&self) -> Result<HIR, SemanticAnalyzerErr> {
+    pub fn analyze(&self) -> Result<HIR, SemanalyzerErr> {
         let mut symbol_table = SymbolTable::new();
         let mut aast: Vec<AAstNode> = vec![];
 
         for ast_node in self.ast {
-            if let Some(aast_node) = Self::get_aast_node(ast_node, &mut symbol_table) {
-                aast.push(aast_node);
-            }
+            let aast_node = self.get_aast_node(ast_node, &mut symbol_table)?;
+            aast.push(aast_node);
         }
 
         Ok(HIR { symbol_table, aast })
     }
 
-    fn get_aast_node(ast_node: &AstNode, symbol_table: &mut SymbolTable) -> Option<AAstNode> {
+    fn get_aast_node(
+        &self,
+        ast_node: &AstNode,
+        symbol_table: &mut SymbolTable,
+    ) -> Result<AAstNode, SemanalyzerErr> {
         match ast_node {
-            AstNode::Number(primitive) => Some(Self::annotate_number(primitive)),
-            AstNode::Identifier(primitive) => {
-                Self::annotate_identifier_reference(primitive, symbol_table)
-            }
+            AstNode::Number(primitive) => Self::annotate_number(primitive),
+            AstNode::Identifier(primitive) => self.annotate_identifier_reference(primitive),
             AstNode::Call((call_kind, compound)) => {
                 Self::annotate_call(call_kind, compound, symbol_table)
             }
-            _ => None,
+            _ => Err(SemanalyzerErr::Unknown),
         }
     }
 
     fn annotate_call(
         _call_kind: &AstCallKind,
-        _compound: &AstCompound,
+        compound: &AstCompound,
         _symbol_table: &mut SymbolTable,
-    ) -> Option<AAstNode> {
-        None
+    ) -> Result<AAstNode, SemanalyzerErr> {
+        Err(SemanalyzerErr::SymbolUndefined {
+            span: compound.span.clone(),
+        })
     }
 
     /// This function annotates identifier references only.
@@ -115,21 +118,31 @@ impl<'a> Harmony<'a> {
     /// semantics for expressions that can define identifiers
     /// line `.let` and `.define`.
     fn annotate_identifier_reference(
-        _primitive: &AstPrimitive,
-        _symbol_table: &mut SymbolTable,
-    ) -> Option<AAstNode> {
-        None
+        &self,
+        primitive: &AstPrimitive,
+    ) -> Result<AAstNode, SemanalyzerErr> {
+        if let Some((symbol_id, depth)) = self.scope_stack.resolve(&primitive.value) {
+            return Ok(AAstNode::SymbolRef {
+                symbol_id,
+                depth,
+                span: primitive.span.clone(),
+            });
+        }
+
+        Err(SemanalyzerErr::SymbolUndefined {
+            span: primitive.span.clone(),
+        })
     }
 
-    fn annotate_number(primitive: &AstPrimitive) -> AAstNode {
+    fn annotate_number(primitive: &AstPrimitive) -> Result<AAstNode, SemanalyzerErr> {
         let aast_prim = AAstPrimitive {
             value: primitive.value.clone(),
             span: primitive.span.clone(),
         };
         if primitive.value.contains(".") {
-            return AAstNode::Float(aast_prim);
+            return Ok(AAstNode::Float(aast_prim));
         }
-        AAstNode::Int(aast_prim)
+        Ok(AAstNode::Int(aast_prim))
     }
 }
 
@@ -229,14 +242,14 @@ mod tests {
     // ==================================================================
 
     // ==================================================================
-    //  IDENTIFIER TESTS START
+    //  IDENTIFIER REFERENCE TESTS START
     // ==================================================================
 
     #[test]
-    fn identifier_should_annotate_correctly() {}
+    fn identifier_reference_should_annotate_correctly() {}
 
     // ==================================================================
-    //  IDENTIFIER TESTS END
+    //  IDENTIFIER REFERENCE TESTS END
     // ==================================================================
 
     // ==================================================================

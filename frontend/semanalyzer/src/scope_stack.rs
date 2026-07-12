@@ -43,7 +43,8 @@ impl ScopeStack {
     }
 
     /// Registers a new identifier in the current (innermost) scope.
-    /// Called when semantic analysis encounters .let or .define declarations.
+    /// Called when semantic analysis encounters .let or any other declarations
+    /// that semantically must create a scope.
     pub fn define(&mut self, identifier_name: String, symbol_id: SymbolId) {
         if let Some(last_scope) = self.scopes.last_mut() {
             last_scope.bindings.insert(identifier_name, symbol_id);
