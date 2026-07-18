@@ -28,7 +28,7 @@
 
     - [x] Add tests for ScopeStack
 
-    - [ ] Add semantics for .define
+    - [x] Add semantics for .define
 
         - [ ] Tests
 
@@ -48,9 +48,7 @@
 
         - [x] Tests
 
-    - [ ] Add identifier scope resolution
-
-        - [ ] Tests
+    - [ ] Refactor errors
 
 - [ ] Compiler
 

@@ -33,13 +33,21 @@ pub mod symbol_table;
 
 use elise_ast::{AstCallKind, AstCompound, AstNode, AstPrimitive};
 use elise_binder::DataBindingTable;
+use elise_builtins::lexemes::FN_DEFINE_LEXEME;
 use elise_errors::errors_semanalyzer::SemanalyzerErr;
 
 use crate::{
     aast::{AAstNode, AAstPrimitive},
+    data_types::{LangPrimitiveType, LangType},
     scope_stack::ScopeStack,
     symbol_table::SymbolTable,
 };
+
+// ==================================================================
+//
+//  SEMANALYZER START
+//
+// ==================================================================
 
 #[derive(Debug)]
 pub struct HIR {
@@ -67,20 +75,20 @@ impl<'a> Harmony<'a> {
         }
     }
 
-    pub fn analyze(&self) -> Result<HIR, SemanalyzerErr> {
+    pub fn analyze(&mut self) -> Result<HIR, SemanalyzerErr> {
         let mut symbol_table = SymbolTable::new();
         let mut aast: Vec<AAstNode> = vec![];
 
         for ast_node in self.ast {
-            let aast_node = self.get_aast_node(ast_node, &mut symbol_table)?;
+            let aast_node = self.annotate_ast_node(ast_node, &mut symbol_table)?;
             aast.push(aast_node);
         }
 
         Ok(HIR { symbol_table, aast })
     }
 
-    fn get_aast_node(
-        &self,
+    fn annotate_ast_node(
+        &mut self,
         ast_node: &AstNode,
         symbol_table: &mut SymbolTable,
     ) -> Result<AAstNode, SemanalyzerErr> {
@@ -88,63 +96,177 @@ impl<'a> Harmony<'a> {
             AstNode::Number(primitive) => Self::annotate_number(primitive),
             AstNode::Identifier(primitive) => self.annotate_identifier_reference(primitive),
             AstNode::Call((call_kind, compound)) => {
-                Self::annotate_call(call_kind, compound, symbol_table)
+                self.annotate_call(call_kind, compound, symbol_table)
             }
             _ => Err(SemanalyzerErr::Unknown),
         }
     }
 
-    fn annotate_call(
-        _call_kind: &AstCallKind,
+    // ==================================================================
+    // ANNOTATE DEFINE CALL START
+    //
+    // .define (Identifier LangPrimitiveType)
+    //
+    // 1. Has only 2 arguments
+    // 2. First argument is always an identifier
+    // 3. Second argument is always primitive type
+    // 4. Never creates a new scope stack record
+    // 5. Defines symbols in the current scope stack
+    // 6. Does not remove any scope stack entries
+    // ==================================================================
+
+    fn annotate_define_call(
+        &mut self,
         compound: &AstCompound,
-        _symbol_table: &mut SymbolTable,
+        symbol_table: &mut SymbolTable,
     ) -> Result<AAstNode, SemanalyzerErr> {
-        Err(SemanalyzerErr::SymbolUndefined {
+        if compound.children.len() != 2 {
+            return Err(SemanalyzerErr::DefineFnArgsLen {
+                span: compound.span.clone(),
+            });
+        }
+
+        let first_arg = &**compound.children.first().unwrap();
+        let second_arg = &**compound.children.last().unwrap();
+
+        let (ident_type, ident_value) = match second_arg {
+            AstNode::Number(number_primitive) => match Self::annotate_number(number_primitive)? {
+                AAstNode::Int(_) => (LangPrimitiveType::Int, number_primitive.value.clone()),
+                AAstNode::Float(_) => (LangPrimitiveType::Float, number_primitive.value.clone()),
+                _ => {
+                    return Err(SemanalyzerErr::DefineFnSecondArgType {
+                        span: number_primitive.span.clone(),
+                    });
+                }
+            },
+            // TODO: Add branches for another primitive types.
+            _ => {
+                return Err(SemanalyzerErr::DefineFnSecondArgType {
+                    span: compound.span.clone(),
+                });
+            }
+        };
+
+        let AstNode::Identifier(primitive) = first_arg else {
+            return Err(SemanalyzerErr::DefineFnFirstArgIdentifier {
+                span: compound.span.clone(),
+            });
+        };
+
+        if self.scope_stack.resolve(&primitive.value).is_some() {
+            return Err(SemanalyzerErr::SymbolDuplicate {
+                span: compound.span.clone(),
+            });
+        }
+
+        let symbol_id =
+            symbol_table.fresh(primitive.value.clone(), LangType::Primitive(ident_type));
+
+        self.scope_stack.define(primitive.value.clone(), symbol_id);
+
+        Ok(AAstNode::Define {
+            symbol_id,
+            value: ident_value,
             span: compound.span.clone(),
         })
     }
 
-    /// This function annotates identifier references only.
-    /// It means that it captures only identifiers that are
-    /// already in scope and just referenced. For example:
-    ///
-    /// .define (PI 3.1415)
-    /// .let ([distance 43]
-    ///    .add (PI distance))
-    ///
-    /// This function takes care of `PI` and `distance` in .add
-    /// function call only. Resolution for identifier definition
-    /// has to be done in respective functions for handling
-    /// semantics for expressions that can define identifiers
-    /// line `.let` and `.define`.
+    // ==================================================================
+    // ANNOTATE DEFINE CALL END
+    // ==================================================================
+
+    // ==================================================================
+    // ANNOTATE CALL START
+    // ==================================================================
+
+    fn annotate_call(
+        &mut self,
+        call_kind: &AstCallKind,
+        compound: &AstCompound,
+        symbol_table: &mut SymbolTable,
+    ) -> Result<AAstNode, SemanalyzerErr> {
+        match call_kind {
+            AstCallKind::Named(name) => match name.as_str() {
+                FN_DEFINE_LEXEME => self.annotate_define_call(compound, symbol_table),
+                _ => Err(SemanalyzerErr::UnknownFunction {
+                    span: compound.span.clone(),
+                }),
+            },
+            // TODO: Annotate anonymous function.
+            _ => Err(SemanalyzerErr::UnknownFunction {
+                span: compound.span.clone(),
+            }),
+        }
+    }
+
+    // ==================================================================
+    // ANNOTATE CALL END
+    // ==================================================================
+
+    // ==================================================================
+    // ANNOTATE IDENTIFIER REFERENCE START
+    //
+    // Annotates identifier references only.
+    // It means that it captures only identifiers that are
+    // already in scope and just referenced. For example:
+    //
+    // .define (PI 3.1415)
+    // .let ([distance 43]
+    //    .add (PI distance))
+    //
+    // This function takes care of `PI` and `distance` in .add
+    // function call only. Resolution for identifier definition
+    // has to be done in respective functions for handling
+    // semantics for expressions that can define identifiers
+    // line `.let` and `.define`.
+    // ==================================================================
+
     fn annotate_identifier_reference(
         &self,
         primitive: &AstPrimitive,
     ) -> Result<AAstNode, SemanalyzerErr> {
-        if let Some((symbol_id, depth)) = self.scope_stack.resolve(&primitive.value) {
-            return Ok(AAstNode::SymbolRef {
+        self.scope_stack
+            .resolve(&primitive.value)
+            .map(|(symbol_id, depth)| AAstNode::SymbolRef {
                 symbol_id,
                 depth,
                 span: primitive.span.clone(),
-            });
-        }
-
-        Err(SemanalyzerErr::SymbolUndefined {
-            span: primitive.span.clone(),
-        })
+            })
+            .ok_or_else(|| SemanalyzerErr::SymbolUndefined {
+                span: primitive.span.clone(),
+            })
     }
+
+    // ==================================================================
+    // ANNOTATE IDENTIFIER REFERENCE END
+    // ==================================================================
+
+    // ==================================================================
+    // ANNOTATE NUMBER START
+    // ==================================================================
 
     fn annotate_number(primitive: &AstPrimitive) -> Result<AAstNode, SemanalyzerErr> {
         let aast_prim = AAstPrimitive {
             value: primitive.value.clone(),
             span: primitive.span.clone(),
         };
-        if primitive.value.contains(".") {
-            return Ok(AAstNode::Float(aast_prim));
-        }
-        Ok(AAstNode::Int(aast_prim))
+        Ok(if primitive.value.contains(".") {
+            AAstNode::Float(aast_prim)
+        } else {
+            AAstNode::Int(aast_prim)
+        })
     }
+
+    // ==================================================================
+    // ANNOTATE NUMBER END
+    // ==================================================================
 }
+
+// ==================================================================
+//
+//  SEMANALYZER END
+//
+// ==================================================================
 
 // ==================================================================
 //

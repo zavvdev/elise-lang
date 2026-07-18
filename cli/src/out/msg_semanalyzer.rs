@@ -8,8 +8,20 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
     use SemanalyzerErr::*;
 
     let (info, span) = match sema_err {
-        SymbolUndefined { span } => ("Undefined Symbol", Some(span)),
-        SymbolDuplicate { span } => ("Duplicated Symbol", Some(span)),
+        SymbolUndefined { span } => ("Undefined symbol", Some(span)),
+        SymbolDuplicate { span } => ("Duplicated symbol", Some(span)),
+
+        DefineFnArgsLen { span } => (".define function must have 2 arguments", Some(span)),
+        DefineFnFirstArgIdentifier { span } => (
+            "First argument of the .define function must be an identifier",
+            Some(span),
+        ),
+        DefineFnSecondArgType { span } => (
+            "Second argument of the .define function must be a primitive value",
+            Some(span),
+        ),
+
+        UnknownFunction { span } => ("Unknown Function", Some(span)),
         Unknown => ("Unexpected error", None),
     };
 

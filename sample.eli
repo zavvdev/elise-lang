@@ -1,4 +1,1 @@
 .define (PI 3.1415)
-
-.let ([distance 43]
-    .add (PI distance))

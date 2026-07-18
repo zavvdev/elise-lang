@@ -1,4 +1,4 @@
-build:
+build\:dev:
 	cargo build
 
 build\:release:
