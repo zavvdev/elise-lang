@@ -235,7 +235,7 @@ impl<'a> Harmony<'a> {
     // function call only. Resolution for identifier definition
     // has to be done in respective functions for handling
     // semantics for expressions that can define identifiers
-    // line `.let` and `.define`.
+    // like `.let` and `.define`.
     // ==================================================================
 
     fn annotate_identifier_reference(
