@@ -294,10 +294,6 @@ impl<'a> Harmony<'a> {
 
 #[cfg(test)]
 mod tests {
-    // ==================================================================
-    //  NUMBER TESTS START
-    // ==================================================================
-
     use std::collections::HashMap;
 
     use elise_ast::{AstNode, AstPrimitive};
@@ -309,8 +305,12 @@ mod tests {
         aast::{AAstNode, AAstPrimitive},
     };
 
+    // ==================================================================
+    // ANNOTATE NUMBER TESTS START
+    // ==================================================================
+
     #[test]
-    fn number_should_annotate_integers() {
+    fn annotate_number_should_annotate_integers() {
         let ast = vec![
             AstNode::Number(AstPrimitive {
                 value: "32".to_string(),
@@ -344,7 +344,7 @@ mod tests {
     }
 
     #[test]
-    fn number_should_annotate_floats() {
+    fn annotate_number_should_annotate_floats() {
         let ast = vec![
             AstNode::Number(AstPrimitive {
                 value: "3.2".to_string(),
@@ -378,29 +378,18 @@ mod tests {
     }
 
     // ==================================================================
-    //  NUMBER TESTS END
+    // ANNOTATE NUMBER TESTS END
     // ==================================================================
 
     // ==================================================================
-    //  IDENTIFIER REFERENCE TESTS START
-    // ==================================================================
-
-    #[test]
-    fn identifier_reference_should_annotate_correctly() {}
-
-    // ==================================================================
-    //  IDENTIFIER REFERENCE TESTS END
-    // ==================================================================
-
-    // ==================================================================
-    //  DEFINE FN TESTS START
+    // ANNOTATE DEFINE CALL TESTS START
     // ==================================================================
 
     #[test]
-    fn fndefine_should_annotate_correctly() {}
+    fn annotate_define_call_should_annotate_correctly() {}
 
     // ==================================================================
-    //  DEFINE FN TESTS END
+    // ANNOTATE DEFINE CALL TESTS END
     // ==================================================================
 }
 
