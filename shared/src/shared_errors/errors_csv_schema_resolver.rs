@@ -1,4 +1,4 @@
-use elise_shared_types::Span;
+use crate::shared_types::Span;
 
 #[derive(Debug, PartialEq)]
 pub enum CsvSchemaResolverErr {

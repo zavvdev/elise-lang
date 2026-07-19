@@ -8,16 +8,18 @@ pub mod conf;
 pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
-use elise_binder::Binder;
-
-use elise_csv::{
-    csv_binder::CsvDataBinder,
-    csv_parser::{CsvParser, CsvRow},
-    csv_schema_resolver::CsvSchemaResolver,
+use elise_data::{
+    DataParseResult,
+    data_binder::DataBinder,
+    data_csv::{
+        data_csv_binder::CsvDataBinder, data_csv_parser::CsvParser,
+        data_csv_schema_resolver::CsvSchemaResolver,
+    },
 };
+
 use elise_parser::Prelude;
 use elise_semanalyzer::Harmony;
-use elise_shared_errors::{LangErr, errors_common::CommonErr, errors_csv_parser::CsvParserErr};
+use elise_shared::shared_errors::{LangErr, errors_common::CommonErr};
 use rayon::scope;
 use std::time::Instant;
 
@@ -57,11 +59,6 @@ pub struct ExecResult<'a> {
 pub struct ValidateResult<'a> {
     pub config: &'a ModeValidateConf,
     pub ms: u128,
-}
-
-/// Result of the data parsing operation.
-enum DataParseResult {
-    Csv(Result<Vec<CsvRow>, CsvParserErr>),
 }
 
 /// Entry point for running the program in 'RUN' mode.

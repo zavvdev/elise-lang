@@ -1,6 +1,6 @@
 use crate::out::utils::{self, print_err_source_code_slice};
 use crate::out::utils::{get_source_code_slice, print_err_source_code_pos};
-use elise_shared_errors::errors_parser::ParserErr;
+use elise_shared::shared_errors::errors_parser::ParserErr;
 
 pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
     use ParserErr::*;

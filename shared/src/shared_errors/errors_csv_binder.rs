@@ -1,5 +1,3 @@
-use elise_shared_types::DataSourceFieldType;
-
 #[derive(Debug, PartialEq)]
 pub struct PosInfo {
     pub row: usize,
@@ -9,8 +7,8 @@ pub struct PosInfo {
 #[derive(Debug, PartialEq)]
 pub struct TypeMismatchInfo {
     pub pos: PosInfo,
-    pub expected: DataSourceFieldType,
-    pub got: DataSourceFieldType,
+    pub expected: &'static str,
+    pub got: &'static str,
 }
 
 #[derive(Debug, PartialEq)]

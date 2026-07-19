@@ -9,13 +9,11 @@ members = [
     "cli",
     "compiler",
     "frontend/ast",
-    "frontend/binder",
-    "frontend/csv",
+    "frontend/data",
     "frontend/parser",
     "frontend/semanalyzer",
     "runtime/vm",
-    "shared/shared_errors",
-    "shared/shared_types",
+    "shared",
 ]
 
 [workspace.dependencies]

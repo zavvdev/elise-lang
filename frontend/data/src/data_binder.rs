@@ -8,7 +8,7 @@
 
 use std::collections::HashMap;
 
-use elise_shared_types::DataSourceFieldType;
+use crate::data_types::DataType;
 
 /// Building blocks of the HashMap key.
 /// We can represent any data access path
@@ -33,7 +33,7 @@ pub type Path = Vec<PathSegment>;
 #[derive(Debug, PartialEq)]
 pub struct DataDescriptor {
     // We don't keep parsed values in enum options.
-    pub ty: DataSourceFieldType,
+    pub ty: DataType,
     // Instead we just use `value` prop as String type
     // because our values will be serialized into bytecode
     // anyway, so there is no need to parse "true" to bool,
@@ -55,7 +55,7 @@ pub struct DataBindingTable {
 }
 
 /// Must be implemented for any binder of any data type.
-pub trait Binder<D, S, E> {
+pub trait DataBinder<D, S, E> {
     fn new(data: D, schema: S) -> Self;
     fn bind(&self) -> Result<DataBindingTable, E>;
 }

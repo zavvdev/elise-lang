@@ -3,7 +3,7 @@
 //! This module consists of AST related type definitions
 //! and implementations.
 
-use elise_shared_types::Span;
+use elise_shared::shared_types::Span;
 
 /// Represents a primitive value that does not
 /// have any nested values inside. Numbers, strings, bools etc.

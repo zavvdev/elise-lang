@@ -1,4 +1,4 @@
-use elise_shared_errors::errors_common::CommonErr;
+use elise_shared::shared_errors::errors_common::CommonErr;
 
 use crate::out::utils::{self};
 

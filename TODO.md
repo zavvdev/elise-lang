@@ -16,9 +16,6 @@
 - [x] Combine CsvResolvedSchema with parsed csv records to produce DataBindingTable 
       IR that describes data in agnostic way.
 
-- [ ] Combine binder and csv crates under a single "data" crate. Move DataParseResult and
-      DataSourceFieldType into it.
-
 - [ ] Semantic analyzer (preserve as much types as you can)
 
     - [x] Add lang data types

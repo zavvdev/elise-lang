@@ -7,9 +7,9 @@
 //!
 //! The AAST is a compile-time only structure, discarded after bytecode emission.
 
-use elise_shared_types::Span;
+use elise_shared::shared_types::Span;
 
-use crate::symbol_table::SymbolId;
+use crate::semanalyzer_symbol_table::SymbolId;
 
 #[derive(Debug, PartialEq)]
 pub struct AAstPrimitive {

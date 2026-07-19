@@ -1,59 +1,56 @@
 # Documentation
 
-## Execution Pipeline
+## General execution pipeline
+
+```
+Source code
+    -> Prelude (parser)
+    -> Harmony (semanalyzer)
+    -> Maestro (compiler)
+    -> Score (bytecode)
+    -> Sonata (VM)
+```
 
 Steps 1–3 run in parallel:
 
-1. `frontend/parser` parses source code `.eli` file → `AST`
-2. `frontend/parser` parses schema `.elt` file → `AST`, then `frontend/csv/schema_resolver` walks it → `CsvResolvedSchema`
-3. `frontend/csv/parser` reads data file → `CsvParserRecord`
+1. `Prelude` (parser) parses source code `.eli` file and produces `AST`
+2. `Prelude` parses schema `.elt` file and produces `AST` 
+3. `CsvParser` reads data and produces parsed data representation `Vec<CsvRow>`
 
 Then sequentially:
 
-4. `frontend/binder` validates `CsvParserRecord` against `CsvResolvedSchema` → `DataBindingTable` which is data agnostic IR 
-5. `frontend/semanalyzer` takes source code `AST` and `DataBindingTable` → `HIR` with `SymbolTable`
-+ `AAST` (optimized, annotated)
-6. `compiler` takes `HIR` + `DataBindingTable` and produces `bytecode` with serialized `DataBindingTable` (agnostic data representation for VM)
-7. `runtime/vm` deserializes data and executes `bytecode`
+4. `CsvSchemaResolver` takes schema AST and produces `CsvResolvedSchema` which is a convenient representation of schema types.
+5. `CsvDataBinder` validates `CsvParserRecord` against `CsvResolvedSchema` → `DataBindingTable` which is data agnostic IR 
+6. `Harmony` (semantic analyzer) takes source code `AST` and `DataBindingTable` → `HIR` with `SymbolTable` + `AAST` (optimized, annotated)
+7. `compiler` takes `HIR` + `DataBindingTable` and produces `bytecode` with serialized `DataBindingTable` (agnostic data representation for VM)
+8. `runtime/vm` deserializes data and executes `bytecode`
 
-Note: the same parser is used for both source and schema files. Schema syntax is identical to source syntax by design.
+Note: the same parser (Prelude) is used for both source and schema files. Schema syntax is identical to source syntax by design.
 
 ---
 
 ## Modules
 
-### `shared/errors`
-Centralized `LangErr` enum wrapping all subsystem error kinds. Depends on `shared/shared_types`.
-
-### `shared/shared_types`
-Shared types. No dependencies.
+### `shared`
+Centralized shared crates such as errors and types. Depends on nothing.
 
 ### `frontend`
 Module that is responsible for syntax/grammar related manipulations.
 
 ### `frontend/ast`
-`AstNode` definitions. Depends on `shared/shared_types`. A frontend-internal artifact — never escapes into `compiler` or `runtime`.
+`AstNode` definitions. Depends on `shared`. A frontend-internal artifact — never escapes into `compiler` or `runtime`.
 
-### `frontend/binder`
-Validates `CsvParserRecord` against `CsvResolvedSchema` and produces `DataBindingTable`. Depends on `shared/shared_types`.
+### `frontend/data`
+Contains data binder and files that are related to data being processed (csv, json). Depends on `shared` and `frontend/ast`.
 
 ### `frontend/parser`
-Parses source `.eli` and schema `.elt` files into `AST`. Depends on `frontend/ast`, `shared/shared_errors`, `shared/shared_types`.
-
-### `frontend/csv`
-Three responsibilities:
-- CSV Parser: reads data file → `DataParseResult`
-- CSV Schema Resolver: walks schema `AST` → `CsvResolvedSchema`
-- CSV Binder: takes `DataParseResult` and `CsvResolvedSchema` → `DataBindingTable`
-
-Depends on `frontend/ast`, `frontend/binder`, `shared/shared_errors`, `shared/shared_types`.
+Parses source `.eli` and schema `.elt` files into `AST`. Depends on `frontend/ast`, `shared`.
 
 ### `frontend/semanalyzer`
-Takes source `AST` and `DataBindingTable` → `HIR`. Depends on `frontend/ast`, `frontend/binder`,
-`shared/shared_errors`, `shared/shared_types`
+Takes source `AST` and `DataBindingTable` → `HIR`. Depends on `frontend/ast`, `frontend/data`, `shared`.
 
 ### `compiler`
-Takes `HIR` + `DataBindingTable`, emits `bytecode`. Depends on `frontend/binder`, `frontend/semanalyzer`. Has no knowledge of `ast` or `runtime`.
+Takes `HIR` + `DataBindingTable`, emits `bytecode`. Depends on `frontend/data`, `frontend/semanalyzer`. Has no knowledge of `ast` or `runtime`.
 
 ### `bytecode`
 Bytecode instruction definitions. No dependencies. A shared neutral contract between `compiler` (writes) and `runtime/vm` (reads) — owned by neither.
@@ -68,17 +65,6 @@ Composition root. Orchestrates the pipeline, handles all user-facing error displ
 
 ## Design decisions
 
-### General execution pipeline
-
-```
-Source code
-    -> Prelude (parser)
-    -> Harmony (semanalyzer)
-    -> Maestro (compiler)
-    -> Score (bytecode)
-    -> Sonata (VM)
-```
-
 ### Lexing & Parsing
 
 Elise syntax is designed to be _Code as Data_ where source is already shaped like an _AST_. Given
@@ -86,8 +72,6 @@ that, lexing and parsing are combined into a single Parser step in order to redu
 iterations and build _AST_ right away.
 
 ### Data Binding Stage
-
-Lives in `src/frontend/binder`.
 
 The data binding stage is responsible for building a data structure that can simplify accessing data.
 For example, if we have `.csv` file, users will access data by mapping rows and accessing column names. Or, if we're talking about `.json`, it might also we a nested access since we can have arrays and objects in there.

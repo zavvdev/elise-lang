@@ -36,7 +36,7 @@
 
 use std::collections::HashMap;
 
-use crate::data_types::LangType;
+use crate::semanalyzer_data_types::LangType;
 
 type TSymbolId = u32;
 
@@ -89,8 +89,8 @@ impl SymbolTable {
 #[cfg(test)]
 mod tests {
     use crate::{
-        data_types::{LangPrimitiveType, LangType},
-        symbol_table::{SymbolId, SymbolTable},
+        semanalyzer_data_types::{LangPrimitiveType, LangType},
+        semanalyzer_symbol_table::{SymbolId, SymbolTable},
     };
 
     #[test]

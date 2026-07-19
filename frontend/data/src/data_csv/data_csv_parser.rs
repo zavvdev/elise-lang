@@ -1,8 +1,10 @@
 use csv::{ErrorKind, ReaderBuilder};
-use elise_shared_errors::errors_csv_parser::CsvParserErr;
-use elise_shared_types::DataSourceFieldType;
+use elise_shared::shared_errors::errors_csv_parser::CsvParserErr;
 
-use crate::csv_config::{CSV_BOOL_FALSE_TOKENS_LOWER, CSV_BOOL_TRUE_TOKENS_LOWER};
+use crate::{
+    data_csv::data_csv_config::{CSV_BOOL_FALSE_TOKENS_LOWER, CSV_BOOL_TRUE_TOKENS_LOWER},
+    data_types::DataType,
+};
 
 pub struct CsvParser<'a> {
     data: &'a str,
@@ -10,7 +12,7 @@ pub struct CsvParser<'a> {
 
 #[derive(Debug, PartialEq)]
 pub struct CsvCol {
-    pub ty: DataSourceFieldType,
+    pub ty: DataType,
     pub value: String,
     pub row: usize,
     pub col: usize,
@@ -69,22 +71,22 @@ impl<'a> CsvParser<'a> {
         col_index: usize,
     ) -> Result<CsvCol, CsvParserErr> {
         let mut result = CsvCol {
-            ty: DataSourceFieldType::String,
+            ty: DataType::String,
             value: value.to_string(),
             row: row_index,
             col: col_index,
         };
 
         if Self::is_bool(value) {
-            result.ty = DataSourceFieldType::Bool;
+            result.ty = DataType::Bool;
         }
 
         if Self::is_number(value) {
-            result.ty = DataSourceFieldType::Number;
+            result.ty = DataType::Number;
         }
 
         if Self::is_empty(value) {
-            result.ty = DataSourceFieldType::Empty;
+            result.ty = DataType::Empty;
             result.value = "".to_string();
         }
 
@@ -120,9 +122,12 @@ impl<'a> CsvParser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::csv_parser::{CsvCol, CsvParser, CsvRow};
-    use elise_shared_errors::errors_csv_parser::CsvParserErr::*;
-    use elise_shared_types::DataSourceFieldType;
+    use elise_shared::shared_errors::errors_csv_parser::CsvParserErr::*;
+
+    use crate::{
+        data_csv::data_csv_parser::{CsvCol, CsvParser, CsvRow},
+        data_types::DataType,
+    };
 
     #[test]
     fn parse_should_parse_number() {
@@ -152,7 +157,7 @@ mod tests {
                 .enumerate()
                 .map(|(i, n)| CsvCol {
                     value: n.to_string(),
-                    ty: DataSourceFieldType::Number,
+                    ty: DataType::Number,
                     row: 0,
                     col: i,
                 })
@@ -180,7 +185,7 @@ mod tests {
                 .enumerate()
                 .map(|(i, n)| CsvCol {
                     value: n.to_string(),
-                    ty: DataSourceFieldType::Bool,
+                    ty: DataType::Bool,
                     row: 0,
                     col: i,
                 })
@@ -201,13 +206,13 @@ mod tests {
                 cols: vec![
                     CsvCol {
                         value: "".to_string(),
-                        ty: DataSourceFieldType::Empty,
+                        ty: DataType::Empty,
                         row: 0,
                         col: 0,
                     },
                     CsvCol {
                         value: "".to_string(),
-                        ty: DataSourceFieldType::Empty,
+                        ty: DataType::Empty,
                         row: 0,
                         col: 1,
                     }
@@ -226,7 +231,7 @@ mod tests {
             Ok(vec![CsvRow {
                 cols: vec![CsvCol {
                     value: "John".to_string(),
-                    ty: DataSourceFieldType::String,
+                    ty: DataType::String,
                     row: 0,
                     col: 0,
                 }],

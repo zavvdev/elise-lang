@@ -26,22 +26,22 @@
 //! By the time HIR reaches the emitter, all semantic guarantees are established
 //! and the emitter can trust the AAST without re-validation.
 
-pub mod aast;
-pub mod config;
-pub mod data_types;
-pub mod scope_stack;
-pub mod symbol_table;
+pub mod semanalyzer_aast;
+pub mod semanalyzer_config;
+pub mod semanalyzer_data_types;
+pub mod semanalyzer_scope_stack;
+pub mod semanalyzer_symbol_table;
 
 use elise_ast::{AstCallKind, AstCompound, AstNode, AstPrimitive};
-use elise_binder::DataBindingTable;
-use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
+use elise_data::data_binder::DataBindingTable;
+use elise_shared::shared_errors::errors_semanalyzer::SemanalyzerErr;
 
 use crate::{
-    aast::{AAstNode, AAstPrimitive},
-    config::{FN_DEFINE_ARGS_LEN, FN_DEFINE_LEXEME},
-    data_types::{LangPrimitiveType, LangType},
-    scope_stack::ScopeStack,
-    symbol_table::SymbolTable,
+    semanalyzer_aast::{AAstNode, AAstPrimitive},
+    semanalyzer_config::{FN_DEFINE_ARGS_LEN, FN_DEFINE_LEXEME},
+    semanalyzer_data_types::{LangPrimitiveType, LangType},
+    semanalyzer_scope_stack::ScopeStack,
+    semanalyzer_symbol_table::SymbolTable,
 };
 
 // ==================================================================
@@ -296,12 +296,12 @@ mod tests {
     use std::collections::HashMap;
 
     use elise_ast::{AstNode, AstPrimitive};
-    use elise_binder::DataBindingTable;
-    use elise_shared_types::Span;
+    use elise_data::data_binder::DataBindingTable;
+    use elise_shared::shared_types::Span;
 
     use crate::{
         Harmony,
-        aast::{AAstNode, AAstPrimitive},
+        semanalyzer_aast::{AAstNode, AAstPrimitive},
     };
 
     // ==================================================================

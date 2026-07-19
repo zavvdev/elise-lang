@@ -1,5 +1,5 @@
 use crate::out::utils::{self};
-use elise_shared_errors::errors_csv_binder::CsvBinderErr;
+use elise_shared::shared_errors::errors_csv_binder::CsvBinderErr;
 
 pub fn print_err(parser_err: &CsvBinderErr) {
     use CsvBinderErr::*;
@@ -19,7 +19,7 @@ pub fn print_err(parser_err: &CsvBinderErr) {
         TypeMismatch(info) => {
             utils::print_err("Type mismatch", label);
             utils::print_err_source_code_pos(info.pos.row, info.pos.col);
-            utils::print_err_type_mismatch(&info.expected, &info.got);
+            utils::print_err_type_mismatch(info.expected, info.got);
         }
     };
 }

@@ -1,20 +1,21 @@
 use elise_ast::{AstCallKind::*, AstCompound, AstNode, AstPrimitive};
 
-use elise_shared_errors::errors_csv_schema_resolver::{
+use elise_shared::shared_errors::errors_csv_schema_resolver::{
     CsvSchemaResolverErr, CsvSchemaResolverErr::*,
 };
-use elise_shared_types::{DataSourceFieldType, Span};
+use elise_shared::shared_types::Span;
 
-use crate::csv_config::{
+use crate::data_csv::data_csv_config::{
     SCHEMA_FN_BOOL_LEXEME, SCHEMA_FN_EMPTY_LEXEME, SCHEMA_FN_NUMBER_LEXEME,
     SCHEMA_FN_OPTIONAL_LEXEME, SCHEMA_FN_ROOT_LEXEME, SCHEMA_FN_ROW_LEXEME,
     SCHEMA_FN_STRING_LEXEME,
 };
+use crate::data_types::DataType;
 
 #[derive(Debug, PartialEq)]
 pub struct CsvColDescriptor {
     pub name: String,
-    pub ty: DataSourceFieldType,
+    pub ty: DataType,
     pub opt: bool,
 }
 
@@ -40,12 +41,12 @@ impl<'a> CsvSchemaResolver<'a> {
         call_name: &str,
         start: usize,
         end: usize,
-    ) -> Result<DataSourceFieldType, CsvSchemaResolverErr> {
+    ) -> Result<DataType, CsvSchemaResolverErr> {
         match call_name {
-            SCHEMA_FN_BOOL_LEXEME => Ok(DataSourceFieldType::Bool),
-            SCHEMA_FN_NUMBER_LEXEME => Ok(DataSourceFieldType::Number),
-            SCHEMA_FN_STRING_LEXEME => Ok(DataSourceFieldType::String),
-            SCHEMA_FN_EMPTY_LEXEME => Ok(DataSourceFieldType::Empty),
+            SCHEMA_FN_BOOL_LEXEME => Ok(DataType::Bool),
+            SCHEMA_FN_NUMBER_LEXEME => Ok(DataType::Number),
+            SCHEMA_FN_STRING_LEXEME => Ok(DataType::String),
+            SCHEMA_FN_EMPTY_LEXEME => Ok(DataType::Empty),
             _ => Err(ColInvalType {
                 span: Self::err_span(start, end),
             }),
@@ -62,7 +63,7 @@ impl<'a> CsvSchemaResolver<'a> {
         }
     }
 
-    fn resolve_literal_type(node: &AstNode) -> Result<DataSourceFieldType, CsvSchemaResolverErr> {
+    fn resolve_literal_type(node: &AstNode) -> Result<DataType, CsvSchemaResolverErr> {
         match node {
             AstNode::Call((Named(name), AstCompound { children, span })) => {
                 if children.is_empty() {
@@ -78,14 +79,14 @@ impl<'a> CsvSchemaResolver<'a> {
         }
     }
 
-    fn resolve_col_type(ty: &AstNode) -> Result<(DataSourceFieldType, bool), CsvSchemaResolverErr> {
+    fn resolve_col_type(ty: &AstNode) -> Result<(DataType, bool), CsvSchemaResolverErr> {
         match ty {
             // Column type must always be a function call.
             AstNode::Call((Named(name), AstCompound { children, span })) => match name.as_str() {
                 SCHEMA_FN_OPTIONAL_LEXEME => {
                     if children.len() == 1 {
                         let literal_type = Self::resolve_literal_type(children.first().unwrap())?;
-                        if literal_type != DataSourceFieldType::Empty {
+                        if literal_type != DataType::Empty {
                             return Ok((literal_type, true));
                         }
                         return Err(OptEmpty {
@@ -194,17 +195,19 @@ impl<'a> CsvSchemaResolver<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::csv_config::{
+    use elise_ast::{AstCallKind::*, AstCompound, AstNode, AstPrimitive};
+    use elise_shared::shared_errors::errors_csv_schema_resolver::CsvSchemaResolverErr::*;
+    use elise_shared::shared_types::Span;
+
+    use crate::data_csv::data_csv_config::{
         SCHEMA_FN_BOOL_LEXEME, SCHEMA_FN_EMPTY_LEXEME, SCHEMA_FN_NUMBER_LEXEME,
         SCHEMA_FN_OPTIONAL_LEXEME, SCHEMA_FN_ROOT_LEXEME, SCHEMA_FN_ROW_LEXEME,
         SCHEMA_FN_STRING_LEXEME,
     };
-    use crate::csv_schema_resolver::{
-        CsvColDescriptor, CsvResolvedSchema, CsvSchemaResolver, DataSourceFieldType,
+    use crate::data_csv::data_csv_schema_resolver::{
+        CsvColDescriptor, CsvResolvedSchema, CsvSchemaResolver,
     };
-    use elise_ast::{AstCallKind::*, AstCompound, AstNode, AstPrimitive};
-    use elise_shared_errors::errors_csv_schema_resolver::CsvSchemaResolverErr::*;
-    use elise_shared_types::Span;
+    use crate::data_types::DataType;
 
     // We don't care about Span values here since
     // we just need to make sure that they have the same
@@ -529,7 +532,7 @@ mod tests {
         let resolved = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
                 name: "name".to_string(),
-                ty: DataSourceFieldType::Number,
+                ty: DataType::Number,
                 opt: false,
             }],
         };
@@ -629,7 +632,7 @@ mod tests {
         let resolved = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
                 name: "name".to_string(),
-                ty: DataSourceFieldType::Number,
+                ty: DataType::Number,
                 opt: true,
             }],
         };
@@ -677,7 +680,7 @@ mod tests {
         let resolved = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
                 name: "age".to_string(),
-                ty: DataSourceFieldType::Number,
+                ty: DataType::Number,
                 opt: false,
             }],
         };
@@ -764,7 +767,7 @@ mod tests {
         let resolved = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
                 name: "name".to_string(),
-                ty: DataSourceFieldType::String,
+                ty: DataType::String,
                 opt: false,
             }],
         };
@@ -851,7 +854,7 @@ mod tests {
         let resolved = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
                 name: "employed".to_string(),
-                ty: DataSourceFieldType::Bool,
+                ty: DataType::Bool,
                 opt: false,
             }],
         };

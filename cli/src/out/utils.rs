@@ -1,7 +1,6 @@
 use std::str::from_utf8;
 
 use colored::Colorize;
-use elise_shared_types::DataSourceFieldType;
 
 pub struct SourceCodeSlice {
     pub slice: String,
@@ -77,15 +76,6 @@ pub fn get_source_code_slice(source_code: &[u8], byte_pos: usize) -> Option<Sour
     })
 }
 
-fn match_data_type(ty: &DataSourceFieldType) -> String {
-    match ty {
-        DataSourceFieldType::Number => "Number".to_string(),
-        DataSourceFieldType::String => "String".to_string(),
-        DataSourceFieldType::Bool => "Boolean".to_string(),
-        DataSourceFieldType::Empty => "Empty".to_string(),
-    }
-}
-
 pub fn print_err(message: &str, label: Option<&str>) {
     let label: &str = label.unwrap_or("Error");
     let error = format!("{}. {}", label.red().bold(), message);
@@ -97,10 +87,8 @@ pub fn print_err_source_code_pos(row: usize, col: usize) {
     eprintln!("{}", location.bold());
 }
 
-pub fn print_err_type_mismatch(expected: &DataSourceFieldType, got: &DataSourceFieldType) {
-    let exp_type = match_data_type(expected);
-    let got_type = match_data_type(got);
-    let msg = format!("Expected: {}, got: {}\n", exp_type, got_type);
+pub fn print_err_type_mismatch(expected: &'static str, got: &'static str) {
+    let msg = format!("Expected: {expected}, got: {got}\n");
     eprintln!("{}", msg.bold());
 }
 

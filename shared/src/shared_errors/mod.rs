@@ -11,7 +11,7 @@ use errors_csv_schema_resolver::CsvSchemaResolverErr;
 use errors_parser::ParserErr;
 use errors_semanalyzer::SemanalyzerErr;
 
-use crate::errors_common::CommonErr;
+use crate::shared_errors::errors_common::CommonErr;
 
 #[derive(Debug, PartialEq)]
 pub enum LangErr {
