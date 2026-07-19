@@ -64,6 +64,17 @@ pub enum AstNode {
 }
 
 impl AstNode {
+    pub const CALL_STR: &'static str = "Call";
+    pub const NUMBER_STR: &'static str = "Number";
+    pub const STRING_STR: &'static str = "String";
+    pub const BOOL_STR: &'static str = "Bool";
+    pub const NULL_STR: &'static str = "Null";
+    pub const LIST_STR: &'static str = "List";
+    pub const DICT_STR: &'static str = "Dict";
+    pub const DICT_PAIR_STR: &'static str = "DictPair";
+    pub const IDENTIFIER_STR: &'static str = "Identifier";
+    pub const SLOT_STR: &'static str = "Slot";
+
     pub fn span(&self) -> &Span {
         match self {
             AstNode::Call((_, c)) => &c.span,
@@ -75,6 +86,21 @@ impl AstNode {
             | AstNode::Slot(p) => &p.span,
             AstNode::List(c) | AstNode::Dict(c) => &c.span,
             AstNode::DictPair(p) => &p.span,
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            AstNode::Call(_) => Self::CALL_STR,
+            AstNode::Number(_) => Self::NUMBER_STR,
+            AstNode::String(_) => Self::STRING_STR,
+            AstNode::Bool(_) => Self::BOOL_STR,
+            AstNode::Null(_) => Self::NULL_STR,
+            AstNode::Dict(_) => Self::DICT_STR,
+            AstNode::List(_) => Self::LIST_STR,
+            AstNode::DictPair(_) => Self::DICT_PAIR_STR,
+            AstNode::Identifier(_) => Self::IDENTIFIER_STR,
+            AstNode::Slot(_) => Self::SLOT_STR,
         }
     }
 }

@@ -48,7 +48,7 @@
 
         - [x] Tests
 
-    - [ ] Refactor errors
+    - [x] Refactor errors
 
 - [ ] Compiler
 

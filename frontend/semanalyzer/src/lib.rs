@@ -27,6 +27,7 @@
 //! and the emitter can trust the AAST without re-validation.
 
 pub mod aast;
+pub mod config;
 pub mod data_types;
 pub mod scope_stack;
 pub mod symbol_table;
@@ -38,6 +39,7 @@ use elise_errors::errors_semanalyzer::SemanalyzerErr;
 
 use crate::{
     aast::{AAstNode, AAstPrimitive},
+    config::FN_DEFINE_ARGS_LEN,
     data_types::{LangPrimitiveType, LangType},
     scope_stack::ScopeStack,
     symbol_table::SymbolTable,
@@ -98,7 +100,9 @@ impl<'a> Harmony<'a> {
             AstNode::Call((call_kind, compound)) => {
                 self.annotate_call(call_kind, compound, symbol_table)
             }
-            _ => Err(SemanalyzerErr::Unknown),
+            _ => Err(SemanalyzerErr::UnsupportedNode {
+                span: ast_node.span().clone(),
+            }),
         }
     }
 
@@ -120,8 +124,11 @@ impl<'a> Harmony<'a> {
         compound: &AstCompound,
         symbol_table: &mut SymbolTable,
     ) -> Result<AAstNode, SemanalyzerErr> {
-        if compound.children.len() != 2 {
-            return Err(SemanalyzerErr::DefineFnArgsLen {
+        if compound.children.len() != FN_DEFINE_ARGS_LEN {
+            return Err(SemanalyzerErr::ArityMismatch {
+                fn_name: FN_DEFINE_LEXEME,
+                expected: FN_DEFINE_ARGS_LEN,
+                found: compound.children.len(),
                 span: compound.span.clone(),
             });
         }
@@ -133,23 +140,34 @@ impl<'a> Harmony<'a> {
             AstNode::Number(number_primitive) => match Self::annotate_number(number_primitive)? {
                 AAstNode::Int(_) => (LangPrimitiveType::Int, number_primitive.value.clone()),
                 AAstNode::Float(_) => (LangPrimitiveType::Float, number_primitive.value.clone()),
-                _ => {
-                    return Err(SemanalyzerErr::DefineFnSecondArgType {
-                        span: number_primitive.span.clone(),
+                fallback_aast_node => {
+                    return Err(SemanalyzerErr::ArgTypeMismatch {
+                        fn_name: FN_DEFINE_LEXEME,
+                        position: 1,
+                        expected: LangType::PRIMITIVE_STR,
+                        found: fallback_aast_node.as_str(),
+                        span: fallback_aast_node.span().clone(),
                     });
                 }
             },
-            // TODO: Add branches for another primitive types.
             _ => {
-                return Err(SemanalyzerErr::DefineFnSecondArgType {
-                    span: compound.span.clone(),
+                return Err(SemanalyzerErr::ArgTypeMismatch {
+                    fn_name: FN_DEFINE_LEXEME,
+                    position: 1,
+                    expected: LangType::PRIMITIVE_STR,
+                    found: second_arg.as_str(),
+                    span: second_arg.span().clone(),
                 });
             }
         };
 
         let AstNode::Identifier(primitive) = first_arg else {
-            return Err(SemanalyzerErr::DefineFnFirstArgIdentifier {
-                span: compound.span.clone(),
+            return Err(SemanalyzerErr::ArgKindMismatch {
+                fn_name: FN_DEFINE_LEXEME,
+                position: 0,
+                expected: AstNode::IDENTIFIER_STR,
+                found: first_arg.as_str(),
+                span: first_arg.span().clone(),
             });
         };
 
@@ -164,7 +182,7 @@ impl<'a> Harmony<'a> {
 
         self.scope_stack.define(primitive.value.clone(), symbol_id);
 
-        Ok(AAstNode::Define {
+        Ok(AAstNode::FDefine {
             symbol_id,
             value: ident_value,
             span: compound.span.clone(),
@@ -193,7 +211,7 @@ impl<'a> Harmony<'a> {
                 }),
             },
             // TODO: Annotate anonymous function.
-            _ => Err(SemanalyzerErr::UnknownFunction {
+            _ => Err(SemanalyzerErr::UnsupportedCallKind {
                 span: compound.span.clone(),
             }),
         }
