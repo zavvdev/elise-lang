@@ -1,4 +1,4 @@
-use elise_errors::errors_semanalyzer::SemanalyzerErr;
+use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
 
 use crate::out::utils::{
     self, get_source_code_slice, print_err_source_code_pos, print_err_source_code_slice,

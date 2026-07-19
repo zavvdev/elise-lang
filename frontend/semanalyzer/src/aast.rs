@@ -7,7 +7,7 @@
 //!
 //! The AAST is a compile-time only structure, discarded after bytecode emission.
 
-use elise_types::Span;
+use elise_shared_types::Span;
 
 use crate::symbol_table::SymbolId;
 

@@ -1,5 +1,5 @@
 [package]
-name = "elise-ast"
+name = "elise-shared-errors"
 version = "0.1.0"
 edition = "2024"
 

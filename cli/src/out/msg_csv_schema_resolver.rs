@@ -1,5 +1,5 @@
-use elise_errors::errors_csv_schema_resolver::CsvSchemaResolverErr;
-use elise_types::Span;
+use elise_shared_errors::errors_csv_schema_resolver::CsvSchemaResolverErr;
+use elise_shared_types::Span;
 
 use crate::out::utils;
 

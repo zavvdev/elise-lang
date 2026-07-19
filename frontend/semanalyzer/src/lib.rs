@@ -34,12 +34,11 @@ pub mod symbol_table;
 
 use elise_ast::{AstCallKind, AstCompound, AstNode, AstPrimitive};
 use elise_binder::DataBindingTable;
-use elise_builtins::lexemes::FN_DEFINE_LEXEME;
-use elise_errors::errors_semanalyzer::SemanalyzerErr;
+use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
 
 use crate::{
     aast::{AAstNode, AAstPrimitive},
-    config::FN_DEFINE_ARGS_LEN,
+    config::{FN_DEFINE_ARGS_LEN, FN_DEFINE_LEXEME},
     data_types::{LangPrimitiveType, LangType},
     scope_stack::ScopeStack,
     symbol_table::SymbolTable,
@@ -298,7 +297,7 @@ mod tests {
 
     use elise_ast::{AstNode, AstPrimitive};
     use elise_binder::DataBindingTable;
-    use elise_types::Span;
+    use elise_shared_types::Span;
 
     use crate::{
         Harmony,

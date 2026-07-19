@@ -15,9 +15,9 @@ use elise_csv::{
     csv_parser::{CsvParser, CsvRow},
     csv_schema_resolver::CsvSchemaResolver,
 };
-use elise_errors::{LangErr, errors_common::CommonErr, errors_csv_parser::CsvParserErr};
 use elise_parser::Prelude;
 use elise_semanalyzer::Harmony;
+use elise_shared_errors::{LangErr, errors_common::CommonErr, errors_csv_parser::CsvParserErr};
 use rayon::scope;
 use std::time::Instant;
 

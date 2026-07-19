@@ -82,10 +82,10 @@ dependencies = [
  "colored",
  "elise-binder",
  "elise-csv",
- "elise-errors",
  "elise-parser",
  "elise-semanalyzer",
- "elise-types",
+ "elise-shared-errors",
+ "elise-shared-types",
  "rayon",
  "serial_test",
 ]
@@ -94,20 +94,15 @@ dependencies = [
 name = "elise-ast"
 version = "0.1.0"
 dependencies = [
- "elise-types",
+ "elise-shared-types",
 ]
 
 [[package]]
 name = "elise-binder"
 version = "0.1.0"
 dependencies = [
- "elise-errors",
- "elise-types",
+ "elise-shared-types",
 ]
-
-[[package]]
-name = "elise-builtins"
-version = "0.1.0"
 
 [[package]]
 name = "elise-bytecode"
@@ -128,16 +123,8 @@ dependencies = [
  "csv",
  "elise-ast",
  "elise-binder",
- "elise-builtins",
- "elise-errors",
- "elise-types",
-]
-
-[[package]]
-name = "elise-errors"
-version = "0.1.0"
-dependencies = [
- "elise-types",
+ "elise-shared-errors",
+ "elise-shared-types",
 ]
 
 [[package]]
@@ -145,8 +132,8 @@ name = "elise-parser"
 version = "0.1.0"
 dependencies = [
  "elise-ast",
- "elise-errors",
- "elise-types",
+ "elise-shared-errors",
+ "elise-shared-types",
 ]
 
 [[package]]
@@ -155,13 +142,19 @@ version = "0.1.0"
 dependencies = [
  "elise-ast",
  "elise-binder",
- "elise-builtins",
- "elise-errors",
- "elise-types",
+ "elise-shared-errors",
+ "elise-shared-types",
 ]
 
 [[package]]
-name = "elise-types"
+name = "elise-shared-errors"
+version = "0.1.0"
+dependencies = [
+ "elise-shared-types",
+]
+
+[[package]]
+name = "elise-shared-types"
 version = "0.1.0"
 
 [[package]]

@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
 use elise_binder::{Binder, DataBindingTable, DataDescriptor, Path, PathSegment::*};
-use elise_errors::errors_csv_binder::{
+use elise_shared_errors::errors_csv_binder::{
     CsvBinderErr::{self, *},
     PosInfo, TypeMismatchInfo,
 };
-use elise_types::DataSourceFieldType;
+use elise_shared_types::DataSourceFieldType;
 
 use crate::{
     csv_config::{CSV_BOOL_FALSE_TOKENS_LOWER, CSV_BOOL_TRUE_TOKENS_LOWER},
@@ -116,9 +116,9 @@ impl Binder<Rows, Schema, CsvBinderErr> for CsvDataBinder {
 mod tests {
     use std::collections::HashMap;
 
-    use elise_errors::errors_csv_binder::PosInfo;
-    use elise_errors::errors_csv_binder::{CsvBinderErr::*, TypeMismatchInfo};
-    use elise_types::DataSourceFieldType;
+    use elise_shared_errors::errors_csv_binder::PosInfo;
+    use elise_shared_errors::errors_csv_binder::{CsvBinderErr::*, TypeMismatchInfo};
+    use elise_shared_types::DataSourceFieldType;
 
     use crate::csv_binder::CsvDataBinder;
     use crate::csv_binder::{BOOL_FALSE_COERCED, BOOL_TRUE_COERCED};

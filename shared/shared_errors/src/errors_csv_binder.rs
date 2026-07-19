@@ -1,4 +1,4 @@
-use elise_types::DataSourceFieldType;
+use elise_shared_types::DataSourceFieldType;
 
 #[derive(Debug, PartialEq)]
 pub struct PosInfo {

@@ -1,5 +1,5 @@
 use crate::out::utils::{self};
-use elise_errors::errors_csv_binder::CsvBinderErr;
+use elise_shared_errors::errors_csv_binder::CsvBinderErr;
 
 pub fn print_err(parser_err: &CsvBinderErr) {
     use CsvBinderErr::*;

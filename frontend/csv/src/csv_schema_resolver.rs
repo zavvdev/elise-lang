@@ -1,12 +1,15 @@
 use elise_ast::{AstCallKind::*, AstCompound, AstNode, AstPrimitive};
 
-use elise_builtins::lexemes::{
+use elise_shared_errors::errors_csv_schema_resolver::{
+    CsvSchemaResolverErr, CsvSchemaResolverErr::*,
+};
+use elise_shared_types::{DataSourceFieldType, Span};
+
+use crate::csv_config::{
     SCHEMA_FN_BOOL_LEXEME, SCHEMA_FN_EMPTY_LEXEME, SCHEMA_FN_NUMBER_LEXEME,
     SCHEMA_FN_OPTIONAL_LEXEME, SCHEMA_FN_ROOT_LEXEME, SCHEMA_FN_ROW_LEXEME,
     SCHEMA_FN_STRING_LEXEME,
 };
-use elise_errors::errors_csv_schema_resolver::{CsvSchemaResolverErr, CsvSchemaResolverErr::*};
-use elise_types::{DataSourceFieldType, Span};
 
 #[derive(Debug, PartialEq)]
 pub struct CsvColDescriptor {
@@ -191,17 +194,17 @@ impl<'a> CsvSchemaResolver<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::csv_schema_resolver::{
-        CsvColDescriptor, CsvResolvedSchema, CsvSchemaResolver, DataSourceFieldType,
-    };
-    use elise_ast::{AstCallKind::*, AstCompound, AstNode, AstPrimitive};
-    use elise_builtins::lexemes::{
+    use crate::csv_config::{
         SCHEMA_FN_BOOL_LEXEME, SCHEMA_FN_EMPTY_LEXEME, SCHEMA_FN_NUMBER_LEXEME,
         SCHEMA_FN_OPTIONAL_LEXEME, SCHEMA_FN_ROOT_LEXEME, SCHEMA_FN_ROW_LEXEME,
         SCHEMA_FN_STRING_LEXEME,
     };
-    use elise_errors::errors_csv_schema_resolver::CsvSchemaResolverErr::*;
-    use elise_types::Span;
+    use crate::csv_schema_resolver::{
+        CsvColDescriptor, CsvResolvedSchema, CsvSchemaResolver, DataSourceFieldType,
+    };
+    use elise_ast::{AstCallKind::*, AstCompound, AstNode, AstPrimitive};
+    use elise_shared_errors::errors_csv_schema_resolver::CsvSchemaResolverErr::*;
+    use elise_shared_types::Span;
 
     // We don't care about Span values here since
     // we just need to make sure that they have the same

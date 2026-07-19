@@ -22,26 +22,23 @@ Note: the same parser is used for both source and schema files. Schema syntax is
 
 ## Modules
 
-### `shared/builtins`
-Language builtin functionality. No dependencies.
-
 ### `shared/errors`
-Centralized `LangErr` enum wrapping all subsystem error kinds. Depends on `shared/types`.
+Centralized `LangErr` enum wrapping all subsystem error kinds. Depends on `shared/shared_types`.
 
-### `shared/types`
+### `shared/shared_types`
 Shared types. No dependencies.
 
 ### `frontend`
 Module that is responsible for syntax/grammar related manipulations.
 
 ### `frontend/ast`
-`AstNode` definitions. Depends on `shared/types`. A frontend-internal artifact — never escapes into `compiler` or `runtime`.
+`AstNode` definitions. Depends on `shared/shared_types`. A frontend-internal artifact — never escapes into `compiler` or `runtime`.
 
 ### `frontend/binder`
-Validates `CsvParserRecord` against `CsvResolvedSchema` and produces `DataBindingTable`. Depends on `shared/errors`, `shared/types`.
+Validates `CsvParserRecord` against `CsvResolvedSchema` and produces `DataBindingTable`. Depends on `shared/shared_types`.
 
 ### `frontend/parser`
-Parses source `.eli` and schema `.elt` files into `AST`. Depends on `frontend/ast`, `shared/errors`, `shared/types`.
+Parses source `.eli` and schema `.elt` files into `AST`. Depends on `frontend/ast`, `shared/shared_errors`, `shared/shared_types`.
 
 ### `frontend/csv`
 Three responsibilities:
@@ -49,11 +46,11 @@ Three responsibilities:
 - CSV Schema Resolver: walks schema `AST` → `CsvResolvedSchema`
 - CSV Binder: takes `DataParseResult` and `CsvResolvedSchema` → `DataBindingTable`
 
-Depends on `frontend/ast`, `frontend/binder`, `shared/errors`, `shared/builtins`, `shared/types`.
+Depends on `frontend/ast`, `frontend/binder`, `shared/shared_errors`, `shared/shared_types`.
 
 ### `frontend/semanalyzer`
 Takes source `AST` and `DataBindingTable` → `HIR`. Depends on `frontend/ast`, `frontend/binder`,
-`shared/errors`, `shared/builtins`, `shared/types`
+`shared/shared_errors`, `shared/shared_types`
 
 ### `compiler`
 Takes `HIR` + `DataBindingTable`, emits `bytecode`. Depends on `frontend/binder`, `frontend/semanalyzer`. Has no knowledge of `ast` or `runtime`.

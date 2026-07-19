@@ -1,7 +1,7 @@
 use std::str::from_utf8;
 
 use colored::Colorize;
-use elise_types::DataSourceFieldType;
+use elise_shared_types::DataSourceFieldType;
 
 pub struct SourceCodeSlice {
     pub slice: String,

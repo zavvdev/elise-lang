@@ -8,7 +8,7 @@
 
 use std::collections::HashMap;
 
-use elise_types::DataSourceFieldType;
+use elise_shared_types::DataSourceFieldType;
 
 /// Building blocks of the HashMap key.
 /// We can represent any data access path

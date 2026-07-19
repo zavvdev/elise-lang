@@ -14,9 +14,8 @@ members = [
     "frontend/parser",
     "frontend/semanalyzer",
     "runtime/vm",
-    "shared/errors",
-    "shared/builtins",
-    "shared/types",
+    "shared/shared_errors",
+    "shared/shared_types",
 ]
 
 [workspace.dependencies]

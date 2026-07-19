@@ -1,6 +1,6 @@
 use csv::{ErrorKind, ReaderBuilder};
-use elise_errors::errors_csv_parser::CsvParserErr;
-use elise_types::DataSourceFieldType;
+use elise_shared_errors::errors_csv_parser::CsvParserErr;
+use elise_shared_types::DataSourceFieldType;
 
 use crate::csv_config::{CSV_BOOL_FALSE_TOKENS_LOWER, CSV_BOOL_TRUE_TOKENS_LOWER};
 
@@ -121,8 +121,8 @@ impl<'a> CsvParser<'a> {
 #[cfg(test)]
 mod tests {
     use crate::csv_parser::{CsvCol, CsvParser, CsvRow};
-    use elise_errors::errors_csv_parser::CsvParserErr::*;
-    use elise_types::DataSourceFieldType;
+    use elise_shared_errors::errors_csv_parser::CsvParserErr::*;
+    use elise_shared_types::DataSourceFieldType;
 
     #[test]
     fn parse_should_parse_number() {

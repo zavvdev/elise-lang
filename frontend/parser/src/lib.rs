@@ -1,6 +1,6 @@
 pub mod parser_config;
 
-use elise_types::Span;
+use elise_shared_types::Span;
 use std::str::from_utf8;
 
 use crate::parser_config::{
@@ -10,7 +10,7 @@ use crate::parser_config::{
 };
 
 use elise_ast::{AstCallKind, AstCompound, AstKeyValuePair, AstNode, AstPrimitive};
-use elise_errors::errors_parser::{ParserErr, ParserErrInfo};
+use elise_shared_errors::errors_parser::{ParserErr, ParserErrInfo};
 
 // ==================================================================
 //
@@ -681,7 +681,7 @@ impl<'a> Prelude<'a> {
 mod tests {
     use crate::{AstCallKind, AstCompound, AstNode, AstPrimitive, Prelude, Span};
     use elise_ast::AstKeyValuePair;
-    use elise_errors::errors_parser::{ParserErr, ParserErrInfo};
+    use elise_shared_errors::errors_parser::{ParserErr, ParserErrInfo};
 
     // ==================================================================
     // NUMBER TESTS START

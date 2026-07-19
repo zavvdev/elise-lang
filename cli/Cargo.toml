@@ -17,8 +17,8 @@ elise-binder = { path = "../frontend/binder" }
 elise-parser = { path = "../frontend/parser" }
 elise-semanalyzer = { path = "../frontend/semanalyzer" }
 elise-csv = { path = "../frontend/csv" }
-elise-errors = { path = "../shared/errors" }
-elise-types = { path = "../shared/types" }
+elise-shared-errors = { path = "../shared/shared_errors" }
+elise-shared-types = { path = "../shared/shared_types" }
 colored.workspace = true
 serial_test.workspace = true
 rayon.workspace = true
