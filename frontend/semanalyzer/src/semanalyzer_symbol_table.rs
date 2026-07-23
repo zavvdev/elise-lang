@@ -43,7 +43,7 @@ type TSymbolId = u32;
 #[derive(Hash, Eq, PartialEq, Clone, Debug, Copy)]
 pub struct SymbolId(pub TSymbolId);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct SymbolDescriptor {
     pub name: String,
     pub ty: LangType,
@@ -53,7 +53,7 @@ pub struct SymbolDescriptor {
 
 #[derive(Debug)]
 pub struct SymbolTable {
-    symbols: HashMap<SymbolId, SymbolDescriptor>,
+    pub symbols: HashMap<SymbolId, SymbolDescriptor>,
     next_id: TSymbolId,
 }
 
