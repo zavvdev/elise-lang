@@ -11,12 +11,6 @@ use elise_shared::shared_types::Span;
 
 use crate::semanalyzer_symbol_table::SymbolId;
 
-#[derive(Debug, PartialEq)]
-pub struct AAstPrimitive {
-    pub value: String,
-    pub span: Span,
-}
-
 /// AAstNode must store primitive values as String type instead of
 /// parsed values since emitter only needs to know the type in order
 /// to emit a correct opcode. Parsing to correct value must be done
@@ -25,10 +19,7 @@ pub struct AAstPrimitive {
 pub enum AAstNode {
     FDefine {
         symbol_id: SymbolId,
-        // Storing value as a String directly instead of Box<AstNode>
-        // since .define can create references to primitive types only
-        // by design.
-        value: String,
+        value: Box<AAstNode>,
         span: Span,
     },
     FLet {
@@ -49,8 +40,25 @@ pub enum AAstNode {
         span: Span,
         depth: usize,
     },
-    Int(AAstPrimitive),
-    Float(AAstPrimitive),
+    Int {
+        value: String,
+        span: Span,
+    },
+    Float {
+        value: String,
+        span: Span,
+    },
+    String {
+        value: String,
+        span: Span,
+    },
+    Bool {
+        value: bool,
+        span: Span,
+    },
+    Null {
+        span: Span,
+    },
 }
 
 // String representations for AAstNode's in order to be able to
@@ -63,6 +71,9 @@ impl AAstNode {
     pub const SYMBOL_REF_STR: &'static str = "SymbolRef";
     pub const INT_STR: &'static str = "Int";
     pub const FLOAT_STR: &'static str = "Float";
+    pub const STRING_STR: &'static str = "String";
+    pub const BOOL_STR: &'static str = "Bool";
+    pub const NULL_STR: &'static str = "Null";
 
     pub fn span(&self) -> &Span {
         match self {
@@ -70,8 +81,12 @@ impl AAstNode {
             | AAstNode::FLet { span, .. }
             | AAstNode::FMul { span, .. }
             | AAstNode::FAdd { span, .. }
-            | AAstNode::SymbolRef { span, .. } => span,
-            AAstNode::Int(c) | AAstNode::Float(c) => &c.span,
+            | AAstNode::SymbolRef { span, .. }
+            | AAstNode::Int { span, .. }
+            | AAstNode::Float { span, .. }
+            | AAstNode::String { span, .. }
+            | AAstNode::Bool { span, .. }
+            | AAstNode::Null { span, .. } => span,
         }
     }
 
@@ -82,8 +97,11 @@ impl AAstNode {
             AAstNode::FMul { .. } => Self::FMUL_STR,
             AAstNode::FAdd { .. } => Self::FADD_STR,
             AAstNode::SymbolRef { .. } => Self::SYMBOL_REF_STR,
-            AAstNode::Int(_) => Self::INT_STR,
-            AAstNode::Float(_) => Self::FLOAT_STR,
+            AAstNode::Int { .. } => Self::INT_STR,
+            AAstNode::Float { .. } => Self::FLOAT_STR,
+            AAstNode::String { .. } => Self::STRING_STR,
+            AAstNode::Bool { .. } => Self::BOOL_STR,
+            AAstNode::Null { .. } => Self::NULL_STR,
         }
     }
 }

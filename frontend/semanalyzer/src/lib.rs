@@ -34,10 +34,11 @@ pub mod semanalyzer_symbol_table;
 
 use elise_ast::{AstCallKind, AstCompound, AstNode, AstPrimitive};
 use elise_data::data_binder::DataBindingTable;
+use elise_parser::parser_config::L_TRUE;
 use elise_shared::shared_errors::errors_semanalyzer::SemanalyzerErr;
 
 use crate::{
-    semanalyzer_aast::{AAstNode, AAstPrimitive},
+    semanalyzer_aast::AAstNode,
     semanalyzer_config::{FN_DEFINE_ARGS_LEN, FN_DEFINE_LEXEME},
     semanalyzer_data_types::{LangPrimitiveType, LangType},
     semanalyzer_scope_stack::ScopeStack,
@@ -95,6 +96,9 @@ impl<'a> Harmony<'a> {
     ) -> Result<AAstNode, SemanalyzerErr> {
         match ast_node {
             AstNode::Number(primitive) => Self::annotate_number(primitive),
+            AstNode::String(primitive) => Self::annotate_string(primitive),
+            AstNode::Bool(primitive) => Self::annotate_bool(primitive),
+            AstNode::Null(primitive) => Self::annotate_null(primitive),
             AstNode::Identifier(primitive) => self.annotate_identifier_reference(primitive),
             AstNode::Call((call_kind, compound)) => {
                 self.annotate_call(call_kind, compound, symbol_table)
@@ -135,20 +139,44 @@ impl<'a> Harmony<'a> {
         let first_arg = &**compound.children.first().unwrap();
         let second_arg = &**compound.children.last().unwrap();
 
-        let (ident_type, ident_value) = match second_arg {
-            AstNode::Number(number_primitive) => match Self::annotate_number(number_primitive)? {
-                AAstNode::Int(_) => (LangPrimitiveType::Int, number_primitive.value.clone()),
-                AAstNode::Float(_) => (LangPrimitiveType::Float, number_primitive.value.clone()),
-                fallback_aast_node => {
-                    return Err(SemanalyzerErr::ArgTypeMismatch {
-                        fn_name: FN_DEFINE_LEXEME,
-                        position: 1,
-                        expected: LangType::PRIMITIVE_STR,
-                        found: fallback_aast_node.as_str(),
-                        span: fallback_aast_node.span().clone(),
-                    });
+        let arg_type_mismatch = |fallback: &AAstNode| SemanalyzerErr::ArgTypeMismatch {
+            fn_name: FN_DEFINE_LEXEME,
+            position: 1,
+            expected: LangType::PRIMITIVE_STR,
+            found: fallback.as_str(),
+            span: fallback.span().clone(),
+        };
+
+        let (ident_type, aast_node) = match second_arg {
+            AstNode::Number(number_primitive) => {
+                let aast_node = Self::annotate_number(number_primitive)?;
+                match aast_node {
+                    AAstNode::Int { .. } => (LangPrimitiveType::Int, aast_node),
+                    AAstNode::Float { .. } => (LangPrimitiveType::Float, aast_node),
+                    fallback => return Err(arg_type_mismatch(&fallback)),
                 }
-            },
+            }
+            AstNode::String(string_primitive) => {
+                let aast_node = Self::annotate_string(string_primitive)?;
+                match aast_node {
+                    AAstNode::String { .. } => (LangPrimitiveType::String, aast_node),
+                    fallback => return Err(arg_type_mismatch(&fallback)),
+                }
+            }
+            AstNode::Bool(bool_primitive) => {
+                let aast_node = Self::annotate_bool(bool_primitive)?;
+                match aast_node {
+                    AAstNode::Bool { .. } => (LangPrimitiveType::Bool, aast_node),
+                    fallback => return Err(arg_type_mismatch(&fallback)),
+                }
+            }
+            AstNode::Null(null_primitive) => {
+                let aast_node = Self::annotate_null(null_primitive)?;
+                match aast_node {
+                    AAstNode::Null { .. } => (LangPrimitiveType::Null, aast_node),
+                    fallback => return Err(arg_type_mismatch(&fallback)),
+                }
+            }
             _ => {
                 return Err(SemanalyzerErr::ArgTypeMismatch {
                     fn_name: FN_DEFINE_LEXEME,
@@ -183,7 +211,7 @@ impl<'a> Harmony<'a> {
 
         Ok(AAstNode::FDefine {
             symbol_id,
-            value: ident_value,
+            value: Box::new(aast_node),
             span: compound.span.clone(),
         })
     }
@@ -218,6 +246,13 @@ impl<'a> Harmony<'a> {
 
     // ==================================================================
     // ANNOTATE CALL END
+    // ==================================================================
+
+    // ==================================================================
+    // PRIMITIVE ANNOTATIONS START
+    //
+    // Annotations for primitive values Number, String, Bool, Null,
+    // Identifier which we can map almost 1:1 from AstNode to AAstNode.
     // ==================================================================
 
     // ==================================================================
@@ -263,19 +298,65 @@ impl<'a> Harmony<'a> {
     // ==================================================================
 
     fn annotate_number(primitive: &AstPrimitive) -> Result<AAstNode, SemanalyzerErr> {
-        let aast_prim = AAstPrimitive {
-            value: primitive.value.clone(),
-            span: primitive.span.clone(),
-        };
+        let value = primitive.value.clone();
+        let span = primitive.span.clone();
         Ok(if primitive.value.contains(".") {
-            AAstNode::Float(aast_prim)
+            AAstNode::Float { value, span }
         } else {
-            AAstNode::Int(aast_prim)
+            AAstNode::Int { value, span }
         })
     }
 
     // ==================================================================
     // ANNOTATE NUMBER END
+    // ==================================================================
+
+    // ==================================================================
+    // ANNOTATE STRING START
+    // ==================================================================
+
+    fn annotate_string(primitive: &AstPrimitive) -> Result<AAstNode, SemanalyzerErr> {
+        Ok(AAstNode::String {
+            value: primitive.value.clone(),
+            span: primitive.span.clone(),
+        })
+    }
+
+    // ==================================================================
+    // ANNOTATE STRING END
+    // ==================================================================
+
+    // ==================================================================
+    // ANNOTATE BOOL START
+    // ==================================================================
+
+    fn annotate_bool(primitive: &AstPrimitive) -> Result<AAstNode, SemanalyzerErr> {
+        Ok(AAstNode::Bool {
+            value: primitive.value == L_TRUE,
+            span: primitive.span.clone(),
+        })
+    }
+
+    // ==================================================================
+    // ANNOTATE BOOL END
+    // ==================================================================
+
+    // ==================================================================
+    // ANNOTATE NULL START
+    // ==================================================================
+
+    fn annotate_null(primitive: &AstPrimitive) -> Result<AAstNode, SemanalyzerErr> {
+        Ok(AAstNode::Null {
+            span: primitive.span.clone(),
+        })
+    }
+
+    // ==================================================================
+    // ANNOTATE BOOL END
+    // ==================================================================
+
+    // ==================================================================
+    // PRIMITIVE ANNOTATIONS END
     // ==================================================================
 }
 
@@ -299,10 +380,7 @@ mod tests {
     use elise_data::data_binder::DataBindingTable;
     use elise_shared::shared_types::Span;
 
-    use crate::{
-        Harmony,
-        semanalyzer_aast::{AAstNode, AAstPrimitive},
-    };
+    use crate::{Harmony, semanalyzer_aast::AAstNode};
 
     // ==================================================================
     // ANNOTATE NUMBER TESTS START
@@ -330,14 +408,14 @@ mod tests {
         assert_eq!(
             aast.unwrap().aast,
             vec![
-                AAstNode::Int(AAstPrimitive {
+                AAstNode::Int {
                     value: "32".to_string(),
                     span: Span { start: 1, end: 1 }
-                }),
-                AAstNode::Int(AAstPrimitive {
+                },
+                AAstNode::Int {
                     value: "32e-2".to_string(),
                     span: Span { start: 2, end: 2 }
-                })
+                }
             ]
         );
     }
@@ -364,14 +442,14 @@ mod tests {
         assert_eq!(
             aast.unwrap().aast,
             vec![
-                AAstNode::Float(AAstPrimitive {
+                AAstNode::Float {
                     value: "3.2".to_string(),
                     span: Span { start: 1, end: 1 }
-                }),
-                AAstNode::Float(AAstPrimitive {
+                },
+                AAstNode::Float {
                     value: "3.2E-2".to_string(),
                     span: Span { start: 2, end: 2 }
-                })
+                }
             ]
         )
     }

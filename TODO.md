@@ -30,7 +30,7 @@
 
     - [x] Add semantics for .define
 
-        - [ ] Tests
+        - [x] Tests
 
     - [ ] Add semantics for .let
 
@@ -45,6 +45,10 @@
         - [ ] Tests
 
     - [x] Add semantics for numbers (Int, Float)
+
+        - [x] Tests
+
+    - [x] Add semantics for string, bool, null
 
         - [x] Tests
 
