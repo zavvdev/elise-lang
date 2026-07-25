@@ -346,16 +346,23 @@ impl<'a> Harmony<'a> {
 
     // ==================================================================
     // ANNOTATE NUMBER START
+    //
+    // Scientific notation numbers are treated as Float.
     // ==================================================================
 
     fn annotate_number(primitive: &AstPrimitive) -> Result<AAstNode, SemanalyzerErr> {
         let value = primitive.value.clone();
         let span = primitive.span.clone();
-        Ok(if primitive.value.contains(".") {
-            AAstNode::Float { value, span }
-        } else {
-            AAstNode::Int { value, span }
-        })
+        Ok(
+            if primitive.value.contains(".")
+                || primitive.value.contains("E")
+                || primitive.value.contains("e")
+            {
+                AAstNode::Float { value, span }
+            } else {
+                AAstNode::Int { value, span }
+            },
+        )
     }
 
     // ==================================================================

@@ -16,11 +16,17 @@
 - [x] Combine CsvResolvedSchema with parsed csv records to produce DataBindingTable 
       IR that describes data in agnostic way.
 
+- [ ] Finish SPECIFICATION
+
+- [ ] Add support for IEEE-754 numbers format (parser)
+
 - [ ] Semantic analyzer (preserve as much types as you can)
 
     - [x] Add lang data types
 
-        - [x] Int, Float (for now)
+        - [x] Int, Float, String, Bool, Null
+
+        - [x] Tests
 
     - [x] Add ScopeStack for Harmony
 
@@ -43,16 +49,6 @@
     - [ ] Add semantics for .add
 
         - [ ] Tests
-
-    - [x] Add semantics for numbers (Int, Float)
-
-        - [x] Tests
-
-    - [x] Add semantics for string, bool, null
-
-        - [x] Tests
-
-    - [x] Refactor errors
 
 - [ ] Compiler
 

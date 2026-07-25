@@ -7,7 +7,7 @@ mod common;
 
 #[test]
 fn test_integers() {
-    let ast = parse("-1e2, -3, 1e-2, 56");
+    let ast = parse("-3, 56, 9999999");
     let data_bindings = empty_data_bindings();
     let hir = Harmony::new(&ast, &data_bindings).analyze().unwrap();
 
@@ -16,20 +16,16 @@ fn test_integers() {
         hir.aast,
         vec![
             AAstNode::Int {
-                value: "-1e2".to_string(),
-                span: Span { start: 0, end: 4 }
-            },
-            AAstNode::Int {
                 value: "-3".to_string(),
-                span: Span { start: 6, end: 8 }
-            },
-            AAstNode::Int {
-                value: "1e-2".to_string(),
-                span: Span { start: 10, end: 14 }
+                span: Span { start: 0, end: 2 }
             },
             AAstNode::Int {
                 value: "56".to_string(),
-                span: Span { start: 16, end: 18 }
+                span: Span { start: 4, end: 6 }
+            },
+            AAstNode::Int {
+                value: "9999999".to_string(),
+                span: Span { start: 8, end: 15 }
             }
         ]
     );
@@ -37,7 +33,7 @@ fn test_integers() {
 
 #[test]
 fn test_floats() {
-    let ast = parse("-1.2e2, -3.34, 1.5e-2, 5.6");
+    let ast = parse("-1.2e2, -3.34, 1.5e-2, 5.6, 3e5, 94E2");
     let data_bindings = empty_data_bindings();
     let hir = Harmony::new(&ast, &data_bindings).analyze().unwrap();
 
@@ -60,6 +56,14 @@ fn test_floats() {
             AAstNode::Float {
                 value: "5.6".to_string(),
                 span: Span { start: 23, end: 26 }
+            },
+            AAstNode::Float {
+                value: "3e5".to_string(),
+                span: Span { start: 28, end: 31 }
+            },
+            AAstNode::Float {
+                value: "94E2".to_string(),
+                span: Span { start: 33, end: 37 }
             }
         ]
     );
