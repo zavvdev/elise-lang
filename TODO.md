@@ -16,11 +16,13 @@
 - [x] Combine CsvResolvedSchema with parsed csv records to produce DataBindingTable 
       IR that describes data in agnostic way.
 
-- [ ] Finish SPECIFICATION
+- [ ] Update anonymous function (don't use .([args\*] expr+) use .fn ([args\*] expr+) instead
 
 - [ ] Add support for IEEE-754 numbers format (parser)
 
 - [ ] Semantic analyzer (preserve as much types as you can)
+
+    - [ ] Check spec and makes changes accordingly (functions)
 
     - [x] Add lang data types
 

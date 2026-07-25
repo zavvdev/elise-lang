@@ -1,45 +1,200 @@
+# Expression
+
+An **Expression** is any instruction written in Elise. When you write code, you write a set of
+expressions that are going to be [evaluated](#evaluation).
+
+# Evaluation
+
+Evaluation is the process of computing the [Value](#value) that an [Expression](#expression) produces.
+Every expression, when evaluated, reduces to a single _Value_ of one of Elise's 8 [data types](#data-types).
+
+# Value
+
+A _Value_ is the result of [evaluating](#evaluation) an [Expression](#expression). It is a concrete
+instance of one of Elise's 8 [data types](#data-types).
+
 # Data Types
 
-Elise language has 8 data types which are divided into 3 categories: **Primitive** data types, **Compound** data types and **Function*.
+Elise has 8 data types divided into 3 categories: **Primitive** data types, **Compound** data
+types, and **Function**.
 
-**LangType**: _LangPrimitiveType_, _LangCompoundType_, _Function_
+**LangType**: _LangPrimitiveType_ | _LangCompoundType_ | _Function_
 
-**LangPrimitiveType**: _Int_, _Float_, _String_, _Bool_, _Null_
+**LangPrimitiveType**: _Int_ | _Float_ | _String_ | _Bool_ | _Null_
 
-**LangCompoundType**: _List_, _Dict_
+**LangCompoundType**: _List_ | _Dict_
 
 ## Int
 
-64 bit signed and unsigned integer.
+64-bit signed or unsigned integer.
+An _Int_ [expression](#expression) [evaluates](#evaluation) to itself.
+
+```
+2, 356, -42, 9999, 0
+```
 
 ## Float
 
-64 bit double precision IEEE-754 floating point number.
-All numbers written in scientific (1e7) notations are interpreted as Float.
+64-bit double-precision [IEEE-754](https://en.wikipedia.org/wiki/IEEE_754) floating point number.
+All numbers written in scientific notation (e.g. `1e7`) are interpreted as _Float_.
+A _Float_ [expression](#expression) [evaluates](#evaluation) to itself.
+
+```
+2.3, 5.0, -23.03, 1e8, -1.2E-3 
+```
+
+## String
+
+[UTF-8](https://en.wikipedia.org/wiki/UTF-8) character sequence wrapped in double quotes.
+
+```
+"Elise"
+```
+
+A _String_ [expression](#expression) [evaluates](#evaluation) to itself.
+
+## Bool
+
+Boolean value. One of: `true` | `false`.
+
+A _Bool_ [expression](#expression) [evaluates](#evaluation) to itself.
+
+## Null
+
+Special type that represents the absence of any [Value](#value).
+```
+null
+```
+
+A _Null_ [expression](#expression) [evaluates](#evaluation) to itself.
+
+## List
+
+A data structure that represents a collection of [values](#value).
+A comma between _expressions_ is not required.
+
+```
+[Expression*]
+```
+
+Example:
+
+```
+[1, 1.2, "John", false, null, [1 2 3], { "name" "Jane" }, .mul(2 2), my-identifier]
+```
+
+Each value has its own index (Int) starting from `0` which you need to use in order to get the value.
+
+```
+.let ([colors ["red", "green", "blue"]]
+        .get(colors, 0))
+```
+
+Here `.get(colors, 0)` [evaluates](#evaluation) to [value](#value) `"red"`.
+
+A _List_ [expression](#expression) [evaluates](#evaluation) to itself.
+
+## Dict
+
+A collection of key-value pairs where each odd element is a _key_ and each even element is the
+[value](#value) associated with that key. A key must always be a [String](#string); a value can be any
+[Expression](#expression).
+
+```
+{ (String Expression)* }
+```
+
+Example:
+
+```
+{
+    "name" "John",
+    "age" 26,
+}
+```
+
+You can think of _Dict_ as the same thing as [List](#list), but instead of indexes that are
+integers, _Dict_ has named indexes - its keys, which you can name however you want.
+
+Therefore, this is also a valid _Dict_:
+
+```
+{ "name", "John", "age", 26 }
+```
+A _Dict_ [expression](#expression) [evaluates](#evaluation) to itself.
+
+## Function
+
+A _Function_ is a special [data type](#data-types) that lets you [evaluate](#evaluation) any number of
+[expressions](#expression) in order to perform some task and produce a [value](#value) as its
+result.
+
+Other [data types](#data-types) evaluate to themselves — for example, the _String_ expression `"Hello"` evaluates
+to `"Hello"`. A _Function_ is different: it lets you define custom logic for producing a result, so
+when called, it doesn't evaluate to itself but to whatever value that logic returns.
+
+Think of it like a custom [expression](#expression) that produces a _value_ you make it produce.
+
+A _Function_ can be created with built-in [.fn](#.fn) function.
+
+For example, using [.let](#.let):
+
+```
+.let ([
+    my-function .fn([value]
+                    .add(2 value))
+])
+```
+
+Here, `.fn([value] ...)` evaluates to a _Function_ that is assigned to `my-function`
+identifier. And now we can call it by referencing `my-function` [identifier](#identifier) with the
+following syntax:
+
+```
+.my-function(2)
+```
+
+which in this case evaluates to `4`.
+
+Or we can use the `.fn` function providing a name for an identifier that will be automatically
+created and bound to the _Function_ returned by `.fn`:
+
+```
+.fn (my-function [value]
+        .add(2 value))
+```
+
+The result is the same as with `.let` but shorter.
+
+### Semantics
+
+1. The last [expression](#expression) in the function body is the result of the function's [evaluation](#evaluation).
+2. Referencing an identifier that was bound to a _Function_ (without calling it) evaluates to
+the _Function_ value itself, not to a resulting value.
+3. Using call syntax on identifier that references to _Function_ value evaluates to a resulting
+value of that function.
+3. Functions create their own scope stack record and destroy it once evaluated.
+4. Functions are closures and capture parent scope stack record [identifiers](#identifier).
 
 # Identifier
 
-Identifiers allow you to create an alias for some data type by creating a binding between them, so
-you can get this data type later by evaluating the identifier.
+An identifier lets you create an alias for a [value](#value) of a specific [data type](#data-types), so you can
+use this alias expression in order to evaluate the value it references. In other languages, this is also called a
+"variable." You can bind an identifier to any data type.
 
 It is a sequence of characters that conforms to this pattern:
 
 ```
-<identifier> ::= <letter> (<letter> | <digit> | '-' | '?' | '!' | '_')*
+Identifier = letter (letter | digit | '-' | '?' | '!' | '_')*
 ```
 
-and evaluates into something that it was bound to. In other language it's also called a "variable".
-You can alias any data type with identifier.
-
-For example, create an alias for primitive data types:
+For example, create an alias for a primitive data type:
 
 ```
 .let ([name "John", age 26, married false] ...)
 ```
 
-so whenever you refer to the _name_, it evaluates to "John", and so on.
-
-Compound data types:
+so whenever you use `name` [expression](#expression), it evaluates to `"John"`, and so on.
 
 ```
 .let ([
@@ -49,28 +204,22 @@ Compound data types:
     },
     colors  ["red", "green", "blue"]
 ])
-```
 
-and even functions:
-
-```
-.let ([say-hi .([name] 
+.let ([say-hi .fn([name]
                     .concat("Hello, " name))])
 ```
 
-# Expression
+# Built-In Functions
 
-Expressions are language instructions that evaluate to some data type. Everything in Elise language is an expression.
-
-# Functions
+Elise provides a set of built-in functions.
 
 ## .define
 
-Allows to define a constant identifier in a current scope. This function must not create
-its own scope stack record, but rather define its symbol inside the current scope. Therefore,
-at the end of the **.define** scope it must not remove any scope stack records.
+Defines a constant identifier in the current scope stack record. This function does not create its own scope
+stack record; it defines its symbol directly in the current one. Consequently, `.define` does
+not remove any scope stack records when its evaluation finishes, since it never added one.
 
-It's allowed to call this function at any nesting level.
+It can be called at any nesting level.
 
 ### Semantics
 
@@ -78,12 +227,12 @@ It's allowed to call this function at any nesting level.
 .define (Identifier LangPrimitiveType)
 ```
 
-1. Has only 2 arguments
-2. First argument is always an identifier
-3. Second argument is always primitive type
-4. Never creates a new scope stack record
-5. Defines symbols in the current scope stack
-6. Does not remove any scope stack entries
+1. Takes exactly 2 arguments.
+2. The first argument is always an [identifier](#identifier).
+3. The second argument is always a primitive type.
+4. Never creates a new scope stack record.
+5. Defines the symbol in the current scope stack record.
+6. Does not remove any scope stack records.
 
 ### Example
 
@@ -93,12 +242,11 @@ It's allowed to call this function at any nesting level.
 
 ## .let
 
-Provides a way to create lexical bindings of data structures to symbols.
-The binding, and therefore the ability to resolve the binding,
-is available only within the lexical context of the let.
+Provides a way to create lexical bindings of [values](#value) to [identifiers](#identifier).
+These bindings are available only within the lexical context of the `.let`.
 
-The result of the **.let** expression evaluation is the result of the last
-expression inside the **.let** scope.
+The result of a `.let` expression is the result of the last expression evaluated within its scope
+stack record.
 
 ### Semantics
 
@@ -106,15 +254,15 @@ expression inside the **.let** scope.
 .let ([(Identifier Expression)+] Expression+)
 ```
 
-1. Min 2 arguments
-2. First argument is always a List
-3. Odd items in the list are always identifiers
-4. Even items in the list are always expressions that must be evaluated first
-5. The result of evaluation is always a result of the last evaluated expression
-6. Creates its own scope stack when enters
-7. Removes its own scope stack when evaluation finishes
-8. Does not allow symbol re-bindings
-9. Can access outer scope
+1. Takes a minimum of 2 arguments.
+2. The first argument is always a [List](#list).
+3. Odd items in that list are always [identifiers](#identifier).
+4. Even items in that list are always [expressions](#expression), which must be [evaluated](#evaluation) first.
+5. The result of evaluation is always the result of the last evaluated expression.
+6. Creates its own scope stack record on entry.
+7. Removes its own scope stack record when evaluation finishes.
+8. Does not allow re-binding of symbols.
+9. Can access the outer scope stack record.
 
 ### Example
 
@@ -127,4 +275,32 @@ expression inside the **.let** scope.
         " years old"))
 ```
 
-The evaluation result of this **.let** expression is "John is 26 years old".
+The evaluation result of this `.let` expression is `"John is 26 years old"`.
+
+## .fn
+
+Creates a [Function](#function) [value](#value). 
+
+### Semantics
+
+```
+.fn (Identifier? [Identifier*] Expression+)
+```
+
+1. If the _Identifier_ argument exists, it creates a new [identifier](#identifier) in the current scope
+stack record that is bound to a _Function_ value returned from `.fn`.
+2. `[Identifier*]` is a list of parameter names that the function accepts as an input (possibly empty).
+3. `[Identifier*]` parameters are identifiers that exist only in the function's scope stack record.
+4. The remaining arguments form the function body; the last expression evaluated is the result of
+the _Function_ evaluation.
+5. Creates a closure over the enclosing scope stack records.
+
+### Example
+
+```
+.fn (my-function [value]
+        .add(2 value))
+
+.let ([my-function2 .fn([value]
+                        .add(2 value))] ...)
+```

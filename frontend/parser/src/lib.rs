@@ -543,6 +543,7 @@ impl<'a> Prelude<'a> {
     fn call_validate_name(&self, name: &str) -> Result<AstCallKind, ParserErr> {
         // Anonymous function
         if name.is_empty() {
+            // TODO: UPDATE!
             return Ok(AstCallKind::Anon);
         }
         if !name.is_empty() && Self::identifier_is_valid(name) {
