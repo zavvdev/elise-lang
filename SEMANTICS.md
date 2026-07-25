@@ -64,12 +64,13 @@ expression inside the **.let** scope.
 
 #### Example
 
-```
+```eli
 .let ([age 26, name "John"]
     .concat(
-        "John is "
+        name
+        " is "
         .to-str(age)
-        "years old"))
+        " years old"))
 ```
 
 The evaluation result of this **.let** expression is "John is 26 years old".
