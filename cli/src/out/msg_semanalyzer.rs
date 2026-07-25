@@ -1,4 +1,4 @@
-use elise_shared::shared_errors::errors_semanalyzer::SemanalyzerErr;
+use elise_shared::shared_errors::errors_semanalyzer::{ArityMismatchKind, SemanalyzerErr};
 
 use crate::out::utils::{
     self, get_source_code_slice, print_err_source_code_pos, print_err_source_code_slice,
@@ -16,12 +16,22 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             expected,
             found,
             span,
-        } => (
-            format!(
-                "Invalid number of arguments for \"{fn_name}\" function. Expected: {expected}, found: {found}"
-            ),
-            span,
-        ),
+            kind,
+        } => {
+            let kind_symb = match kind {
+                ArityMismatchKind::Eq => "",
+                ArityMismatchKind::MoreEq => ">=",
+                ArityMismatchKind::LessEq => "<=",
+                ArityMismatchKind::More => ">",
+                ArityMismatchKind::Less => "<",
+            };
+            (
+                format!(
+                    "Invalid number of arguments for \"{fn_name}\" function. Expected: {kind_symb}{expected}, found: {found}"
+                ),
+                span,
+            )
+        }
         ArgKindMismatch {
             fn_name,
             position,

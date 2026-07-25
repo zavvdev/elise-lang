@@ -2,8 +2,8 @@
 // DEFINE FN START
 // ==================================================================
 
-pub const FN_DEFINE_ARGS_LEN: usize = 2;
 pub const FN_DEFINE_LEXEME: &str = "define";
+pub const FN_DEFINE_ARGS_LEN: usize = 2;
 
 // ==================================================================
 // DEFINE FN END
@@ -14,6 +14,7 @@ pub const FN_DEFINE_LEXEME: &str = "define";
 // ==================================================================
 
 pub const FN_LET_LEXEME: &str = "let";
+pub const FN_LET_MIN_ARGS_LEN: usize = 2;
 
 // ==================================================================
 // LET FN END

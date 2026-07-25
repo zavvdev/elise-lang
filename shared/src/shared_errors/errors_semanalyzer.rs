@@ -1,5 +1,15 @@
 use crate::shared_types::Span;
 
+/// Determines what exactly expected arguments number means.
+#[derive(Debug, PartialEq)]
+pub enum ArityMismatchKind {
+    Eq,
+    MoreEq,
+    LessEq,
+    More,
+    Less,
+}
+
 #[derive(Debug, PartialEq)]
 pub enum SemanalyzerErr {
     SymbolUndefined {
@@ -11,6 +21,7 @@ pub enum SemanalyzerErr {
     ArityMismatch {
         fn_name: &'static str,
         expected: usize,
+        kind: ArityMismatchKind,
         found: usize,
         span: Span,
     },

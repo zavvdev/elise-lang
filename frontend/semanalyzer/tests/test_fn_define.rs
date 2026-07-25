@@ -6,7 +6,10 @@ use elise_semanalyzer::{
     semanalyzer_data_types::{LangPrimitiveType, LangType},
     semanalyzer_symbol_table::{SymbolDescriptor, SymbolId},
 };
-use elise_shared::{shared_errors::errors_semanalyzer::SemanalyzerErr, shared_types::Span};
+use elise_shared::{
+    shared_errors::errors_semanalyzer::{ArityMismatchKind, SemanalyzerErr},
+    shared_types::Span,
+};
 
 use crate::common::{empty_data_bindings, parse};
 
@@ -184,6 +187,7 @@ fn test_returns_arity_mismatch_if_no_args() {
             fn_name: FN_DEFINE_LEXEME,
             expected: FN_DEFINE_ARGS_LEN,
             found: 0,
+            kind: ArityMismatchKind::Eq,
             ..
         })
     ));
@@ -201,6 +205,7 @@ fn test_returns_arity_mismatch_if_more_than_2_args() {
             fn_name: FN_DEFINE_LEXEME,
             expected: FN_DEFINE_ARGS_LEN,
             found: 3,
+            kind: ArityMismatchKind::Eq,
             ..
         })
     ));

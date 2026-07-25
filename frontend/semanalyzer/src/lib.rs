@@ -35,11 +35,16 @@ pub mod semanalyzer_symbol_table;
 use elise_ast::{AstCallKind, AstCompound, AstNode, AstPrimitive};
 use elise_data::data_binder::DataBindingTable;
 use elise_parser::parser_config::L_TRUE;
-use elise_shared::shared_errors::errors_semanalyzer::SemanalyzerErr;
+use elise_shared::{
+    shared_errors::errors_semanalyzer::{ArityMismatchKind, SemanalyzerErr},
+    shared_types::Span,
+};
 
 use crate::{
     semanalyzer_aast::AAstNode,
-    semanalyzer_config::{FN_DEFINE_ARGS_LEN, FN_DEFINE_LEXEME},
+    semanalyzer_config::{
+        FN_DEFINE_ARGS_LEN, FN_DEFINE_LEXEME, FN_LET_LEXEME, FN_LET_MIN_ARGS_LEN,
+    },
     semanalyzer_data_types::{LangPrimitiveType, LangType},
     semanalyzer_scope_stack::ScopeStack,
     semanalyzer_symbol_table::SymbolTable,
@@ -114,12 +119,12 @@ impl<'a> Harmony<'a> {
     //
     // .define (Identifier LangPrimitiveType)
     //
-    // 1. Has only 2 arguments
-    // 2. First argument is always an identifier
-    // 3. Second argument is always primitive type
-    // 4. Never creates a new scope stack record
-    // 5. Defines symbols in the current scope stack
-    // 6. Does not remove any scope stack entries
+    // 1. Has only 2 arguments;
+    // 2. First argument is always an identifier;
+    // 3. Second argument is always primitive type;
+    // 4. Never creates a new scope stack record;
+    // 5. Defines symbols in the current scope stack;
+    // 6. Does not remove any scope stack entries;
     // ==================================================================
 
     fn annotate_define_call(
@@ -133,6 +138,7 @@ impl<'a> Harmony<'a> {
                 expected: FN_DEFINE_ARGS_LEN,
                 found: compound.children.len(),
                 span: compound.span.clone(),
+                kind: ArityMismatchKind::Eq,
             });
         }
 
@@ -221,6 +227,50 @@ impl<'a> Harmony<'a> {
     // ==================================================================
 
     // ==================================================================
+    // ANNOTATE LET CALL START
+    //
+    // .let ([(Identifier Expression)+] Expression+)
+    //
+    // 1. Min 2 arguments;
+    // 2. First argument is always a list;
+    // 3. Odd items in the list are always identifiers;
+    // 4. Even items in the list are always expressions
+    //    that must be evaluated first;
+    // 5. The result of evaluation is always a result of
+    //    the last evaluated expression;
+    // 6. Creates its own scope stack when enters;
+    // 7. Removes its own scope stack when evaluation finishes;
+    // 8. Does not allow symbol re-bindings;
+    // 9. Can access outer scope;
+    // ==================================================================
+
+    fn annotate_let_call(
+        &mut self,
+        compound: &AstCompound,
+        _symbol_table: &mut SymbolTable,
+    ) -> Result<AAstNode, SemanalyzerErr> {
+        if compound.children.len() < FN_LET_MIN_ARGS_LEN {
+            return Err(SemanalyzerErr::ArityMismatch {
+                fn_name: FN_LET_LEXEME,
+                expected: FN_LET_MIN_ARGS_LEN,
+                found: compound.children.len(),
+                span: compound.span.clone(),
+                kind: ArityMismatchKind::MoreEq,
+            });
+        }
+
+        // TODO
+
+        Err(SemanalyzerErr::UnknownFunction {
+            span: Span { start: 0, end: 0 },
+        })
+    }
+
+    // ==================================================================
+    // ANNOTATE LET CALL END
+    // ==================================================================
+
+    // ==================================================================
     // ANNOTATE CALL START
     // ==================================================================
 
@@ -233,6 +283,7 @@ impl<'a> Harmony<'a> {
         match call_kind {
             AstCallKind::Named(name) => match name.as_str() {
                 FN_DEFINE_LEXEME => self.annotate_define_call(compound, symbol_table),
+                FN_LET_LEXEME => self.annotate_let_call(compound, symbol_table),
                 _ => Err(SemanalyzerErr::UnknownFunction {
                     span: compound.span.clone(),
                 }),
