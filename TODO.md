@@ -2,6 +2,9 @@
 
 ## Things to implement
  
+- [ ] IMPORTANT! Review compilation stage and semanalyzer stage.
+      These 2 must not depend on DataBindingTable in any way!
+
 - [x] CLI
   
 - [x] Parser

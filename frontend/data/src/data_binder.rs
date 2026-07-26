@@ -4,7 +4,7 @@
 //! for representation of any set of data (csv or json).
 //! It encapsulates the process of data validation against
 //! its schema and produces a data structure that will
-//! allow fast and easier data access during compilation.
+//! allow fast and easier data access.
 
 use std::collections::HashMap;
 
@@ -28,7 +28,7 @@ pub enum PathSegment {
 /// Key for HashMap in order to access data descriptor.
 pub type Path = Vec<PathSegment>;
 
-/// Provides some basic information for the compiler about
+/// Provides some basic information for about
 /// underlying data.
 #[derive(Debug, PartialEq)]
 pub struct DataDescriptor {

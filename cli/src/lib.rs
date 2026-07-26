@@ -41,7 +41,7 @@ pub struct RunResult<'a> {
 pub struct BuildResult<'a> {
     pub config: &'a ModeBuildConf,
     pub ms: u128,
-    pub executale_output: String,
+    pub executable_output: String,
 }
 
 /// Representation of the successful execution of the
@@ -145,7 +145,7 @@ pub fn build<'a>(
     Ok(BuildResult {
         config,
         ms: start.elapsed().as_millis(),
-        executale_output: String::from("CALL a [1] [0]"),
+        executable_output: String::from("CALL a [1] [0]"),
     })
 }
 

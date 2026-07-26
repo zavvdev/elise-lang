@@ -50,14 +50,18 @@ fn cli_run(conf: &ModeRunConf) {
     // be able to pass it to the function that handles errors.
     let source_code = match read_file_bytes(&conf.source_code_path) {
         Ok(desc) => desc.content,
-        Err(e) => return msg_fsys::print_file_rw_err(&e.message, &e.path, true),
+        Err(e) => {
+            return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
+        }
     };
 
     // We need to keep schema source code globally available in order to
     // be able to pass it to the function that handles errors.
     let schema_source_code = match read_file_bytes(&conf.data_schema_path) {
         Ok(desc) => desc.content,
-        Err(e) => return msg_fsys::print_file_rw_err(&e.message, &e.path, true),
+        Err(e) => {
+            return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
+        }
     };
 
     match read_file_string(&conf.data_path) {
@@ -89,14 +93,18 @@ fn cli_build(conf: &ModeBuildConf) {
     // be able to pass it to the function that handles errors.
     let source_code = match read_file_bytes(&conf.source_code_path) {
         Ok(desc) => desc.content,
-        Err(e) => return msg_fsys::print_file_rw_err(&e.message, &e.path, true),
+        Err(e) => {
+            return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
+        }
     };
 
     // We need to keep schema source code globally available in order to
     // be able to pass it to the function that handles errors.
     let schema_source_code = match read_file_bytes(&conf.data_schema_path) {
         Ok(desc) => desc.content,
-        Err(e) => return msg_fsys::print_file_rw_err(&e.message, &e.path, true),
+        Err(e) => {
+            return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
+        }
     };
 
     let build_res = elise::build(&source_code, &schema_source_code, conf)
@@ -104,7 +112,7 @@ fn cli_build(conf: &ModeBuildConf) {
 
     let out_path = &build_res.config.executable_output_path;
 
-    match write_file(out_path, &build_res.executale_output) {
+    match write_file(out_path, &build_res.executable_output) {
         Ok(_) => msg_modes::print_build_result(out_path, build_res.ms),
         Err(err) => msg_fsys::print_file_rw_err(&err.message, &err.path, false),
     }
@@ -137,7 +145,9 @@ fn cli_validate(conf: &ModeValidateConf) {
     // be able to pass it to the function that handles errors.
     let schema_source_code = match read_file_bytes(&conf.data_schema_path) {
         Ok(desc) => desc.content,
-        Err(e) => return msg_fsys::print_file_rw_err(&e.message, &e.path, true),
+        Err(e) => {
+            return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
+        }
     };
 
     match read_file_string(&conf.data_path) {

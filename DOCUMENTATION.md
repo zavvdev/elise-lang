@@ -14,16 +14,16 @@ Source code
 Steps 1–3 run in parallel:
 
 1. `Prelude` (parser) parses source code `.eli` file and produces `AST`
-2. `Prelude` parses schema `.elt` file and produces `AST` 
+2. `Prelude` parses schema `.elt` file and produces `AST`
 3. `CsvParser` reads data and produces parsed data representation `Vec<CsvRow>`
 
 Then sequentially:
 
 4. `CsvSchemaResolver` takes schema AST and produces `CsvResolvedSchema` which is a convenient representation of schema types.
-5. `CsvDataBinder` validates `CsvParserRecord` against `CsvResolvedSchema` → `DataBindingTable` which is data agnostic IR 
+5. `CsvDataBinder` validates `CsvParserRecord` against `CsvResolvedSchema` → `DataBindingTable` which is data agnostic IR
 6. `Harmony` (semantic analyzer) takes source code `AST` and `DataBindingTable` → `HIR` with `SymbolTable` + `AAST` (optimized, annotated)
-7. `compiler` takes `HIR` + `DataBindingTable` and produces `bytecode` with serialized `DataBindingTable` (agnostic data representation for VM)
-8. `runtime/vm` deserializes data and executes `bytecode`
+7. `compiler` takes `HIR` and produces `bytecode`.
+8. `runtime/vm` takes `bytecode` + `DataBindingTable` and executes bytecode against the data that is injected into runtime.
 
 Note: the same parser (Prelude) is used for both source and schema files. Schema syntax is identical to source syntax by design.
 
@@ -32,33 +32,47 @@ Note: the same parser (Prelude) is used for both source and schema files. Schema
 ## Modules
 
 ### `shared`
+
 Centralized shared crates such as errors and types. Depends on nothing.
 
 ### `frontend`
+
 Module that is responsible for syntax/grammar related manipulations.
 
 ### `frontend/ast`
+
 `AstNode` definitions. Depends on `shared`. A frontend-internal artifact — never escapes into `compiler` or `runtime`.
 
 ### `frontend/data`
+
 Contains data binder and files that are related to data being processed (csv, json). Depends on `shared` and `frontend/ast`.
 
 ### `frontend/parser`
+
 Parses source `.eli` and schema `.elt` files into `AST`. Depends on `frontend/ast`, `shared`.
 
 ### `frontend/semanalyzer`
+
+TODO: WRONG IDEA. SEMANALYZER MUST NOT DEPEND ON DATA
+
 Takes source `AST` and `DataBindingTable` → `HIR`. Depends on `frontend/ast`, `frontend/data`, `shared`.
 
 ### `compiler`
+
+TODO: WRONG IDEA. COMPILER MUST NOT DEPEND ON DATA
+
 Takes `HIR` + `DataBindingTable`, emits `bytecode`. Depends on `frontend/data`, `frontend/semanalyzer`. Has no knowledge of `ast` or `runtime`.
 
 ### `bytecode`
+
 Bytecode instruction definitions. No dependencies. A shared neutral contract between `compiler` (writes) and `runtime/vm` (reads) — owned by neither.
 
 ### `runtime/vm`
+
 Executes bytecode. Depends only on `bytecode`. Has no knowledge of `compiler`, `AST`, or any frontend artifact.
 
 ### `cli`
+
 Composition root. Orchestrates the pipeline, handles all user-facing error display.
 
 ---
@@ -132,7 +146,7 @@ When we walk AST, we carry both the `ScopeStack` and `SymbolTable` as mutable st
 
 **Entering a `let`:**
 
-1. Resolve the init expression(s) *before* pushing the scope (so `.let([x x] ...)` doesn't let `x` see itself)
+1. Resolve the init expression(s) _before_ pushing the scope (so `.let([x x] ...)` doesn't let `x` see itself)
 
 2. Push a new scope
 
@@ -154,7 +168,7 @@ When we walk AST, we carry both the `ScopeStack` and `SymbolTable` as mutable st
 
 1. Push a fresh scope, register each param with a new `SymbolId`
 
-2. Recurse into the body — *but track which identifiers resolve to a depth > 0 from the function's own scope boundary*
+2. Recurse into the body — _but track which identifiers resolve to a depth > 0 from the function's own scope boundary_
 
 3. Those are our captures — collect their `SymbolId`s, put them in the `Fn` node's `captures` list, and mark `symbol_table.symbols[id].is_captured = true`
 
@@ -173,14 +187,16 @@ When we walk AST, we carry both the `ScopeStack` and `SymbolTable` as mutable st
 The answer is: **the function object itself carries a copy of (or reference to) its captured variables**. This object is called a **closure**. At runtime, when the interpreter or VM creates this function value, it bundles `prefix`'s current value into the closure object alongside the function's code.
 
 1. During the walk, when we see `prefix` inside the function body, `scope_stack.resolve` returns
-`Some((SymbolId(1), depth=2))` — depth > 0 relative to the function boundary means it's not local
-but from outer scope.
+   `Some((SymbolId(1), depth=2))` — depth > 0 relative to the function boundary means it's not local
+   but from outer scope.
 
 2. We add `SymbolId(1)` to the `Fn` node's `captures: Vec<SymbolId>`
 
 3. We mark `symbol_info.is_captured = true` for that symbol
 
 ### Compilation Stage
+
+TODO: WRONG IDEA
 
 During compilation stage, we create some `ConstantPool` structure which is represented as a Vector, and a `ResolutionCache` (names can be different) HashMap.
 
