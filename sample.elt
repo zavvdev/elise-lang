@@ -2,6 +2,7 @@
     .row(
         name     .string()
         age      .number()
-        salary   .empty()
+        salary   .number()
+        employed .bool()
         employed .bool()
     ))

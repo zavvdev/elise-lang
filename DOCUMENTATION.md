@@ -1,7 +1,3 @@
-# Documentation
-
-## General execution pipeline
-
 ```
 Source code
     -> Prelude (parser)

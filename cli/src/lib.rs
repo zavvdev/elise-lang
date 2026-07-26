@@ -72,7 +72,7 @@ pub fn run<'a>(
 
     let (mut source_code_ast, mut schema_ast, mut parsed_data) = (None, None, None);
 
-    // Run in parallel since these processes does not depend on one another.
+    // Run in parallel since these processes don't depend on one another.
     scope(|s| {
         s.spawn(|_| {
             // Map ParserErr to LangErr::ParserSource in order to differentiate

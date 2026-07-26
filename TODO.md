@@ -4,6 +4,14 @@
  
 - [ ] IMPORTANT! Review compilation stage and semanalyzer stage.
       These 2 must not depend on DataBindingTable in any way!
+      Consider adding SchemaBindingTable that uses hashmap with
+      PathSegment => DataType, and this DS is what compiler
+      needs to use instead of DataBindingTable that must be
+      used only by VM.
+
+- [ ] CSV data file must not have col duplicates
+
+- [ ] Schema definition must not have field duplicates
 
 - [x] CLI
   
