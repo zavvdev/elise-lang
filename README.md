@@ -2,7 +2,7 @@
 
 /eˈliːs/ → pronounced like “eh-LEES”
 
-[Grammar Rules](./GRAMMAR.md), [Todos](./TODO.md), [Documentation](./DOCUMENTATION.md)
+[Grammar Rules](./GRAMMAR.md), [Documentation](./DOCUMENTATION.md), [Specification](./SPECIFICATION.md), [Todos](./TODO.md)
 
 ## Overview
 
@@ -10,7 +10,7 @@ A schema-driven data transformation language that compiles type-optimized byteco
 
 ## File Types
 
-> **_NOTE:_** Only `.csv` files are supported for now.
+> **_NOTE:_** Only `.csv` data files are supported for now.
 
 | Extension | Purpose                                  |
 | --------- | ---------------------------------------- |
@@ -33,9 +33,7 @@ elise --mode=run --source-code=sample.eli --data=data.csv --data-schema=data.elt
 
 - Executes immediately
 
-**Safety**: High
-
-### 2. Unsafe Execution (Maximum Performance)
+### 2. Unsafe Execution
 
 Step 1 — Build an executable
 
@@ -51,13 +49,13 @@ elise --mode=exec --executable=program.elc --data=data.csv
 
 - Requires precompiled .elc
 
+- Data must comply with schema that was used for building executable
+
 - Skips runtime validation
 
 - Executes fastest possible path
 
 **Use case**: trusted, prevalidated data
-
-**Safety**: None ⚠️
 
 ### 3. Validation-Only Step
 

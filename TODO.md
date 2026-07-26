@@ -16,11 +16,7 @@
 - [x] Combine CsvResolvedSchema with parsed csv records to produce DataBindingTable 
       IR that describes data in agnostic way.
 
-- [ ] Add support for IEEE-754 numbers format
-
 - [ ] Semantic analyzer (preserve as much types as you can)
-
-    - [ ] Check spec and makes changes accordingly (functions)
 
     - [x] Add lang data types
 
@@ -55,6 +51,8 @@
     - [ ] ...
 
 - [ ] VM
+
+    - [ ] Add support for IEEE-754 numbers format
 
     - [ ] ...
 
