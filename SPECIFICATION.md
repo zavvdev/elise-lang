@@ -236,7 +236,54 @@ This section describes the idea of how execution model works in high level.
 Any data structure names or anything else that refers to implementation might
 not be precise in terms of the naming of the original implementation.
 
-## Pre-compilation Stage
+### Pre-compilation Stage
+
+Elise syntax is designed to be _Code as Data_ where source is already shaped like an _AST_. Given that, lexing and parsing are combined into a single Parser step in order to reduce number of iterations and build _AST_ right away.
+
+#### Source Code Parsing
+
+This stage uses Parser in order to build _AST_ from source code written in `.eli` file.
+
+#### Source Code Semantic Analysis
+
+TODO
+
+#### Data Schema Parsing
+
+This stage uses Parser in order to build _AST_ from data schema code written in `.elt` file. Data
+schema uses the same syntax as source code, so the same parser is used for this step as well.
+
+#### Data Schema Resolution
+
+Takes data schema _AST_ and resolves it into _ResolvedSchema_ data structure that simplifies
+type definition addressing for specific data fields. This data structure can be constructed in
+any way that simplifies type definition access for the specific data type (csv json) being resolved.
+
+For example, for CSV it can be:
+
+```rust
+struct CsvColDescriptor {
+    name: String,
+    ty: DataType,
+    opt: bool,
+}
+
+struct CsvResolvedSchema {
+    row: Vec<CsvColDescriptor>,
+}
+```
+
+#### Data Parsing
+
+This stage uses a dedicated parser depending on data being parsed (csv, json). The result is a data
+structure that can be constructed according to the data type being parsed. For example, for CSV it
+can be an array of row descriptors.
+
+#### Compile-time Data Binding
+
+TODO
+
+#### Runtime Data Binding
 
 TODO
 
