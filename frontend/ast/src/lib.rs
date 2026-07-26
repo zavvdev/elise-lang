@@ -5,6 +5,14 @@
 
 use elise_shared::shared_types::Span;
 
+/// Represents value for a function call.
+#[derive(Debug, PartialEq)]
+pub struct AstCall {
+    pub name: String,
+    pub span: Span,
+    pub children: Vec<Box<AstNode>>,
+}
+
 /// Represents a primitive value that does not
 /// have any nested values inside. Numbers, strings, bools etc.
 #[derive(Debug, PartialEq)]
@@ -25,14 +33,6 @@ pub struct AstCompound {
     pub children: Vec<Box<AstNode>>,
 }
 
-/// Different kinds of functions.
-/// We support named and anonymous for now.
-#[derive(Debug, PartialEq)]
-pub enum AstCallKind {
-    Named(String),
-    Anon,
-}
-
 /// Dictionary key-value pair representation.
 #[derive(Debug, PartialEq)]
 pub struct AstKeyValuePair {
@@ -49,7 +49,7 @@ pub struct AstKeyValuePair {
 
 #[derive(Debug, PartialEq)]
 pub enum AstNode {
-    Call((AstCallKind, AstCompound)),
+    Call(AstCall),
     Number(AstPrimitive),
     String(AstPrimitive),
     Bool(AstPrimitive),
@@ -64,7 +64,7 @@ pub enum AstNode {
 }
 
 impl AstNode {
-    pub const CALL_STR: &'static str = "Call";
+    pub const FN_CALL_STR: &'static str = "FunctionCall";
     pub const NUMBER_STR: &'static str = "Number";
     pub const STRING_STR: &'static str = "String";
     pub const BOOL_STR: &'static str = "Bool";
@@ -77,7 +77,7 @@ impl AstNode {
 
     pub fn span(&self) -> &Span {
         match self {
-            AstNode::Call((_, c)) => &c.span,
+            AstNode::Call(f) => &f.span,
             AstNode::Number(p)
             | AstNode::String(p)
             | AstNode::Bool(p)
@@ -91,7 +91,7 @@ impl AstNode {
 
     pub fn as_str(&self) -> &'static str {
         match self {
-            AstNode::Call(_) => Self::CALL_STR,
+            AstNode::Call(_) => Self::FN_CALL_STR,
             AstNode::Number(_) => Self::NUMBER_STR,
             AstNode::String(_) => Self::STRING_STR,
             AstNode::Bool(_) => Self::BOOL_STR,

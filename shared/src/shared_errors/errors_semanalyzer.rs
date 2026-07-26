@@ -45,7 +45,4 @@ pub enum SemanalyzerErr {
     UnsupportedNode {
         span: Span,
     },
-    UnsupportedCallKind {
-        span: Span,
-    },
 }

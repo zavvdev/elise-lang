@@ -32,7 +32,7 @@ pub mod semanalyzer_data_types;
 pub mod semanalyzer_scope_stack;
 pub mod semanalyzer_symbol_table;
 
-use elise_ast::{AstCallKind, AstCompound, AstNode, AstPrimitive};
+use elise_ast::{AstCall, AstNode, AstPrimitive};
 use elise_data::data_binder::DataBindingTable;
 use elise_parser::parser_config::L_TRUE;
 use elise_shared::{
@@ -105,9 +105,7 @@ impl<'a> Harmony<'a> {
             AstNode::Bool(primitive) => Self::annotate_bool(primitive),
             AstNode::Null(primitive) => Self::annotate_null(primitive),
             AstNode::Identifier(primitive) => self.annotate_identifier_reference(primitive),
-            AstNode::Call((call_kind, compound)) => {
-                self.annotate_call(call_kind, compound, symbol_table)
-            }
+            AstNode::Call(call) => self.annotate_call(call, symbol_table),
             _ => Err(SemanalyzerErr::UnsupportedNode {
                 span: ast_node.span().clone(),
             }),
@@ -129,21 +127,21 @@ impl<'a> Harmony<'a> {
 
     fn annotate_define_call(
         &mut self,
-        compound: &AstCompound,
+        call: &AstCall,
         symbol_table: &mut SymbolTable,
     ) -> Result<AAstNode, SemanalyzerErr> {
-        if compound.children.len() != FN_DEFINE_ARGS_LEN {
+        if call.children.len() != FN_DEFINE_ARGS_LEN {
             return Err(SemanalyzerErr::ArityMismatch {
                 fn_name: FN_DEFINE_LEXEME,
                 expected: FN_DEFINE_ARGS_LEN,
-                found: compound.children.len(),
-                span: compound.span.clone(),
+                found: call.children.len(),
+                span: call.span.clone(),
                 kind: ArityMismatchKind::Eq,
             });
         }
 
-        let first_arg = &**compound.children.first().unwrap();
-        let second_arg = &**compound.children.last().unwrap();
+        let first_arg = &**call.children.first().unwrap();
+        let second_arg = &**call.children.last().unwrap();
 
         let arg_type_mismatch = |fallback: &AAstNode| SemanalyzerErr::ArgTypeMismatch {
             fn_name: FN_DEFINE_LEXEME,
@@ -206,7 +204,7 @@ impl<'a> Harmony<'a> {
 
         if self.scope_stack.resolve(&primitive.value).is_some() {
             return Err(SemanalyzerErr::SymbolDuplicate {
-                span: compound.span.clone(),
+                span: call.span.clone(),
             });
         }
 
@@ -218,7 +216,7 @@ impl<'a> Harmony<'a> {
         Ok(AAstNode::FDefine {
             symbol_id,
             value: Box::new(aast_node),
-            span: compound.span.clone(),
+            span: call.span.clone(),
         })
     }
 
@@ -246,15 +244,15 @@ impl<'a> Harmony<'a> {
 
     fn annotate_let_call(
         &mut self,
-        compound: &AstCompound,
+        call: &AstCall,
         _symbol_table: &mut SymbolTable,
     ) -> Result<AAstNode, SemanalyzerErr> {
-        if compound.children.len() < FN_LET_MIN_ARGS_LEN {
+        if call.children.len() < FN_LET_MIN_ARGS_LEN {
             return Err(SemanalyzerErr::ArityMismatch {
                 fn_name: FN_LET_LEXEME,
                 expected: FN_LET_MIN_ARGS_LEN,
-                found: compound.children.len(),
-                span: compound.span.clone(),
+                found: call.children.len(),
+                span: call.span.clone(),
                 kind: ArityMismatchKind::MoreEq,
             });
         }
@@ -276,21 +274,14 @@ impl<'a> Harmony<'a> {
 
     fn annotate_call(
         &mut self,
-        call_kind: &AstCallKind,
-        compound: &AstCompound,
+        call: &AstCall,
         symbol_table: &mut SymbolTable,
     ) -> Result<AAstNode, SemanalyzerErr> {
-        match call_kind {
-            AstCallKind::Named(name) => match name.as_str() {
-                FN_DEFINE_LEXEME => self.annotate_define_call(compound, symbol_table),
-                FN_LET_LEXEME => self.annotate_let_call(compound, symbol_table),
-                _ => Err(SemanalyzerErr::UnknownFunction {
-                    span: compound.span.clone(),
-                }),
-            },
-            // TODO: Annotate anonymous function.
-            _ => Err(SemanalyzerErr::UnsupportedCallKind {
-                span: compound.span.clone(),
+        match call.name.as_str() {
+            FN_DEFINE_LEXEME => self.annotate_define_call(call, symbol_table),
+            FN_LET_LEXEME => self.annotate_let_call(call, symbol_table),
+            _ => Err(SemanalyzerErr::UnknownFunction {
+                span: call.span.clone(),
             }),
         }
     }

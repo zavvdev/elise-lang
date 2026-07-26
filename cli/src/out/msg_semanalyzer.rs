@@ -63,7 +63,6 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
         UnknownFunction { span } => ("Unknown function".to_string(), span),
 
         UnsupportedNode { span } => ("Unsupported expression".to_string(), span),
-        UnsupportedCallKind { span } => ("Unsupported function".to_string(), span),
     };
 
     utils::print_err(&info, Some("Semantic error"));

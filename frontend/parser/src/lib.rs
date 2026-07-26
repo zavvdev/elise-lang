@@ -9,7 +9,7 @@ use crate::parser_config::{
     L_SLOT_PREFIX, L_TRUE,
 };
 
-use elise_ast::{AstCallKind, AstCompound, AstKeyValuePair, AstNode, AstPrimitive};
+use elise_ast::{AstCall, AstCompound, AstKeyValuePair, AstNode, AstPrimitive};
 use elise_shared::shared_errors::errors_parser::{ParserErr, ParserErrInfo};
 
 // ==================================================================
@@ -540,14 +540,9 @@ impl<'a> Prelude<'a> {
         *char == L_RIGHT_PAREN
     }
 
-    fn call_validate_name(&self, name: &str) -> Result<AstCallKind, ParserErr> {
-        // Anonymous function
-        if name.is_empty() {
-            // TODO: UPDATE!
-            return Ok(AstCallKind::Anon);
-        }
+    fn call_validate_name(&self, name: &str) -> Result<String, ParserErr> {
         if !name.is_empty() && Self::identifier_is_valid(name) {
-            Ok(AstCallKind::Named(name.to_string()))
+            Ok(name.to_string())
         } else {
             Err(self.fail(ParserErr::InvalFnName))
         }
@@ -597,16 +592,14 @@ impl<'a> Prelude<'a> {
 
         let call_end = self.tok_pos;
 
-        Ok(Some(AstNode::Call((
-            call_name,
-            AstCompound {
-                span: Span {
-                    start: call_start,
-                    end: call_end,
-                },
-                children,
+        Ok(Some(AstNode::Call(AstCall {
+            name: call_name,
+            span: Span {
+                start: call_start,
+                end: call_end,
             },
-        ))))
+            children,
+        })))
     }
 
     // ==================================================================
@@ -680,7 +673,7 @@ impl<'a> Prelude<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{AstCallKind, AstCompound, AstNode, AstPrimitive, Prelude, Span};
+    use crate::{AstCall, AstCompound, AstNode, AstPrimitive, Prelude, Span};
     use elise_ast::AstKeyValuePair;
     use elise_shared::shared_errors::errors_parser::{ParserErr, ParserErrInfo};
 
@@ -1333,13 +1326,11 @@ mod tests {
         let ast = Prelude::new(".some-fn()".as_bytes()).parse();
         assert_eq!(
             ast,
-            Ok(vec![AstNode::Call((
-                AstCallKind::Named("some-fn".to_string()),
-                AstCompound {
-                    span: Span { start: 0, end: 10 },
-                    children: vec![],
-                }
-            ))])
+            Ok(vec![AstNode::Call(AstCall {
+                name: "some-fn".to_string(),
+                span: Span { start: 0, end: 10 },
+                children: vec![],
+            })])
         );
     }
 
@@ -1361,23 +1352,19 @@ mod tests {
                 value: "2".to_string(),
                 span: Span { start: 5, end: 6 },
             })),
-            Box::new(AstNode::Call((
-                AstCallKind::Named("div".to_string()),
-                AstCompound {
-                    span: Span { start: 7, end: 16 },
-                    children: nested_children,
-                },
-            ))),
+            Box::new(AstNode::Call(AstCall {
+                name: "div".to_string(),
+                span: Span { start: 7, end: 16 },
+                children: nested_children,
+            })),
         ];
         assert_eq!(
             ast,
-            Ok(vec![AstNode::Call((
-                AstCallKind::Named("add".to_string()),
-                AstCompound {
-                    span: Span { start: 0, end: 17 },
-                    children,
-                }
-            ))])
+            Ok(vec![AstNode::Call(AstCall {
+                name: "add".to_string(),
+                span: Span { start: 0, end: 17 },
+                children,
+            })])
         );
     }
 
@@ -1400,13 +1387,11 @@ mod tests {
         for (input, end) in inputs {
             assert_eq!(
                 Prelude::new(input.as_bytes()).parse(),
-                Ok(vec![AstNode::Call((
-                    AstCallKind::Named("test".to_string()),
-                    AstCompound {
-                        span: Span { start: 0, end },
-                        children: vec![],
-                    }
-                ))])
+                Ok(vec![AstNode::Call(AstCall {
+                    name: "test".to_string(),
+                    span: Span { start: 0, end },
+                    children: vec![],
+                })])
             );
         }
     }
@@ -1469,16 +1454,10 @@ mod tests {
     }
 
     #[test]
-    fn call_should_parse_anon() {
+    fn call_should_not_allow_missing_names() {
         assert_eq!(
             Prelude::new(".()".as_bytes()).parse(),
-            Ok(vec![AstNode::Call((
-                AstCallKind::Anon,
-                AstCompound {
-                    span: Span { start: 0, end: 3 },
-                    children: vec![],
-                }
-            ))])
+            Err(ParserErr::InvalFnName(ParserErrInfo { pos: 1 }))
         );
     }
 
