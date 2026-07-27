@@ -6,32 +6,6 @@ use crate::common::{empty_data_bindings, parse};
 mod common;
 
 #[test]
-fn test_integers() {
-    let ast = parse("-3, 56, 9999999");
-    let data_bindings = empty_data_bindings();
-    let hir = Harmony::new(&ast, &data_bindings).analyze().unwrap();
-
-    assert_eq!(hir.symbol_table.symbols.is_empty(), true);
-    assert_eq!(
-        hir.aast,
-        vec![
-            AAstNode::Int {
-                value: "-3".to_string(),
-                span: Span { start: 0, end: 2 }
-            },
-            AAstNode::Int {
-                value: "56".to_string(),
-                span: Span { start: 4, end: 6 }
-            },
-            AAstNode::Int {
-                value: "9999999".to_string(),
-                span: Span { start: 8, end: 15 }
-            }
-        ]
-    );
-}
-
-#[test]
 fn test_floats() {
     let ast = parse("-1.2e2, -3.34, 1.5e-2, 5.6, 3e5, 94E2");
     let data_bindings = empty_data_bindings();

@@ -2,7 +2,7 @@ use elise_ast::AstNode;
 use elise_semanalyzer::{
     Harmony,
     semanalyzer_aast::AAstNode,
-    semanalyzer_config::{FN_DEFINE_ARGS_LEN, FN_DEFINE_LEXEME},
+    semanalyzer_config::FnDefine,
     semanalyzer_data_types::{LangPrimitiveType, LangType},
     semanalyzer_symbol_table::{SymbolDescriptor, SymbolId},
 };
@@ -38,7 +38,7 @@ fn test_defines_int() {
 
     assert_eq!(
         hir.aast,
-        vec![AAstNode::FDefine {
+        vec![AAstNode::CallDefine {
             symbol_id: SymbolId(0),
             value: Box::new(AAstNode::Int {
                 value: "3".to_string(),
@@ -66,7 +66,7 @@ fn test_defines_float() {
 
     assert_eq!(
         hir.aast,
-        vec![AAstNode::FDefine {
+        vec![AAstNode::CallDefine {
             symbol_id: SymbolId(0),
             value: Box::new(AAstNode::Float {
                 value: "3.1415".to_string(),
@@ -94,7 +94,7 @@ fn test_defines_string() {
 
     assert_eq!(
         hir.aast,
-        vec![AAstNode::FDefine {
+        vec![AAstNode::CallDefine {
             symbol_id: SymbolId(0),
             value: Box::new(AAstNode::String {
                 value: "Carl".to_string(),
@@ -122,7 +122,7 @@ fn test_defines_bool_true() {
 
     assert_eq!(
         hir.aast,
-        vec![AAstNode::FDefine {
+        vec![AAstNode::CallDefine {
             symbol_id: SymbolId(0),
             value: Box::new(AAstNode::Bool {
                 value: true,
@@ -151,7 +151,7 @@ fn test_defines_bool_false() {
 
     assert_eq!(
         hir.aast,
-        vec![AAstNode::FDefine {
+        vec![AAstNode::CallDefine {
             symbol_id: SymbolId(0),
             value: Box::new(AAstNode::Bool {
                 value: false,
@@ -184,8 +184,8 @@ fn test_returns_arity_mismatch_if_no_args() {
     assert!(matches!(
         result,
         Err(SemanalyzerErr::ArityMismatch {
-            fn_name: FN_DEFINE_LEXEME,
-            expected: FN_DEFINE_ARGS_LEN,
+            fn_name: FnDefine::LEXEME,
+            expected: FnDefine::ARGS_LEN,
             found: 0,
             kind: ArityMismatchKind::Eq,
             ..
@@ -202,8 +202,8 @@ fn test_returns_arity_mismatch_if_more_than_2_args() {
     assert!(matches!(
         result,
         Err(SemanalyzerErr::ArityMismatch {
-            fn_name: FN_DEFINE_LEXEME,
-            expected: FN_DEFINE_ARGS_LEN,
+            fn_name: FnDefine::LEXEME,
+            expected: FnDefine::ARGS_LEN,
             found: 3,
             kind: ArityMismatchKind::Eq,
             ..
@@ -220,7 +220,7 @@ fn test_returns_arg_type_mismatch_if_defines_non_primitive() {
     assert!(matches!(
         result,
         Err(SemanalyzerErr::ArgTypeMismatch {
-            fn_name: FN_DEFINE_LEXEME,
+            fn_name: FnDefine::LEXEME,
             position: 1,
             expected: LangType::PRIMITIVE_STR,
             found: AstNode::LIST_STR,
@@ -237,7 +237,7 @@ fn test_returns_arg_kind_mismatch_if_first_arg_is_not_identifier() {
     assert!(matches!(
         result,
         Err(SemanalyzerErr::ArgKindMismatch {
-            fn_name: FN_DEFINE_LEXEME,
+            fn_name: FnDefine::LEXEME,
             position: 0,
             expected: AstNode::IDENTIFIER_STR,
             found: AstNode::BOOL_STR,

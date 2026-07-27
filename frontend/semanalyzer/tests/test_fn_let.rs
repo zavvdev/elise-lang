@@ -1,7 +1,4 @@
-use elise_semanalyzer::{
-    Harmony,
-    semanalyzer_config::{FN_LET_LEXEME, FN_LET_MIN_ARGS_LEN},
-};
+use elise_semanalyzer::{Harmony, semanalyzer_config::FnLet};
 use elise_shared::shared_errors::errors_semanalyzer::{ArityMismatchKind, SemanalyzerErr};
 
 use crate::common::{empty_data_bindings, parse};
@@ -37,8 +34,8 @@ fn test_returns_arity_mismatch_if_no_args() {
     assert!(matches!(
         result,
         Err(SemanalyzerErr::ArityMismatch {
-            fn_name: FN_LET_LEXEME,
-            expected: FN_LET_MIN_ARGS_LEN,
+            fn_name: FnLet::LEXEME,
+            expected: FnLet::MIN_ARGS_LEN,
             found: 0,
             kind: ArityMismatchKind::MoreEq,
             ..
@@ -55,8 +52,8 @@ fn test_returns_arity_mismatch_if_1_arg() {
     assert!(matches!(
         result,
         Err(SemanalyzerErr::ArityMismatch {
-            fn_name: FN_LET_LEXEME,
-            expected: FN_LET_MIN_ARGS_LEN,
+            fn_name: FnLet::LEXEME,
+            expected: FnLet::MIN_ARGS_LEN,
             found: 1,
             kind: ArityMismatchKind::MoreEq,
             ..

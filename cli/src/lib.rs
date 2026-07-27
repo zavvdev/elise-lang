@@ -101,6 +101,7 @@ pub fn run<'a>(
     });
 
     let source_code_ast = source_code_ast.unwrap()?;
+    println!("AST: {:#?}", source_code_ast);
     let schema_ast = schema_ast.unwrap()?;
     let parsed_data = parsed_data.ok_or(LangErr::Common(CommonErr::MissingParserData))?;
 

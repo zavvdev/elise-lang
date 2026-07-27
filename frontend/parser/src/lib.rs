@@ -3,11 +3,7 @@ pub mod parser_config;
 use elise_shared::shared_types::Span;
 use std::str::from_utf8;
 
-use crate::parser_config::{
-    L_CALL_PREFIX, L_COMMA, L_DOUBLE_QT, L_FALSE, L_LEFT_CUR_BRACKET, L_LEFT_PAREN,
-    L_LEFT_SQR_BRACKET, L_MINUS, L_NULL, L_RIGHT_CUR_BRACKET, L_RIGHT_PAREN, L_RIGHT_SQR_BRACKET,
-    L_SLOT_PREFIX, L_TRUE,
-};
+use crate::parser_config::{CharCode, Keyword};
 
 use elise_ast::{AstCall, AstCompound, AstKeyValuePair, AstNode, AstPrimitive};
 use elise_shared::shared_errors::errors_parser::{ParserErr, ParserErrInfo};
@@ -121,7 +117,7 @@ impl<'a> Prelude<'a> {
     }
 
     fn is_separator(c: &u8) -> bool {
-        matches!(c, b' ' | b'\n' | b'\t' | b'\r') || *c == L_COMMA
+        matches!(c, b' ' | b'\n' | b'\t' | b'\r') || *c == CharCode::COMMA
     }
 
     // ==================================================================
@@ -137,11 +133,11 @@ impl<'a> Prelude<'a> {
     }
 
     fn number_is_start(c: &u8) -> bool {
-        Self::number_is_digit(c) || *c == L_MINUS
+        Self::number_is_digit(c) || *c == CharCode::MINUS
     }
 
     fn number_is_end(c: &u8) -> bool {
-        Self::is_separator(c) || *c == L_RIGHT_PAREN || *c == L_RIGHT_SQR_BRACKET
+        Self::is_separator(c) || *c == CharCode::RIGHT_PAREN || *c == CharCode::RIGHT_SQR_BRACKET
     }
 
     fn number_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
@@ -152,7 +148,7 @@ impl<'a> Prelude<'a> {
             use DfaNumState::*;
 
             state = match (&state, c) {
-                (Start, L_MINUS) => {
+                (Start, CharCode::MINUS) => {
                     self.advance();
                     Sign
                 }
@@ -184,7 +180,7 @@ impl<'a> Prelude<'a> {
                     self.advance();
                     Scient
                 }
-                (Expon, L_MINUS) => {
+                (Expon, CharCode::MINUS) => {
                     self.advance();
                     ScientMinus
                 }
@@ -199,14 +195,6 @@ impl<'a> Prelude<'a> {
             };
         }
 
-        // Return an error we ended up with invalid state.
-        match state {
-            DfaNumState::Zero | DfaNumState::Int | DfaNumState::Frac | DfaNumState::Scient => {}
-            _ => {
-                return Err(self.fail(ParserErr::InvalNum));
-            }
-        }
-
         let tok_end = self.tok_pos;
         let value = from_utf8(&self.source_code[tok_start..tok_end]);
 
@@ -214,13 +202,21 @@ impl<'a> Prelude<'a> {
             return Err(self.fail(ParserErr::InvalNum));
         }
 
-        Ok(Some(AstNode::Number(AstPrimitive {
+        let primitive = AstPrimitive {
             value: value.unwrap().to_string(),
             span: Span {
                 start: tok_start,
                 end: tok_end,
             },
-        })))
+        };
+
+        match state {
+            DfaNumState::Zero | DfaNumState::Int => Ok(Some(AstNode::Int(primitive))),
+            DfaNumState::Frac | DfaNumState::Scient => Ok(Some(AstNode::Float(primitive))),
+            _ => {
+                Err(self.fail(ParserErr::InvalNum))
+            }
+        }
     }
 
     // ==================================================================
@@ -232,11 +228,11 @@ impl<'a> Prelude<'a> {
     // ==================================================================
 
     fn string_is_start(char: &u8) -> bool {
-        *char == L_DOUBLE_QT
+        *char == CharCode::DOUBLE_QT
     }
 
     fn string_is_end(char: &u8) -> bool {
-        *char == L_DOUBLE_QT
+        *char == CharCode::DOUBLE_QT
     }
 
     fn string_is_forbidden_char(char: &u8) -> bool {
@@ -323,7 +319,7 @@ impl<'a> Prelude<'a> {
     }
 
     fn identifier_is_end(c: &u8) -> bool {
-        Self::is_separator(c) || *c == L_RIGHT_PAREN || *c == L_RIGHT_SQR_BRACKET
+        Self::is_separator(c) || *c == CharCode::RIGHT_PAREN || *c == CharCode::RIGHT_SQR_BRACKET
     }
 
     fn identifier_is_valid(s: &str) -> bool {
@@ -362,9 +358,9 @@ impl<'a> Prelude<'a> {
         };
 
         match primitive.value.as_str() {
-            // Identify known identifiers.
-            L_TRUE | L_FALSE => Ok(Some(AstNode::Bool(primitive))),
-            L_NULL => Ok(Some(AstNode::Null(primitive))),
+            // Identify known keywords.
+            Keyword::TRUE | Keyword::FALSE => Ok(Some(AstNode::Bool(primitive))),
+            Keyword::NULL => Ok(Some(AstNode::Null(primitive))),
             _ => {
                 if Self::identifier_is_valid(&primitive.value) {
                     Ok(Some(AstNode::Identifier(primitive)))
@@ -384,17 +380,17 @@ impl<'a> Prelude<'a> {
     // ==================================================================
 
     fn list_is_start(&mut self, c: &u8) -> bool {
-        if *c == L_LEFT_SQR_BRACKET {
-            self.depth_stack.push(L_LEFT_SQR_BRACKET);
+        if *c == CharCode::LEFT_SQR_BRACKET {
+            self.depth_stack.push(CharCode::LEFT_SQR_BRACKET);
             return true;
         }
         false
     }
 
     fn list_check_end(&mut self, c: &u8) -> Result<bool, ()> {
-        if *c == L_RIGHT_SQR_BRACKET {
+        if *c == CharCode::RIGHT_SQR_BRACKET {
             let last_entry = self.depth_stack.pop();
-            if last_entry.is_none() || last_entry.unwrap() != L_LEFT_SQR_BRACKET {
+            if last_entry.is_none() || last_entry.unwrap() != CharCode::LEFT_SQR_BRACKET {
                 return Err(());
             }
             return Ok(true);
@@ -439,17 +435,17 @@ impl<'a> Prelude<'a> {
     // ==================================================================
 
     fn dict_is_start(&mut self, c: &u8) -> bool {
-        if *c == L_LEFT_CUR_BRACKET {
-            self.depth_stack.push(L_LEFT_CUR_BRACKET);
+        if *c == CharCode::LEFT_CUR_BRACKET {
+            self.depth_stack.push(CharCode::LEFT_CUR_BRACKET);
             return true;
         }
         false
     }
 
     fn dict_check_end(&mut self, c: &u8) -> Result<bool, ()> {
-        if *c == L_RIGHT_CUR_BRACKET {
+        if *c == CharCode::RIGHT_CUR_BRACKET {
             let last_entry = self.depth_stack.pop();
-            if last_entry.is_none() || last_entry.unwrap() != L_LEFT_CUR_BRACKET {
+            if last_entry.is_none() || last_entry.unwrap() != CharCode::LEFT_CUR_BRACKET {
                 return Err(());
             }
             return Ok(true);
@@ -531,13 +527,13 @@ impl<'a> Prelude<'a> {
 
     fn call_is_start(&self, char: &u8) -> bool {
         if let Some(next_char) = self.peek() {
-            return *char == L_CALL_PREFIX && !Self::is_separator(&next_char);
+            return *char == CharCode::CALL_PREFIX && !Self::is_separator(&next_char);
         }
         false
     }
 
     fn call_is_end(&self, char: &u8) -> bool {
-        *char == L_RIGHT_PAREN
+        *char == CharCode::RIGHT_PAREN
     }
 
     fn call_validate_name(&self, name: &str) -> Result<String, ParserErr> {
@@ -557,8 +553,8 @@ impl<'a> Prelude<'a> {
         let call_name_start = self.tok_pos;
 
         while let Some(c) = self.peek() {
-            if c == L_LEFT_PAREN {
-                self.depth_stack.push(L_LEFT_PAREN);
+            if c == CharCode::LEFT_PAREN {
+                self.depth_stack.push(CharCode::LEFT_PAREN);
                 break;
             } else {
                 self.advance();
@@ -578,7 +574,7 @@ impl<'a> Prelude<'a> {
         while let Some(c) = self.peek() {
             if self.call_is_end(&c) {
                 let last_entry = self.depth_stack.pop();
-                if last_entry.is_none() || last_entry.unwrap() != L_LEFT_PAREN {
+                if last_entry.is_none() || last_entry.unwrap() != CharCode::LEFT_PAREN {
                     return Err(self.fail(ParserErr::UnexpEoFn));
                 }
                 self.advance();
@@ -593,7 +589,7 @@ impl<'a> Prelude<'a> {
         let call_end = self.tok_pos;
 
         Ok(Some(AstNode::Call(AstCall {
-            name: call_name,
+            lexeme: call_name,
             span: Span {
                 start: call_start,
                 end: call_end,
@@ -612,13 +608,13 @@ impl<'a> Prelude<'a> {
 
     fn slot_is_start(&self, char: &u8) -> bool {
         if let Some(next_char) = self.peek() {
-            return *char == L_SLOT_PREFIX && !Self::is_separator(&next_char);
+            return *char == CharCode::SLOT_PREFIX && !Self::is_separator(&next_char);
         }
         false
     }
 
     fn slot_is_end(c: &u8) -> bool {
-        Self::is_separator(c) || *c == L_RIGHT_PAREN || *c == L_RIGHT_SQR_BRACKET
+        Self::is_separator(c) || *c == CharCode::RIGHT_PAREN || *c == CharCode::RIGHT_SQR_BRACKET
     }
 
     fn slot_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
@@ -729,8 +725,8 @@ mod tests {
     }
 
     #[test]
-    fn number_should_not_allow_start_with_zero_which_not_float() {
-        let forbidded_tokens = vec![("02", 1), ("00", 1)];
+    fn number_should_not_allow_start_with_zero_if_not_float() {
+        let forbidded_tokens = vec![("02", 1), ("00", 1), ("00.3", 1), ("02.4", 1)];
 
         for (token, pos) in forbidded_tokens {
             assert_eq!(
@@ -750,26 +746,34 @@ mod tests {
     }
 
     #[test]
-    fn number_should_parse_positive_numbers() {
+    fn number_should_not_allow_separator_after_minus() {
+        let forbidded_tokens = vec![("- 2", 1), ("-\n2", 1)];
+
+        for (token, pos) in forbidded_tokens {
+            assert_eq!(
+                Prelude::new(token.as_bytes()).parse(),
+                Err(ParserErr::InvalNum(ParserErrInfo { pos }))
+            );
+        }
+    }
+
+    #[test]
+    fn number_should_parse_integers() {
         let numbers = vec![
+            ("-0", 2),
             ("0", 1),
-            ("1", 1),
+            ("-1", 2),
             ("2", 1),
-            ("9", 1),
+            ("-9", 2),
             ("123", 3),
-            ("999999", 6),
-            ("0.1", 3),
-            ("2.3", 3),
-            ("23.23", 5),
-            ("0.23", 4),
-            ("9999.9999", 9),
+            ("-999999", 7),
             ("101", 3),
         ];
         for (number, end) in numbers {
             let ast = Prelude::new(number.as_bytes()).parse();
             assert_eq!(
                 ast,
-                Ok(vec![AstNode::Number(AstPrimitive {
+                Ok(vec![AstNode::Int(AstPrimitive {
                     value: number.to_string(),
                     span: Span { start: 0, end },
                 })])
@@ -778,29 +782,20 @@ mod tests {
     }
 
     #[test]
-    fn number_should_parse_negative_numbers() {
+    fn number_should_parse_floats() {
         let numbers = vec![
-            ("-0", 2),
             ("-0.0", 4),
-            ("-0.1", 4),
-            ("-0.101", 6),
-            ("-2", 2),
-            ("-2.0", 4),
-            ("-2.01", 5),
-            ("-2.101", 6),
-            ("-123", 4),
-            ("-999999", 7),
-            ("-2.3", 4),
-            ("-23.23", 6),
-            ("-0.23", 5),
-            ("-9999.9999", 10),
-            ("-101", 4),
+            ("0.2", 3),
+            ("-1.34", 5),
+            ("22.4456", 7),
+            ("-999.3234", 9),
+            ("99999.900", 9),
         ];
         for (number, end) in numbers {
             let ast = Prelude::new(number.as_bytes()).parse();
             assert_eq!(
                 ast,
-                Ok(vec![AstNode::Number(AstPrimitive {
+                Ok(vec![AstNode::Float(AstPrimitive {
                     value: number.to_string(),
                     span: Span { start: 0, end },
                 })])
@@ -819,19 +814,19 @@ mod tests {
         assert_eq!(
             ast,
             Ok(vec![
-                AstNode::Number(AstPrimitive {
+                AstNode::Int(AstPrimitive {
                     value: "3".to_string(),
                     span: Span { start: 0, end: 1 },
                 }),
-                AstNode::Number(AstPrimitive {
+                AstNode::Int(AstPrimitive {
                     value: "56".to_string(),
                     span: Span { start: 2, end: 4 },
                 }),
-                AstNode::Number(AstPrimitive {
+                AstNode::Int(AstPrimitive {
                     value: "-9".to_string(),
                     span: Span { start: 6, end: 8 },
                 }),
-                AstNode::Number(AstPrimitive {
+                AstNode::Float(AstPrimitive {
                     value: "3.2".to_string(),
                     span: Span { start: 11, end: 14 },
                 }),
@@ -852,7 +847,7 @@ mod tests {
     }
 
     #[test]
-    fn number_should_parse_scientific_numbers() {
+    fn number_should_parse_scientific_numbers_as_floats() {
         let numbers = vec![
             ("0e0", 3),
             ("-0e0", 4),
@@ -876,7 +871,7 @@ mod tests {
             let ast = Prelude::new(number.as_bytes()).parse();
             assert_eq!(
                 ast,
-                Ok(vec![AstNode::Number(AstPrimitive {
+                Ok(vec![AstNode::Float(AstPrimitive {
                     value: number.to_string(),
                     span: Span { start: 0, end },
                 })])
@@ -1125,7 +1120,7 @@ mod tests {
             Ok(vec![AstNode::List(AstCompound {
                 span: Span { start: 0, end: 25 },
                 children: vec![
-                    Box::new(AstNode::Number(AstPrimitive {
+                    Box::new(AstNode::Int(AstPrimitive {
                         value: "1".to_string(),
                         span: Span { start: 1, end: 2 },
                     })),
@@ -1184,7 +1179,7 @@ mod tests {
 
         let pair_1 = Box::new(AstNode::DictPair(AstKeyValuePair {
             key: "a".to_string(),
-            value: Box::new(AstNode::Number(AstPrimitive {
+            value: Box::new(AstNode::Int(AstPrimitive {
                 value: "1".to_string(),
                 span: Span { start: 6, end: 7 },
             })),
@@ -1227,15 +1222,15 @@ mod tests {
             value: Box::new(AstNode::List(AstCompound {
                 span: Span { start: 43, end: 52 },
                 children: vec![
-                    Box::new(AstNode::Number(AstPrimitive {
+                    Box::new(AstNode::Int(AstPrimitive {
                         value: "1".to_string(),
                         span: Span { start: 44, end: 45 },
                     })),
-                    Box::new(AstNode::Number(AstPrimitive {
+                    Box::new(AstNode::Int(AstPrimitive {
                         value: "2".to_string(),
                         span: Span { start: 47, end: 48 },
                     })),
-                    Box::new(AstNode::Number(AstPrimitive {
+                    Box::new(AstNode::Int(AstPrimitive {
                         value: "3".to_string(),
                         span: Span { start: 50, end: 51 },
                     })),
@@ -1327,7 +1322,7 @@ mod tests {
         assert_eq!(
             ast,
             Ok(vec![AstNode::Call(AstCall {
-                name: "some-fn".to_string(),
+                lexeme: "some-fn".to_string(),
                 span: Span { start: 0, end: 10 },
                 children: vec![],
             })])
@@ -1338,22 +1333,22 @@ mod tests {
     fn call_should_parse_with_arguments() {
         let ast = Prelude::new(".add(2 .div(4 2))".as_bytes()).parse();
         let nested_children = vec![
-            Box::new(AstNode::Number(AstPrimitive {
+            Box::new(AstNode::Int(AstPrimitive {
                 value: "4".to_string(),
                 span: Span { start: 12, end: 13 },
             })),
-            Box::new(AstNode::Number(AstPrimitive {
+            Box::new(AstNode::Int(AstPrimitive {
                 value: "2".to_string(),
                 span: Span { start: 14, end: 15 },
             })),
         ];
         let children = vec![
-            Box::new(AstNode::Number(AstPrimitive {
+            Box::new(AstNode::Int(AstPrimitive {
                 value: "2".to_string(),
                 span: Span { start: 5, end: 6 },
             })),
             Box::new(AstNode::Call(AstCall {
-                name: "div".to_string(),
+                lexeme: "div".to_string(),
                 span: Span { start: 7, end: 16 },
                 children: nested_children,
             })),
@@ -1361,7 +1356,7 @@ mod tests {
         assert_eq!(
             ast,
             Ok(vec![AstNode::Call(AstCall {
-                name: "add".to_string(),
+                lexeme: "add".to_string(),
                 span: Span { start: 0, end: 17 },
                 children,
             })])
@@ -1388,7 +1383,7 @@ mod tests {
             assert_eq!(
                 Prelude::new(input.as_bytes()).parse(),
                 Ok(vec![AstNode::Call(AstCall {
-                    name: "test".to_string(),
+                    lexeme: "test".to_string(),
                     span: Span { start: 0, end },
                     children: vec![],
                 })])

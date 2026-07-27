@@ -42,9 +42,7 @@ use elise_shared::{
 
 use crate::{
     semanalyzer_aast::AAstNode,
-    semanalyzer_config::{
-        FN_DEFINE_ARGS_LEN, FN_DEFINE_LEXEME, FN_LET_LEXEME, FN_LET_MIN_ARGS_LEN,
-    },
+    semanalyzer_config::{FnDefine, FnLet},
     semanalyzer_data_types::{LangPrimitiveType, LangType},
     semanalyzer_scope_stack::ScopeStack,
     semanalyzer_symbol_table::SymbolTable,
@@ -100,7 +98,8 @@ impl<'a> Harmony<'a> {
         symbol_table: &mut SymbolTable,
     ) -> Result<AAstNode, SemanalyzerErr> {
         match ast_node {
-            AstNode::Number(primitive) => Self::annotate_number(primitive),
+            AstNode::Int(primitive) => Self::annotate_int(primitive),
+            AstNode::Float(primitive) => Self::annotate_float(primitive),
             AstNode::String(primitive) => Self::annotate_string(primitive),
             AstNode::Bool(primitive) => Self::annotate_bool(primitive),
             AstNode::Null(primitive) => Self::annotate_null(primitive),
@@ -130,10 +129,10 @@ impl<'a> Harmony<'a> {
         call: &AstCall,
         symbol_table: &mut SymbolTable,
     ) -> Result<AAstNode, SemanalyzerErr> {
-        if call.children.len() != FN_DEFINE_ARGS_LEN {
+        if call.children.len() != FnDefine::ARGS_LEN {
             return Err(SemanalyzerErr::ArityMismatch {
-                fn_name: FN_DEFINE_LEXEME,
-                expected: FN_DEFINE_ARGS_LEN,
+                fn_name: FnDefine::LEXEME,
+                expected: FnDefine::ARGS_LEN,
                 found: call.children.len(),
                 span: call.span.clone(),
                 kind: ArityMismatchKind::Eq,
@@ -143,47 +142,15 @@ impl<'a> Harmony<'a> {
         let first_arg = &**call.children.first().unwrap();
         let second_arg = &**call.children.last().unwrap();
 
-        let arg_type_mismatch = |fallback: &AAstNode| SemanalyzerErr::ArgTypeMismatch {
-            fn_name: FN_DEFINE_LEXEME,
-            position: 1,
-            expected: LangType::PRIMITIVE_STR,
-            found: fallback.as_str(),
-            span: fallback.span().clone(),
-        };
-
         let (ident_type, aast_node) = match second_arg {
-            AstNode::Number(number_primitive) => {
-                let aast_node = Self::annotate_number(number_primitive)?;
-                match aast_node {
-                    AAstNode::Int { .. } => (LangPrimitiveType::Int, aast_node),
-                    AAstNode::Float { .. } => (LangPrimitiveType::Float, aast_node),
-                    fallback => return Err(arg_type_mismatch(&fallback)),
-                }
-            }
-            AstNode::String(string_primitive) => {
-                let aast_node = Self::annotate_string(string_primitive)?;
-                match aast_node {
-                    AAstNode::String { .. } => (LangPrimitiveType::String, aast_node),
-                    fallback => return Err(arg_type_mismatch(&fallback)),
-                }
-            }
-            AstNode::Bool(bool_primitive) => {
-                let aast_node = Self::annotate_bool(bool_primitive)?;
-                match aast_node {
-                    AAstNode::Bool { .. } => (LangPrimitiveType::Bool, aast_node),
-                    fallback => return Err(arg_type_mismatch(&fallback)),
-                }
-            }
-            AstNode::Null(null_primitive) => {
-                let aast_node = Self::annotate_null(null_primitive)?;
-                match aast_node {
-                    AAstNode::Null { .. } => (LangPrimitiveType::Null, aast_node),
-                    fallback => return Err(arg_type_mismatch(&fallback)),
-                }
-            }
+            AstNode::Int(prim) => (LangPrimitiveType::Int, Self::annotate_int(prim)?),
+            AstNode::Float(prim) => (LangPrimitiveType::Float, Self::annotate_float(prim)?),
+            AstNode::String(prim) => (LangPrimitiveType::String, Self::annotate_string(prim)?),
+            AstNode::Bool(prim) => (LangPrimitiveType::Bool, Self::annotate_bool(prim)?),
+            AstNode::Null(prim) => (LangPrimitiveType::Null, Self::annotate_null(prim)?),
             _ => {
                 return Err(SemanalyzerErr::ArgTypeMismatch {
-                    fn_name: FN_DEFINE_LEXEME,
+                    fn_name: FnDefine::LEXEME,
                     position: 1,
                     expected: LangType::PRIMITIVE_STR,
                     found: second_arg.as_str(),
@@ -194,7 +161,7 @@ impl<'a> Harmony<'a> {
 
         let AstNode::Identifier(primitive) = first_arg else {
             return Err(SemanalyzerErr::ArgKindMismatch {
-                fn_name: FN_DEFINE_LEXEME,
+                fn_name: FnDefine::LEXEME,
                 position: 0,
                 expected: AstNode::IDENTIFIER_STR,
                 found: first_arg.as_str(),
@@ -213,7 +180,7 @@ impl<'a> Harmony<'a> {
 
         self.scope_stack.define(primitive.value.clone(), symbol_id);
 
-        Ok(AAstNode::FDefine {
+        Ok(AAstNode::CallDefine {
             symbol_id,
             value: Box::new(aast_node),
             span: call.span.clone(),
@@ -247,10 +214,10 @@ impl<'a> Harmony<'a> {
         call: &AstCall,
         _symbol_table: &mut SymbolTable,
     ) -> Result<AAstNode, SemanalyzerErr> {
-        if call.children.len() < FN_LET_MIN_ARGS_LEN {
+        if call.children.len() < FnLet::MIN_ARGS_LEN {
             return Err(SemanalyzerErr::ArityMismatch {
-                fn_name: FN_LET_LEXEME,
-                expected: FN_LET_MIN_ARGS_LEN,
+                fn_name: FnLet::LEXEME,
+                expected: FnLet::MIN_ARGS_LEN,
                 found: call.children.len(),
                 span: call.span.clone(),
                 kind: ArityMismatchKind::MoreEq,
@@ -278,8 +245,8 @@ impl<'a> Harmony<'a> {
         symbol_table: &mut SymbolTable,
     ) -> Result<AAstNode, SemanalyzerErr> {
         match call.name.as_str() {
-            FN_DEFINE_LEXEME => self.annotate_define_call(call, symbol_table),
-            FN_LET_LEXEME => self.annotate_let_call(call, symbol_table),
+            FnDefine::LEXEME => self.annotate_define_call(call, symbol_table),
+            FnLet::LEXEME => self.annotate_let_call(call, symbol_table),
             _ => Err(SemanalyzerErr::UnknownFunction {
                 span: call.span.clone(),
             }),
@@ -336,28 +303,33 @@ impl<'a> Harmony<'a> {
     // ==================================================================
 
     // ==================================================================
-    // ANNOTATE NUMBER START
-    //
-    // Scientific notation numbers are treated as Float.
+    // ANNOTATE INT START
     // ==================================================================
 
-    fn annotate_number(primitive: &AstPrimitive) -> Result<AAstNode, SemanalyzerErr> {
-        let value = primitive.value.clone();
-        let span = primitive.span.clone();
-        Ok(
-            if primitive.value.contains(".")
-                || primitive.value.contains("E")
-                || primitive.value.contains("e")
-            {
-                AAstNode::Float { value, span }
-            } else {
-                AAstNode::Int { value, span }
-            },
-        )
+    fn annotate_int(primitive: &AstPrimitive) -> Result<AAstNode, SemanalyzerErr> {
+        Ok(AAstNode::Int {
+            value: primitive.value.clone(),
+            span: primitive.span.clone(),
+        })
     }
 
     // ==================================================================
-    // ANNOTATE NUMBER END
+    // ANNOTATE INT END
+    // ==================================================================
+
+    // ==================================================================
+    // ANNOTATE FLOAT START
+    // ==================================================================
+
+    fn annotate_float(primitive: &AstPrimitive) -> Result<AAstNode, SemanalyzerErr> {
+        Ok(AAstNode::Float {
+            value: primitive.value.clone(),
+            span: primitive.span.clone(),
+        })
+    }
+
+    // ==================================================================
+    // ANNOTATE FLOAT END
     // ==================================================================
 
     // ==================================================================

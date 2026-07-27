@@ -7,7 +7,7 @@
 //!
 //! The AAST is a compile-time only structure, discarded after bytecode emission.
 
-use elise_shared::shared_types::Span;
+use elise_shared::{shared_node_names::NodeName, shared_types::Span};
 
 use crate::semanalyzer_symbol_table::SymbolId;
 
@@ -17,22 +17,14 @@ use crate::semanalyzer_symbol_table::SymbolId;
 /// only during VM bytecode execution.
 #[derive(Debug, PartialEq)]
 pub enum AAstNode {
-    FDefine {
+    CallDefine {
         symbol_id: SymbolId,
         value: Box<AAstNode>,
         span: Span,
     },
-    FLet {
+    CallLet {
         bindings: Vec<(SymbolId, Box<AAstNode>)>,
         body: Vec<Box<AAstNode>>,
-        span: Span,
-    },
-    FMul {
-        operands: Vec<Box<AAstNode>>,
-        span: Span,
-    },
-    FAdd {
-        operands: Vec<Box<AAstNode>>,
         span: Span,
     },
     SymbolRef {
@@ -64,23 +56,10 @@ pub enum AAstNode {
 // String representations for AAstNode's in order to be able to
 // use them for error reports.
 impl AAstNode {
-    pub const FDEFINE_STR: &'static str = "FDefine";
-    pub const FLET_STR: &'static str = "FLet";
-    pub const FMUL_STR: &'static str = "FMul";
-    pub const FADD_STR: &'static str = "FAdd";
-    pub const SYMBOL_REF_STR: &'static str = "SymbolRef";
-    pub const INT_STR: &'static str = "Int";
-    pub const FLOAT_STR: &'static str = "Float";
-    pub const STRING_STR: &'static str = "String";
-    pub const BOOL_STR: &'static str = "Bool";
-    pub const NULL_STR: &'static str = "Null";
-
     pub fn span(&self) -> &Span {
         match self {
-            AAstNode::FDefine { span, .. }
-            | AAstNode::FLet { span, .. }
-            | AAstNode::FMul { span, .. }
-            | AAstNode::FAdd { span, .. }
+            AAstNode::CallDefine { span, .. }
+            | AAstNode::CallLet { span, .. }
             | AAstNode::SymbolRef { span, .. }
             | AAstNode::Int { span, .. }
             | AAstNode::Float { span, .. }
@@ -92,16 +71,14 @@ impl AAstNode {
 
     pub fn as_str(&self) -> &'static str {
         match self {
-            AAstNode::FDefine { .. } => Self::FDEFINE_STR,
-            AAstNode::FLet { .. } => Self::FLET_STR,
-            AAstNode::FMul { .. } => Self::FMUL_STR,
-            AAstNode::FAdd { .. } => Self::FADD_STR,
-            AAstNode::SymbolRef { .. } => Self::SYMBOL_REF_STR,
-            AAstNode::Int { .. } => Self::INT_STR,
-            AAstNode::Float { .. } => Self::FLOAT_STR,
-            AAstNode::String { .. } => Self::STRING_STR,
-            AAstNode::Bool { .. } => Self::BOOL_STR,
-            AAstNode::Null { .. } => Self::NULL_STR,
+            AAstNode::CallDefine { .. } => NodeName::CALL_DEFINE,
+            AAstNode::CallLet { .. } => NodeName::CALL_LET,
+            AAstNode::SymbolRef { .. } => NodeName::SYMBOL,
+            AAstNode::Int { .. } => NodeName::INT,
+            AAstNode::Float { .. } => NodeName::FLOAT,
+            AAstNode::String { .. } => NodeName::STRING,
+            AAstNode::Bool { .. } => NodeName::BOOL,
+            AAstNode::Null { .. } => NodeName::NULL,
         }
     }
 }

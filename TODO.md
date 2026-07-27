@@ -2,6 +2,10 @@
 
 ## Things to implement
  
+- [x] Move number type differentiation into parser
+
+- [ ] Review cli and data for standalone const usage. Refactor to zero-variant struct.
+
 - [ ] IMPORTANT! Review compilation stage and semanalyzer stage.
       These 2 must not depend on DataBindingTable in any way!
       Consider adding SchemaBindingTable that uses hashmap with
@@ -11,7 +15,7 @@
       These are 2 separate data structures that share the same PathSegment.
       Need to find out how to reduce code duplication on them.
 
-- [ ] Use the same data types in parser, data schema, data parser, data schema resolution, data
+- [ ] ?Use the same data types in parser, data schema, data parser, data schema resolution, data
       binding and semanalyzer
 
 - [ ] CSV data file must not have col duplicates

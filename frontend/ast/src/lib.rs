@@ -1,14 +1,14 @@
-//! # Ast type definitions module
+//! # AST type definitions module
 //!
 //! This module consists of AST related type definitions
 //! and implementations.
 
-use elise_shared::shared_types::Span;
+use elise_shared::{shared_node_names::NodeName, shared_types::Span};
 
 /// Represents value for a function call.
 #[derive(Debug, PartialEq)]
 pub struct AstCall {
-    pub name: String,
+    pub lexeme: String,
     pub span: Span,
     pub children: Vec<Box<AstNode>>,
 }
@@ -50,7 +50,8 @@ pub struct AstKeyValuePair {
 #[derive(Debug, PartialEq)]
 pub enum AstNode {
     Call(AstCall),
-    Number(AstPrimitive),
+    Int(AstPrimitive),
+    Float(AstPrimitive),
     String(AstPrimitive),
     Bool(AstPrimitive),
     Null(AstPrimitive),
@@ -64,21 +65,11 @@ pub enum AstNode {
 }
 
 impl AstNode {
-    pub const FN_CALL_STR: &'static str = "FunctionCall";
-    pub const NUMBER_STR: &'static str = "Number";
-    pub const STRING_STR: &'static str = "String";
-    pub const BOOL_STR: &'static str = "Bool";
-    pub const NULL_STR: &'static str = "Null";
-    pub const LIST_STR: &'static str = "List";
-    pub const DICT_STR: &'static str = "Dict";
-    pub const DICT_PAIR_STR: &'static str = "DictPair";
-    pub const IDENTIFIER_STR: &'static str = "Identifier";
-    pub const SLOT_STR: &'static str = "Slot";
-
     pub fn span(&self) -> &Span {
         match self {
             AstNode::Call(f) => &f.span,
-            AstNode::Number(p)
+            AstNode::Int(p)
+            | AstNode::Float(p)
             | AstNode::String(p)
             | AstNode::Bool(p)
             | AstNode::Null(p)
@@ -91,16 +82,17 @@ impl AstNode {
 
     pub fn as_str(&self) -> &'static str {
         match self {
-            AstNode::Call(_) => Self::FN_CALL_STR,
-            AstNode::Number(_) => Self::NUMBER_STR,
-            AstNode::String(_) => Self::STRING_STR,
-            AstNode::Bool(_) => Self::BOOL_STR,
-            AstNode::Null(_) => Self::NULL_STR,
-            AstNode::Dict(_) => Self::DICT_STR,
-            AstNode::List(_) => Self::LIST_STR,
-            AstNode::DictPair(_) => Self::DICT_PAIR_STR,
-            AstNode::Identifier(_) => Self::IDENTIFIER_STR,
-            AstNode::Slot(_) => Self::SLOT_STR,
+            AstNode::Call(_) => NodeName::CALL,
+            AstNode::Int(_) => NodeName::INT,
+            AstNode::Float(_) => NodeName::FLOAT,
+            AstNode::String(_) => NodeName::STRING,
+            AstNode::Bool(_) => NodeName::BOOL,
+            AstNode::Null(_) => NodeName::NULL,
+            AstNode::Dict(_) => NodeName::DICT,
+            AstNode::List(_) => NodeName::LIST,
+            AstNode::DictPair(_) => NodeName::DICT_PAIR,
+            AstNode::Identifier(_) => NodeName::IDENTIFIER,
+            AstNode::Slot(_) => NodeName::SLOT,
         }
     }
 }
