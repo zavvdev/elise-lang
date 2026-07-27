@@ -1,3 +1,6 @@
+// TODO: Refactor! We need 2 versions for Compiler and Runtime
+// sharing the same Path
+
 //! # Binding Table
 //!
 //! This file defines a common, data agnostic interface

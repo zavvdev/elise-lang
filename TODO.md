@@ -6,6 +6,8 @@
 
 - [ ] Review cli and data for standalone const usage. Refactor to zero-variant struct.
 
+- [ ] Coerce Int to Float in data parser if type definition in schema is Float.
+
 - [ ] IMPORTANT! Review compilation stage and semanalyzer stage.
       These 2 must not depend on DataBindingTable in any way!
       Consider adding SchemaBindingTable that uses hashmap with

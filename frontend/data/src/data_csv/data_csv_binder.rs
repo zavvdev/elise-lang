@@ -7,16 +7,13 @@ use elise_shared::shared_errors::errors_csv_binder::{
 
 use crate::{
     data_binder::{DataBinder, DataBindingTable, DataDescriptor, Path, PathSegment::*},
-    data_csv::{
-        data_csv_config::{CSV_BOOL_FALSE_TOKENS_LOWER, CSV_BOOL_TRUE_TOKENS_LOWER},
-        data_csv_parser::CsvRow,
-        data_csv_schema_resolver::CsvResolvedSchema,
-    },
+    data_config::SchemaFnBool,
+    data_csv::{data_csv_parser::CsvRow, data_csv_schema_resolver::CsvResolvedSchema},
     data_types::DataType,
 };
 
+// TODO: Move into config.
 const BOOL_TRUE_COERCED: &str = "true";
-
 const BOOL_FALSE_COERCED: &str = "false";
 
 pub struct CsvDataBinder {
@@ -28,25 +25,18 @@ type Rows = Vec<CsvRow>;
 type Schema = CsvResolvedSchema;
 
 impl CsvDataBinder {
-    fn is_bool(value: &str) -> bool {
-        let lower_value = value.to_lowercase();
-        CSV_BOOL_TRUE_TOKENS_LOWER.contains(&lower_value.as_str())
-            || CSV_BOOL_FALSE_TOKENS_LOWER.contains(&lower_value.as_str())
-    }
-
     fn coerce_bool(value: &str) -> String {
-        let lower_value = value.to_lowercase();
-        if CSV_BOOL_TRUE_TOKENS_LOWER.contains(&lower_value.as_str()) {
+        if SchemaFnBool::is_true(value) {
             return BOOL_TRUE_COERCED.to_string();
         }
-        if CSV_BOOL_FALSE_TOKENS_LOWER.contains(&lower_value.as_str()) {
+        if SchemaFnBool::is_false(value) {
             return BOOL_FALSE_COERCED.to_string();
         }
         value.to_string()
     }
 
     fn coerce(value: &str) -> String {
-        if Self::is_bool(value) {
+        if SchemaFnBool::is_bool(value) {
             return Self::coerce_bool(value);
         }
         value.to_string()
@@ -74,7 +64,7 @@ impl DataBinder<Rows, Schema, CsvBinderErr> for CsvDataBinder {
 
             for (col_idx, col) in row.cols.iter().enumerate() {
                 let col_schema = self.schema.row.get(col_idx).unwrap();
-                let is_opt = col_schema.opt && col.ty == DataType::Empty;
+                let is_opt = col_schema.opt && col.ty == DataType::Null;
 
                 if col.ty == col_schema.ty || is_opt {
                     let path = vec![Index(row_idx), Field(col_schema.name.clone())];
@@ -120,6 +110,7 @@ mod tests {
 
     use elise_shared::shared_errors::errors_csv_binder::PosInfo;
     use elise_shared::shared_errors::errors_csv_binder::{CsvBinderErr::*, TypeMismatchInfo};
+    use elise_shared::shared_node_names::NodeName;
 
     use crate::data_binder::DataBinder;
     use crate::data_binder::{DataBindingTable, DataDescriptor, PathSegment::*};
@@ -132,7 +123,7 @@ mod tests {
     fn bind_should_return_error_if_schema_row_len_bigger_than_csv_row_len() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
-                ty: DataType::Number,
+                ty: DataType::Int,
                 value: "32".to_string(),
                 row: 0,
                 col: 0,
@@ -141,7 +132,7 @@ mod tests {
         let schema = CsvResolvedSchema {
             row: vec![
                 CsvColDescriptor {
-                    ty: DataType::Number,
+                    ty: DataType::Int,
                     name: "age".to_string(),
                     opt: false,
                 },
@@ -164,13 +155,13 @@ mod tests {
         let data = vec![CsvRow {
             cols: vec![
                 CsvCol {
-                    ty: DataType::Number,
+                    ty: DataType::Int,
                     value: "32".to_string(),
                     row: 0,
                     col: 0,
                 },
                 CsvCol {
-                    ty: DataType::Number,
+                    ty: DataType::Int,
                     value: "33".to_string(),
                     row: 0,
                     col: 1,
@@ -179,7 +170,7 @@ mod tests {
         }];
         let schema = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
-                ty: DataType::Number,
+                ty: DataType::Int,
                 name: "age".to_string(),
                 opt: false,
             }],
@@ -195,7 +186,7 @@ mod tests {
     fn bind_should_return_error_if_type_mismatch_and_opt_false() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
-                ty: DataType::Number,
+                ty: DataType::Int,
                 value: "32".to_string(),
                 row: 0,
                 col: 0,
@@ -213,8 +204,8 @@ mod tests {
             binder.bind(),
             Err(TypeMismatch(TypeMismatchInfo {
                 pos: PosInfo { row: 0, col: 0 },
-                expected: DataType::STRING_STR,
-                got: DataType::NUMBER_STR,
+                expected: NodeName::STRING,
+                got: NodeName::INT,
             }))
         )
     }
@@ -223,7 +214,7 @@ mod tests {
     fn bind_should_return_error_if_type_mismatch_opt_true_and_not_empty() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
-                ty: DataType::Number,
+                ty: DataType::Int,
                 value: "32".to_string(),
                 row: 0,
                 col: 0,
@@ -241,8 +232,8 @@ mod tests {
             binder.bind(),
             Err(TypeMismatch(TypeMismatchInfo {
                 pos: PosInfo { row: 0, col: 0 },
-                expected: DataType::STRING_STR,
-                got: DataType::NUMBER_STR,
+                expected: NodeName::STRING,
+                got: NodeName::NUMBER,
             }))
         )
     }
@@ -251,7 +242,7 @@ mod tests {
     fn bind_should_bind_if_type_match_and_opt_false() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
-                ty: DataType::Number,
+                ty: DataType::Int,
                 value: "32".to_string(),
                 row: 0,
                 col: 0,
@@ -259,7 +250,7 @@ mod tests {
         }];
         let schema = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
-                ty: DataType::Number,
+                ty: DataType::Int,
                 name: "age".to_string(),
                 opt: false,
             }],
@@ -271,7 +262,7 @@ mod tests {
         table.insert(
             path,
             DataDescriptor {
-                ty: DataType::Number,
+                ty: DataType::Int,
                 value: "32".to_string(),
             },
         );
@@ -285,7 +276,7 @@ mod tests {
     fn bind_should_bind_if_type_match_and_opt_true() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
-                ty: DataType::Number,
+                ty: DataType::Int,
                 value: "32".to_string(),
                 row: 0,
                 col: 0,
@@ -293,7 +284,7 @@ mod tests {
         }];
         let schema = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
-                ty: DataType::Number,
+                ty: DataType::Int,
                 name: "age".to_string(),
                 opt: true,
             }],
@@ -305,7 +296,7 @@ mod tests {
         table.insert(
             path,
             DataDescriptor {
-                ty: DataType::Number,
+                ty: DataType::Int,
                 value: "32".to_string(),
             },
         );
@@ -319,7 +310,7 @@ mod tests {
     fn bind_should_bind_if_opt_true_and_empty() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
-                ty: DataType::Empty,
+                ty: DataType::Null,
                 value: "".to_string(),
                 row: 0,
                 col: 0,
@@ -327,7 +318,7 @@ mod tests {
         }];
         let schema = CsvResolvedSchema {
             row: vec![CsvColDescriptor {
-                ty: DataType::Number,
+                ty: DataType::Int,
                 name: "age".to_string(),
                 opt: true,
             }],
@@ -339,7 +330,7 @@ mod tests {
         table.insert(
             path,
             DataDescriptor {
-                ty: DataType::Empty,
+                ty: DataType::Null,
                 value: "".to_string(),
             },
         );

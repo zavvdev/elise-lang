@@ -1,10 +1,7 @@
 use csv::{ErrorKind, ReaderBuilder};
 use elise_shared::shared_errors::errors_csv_parser::CsvParserErr;
 
-use crate::{
-    data_csv::data_csv_config::{CSV_BOOL_FALSE_TOKENS_LOWER, CSV_BOOL_TRUE_TOKENS_LOWER},
-    data_types::DataType,
-};
+use crate::{data_config::SchemaFnBool, data_types::DataType};
 
 pub struct CsvParser<'a> {
     data: &'a str,
@@ -51,12 +48,6 @@ impl<'a> CsvParser<'a> {
         }
     }
 
-    fn is_bool(value: &str) -> bool {
-        let lower_value = value.to_lowercase();
-        CSV_BOOL_TRUE_TOKENS_LOWER.contains(&lower_value.as_str())
-            || CSV_BOOL_FALSE_TOKENS_LOWER.contains(&lower_value.as_str())
-    }
-
     fn is_number(value: &str) -> bool {
         value.parse::<i64>().is_ok() || value.parse::<f64>().is_ok()
     }
@@ -77,16 +68,16 @@ impl<'a> CsvParser<'a> {
             col: col_index,
         };
 
-        if Self::is_bool(value) {
+        if SchemaFnBool::is_bool(value) {
             result.ty = DataType::Bool;
         }
 
         if Self::is_number(value) {
-            result.ty = DataType::Number;
+            result.ty = DataType::Int; // TODO: Diff between Int and Float
         }
 
         if Self::is_empty(value) {
-            result.ty = DataType::Empty;
+            result.ty = DataType::Null; // TODO: Review this
             result.value = "".to_string();
         }
 
@@ -129,6 +120,8 @@ mod tests {
         data_types::DataType,
     };
 
+    // TODO: Diff tests for int and float
+
     #[test]
     fn parse_should_parse_number() {
         let row = vec![
@@ -157,7 +150,7 @@ mod tests {
                 .enumerate()
                 .map(|(i, n)| CsvCol {
                     value: n.to_string(),
-                    ty: DataType::Number,
+                    ty: DataType::Int,
                     row: 0,
                     col: i,
                 })
@@ -206,13 +199,13 @@ mod tests {
                 cols: vec![
                     CsvCol {
                         value: "".to_string(),
-                        ty: DataType::Empty,
+                        ty: DataType::Null,
                         row: 0,
                         col: 0,
                     },
                     CsvCol {
                         value: "".to_string(),
-                        ty: DataType::Empty,
+                        ty: DataType::Null,
                         row: 0,
                         col: 1,
                     }

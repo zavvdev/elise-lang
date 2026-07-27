@@ -7,7 +7,7 @@ pub enum DataType {
     Float,
     String,
     Bool,
-    Empty,
+    Null,
 }
 
 impl DataType {
@@ -17,7 +17,7 @@ impl DataType {
             DataType::Float => NodeName::FLOAT,
             DataType::String => NodeName::STRING,
             DataType::Bool => NodeName::BOOL,
-            DataType::Empty => NodeName::EMPTY,
+            DataType::Null => NodeName::NULL,
         }
     }
 }
