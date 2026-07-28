@@ -23,7 +23,7 @@ use elise_shared::shared_errors::{LangErr, errors_common::CommonErr};
 use rayon::scope;
 use std::time::Instant;
 
-use crate::conf::config::FILE_EXT_CSV;
+use crate::conf::config::FileExt;
 
 /// Representation of the successful execution of the
 /// program in 'RUN' mode.
@@ -92,7 +92,7 @@ pub fn run<'a>(
             schema_ast = Some(ast);
         });
 
-        if config.data_path.ends_with(FILE_EXT_CSV) {
+        if config.data_path.ends_with(FileExt::CSV) {
             s.spawn(|_| {
                 let parsed = CsvParser::new(data).parse();
                 parsed_data = Some(DataParseResult::Csv(parsed));

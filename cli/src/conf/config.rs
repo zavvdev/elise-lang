@@ -1,74 +1,39 @@
-// ==================================================================
-//
-// FILE EXTS START
-//
-// ==================================================================
+pub struct FileExt;
+impl FileExt {
+    pub const SOURCE_CODE: &[&str] = &[".eli"];
+    pub const EXECUTABLE: &[&str] = &[".elc"];
+    pub const DATA_SCHEMA: &[&str] = &[".elt"];
+    pub const CSV: &str = ".csv";
+    pub const DATA: &[&str] = &[Self::CSV];
+}
 
-pub const FILE_EXT_SOURCE_CODE: &[&str] = &[".eli"];
-pub const FILE_EXT_EXECUTABLE: &[&str] = &[".elc"];
-pub const FILE_EXT_DATA_SCHEMA: &[&str] = &[".elt"];
+pub struct ArgName;
+impl ArgName {
+    pub const MODE: &str = "mode";
+    pub const SOURCE_CODE: &str = "source-code";
+    pub const DATA: &str = "data";
+    pub const DATA_SCHEMA: &str = "data-schema";
+    pub const EXECUTABLE: &str = "executable";
+    pub const OUTPUT: &str = "output";
+    pub const PRINT_BYTECODE: &str = "print-bytecode";
+}
 
-pub const FILE_EXT_CSV: &str = ".csv";
+pub struct ArgValue;
+impl ArgValue {
+    pub const BOOL_TRUE: &str = "true";
+    pub const BOOL_FALSE: &str = "false";
+    pub const MODE_RUN: &str = "run";
+    pub const MODE_BUILD: &str = "build";
+    pub const MODE_EXEC: &str = "exec";
+    pub const MODE_VALIDATE: &str = "validate";
 
-pub const FILE_EXT_DATA: &[&str] = &[FILE_EXT_CSV];
-
-// ==================================================================
-//
-// FILE EXTS END
-//
-// ==================================================================
-
-// ==================================================================
-//
-// ARGUMENT FLAGS START
-//
-// ==================================================================
-
-pub const ARG_FLAG_MODE: &str = "mode";
-pub const ARG_FLAG_SOURCE_CODE: &str = "source-code";
-pub const ARG_FLAG_DATA: &str = "data";
-pub const ARG_FLAG_DATA_SCHEMA: &str = "data-schema";
-pub const ARG_FLAG_EXECUTABLE: &str = "executable";
-pub const ARG_FLAG_OUTPUT: &str = "output";
-pub const ARG_FLAG_PRINT_BYTECODE: &str = "print-bytecode";
-
-// ==================================================================
-//
-// ARGUMENT FLAGS END
-//
-// ==================================================================
-
-// ==================================================================
-//
-// ARGUMENT VALUES START
-//
-// ==================================================================
-
-pub const ARG_V_BOOL_TRUE: &str = "true";
-pub const ARG_V_BOOL_FALSE: &str = "false";
-pub const ARG_V_MODE_RUN: &str = "run";
-pub const ARG_V_MODE_BUILD: &str = "build";
-pub const ARG_V_MODE_EXEC: &str = "exec";
-pub const ARG_V_MODE_VALIDATE: &str = "validate";
-
-pub const ARG_V_MODES: [&str; 4] = [
-    ARG_V_MODE_RUN,
-    ARG_V_MODE_BUILD,
-    ARG_V_MODE_EXEC,
-    ARG_V_MODE_VALIDATE,
-];
-
-// ==================================================================
-//
-// ARGUMENT VALUES END
-//
-// ==================================================================
-
-// ==================================================================
-//
-// ARGUMENT TYPES START
-//
-// ==================================================================
+    pub const MODES: [&str; 4] = [
+        Self::MODE_RUN,
+        Self::MODE_BUILD,
+        Self::MODE_EXEC,
+        Self::MODE_VALIDATE,
+    ];
+}
 
 pub enum ArgType {
     SourceFile(&'static [&'static str]),
@@ -83,67 +48,55 @@ pub struct Arg {
     pub def: Option<&'static str>, // default argument value
 }
 
-// ==================================================================
-//
-// ARGUMENT TYPES END
-//
-// ==================================================================
-
-// ==================================================================
-//
-// ARGUMENT LISTS START
-//
-// ==================================================================
-
 pub const RUN_ARGS: &[Arg] = &[
     Arg {
-        name: ARG_FLAG_SOURCE_CODE,
-        ty: ArgType::SourceFile(FILE_EXT_SOURCE_CODE),
+        name: ArgName::SOURCE_CODE,
+        ty: ArgType::SourceFile(FileExt::SOURCE_CODE),
         req: true,
         def: None,
     },
     Arg {
-        name: ARG_FLAG_DATA,
-        ty: ArgType::SourceFile(FILE_EXT_DATA),
+        name: ArgName::DATA,
+        ty: ArgType::SourceFile(FileExt::DATA),
         req: true,
         def: None,
     },
     Arg {
-        name: ARG_FLAG_DATA_SCHEMA,
-        ty: ArgType::SourceFile(FILE_EXT_DATA_SCHEMA),
+        name: ArgName::DATA_SCHEMA,
+        ty: ArgType::SourceFile(FileExt::DATA_SCHEMA),
         req: true,
         def: None,
     },
     Arg {
-        name: ARG_FLAG_OUTPUT,
+        name: ArgName::OUTPUT,
         ty: ArgType::Any,
         req: false,
         def: None,
     },
     Arg {
-        name: ARG_FLAG_PRINT_BYTECODE,
+        name: ArgName::PRINT_BYTECODE,
         ty: ArgType::Boolean,
         req: false,
-        def: Some(ARG_V_BOOL_FALSE),
+        def: Some(BOOL_FALSE),
     },
 ];
 
 pub const BUILD_ARGS: &[Arg] = &[
     Arg {
-        name: ARG_FLAG_SOURCE_CODE,
-        ty: ArgType::SourceFile(FILE_EXT_SOURCE_CODE),
+        name: ArgName::SOURCE_CODE,
+        ty: ArgType::SourceFile(FileExt::SOURCE_CODE),
         req: true,
         def: None,
     },
     Arg {
-        name: ARG_FLAG_DATA_SCHEMA,
-        ty: ArgType::SourceFile(FILE_EXT_DATA_SCHEMA),
+        name: ArgName::DATA_SCHEMA,
+        ty: ArgType::SourceFile(FileExt::DATA_SCHEMA),
         req: true,
         def: None,
     },
     Arg {
-        name: ARG_FLAG_OUTPUT,
-        ty: ArgType::SourceFile(FILE_EXT_EXECUTABLE),
+        name: ArgName::OUTPUT,
+        ty: ArgType::SourceFile(FileExt::EXECUTABLE),
         req: true,
         def: None,
     },
@@ -151,14 +104,14 @@ pub const BUILD_ARGS: &[Arg] = &[
 
 pub const EXEC_ARGS: &[Arg] = &[
     Arg {
-        name: ARG_FLAG_EXECUTABLE,
-        ty: ArgType::SourceFile(FILE_EXT_EXECUTABLE),
+        name: ArgName::EXECUTABLE,
+        ty: ArgType::SourceFile(FileExt::EXECUTABLE),
         req: true,
         def: None,
     },
     Arg {
-        name: ARG_FLAG_DATA,
-        ty: ArgType::SourceFile(FILE_EXT_DATA),
+        name: ArgName::DATA,
+        ty: ArgType::SourceFile(FileExt::DATA),
         req: true,
         def: None,
     },
@@ -166,21 +119,15 @@ pub const EXEC_ARGS: &[Arg] = &[
 
 pub const VALIDATE_ARGS: &[Arg] = &[
     Arg {
-        name: ARG_FLAG_DATA,
-        ty: ArgType::SourceFile(FILE_EXT_DATA),
+        name: ArgName::DATA,
+        ty: ArgType::SourceFile(FileExt::DATA),
         req: true,
         def: None,
     },
     Arg {
-        name: ARG_FLAG_DATA_SCHEMA,
-        ty: ArgType::SourceFile(FILE_EXT_DATA_SCHEMA),
+        name: ArgName::DATA_SCHEMA,
+        ty: ArgType::SourceFile(FileExt::DATA_SCHEMA),
         req: true,
         def: None,
     },
 ];
-
-// ==================================================================
-//
-// ARGUMENT LISTS END
-//
-// ==================================================================

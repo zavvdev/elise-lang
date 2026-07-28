@@ -8,12 +8,7 @@ pub mod config;
 
 use std::collections::HashMap;
 
-use config::{
-    ARG_FLAG_DATA, ARG_FLAG_DATA_SCHEMA, ARG_FLAG_EXECUTABLE, ARG_FLAG_MODE, ARG_FLAG_OUTPUT,
-    ARG_FLAG_PRINT_BYTECODE, ARG_FLAG_SOURCE_CODE, ARG_V_BOOL_FALSE, ARG_V_BOOL_TRUE,
-    ARG_V_MODE_BUILD, ARG_V_MODE_EXEC, ARG_V_MODE_RUN, ARG_V_MODE_VALIDATE, ARG_V_MODES, ArgType,
-    BUILD_ARGS, EXEC_ARGS, RUN_ARGS, VALIDATE_ARGS,
-};
+use config::{ArgValue, ArgName, VALIDATE_ARGS, RUN_ARGS, BUILD_ARGS, EXEC_ARGS};
 
 #[derive(Debug, PartialEq)]
 pub struct InvalidArg {
@@ -76,12 +71,12 @@ impl Conf {
 
     fn validate_mode(mode: Option<&str>) -> Result<&str, ConfErr> {
         match mode {
-            Some(mode) if ARG_V_MODES.contains(&mode) => Ok(mode),
+            Some(mode) if ArgValue::MODES.contains(&mode) => Ok(mode),
             Some(mode) => Err(ConfErr::ArgInvalid(InvalidArg {
                 provided: mode.to_string(),
-                arg_name: ARG_FLAG_MODE.to_string(),
+                arg_name: ArgName::MODE.to_string(),
             })),
-            None => Err(ConfErr::ArgRequired(ARG_FLAG_MODE.to_string())),
+            None => Err(ConfErr::ArgRequired(ArgName::MODE.to_string())),
         }
     }
 
@@ -89,7 +84,7 @@ impl Conf {
     // in order to construct Conf structs.
 
     fn arg_bool(value: Option<&&str>) -> bool {
-        value.is_some() && *value.unwrap() == ARG_V_BOOL_TRUE
+        value.is_some() && *value.unwrap() == ArgValue::BOOL_TRUE
     }
 
     fn arg_str(value: Option<&&str>) -> String {
@@ -152,13 +147,13 @@ impl Conf {
         let mut res: HashMap<&str, &str> = HashMap::new();
 
         let args = match mode {
-            ARG_V_MODE_RUN => Ok(RUN_ARGS),
-            ARG_V_MODE_BUILD => Ok(BUILD_ARGS),
-            ARG_V_MODE_EXEC => Ok(EXEC_ARGS),
-            ARG_V_MODE_VALIDATE => Ok(VALIDATE_ARGS),
+            ArgValue::MODE_RUN => Ok(RUN_ARGS),
+            ArgValue::MODE_BUILD => Ok(BUILD_ARGS),
+            ArgValue::MODE_EXEC => Ok(EXEC_ARGS),
+            ArgValue::MODE_VALIDATE => Ok(VALIDATE_ARGS),
             _ => Err(ConfErr::ArgInvalid(InvalidArg {
                 provided: mode.to_string(),
-                arg_name: ARG_FLAG_MODE.to_string(),
+                arg_name: ArgName::MODE.to_string(),
             })),
         }?;
 
@@ -186,12 +181,12 @@ impl Conf {
                     }
                     ArgType::Boolean => {
                         if user_arg.is_empty() {
-                            res.insert(arg.name, ARG_V_BOOL_TRUE);
+                            res.insert(arg.name, ArgValue::BOOL_TRUE);
                         } else {
-                            let value = if ARG_V_BOOL_TRUE == user_arg {
-                                ARG_V_BOOL_TRUE
+                            let value = if ArgValue::BOOL_TRUE == user_arg {
+                                ArgValue::BOOL_TRUE
                             } else {
-                                ARG_V_BOOL_FALSE
+                                ArgValue::BOOL_FALSE
                             };
                             res.insert(arg.name, value);
                         }
@@ -215,7 +210,7 @@ impl Conf {
         let parsed_args = Self::parse_args(args);
 
         // Must be an error if mode is invalid.
-        let mode = Self::validate_mode(parsed_args.get(ARG_FLAG_MODE).copied())?;
+        let mode = Self::validate_mode(parsed_args.get(ArgName::MODE).copied())?;
 
         // At this point we have the full list of arguments with their values.
         // If some argument was not provided by user, it must be present in this variable with
@@ -224,33 +219,33 @@ impl Conf {
         let args = Self::build_valid_args(&parsed_args, mode)?;
 
         match mode {
-            ARG_V_MODE_RUN => Ok(Self::Run(ModeRunConf {
-                source_code_path: Self::arg_str(args.get(ARG_FLAG_SOURCE_CODE)),
-                data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
-                data_schema_path: Self::arg_str(args.get(ARG_FLAG_DATA_SCHEMA)),
-                print_bytecode: Self::arg_bool(args.get(ARG_FLAG_PRINT_BYTECODE)),
-                output_path: Self::arg_any(args.get(ARG_FLAG_OUTPUT)),
+            ArgValue::MODE_RUN => Ok(Self::Run(ModeRunConf {
+                source_code_path: Self::arg_str(args.get(ArgName::SOURCE_CODE)),
+                data_path: Self::arg_str(args.get(ArgName::DATA)),
+                data_schema_path: Self::arg_str(args.get(ArgName::DATA_SCHEMA)),
+                print_bytecode: Self::arg_bool(args.get(ArgName::PRINT_BYTECODE)),
+                output_path: Self::arg_any(args.get(ArgName::OUTPUT)),
             })),
 
-            ARG_V_MODE_BUILD => Ok(Self::Build(ModeBuildConf {
-                source_code_path: Self::arg_str(args.get(ARG_FLAG_SOURCE_CODE)),
-                data_schema_path: Self::arg_str(args.get(ARG_FLAG_DATA_SCHEMA)),
-                executable_output_path: Self::arg_str(args.get(ARG_FLAG_OUTPUT)),
+            ArgValue::MODE_BUILD => Ok(Self::Build(ModeBuildConf {
+                source_code_path: Self::arg_str(args.get(ArgName::SOURCE_CODE)),
+                data_schema_path: Self::arg_str(args.get(ArgName::DATA_SCHEMA)),
+                executable_output_path: Self::arg_str(args.get(ArgName::OUTPUT)),
             })),
 
-            ARG_V_MODE_EXEC => Ok(Self::Exec(ModeExecConf {
-                executable_path: Self::arg_str(args.get(ARG_FLAG_EXECUTABLE)),
-                data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
+            ArgValue::MODE_EXEC => Ok(Self::Exec(ModeExecConf {
+                executable_path: Self::arg_str(args.get(ArgName::EXECUTABLE)),
+                data_path: Self::arg_str(args.get(ArgName::DATA)),
             })),
 
-            ARG_V_MODE_VALIDATE => Ok(Self::Validate(ModeValidateConf {
-                data_path: Self::arg_str(args.get(ARG_FLAG_DATA)),
-                data_schema_path: Self::arg_str(args.get(ARG_FLAG_DATA_SCHEMA)),
+            ArgValue::MODE_VALIDATE => Ok(Self::Validate(ModeValidateConf {
+                data_path: Self::arg_str(args.get(ArgName::DATA)),
+                data_schema_path: Self::arg_str(args.get(ArgName::DATA_SCHEMA)),
             })),
 
             _ => Err(ConfErr::ArgInvalid(InvalidArg {
                 provided: mode.to_string(),
-                arg_name: ARG_FLAG_MODE.to_string(),
+                arg_name: ArgName::MODE.to_string(),
             })),
         }
     }
@@ -264,10 +259,7 @@ impl Conf {
 
 #[cfg(test)]
 mod tests {
-    use crate::conf::config::{
-        ARG_FLAG_DATA, ARG_FLAG_DATA_SCHEMA, ARG_FLAG_EXECUTABLE, ARG_FLAG_MODE, ARG_FLAG_OUTPUT,
-        ARG_FLAG_SOURCE_CODE,
-    };
+    use crate::conf::config::ArgName;
     use crate::conf::{
         Conf, ConfErr, InvalidArg, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf,
     };
@@ -279,7 +271,7 @@ mod tests {
             "--data=data.csv".to_string(),
             "--data-schema=data.elt".to_string(),
         ]);
-        assert_eq!(result, Err(ConfErr::ArgRequired(ARG_FLAG_MODE.to_string())));
+        assert_eq!(result, Err(ConfErr::ArgRequired(ArgName::MODE.to_string())));
     }
 
     #[test]
@@ -294,7 +286,7 @@ mod tests {
             result,
             Err(ConfErr::ArgInvalid(InvalidArg {
                 provided: "invalid".to_string(),
-                arg_name: ARG_FLAG_MODE.to_string(),
+                arg_name: ArgName::MODE.to_string(),
             }))
         );
     }
@@ -312,7 +304,7 @@ mod tests {
         ]);
         assert_eq!(
             result,
-            Err(ConfErr::ArgRequired(ARG_FLAG_SOURCE_CODE.to_string()))
+            Err(ConfErr::ArgRequired(ArgName::SOURCE_CODE.to_string()))
         );
     }
 
@@ -323,7 +315,7 @@ mod tests {
             "--source-code=sample.eli".to_string(),
             "--data-schema=data.elt".to_string(),
         ]);
-        assert_eq!(result, Err(ConfErr::ArgRequired(ARG_FLAG_DATA.to_string())));
+        assert_eq!(result, Err(ConfErr::ArgRequired(ArgName::DATA.to_string())));
     }
 
     #[test]
@@ -335,7 +327,7 @@ mod tests {
         ]);
         assert_eq!(
             result,
-            Err(ConfErr::ArgRequired(ARG_FLAG_DATA_SCHEMA.to_string()))
+            Err(ConfErr::ArgRequired(ArgName::DATA_SCHEMA.to_string()))
         );
     }
 
@@ -398,7 +390,7 @@ mod tests {
         ]);
         assert_eq!(
             result,
-            Err(ConfErr::ArgRequired(ARG_FLAG_SOURCE_CODE.to_string()))
+            Err(ConfErr::ArgRequired(ArgName::SOURCE_CODE.to_string()))
         );
     }
 
@@ -412,7 +404,7 @@ mod tests {
 
         assert_eq!(
             result,
-            Err(ConfErr::ArgRequired(ARG_FLAG_DATA_SCHEMA.to_string()))
+            Err(ConfErr::ArgRequired(ArgName::DATA_SCHEMA.to_string()))
         );
     }
 
@@ -425,7 +417,7 @@ mod tests {
         ]);
         assert_eq!(
             result,
-            Err(ConfErr::ArgRequired(ARG_FLAG_OUTPUT.to_string()))
+            Err(ConfErr::ArgRequired(ArgName::OUTPUT.to_string()))
         );
     }
 
@@ -460,7 +452,7 @@ mod tests {
         let result = Conf::new(&["--mode=exec".to_string(), "--data=data.csv".to_string()]);
         assert_eq!(
             result,
-            Err(ConfErr::ArgRequired(ARG_FLAG_EXECUTABLE.to_string()))
+            Err(ConfErr::ArgRequired(ArgName::EXECUTABLE.to_string()))
         );
     }
 
@@ -470,7 +462,7 @@ mod tests {
             "--mode=exec".to_string(),
             "--executable=sample.elc".to_string(),
         ]);
-        assert_eq!(result, Err(ConfErr::ArgRequired(ARG_FLAG_DATA.to_string())));
+        assert_eq!(result, Err(ConfErr::ArgRequired(ArgName::DATA.to_string())));
     }
 
     #[test]
@@ -503,7 +495,7 @@ mod tests {
             "--mode=validate".to_string(),
             "--data-schema=data.elt".to_string(),
         ]);
-        assert_eq!(result, Err(ConfErr::ArgRequired(ARG_FLAG_DATA.to_string())));
+        assert_eq!(result, Err(ConfErr::ArgRequired(ArgName::DATA.to_string())));
     }
 
     #[test]
@@ -511,7 +503,7 @@ mod tests {
         let result = Conf::new(&["--mode=validate".to_string(), "--data=data.csv".to_string()]);
         assert_eq!(
             result,
-            Err(ConfErr::ArgRequired(ARG_FLAG_DATA_SCHEMA.to_string()))
+            Err(ConfErr::ArgRequired(ArgName::DATA_SCHEMA.to_string()))
         );
     }
 
