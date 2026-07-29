@@ -8,7 +8,9 @@
 
 - [x] Fix compile errors in frontend/data
 
-- [ ] Coerce Int to Float in data parser if type definition in schema is Float.
+- [ ] Refactor Csv Parser
+
+  - [ ] Coerce Int to Float in data parser if type definition in schema is Float.
 
 - [ ] IMPORTANT! Review compilation stage and semanalyzer stage.
       These 2 must not depend on DataBindingTable in any way!

@@ -1,5 +1,5 @@
 use csv::{ErrorKind, ReaderBuilder};
-use elise_shared::shared_errors::errors_csv_parser::CsvParserErr;
+use elise_shared::{shared_errors::errors_csv_parser::CsvParserErr, shared_types::Keyword};
 
 use crate::{data_config::SchemaFnBool, data_types::DataType};
 
@@ -48,12 +48,22 @@ impl<'a> CsvParser<'a> {
         }
     }
 
-    fn is_number(value: &str) -> bool {
-        value.parse::<i64>().is_ok() || value.parse::<f64>().is_ok()
+    fn is_int(value: &str) -> bool {
+        value.parse::<i64>().is_ok()
     }
 
-    fn is_empty(value: &str) -> bool {
-        value.trim().is_empty()
+    fn is_float(value: &str) -> bool {
+        value.parse::<f64>().is_ok()
+    }
+
+    fn is_null(value: &str) -> bool {
+        let value = value.trim().to_lowercase();
+        value.is_empty() || value == Keyword::NULL
+    }
+
+    fn is_bool(value: &str) -> bool {
+        let value = value.trim().to_lowercase();
+        value == Keyword::TRUE || value == Keyword::FALSE
     }
 
     fn annotate_col(
@@ -68,17 +78,21 @@ impl<'a> CsvParser<'a> {
             col: col_index,
         };
 
-        if SchemaFnBool::is_bool(value) {
+        // TODO: Refactor. Looks ugly.
+        if Self::is_bool(value) {
             result.ty = DataType::Bool;
         }
 
-        if Self::is_number(value) {
-            result.ty = DataType::Int; // TODO: Diff between Int and Float
+        if Self::is_int(value) {
+            result.ty = DataType::Int;
         }
 
-        if Self::is_empty(value) {
-            result.ty = DataType::Null; // TODO: Review this
-            result.value = "".to_string();
+        if Self::is_float(value) {
+            result.ty = DataType::Float;
+        }
+
+        if Self::is_null(value) {
+            result.ty = DataType::Null;
         }
 
         Ok(result)

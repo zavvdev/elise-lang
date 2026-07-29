@@ -64,6 +64,7 @@ pub struct ValidateResult<'a> {
 /// Entry point for running the program in 'RUN' mode.
 pub fn run<'a>(
     source_code: &'a [u8],
+    // TODO: Why it's not vec of bytes?
     data: &'a str,
     data_schema: &'a [u8],
     config: &'a ModeRunConf,

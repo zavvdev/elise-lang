@@ -12,10 +12,3 @@ impl CharCode {
     pub const COMMA: u8 = b',';
     pub const DOUBLE_QT: u8 = b'"';
 }
-
-pub struct Keyword;
-impl Keyword {
-    pub const TRUE: &str = "true";
-    pub const FALSE: &str = "false";
-    pub const NULL: &str = "null";
-}
