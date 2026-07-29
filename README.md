@@ -17,7 +17,7 @@ A schema-driven data transformation language that compiles type-optimized byteco
 | `.eli`    | Source code                              |
 | `.elt`    | Schema / type definitions for input data |
 | `.csv`    | Input data file                          |
-| `.elc`    | Generated file with compiled bytecode    |
+| `.elb`    | Generated file with compiled bytecode    |
 
 ## Execution Modes
 
@@ -27,7 +27,7 @@ A schema-driven data transformation language that compiles type-optimized byteco
 elise --mode=run --source-code=sample.eli --data=data.csv --data-schema=data.elt
 ```
 
-- Compiles in-memory (no `.elc` output)
+- Compiles in-memory (no `.elb` output)
 
 - Performs full runtime validation of input data against schema
 
@@ -38,16 +38,16 @@ elise --mode=run --source-code=sample.eli --data=data.csv --data-schema=data.elt
 Step 1 — Build an executable
 
 ```bash
-elise --mode=build --source-code=sample.eli --data-schema=data.elt --output=program.elc
+elise --mode=build --source-code=sample.eli --data-schema=data.elt --output=program.elb
 ```
 
 Step 2 — Execute
 
 ```bash
-elise --mode=exec --executable=program.elc --data=data.csv
+elise --mode=exec --executable=program.elb --data=data.csv
 ```
 
-- Requires precompiled .elc
+- Requires precompiled .elb
 
 - Data must comply with schema that was used for building executable
 

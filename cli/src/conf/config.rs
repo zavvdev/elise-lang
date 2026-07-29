@@ -1,7 +1,7 @@
 pub struct FileExt;
 impl FileExt {
     pub const SOURCE_CODE: &[&str] = &[".eli"];
-    pub const EXECUTABLE: &[&str] = &[".elc"];
+    pub const EXECUTABLE: &[&str] = &[".elb"];
     pub const DATA_SCHEMA: &[&str] = &[".elt"];
     pub const CSV: &str = ".csv";
     pub const DATA: &[&str] = &[Self::CSV];

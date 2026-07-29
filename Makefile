@@ -16,16 +16,16 @@ elise-run\:release:
 	./target/debug/elise --mode=run --source-code=sample.eli --data=data.csv --data-schema=sample.elt --print-bytecode
 
 elise-build:
-	./target/debug/elise --mode=build --source-code=sample.eli --data-schema=sample.elt --output=sample.elc
+	./target/debug/elise --mode=build --source-code=sample.eli --data-schema=sample.elt --output=sample.elb
 
 elise-build\:release:
-	./target/debug/elise --mode=build --source-code=sample.eli --data-schema=sample.elt --output=sample.elc
+	./target/debug/elise --mode=build --source-code=sample.eli --data-schema=sample.elt --output=sample.elb
 
 elise-exec:
-	./target/debug/elise --mode=exec --executable=sample.elc --data=data.csv
+	./target/debug/elise --mode=exec --executable=sample.elb --data=data.csv
 
 elise-exec\:release:
-	./target/debug/elise --mode=exec --executable=sample.elc --data=data.csv
+	./target/debug/elise --mode=exec --executable=sample.elb --data=data.csv
 
 elise-validate:
 	./target/debug/elise --mode=validate --data=data.csv --data-schema=sample.elt 

@@ -388,7 +388,7 @@ mod tests {
         let result = Conf::new(&[
             "--mode=build".to_string(),
             "--data-schema=data.elt".to_string(),
-            "--output=sample.elc".to_string(),
+            "--output=sample.elb".to_string(),
         ]);
         assert_eq!(
             result,
@@ -401,7 +401,7 @@ mod tests {
         let result = Conf::new(&[
             "--mode=build".to_string(),
             "--source-code=sample.eli".to_string(),
-            "--output=sample.elc".to_string(),
+            "--output=sample.elb".to_string(),
         ]);
 
         assert_eq!(
@@ -429,13 +429,13 @@ mod tests {
             "--mode=build".to_string(),
             "--source-code=sample.eli".to_string(),
             "--data-schema=data.elt".to_string(),
-            "--output=sample.elc".to_string(),
+            "--output=sample.elb".to_string(),
         ]);
         assert_eq!(
             result,
             Ok(Conf::Build(ModeBuildConf {
                 source_code_path: "sample.eli".to_string(),
-                executable_output_path: "sample.elc".to_string(),
+                executable_output_path: "sample.elb".to_string(),
                 data_schema_path: "data.elt".to_string(),
             }))
         );
@@ -462,7 +462,7 @@ mod tests {
     fn exec_should_require_data_flag() {
         let result = Conf::new(&[
             "--mode=exec".to_string(),
-            "--executable=sample.elc".to_string(),
+            "--executable=sample.elb".to_string(),
         ]);
         assert_eq!(result, Err(ConfErr::ArgRequired(ArgName::DATA.to_string())));
     }
@@ -471,13 +471,13 @@ mod tests {
     fn exec_should_construct_conf() {
         let result = Conf::new(&[
             "--mode=exec".to_string(),
-            "--executable=sample.elc".to_string(),
+            "--executable=sample.elb".to_string(),
             "--data=data.csv".to_string(),
         ]);
         assert_eq!(
             result,
             Ok(Conf::Exec(ModeExecConf {
-                executable_path: "sample.elc".to_string(),
+                executable_path: "sample.elb".to_string(),
                 data_path: "data.csv".to_string(),
             }))
         );
