@@ -3,7 +3,6 @@ use elise_shared::shared_errors::errors_csv_parser::CsvParserErr;
 use crate::data_csv::data_csv_parser::CsvRow;
 
 pub mod data_binder;
-pub mod data_config;
 pub mod data_csv;
 pub mod data_types;
 

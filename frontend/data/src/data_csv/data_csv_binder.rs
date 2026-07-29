@@ -7,7 +7,6 @@ use elise_shared::shared_errors::errors_csv_binder::{
 
 use crate::{
     data_binder::{DataBinder, DataBindingTable, DataDescriptor, Path, PathSegment::*},
-    data_config::SchemaFnBool,
     data_csv::{data_csv_parser::CsvRow, data_csv_schema_resolver::CsvResolvedSchema},
     data_types::DataType,
 };
@@ -19,25 +18,6 @@ pub struct CsvDataBinder {
 
 type Rows = Vec<CsvRow>;
 type Schema = CsvResolvedSchema;
-
-impl CsvDataBinder {
-    fn coerce_bool(value: &str) -> String {
-        if SchemaFnBool::is_true(value) {
-            return SchemaFnBool::TRUE_LEXEME.to_string();
-        }
-        if SchemaFnBool::is_false(value) {
-            return SchemaFnBool::FALSE_LEXEME.to_string();
-        }
-        value.to_string()
-    }
-
-    fn coerce(value: &str) -> String {
-        if SchemaFnBool::is_bool(value) {
-            return Self::coerce_bool(value);
-        }
-        value.to_string()
-    }
-}
 
 impl DataBinder<Rows, Schema, CsvBinderErr> for CsvDataBinder {
     fn new(rows: Rows, schema: Schema) -> Self {
@@ -69,7 +49,7 @@ impl DataBinder<Rows, Schema, CsvBinderErr> for CsvDataBinder {
                         path,
                         DataDescriptor {
                             ty: col.ty.clone(),
-                            value: Self::coerce(&col.value),
+                            value: col.value.to_string(),
                         },
                     );
                     continue;
@@ -110,7 +90,7 @@ mod tests {
 
     use crate::data_binder::DataBinder;
     use crate::data_binder::{DataBindingTable, DataDescriptor, PathSegment::*};
-    use crate::data_csv::data_csv_binder::{CsvDataBinder, SchemaFnBool};
+    use crate::data_csv::data_csv_binder::CsvDataBinder;
     use crate::data_csv::data_csv_parser::{CsvCol, CsvRow};
     use crate::data_csv::data_csv_schema_resolver::{CsvColDescriptor, CsvResolvedSchema};
     use crate::data_types::DataType;
@@ -334,86 +314,6 @@ mod tests {
         let result = DataBindingTable { table };
 
         assert_eq!(binder.bind(), Ok(result));
-    }
-
-    #[test]
-    fn bind_should_coerce_bool_true() {
-        let true_values = vec![
-            "True", "true", "TRUE", "Yes", "yes", "YES", "on", "On", "ON", "y", "Y",
-        ];
-
-        for bool_true in true_values {
-            let data = vec![CsvRow {
-                cols: vec![CsvCol {
-                    ty: DataType::Bool,
-                    value: bool_true.to_string(),
-                    row: 0,
-                    col: 0,
-                }],
-            }];
-            let schema = CsvResolvedSchema {
-                row: vec![CsvColDescriptor {
-                    ty: DataType::Bool,
-                    name: "test".to_string(),
-                    opt: false,
-                }],
-            };
-            let binder = CsvDataBinder::new(data, schema);
-            let mut table = HashMap::new();
-            let path = vec![Index(0), Field("test".to_string())];
-
-            table.insert(
-                path,
-                DataDescriptor {
-                    ty: DataType::Bool,
-                    value: SchemaFnBool::TRUE_LEXEME.to_string(),
-                },
-            );
-
-            let result = DataBindingTable { table };
-
-            assert_eq!(binder.bind(), Ok(result));
-        }
-    }
-
-    #[test]
-    fn bind_should_coerce_bool_false() {
-        let false_values = vec![
-            "False", "false", "FALSE", "No", "no", "NO", "off", "Off", "OFF", "n", "N",
-        ];
-
-        for bool_false in false_values {
-            let data = vec![CsvRow {
-                cols: vec![CsvCol {
-                    ty: DataType::Bool,
-                    value: bool_false.to_string(),
-                    row: 0,
-                    col: 0,
-                }],
-            }];
-            let schema = CsvResolvedSchema {
-                row: vec![CsvColDescriptor {
-                    ty: DataType::Bool,
-                    name: "test".to_string(),
-                    opt: false,
-                }],
-            };
-            let binder = CsvDataBinder::new(data, schema);
-            let mut table = HashMap::new();
-            let path = vec![Index(0), Field("test".to_string())];
-
-            table.insert(
-                path,
-                DataDescriptor {
-                    ty: DataType::Bool,
-                    value: SchemaFnBool::FALSE_LEXEME.to_string(),
-                },
-            );
-
-            let result = DataBindingTable { table };
-
-            assert_eq!(binder.bind(), Ok(result));
-        }
     }
 }
 

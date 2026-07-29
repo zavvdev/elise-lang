@@ -34,11 +34,10 @@ pub mod semanalyzer_symbol_table;
 
 use elise_ast::{AstCall, AstNode, AstPrimitive};
 use elise_data::data_binder::DataBindingTable;
-use elise_parser::parser_config::Keyword;
 use elise_shared::{
     shared_errors::errors_semanalyzer::{ArityMismatchKind, SemanalyzerErr},
     shared_node_names::NodeName,
-    shared_types::Span,
+    shared_types::{Keyword, Span},
 };
 
 use crate::{

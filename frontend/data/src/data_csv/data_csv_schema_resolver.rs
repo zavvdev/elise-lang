@@ -5,11 +5,8 @@ use elise_shared::shared_errors::errors_csv_schema_resolver::{
 };
 use elise_shared::shared_types::Span;
 
-use crate::data_config::{
-    SchemaFnBool, SchemaFnFloat, SchemaFnInt, SchemaFnOptional, SchemaFnRoot, SchemaFnRow,
-    SchemaFnString,
-};
 use crate::data_types::DataType;
+use crate::data_types::SchemaFnLexeme;
 
 #[derive(Debug, PartialEq)]
 pub struct CsvColDescriptor {
@@ -42,11 +39,11 @@ impl<'a> CsvSchemaResolver<'a> {
         end: usize,
     ) -> Result<DataType, CsvSchemaResolverErr> {
         match call_name {
-            SchemaFnBool::LEXEME => Ok(DataType::Bool),
-            SchemaFnInt::LEXEME => Ok(DataType::Int),
-            SchemaFnFloat::LEXEME => Ok(DataType::Float),
-            SchemaFnString::LEXEME => Ok(DataType::String),
-            SchemaFnOptional::LEXEME => Ok(DataType::Null),
+            SchemaFnLexeme::BOOL => Ok(DataType::Bool),
+            SchemaFnLexeme::INT => Ok(DataType::Int),
+            SchemaFnLexeme::FLOAT => Ok(DataType::Float),
+            SchemaFnLexeme::STRING => Ok(DataType::String),
+            SchemaFnLexeme::OPT => Ok(DataType::Null),
             _ => Err(ColInvalType {
                 span: Self::err_span(start, end),
             }),
@@ -91,7 +88,7 @@ impl<'a> CsvSchemaResolver<'a> {
                 children,
                 span,
             }) => match name.as_str() {
-                SchemaFnOptional::LEXEME => {
+                SchemaFnLexeme::OPT => {
                     if children.len() == 1 {
                         let literal_type = Self::resolve_literal_type(children.first().unwrap())?;
                         if literal_type != DataType::Null {
@@ -164,7 +161,7 @@ impl<'a> CsvSchemaResolver<'a> {
 
         // Extract root node descriptor if it matches type and name.
         let root_call = match root {
-            AstNode::Call(call) if call.lexeme == SchemaFnRoot::LEXEME => call,
+            AstNode::Call(call) if call.lexeme == SchemaFnLexeme::ROOT => call,
             node => {
                 return Err(RootInval {
                     span: Self::err_span(node.span().start, node.span().end),
@@ -185,7 +182,7 @@ impl<'a> CsvSchemaResolver<'a> {
         let row = root_call.children.first().unwrap();
 
         match &**row {
-            AstNode::Call(call) if call.lexeme == SchemaFnRow::LEXEME => Self::resolve_row(call),
+            AstNode::Call(call) if call.lexeme == SchemaFnLexeme::ROW => Self::resolve_row(call),
             node => Err(RowInval {
                 span: Self::err_span(node.span().start, node.span().end),
             }),
@@ -205,13 +202,10 @@ mod tests {
     use elise_shared::shared_errors::errors_csv_schema_resolver::CsvSchemaResolverErr::*;
     use elise_shared::shared_types::Span;
 
-    use crate::data_config::{
-        SchemaFnBool, SchemaFnInt, SchemaFnOptional, SchemaFnRoot, SchemaFnRow, SchemaFnString,
-    };
     use crate::data_csv::data_csv_schema_resolver::{
         CsvColDescriptor, CsvResolvedSchema, CsvSchemaResolver,
     };
-    use crate::data_types::DataType;
+    use crate::data_types::{DataType, SchemaFnLexeme};
 
     // We don't care about Span values here since
     // we just need to make sure that they have the same
@@ -264,7 +258,7 @@ mod tests {
     #[test]
     fn root_should_return_error_if_no_args() {
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![],
         })];
@@ -278,7 +272,7 @@ mod tests {
     #[test]
     fn root_should_return_error_if_more_than_one_arg() {
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: vec![],
         }));
@@ -288,7 +282,7 @@ mod tests {
             children: vec![],
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 11 },
             children: vec![row_def, redundant_def],
         })];
@@ -310,7 +304,7 @@ mod tests {
             span: Span { start: 3, end: 6 },
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 8 },
             children: vec![row_def],
         })];
@@ -329,7 +323,7 @@ mod tests {
             children: vec![],
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 8 },
             children: vec![row_def],
         })];
@@ -343,12 +337,12 @@ mod tests {
     #[test]
     fn row_should_return_error_if_no_args() {
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: vec![],
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![row_def],
         })];
@@ -362,7 +356,7 @@ mod tests {
     #[test]
     fn row_should_return_error_if_args_not_even() {
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: vec![Box::new(AstNode::Identifier(AstPrimitive {
                 value: "some_value".to_string(),
@@ -370,7 +364,7 @@ mod tests {
             }))],
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![row_def],
         })];
@@ -389,18 +383,18 @@ mod tests {
                 span: Span { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call(AstCall {
-                lexeme: SchemaFnInt::LEXEME.to_string(),
+                lexeme: SchemaFnLexeme::INT.to_string(),
                 span: Span { start: 12, end: 15 },
                 children: vec![],
             })),
         ];
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: row_children,
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![row_def],
         })];
@@ -425,12 +419,12 @@ mod tests {
             })),
         ];
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: row_children,
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![row_def],
         })];
@@ -459,18 +453,18 @@ mod tests {
                 span: Span { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call(AstCall {
-                lexeme: SchemaFnInt::LEXEME.to_string(),
+                lexeme: SchemaFnLexeme::INT.to_string(),
                 span: Span { start: 12, end: 15 },
                 children: vec![],
             })),
         ];
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: row_children,
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![row_def],
         })];
@@ -496,12 +490,12 @@ mod tests {
     #[test]
     fn optional_should_reject_empty_type() {
         let opt_children = vec![Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnOptional::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::OPT.to_string(),
             span: Span { start: 12, end: 15 },
             children: vec![],
         }))];
         let type_opt = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnOptional::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::OPT.to_string(),
             span: Span { start: 15, end: 18 },
             children: opt_children,
         }));
@@ -513,12 +507,12 @@ mod tests {
             type_opt,
         ];
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: row_children,
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![row_def],
         })];
@@ -532,12 +526,12 @@ mod tests {
     #[test]
     fn optional_should_resolve() {
         let opt_children = vec![Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnInt::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::INT.to_string(),
             span: Span { start: 12, end: 15 },
             children: vec![],
         }))];
         let type_opt = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnOptional::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::OPT.to_string(),
             span: Span { start: 15, end: 18 },
             children: opt_children,
         }));
@@ -549,12 +543,12 @@ mod tests {
             type_opt,
         ];
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: row_children,
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![row_def],
         })];
@@ -585,18 +579,18 @@ mod tests {
                 span: Span { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call(AstCall {
-                lexeme: SchemaFnInt::LEXEME.to_string(),
+                lexeme: SchemaFnLexeme::INT.to_string(),
                 span: Span { start: 12, end: 15 },
                 children: vec![],
             })),
         ];
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: row_children,
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![row_def],
         })];
@@ -619,7 +613,7 @@ mod tests {
                 span: Span { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call(AstCall {
-                lexeme: SchemaFnInt::LEXEME.to_string(),
+                lexeme: SchemaFnLexeme::INT.to_string(),
                 span: Span { start: 12, end: 15 },
                 children: vec![Box::new(AstNode::Int(AstPrimitive {
                     value: "1".to_string(),
@@ -628,12 +622,12 @@ mod tests {
             })),
         ];
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: row_children,
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![row_def],
         })];
@@ -660,18 +654,18 @@ mod tests {
                 span: Span { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call(AstCall {
-                lexeme: SchemaFnString::LEXEME.to_string(),
+                lexeme: SchemaFnLexeme::STRING.to_string(),
                 span: Span { start: 12, end: 15 },
                 children: vec![],
             })),
         ];
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: row_children,
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![row_def],
         })];
@@ -694,7 +688,7 @@ mod tests {
                 span: Span { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call(AstCall {
-                lexeme: SchemaFnString::LEXEME.to_string(),
+                lexeme: SchemaFnLexeme::STRING.to_string(),
                 span: Span { start: 12, end: 15 },
                 children: vec![Box::new(AstNode::Int(AstPrimitive {
                     value: "1".to_string(),
@@ -703,12 +697,12 @@ mod tests {
             })),
         ];
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: row_children,
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![row_def],
         })];
@@ -735,18 +729,18 @@ mod tests {
                 span: Span { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call(AstCall {
-                lexeme: SchemaFnBool::LEXEME.to_string(),
+                lexeme: SchemaFnLexeme::BOOL.to_string(),
                 span: Span { start: 12, end: 15 },
                 children: vec![],
             })),
         ];
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: row_children,
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![row_def],
         })];
@@ -769,7 +763,7 @@ mod tests {
                 span: Span { start: 9, end: 12 },
             })),
             Box::new(AstNode::Call(AstCall {
-                lexeme: SchemaFnBool::LEXEME.to_string(),
+                lexeme: SchemaFnLexeme::BOOL.to_string(),
                 span: Span { start: 12, end: 15 },
                 children: vec![Box::new(AstNode::Int(AstPrimitive {
                     value: "1".to_string(),
@@ -778,12 +772,12 @@ mod tests {
             })),
         ];
         let row_def = Box::new(AstNode::Call(AstCall {
-            lexeme: SchemaFnRow::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROW.to_string(),
             span: Span { start: 3, end: 6 },
             children: row_children,
         }));
         let ast = vec![AstNode::Call(AstCall {
-            lexeme: SchemaFnRoot::LEXEME.to_string(),
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
             span: Span { start: 0, end: 3 },
             children: vec![row_def],
         })];

@@ -12,6 +12,8 @@
 
 - [ ] Refactor Csv Parser
 
+- [ ] Review tests for frontend/data
+
 - [ ] IMPORTANT! Review compilation stage and semanalyzer stage.
       These 2 must not depend on DataBindingTable in any way!
       Consider adding SchemaBindingTable that uses hashmap with

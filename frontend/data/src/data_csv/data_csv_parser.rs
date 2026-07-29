@@ -1,7 +1,7 @@
 use csv::{ErrorKind, ReaderBuilder};
 use elise_shared::{shared_errors::errors_csv_parser::CsvParserErr, shared_types::Keyword};
 
-use crate::{data_config::SchemaFnBool, data_types::DataType};
+use crate::data_types::DataType;
 
 pub struct CsvParser<'a> {
     data: &'a str,
@@ -66,36 +66,14 @@ impl<'a> CsvParser<'a> {
         value == Keyword::TRUE || value == Keyword::FALSE
     }
 
-    fn annotate_col(
-        value: &str,
-        row_index: usize,
-        col_index: usize,
-    ) -> Result<CsvCol, CsvParserErr> {
-        let mut result = CsvCol {
-            ty: DataType::String,
-            value: value.to_string(),
-            row: row_index,
-            col: col_index,
-        };
-
-        // TODO: Refactor. Looks ugly.
-        if Self::is_bool(value) {
-            result.ty = DataType::Bool;
+    fn infer_type(value: &str) -> DataType {
+        match value {
+            v if Self::is_null(v) => DataType::Null,
+            v if Self::is_bool(v) => DataType::Bool,
+            v if Self::is_int(v) => DataType::Int,
+            v if Self::is_float(v) => DataType::Float,
+            _ => DataType::String,
         }
-
-        if Self::is_int(value) {
-            result.ty = DataType::Int;
-        }
-
-        if Self::is_float(value) {
-            result.ty = DataType::Float;
-        }
-
-        if Self::is_null(value) {
-            result.ty = DataType::Null;
-        }
-
-        Ok(result)
     }
 
     pub fn parse(&self) -> Result<Vec<CsvRow>, CsvParserErr> {
@@ -109,8 +87,12 @@ impl<'a> CsvParser<'a> {
             let str_record = result.map_err(|err| Self::map_lib_error(err.kind()))?;
             let mut row_record = CsvRow { cols: vec![] };
             for (col_index, col) in str_record.iter().enumerate() {
-                let annotated_col = Self::annotate_col(col, row_index, col_index)?;
-                row_record.cols.push(annotated_col);
+                row_record.cols.push(CsvCol {
+                    ty: Self::infer_type(col),
+                    value: col.to_string(),
+                    row: row_index,
+                    col: col_index,
+                });
             }
             records.push(row_record);
         }
@@ -124,7 +106,6 @@ impl<'a> CsvParser<'a> {
 //  TESTS START
 //
 // ==================================================================
-
 #[cfg(test)]
 mod tests {
     use elise_shared::shared_errors::errors_csv_parser::CsvParserErr::*;

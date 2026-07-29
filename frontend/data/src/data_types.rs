@@ -21,3 +21,14 @@ impl DataType {
         }
     }
 }
+
+pub struct SchemaFnLexeme;
+impl SchemaFnLexeme {
+    pub const ROOT: &'static str = "schema";
+    pub const ROW: &'static str = "row";
+    pub const INT: &'static str = "int";
+    pub const FLOAT: &'static str = "float";
+    pub const STRING: &'static str = "string";
+    pub const BOOL: &'static str = "bool";
+    pub const OPT: &'static str = "optional";
+}
