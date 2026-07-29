@@ -12,10 +12,6 @@ use crate::{
     data_types::DataType,
 };
 
-// TODO: Move into config.
-const BOOL_TRUE_COERCED: &str = "true";
-const BOOL_FALSE_COERCED: &str = "false";
-
 pub struct CsvDataBinder {
     pub rows: Vec<CsvRow>,
     pub schema: CsvResolvedSchema,
@@ -27,10 +23,10 @@ type Schema = CsvResolvedSchema;
 impl CsvDataBinder {
     fn coerce_bool(value: &str) -> String {
         if SchemaFnBool::is_true(value) {
-            return BOOL_TRUE_COERCED.to_string();
+            return SchemaFnBool::TRUE_LEXEME.to_string();
         }
         if SchemaFnBool::is_false(value) {
-            return BOOL_FALSE_COERCED.to_string();
+            return SchemaFnBool::FALSE_LEXEME.to_string();
         }
         value.to_string()
     }
@@ -114,7 +110,7 @@ mod tests {
 
     use crate::data_binder::DataBinder;
     use crate::data_binder::{DataBindingTable, DataDescriptor, PathSegment::*};
-    use crate::data_csv::data_csv_binder::{BOOL_FALSE_COERCED, BOOL_TRUE_COERCED, CsvDataBinder};
+    use crate::data_csv::data_csv_binder::{CsvDataBinder, SchemaFnBool};
     use crate::data_csv::data_csv_parser::{CsvCol, CsvRow};
     use crate::data_csv::data_csv_schema_resolver::{CsvColDescriptor, CsvResolvedSchema};
     use crate::data_types::DataType;
@@ -233,7 +229,7 @@ mod tests {
             Err(TypeMismatch(TypeMismatchInfo {
                 pos: PosInfo { row: 0, col: 0 },
                 expected: NodeName::STRING,
-                got: NodeName::NUMBER,
+                got: NodeName::INT,
             }))
         )
     }
@@ -370,7 +366,7 @@ mod tests {
                 path,
                 DataDescriptor {
                     ty: DataType::Bool,
-                    value: BOOL_TRUE_COERCED.to_string(),
+                    value: SchemaFnBool::TRUE_LEXEME.to_string(),
                 },
             );
 
@@ -410,7 +406,7 @@ mod tests {
                 path,
                 DataDescriptor {
                     ty: DataType::Bool,
-                    value: BOOL_FALSE_COERCED.to_string(),
+                    value: SchemaFnBool::FALSE_LEXEME.to_string(),
                 },
             );
 

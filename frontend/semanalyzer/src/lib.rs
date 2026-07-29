@@ -34,9 +34,10 @@ pub mod semanalyzer_symbol_table;
 
 use elise_ast::{AstCall, AstNode, AstPrimitive};
 use elise_data::data_binder::DataBindingTable;
-use elise_parser::parser_config::L_TRUE;
+use elise_parser::parser_config::Keyword;
 use elise_shared::{
     shared_errors::errors_semanalyzer::{ArityMismatchKind, SemanalyzerErr},
+    shared_node_names::NodeName,
     shared_types::Span,
 };
 
@@ -152,7 +153,7 @@ impl<'a> Harmony<'a> {
                 return Err(SemanalyzerErr::ArgTypeMismatch {
                     fn_name: FnDefine::LEXEME,
                     position: 1,
-                    expected: LangType::PRIMITIVE_STR,
+                    expected: NodeName::PRIMITIVE,
                     found: second_arg.as_str(),
                     span: second_arg.span().clone(),
                 });
@@ -163,7 +164,7 @@ impl<'a> Harmony<'a> {
             return Err(SemanalyzerErr::ArgKindMismatch {
                 fn_name: FnDefine::LEXEME,
                 position: 0,
-                expected: AstNode::IDENTIFIER_STR,
+                expected: NodeName::IDENTIFIER,
                 found: first_arg.as_str(),
                 span: first_arg.span().clone(),
             });
@@ -244,7 +245,7 @@ impl<'a> Harmony<'a> {
         call: &AstCall,
         symbol_table: &mut SymbolTable,
     ) -> Result<AAstNode, SemanalyzerErr> {
-        match call.name.as_str() {
+        match call.lexeme.as_str() {
             FnDefine::LEXEME => self.annotate_define_call(call, symbol_table),
             FnLet::LEXEME => self.annotate_let_call(call, symbol_table),
             _ => Err(SemanalyzerErr::UnknownFunction {
@@ -353,7 +354,7 @@ impl<'a> Harmony<'a> {
 
     fn annotate_bool(primitive: &AstPrimitive) -> Result<AAstNode, SemanalyzerErr> {
         Ok(AAstNode::Bool {
-            value: primitive.value == L_TRUE,
+            value: primitive.value == Keyword::TRUE,
             span: primitive.span.clone(),
         })
     }

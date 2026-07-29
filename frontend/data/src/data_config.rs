@@ -29,6 +29,8 @@ impl SchemaFnBool {
     // TODO: Review variants; need to narrow down;
     const TRUE_VARIANTS: [&str; 4] = ["true", "yes", "on", "y"];
     const FALSE_VARIANTS: [&str; 4] = ["false", "no", "off", "n"];
+    pub const TRUE_LEXEME: &'static str = "true";
+    pub const FALSE_LEXEME: &'static str = "false";
 
     pub fn is_true(lexeme: &str) -> bool {
         Self::TRUE_VARIANTS.contains(&lexeme.to_lowercase().as_str())

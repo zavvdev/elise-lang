@@ -213,9 +213,7 @@ impl<'a> Prelude<'a> {
         match state {
             DfaNumState::Zero | DfaNumState::Int => Ok(Some(AstNode::Int(primitive))),
             DfaNumState::Frac | DfaNumState::Scient => Ok(Some(AstNode::Float(primitive))),
-            _ => {
-                Err(self.fail(ParserErr::InvalNum))
-            }
+            _ => Err(self.fail(ParserErr::InvalNum)),
         }
     }
 

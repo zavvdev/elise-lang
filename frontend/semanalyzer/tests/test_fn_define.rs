@@ -1,4 +1,3 @@
-use elise_ast::AstNode;
 use elise_semanalyzer::{
     Harmony,
     semanalyzer_aast::AAstNode,
@@ -8,6 +7,7 @@ use elise_semanalyzer::{
 };
 use elise_shared::{
     shared_errors::errors_semanalyzer::{ArityMismatchKind, SemanalyzerErr},
+    shared_node_names::NodeName,
     shared_types::Span,
 };
 
@@ -222,8 +222,8 @@ fn test_returns_arg_type_mismatch_if_defines_non_primitive() {
         Err(SemanalyzerErr::ArgTypeMismatch {
             fn_name: FnDefine::LEXEME,
             position: 1,
-            expected: LangType::PRIMITIVE_STR,
-            found: AstNode::LIST_STR,
+            expected: NodeName::PRIMITIVE,
+            found: NodeName::LIST,
             ..
         })
     ));
@@ -239,8 +239,8 @@ fn test_returns_arg_kind_mismatch_if_first_arg_is_not_identifier() {
         Err(SemanalyzerErr::ArgKindMismatch {
             fn_name: FnDefine::LEXEME,
             position: 0,
-            expected: AstNode::IDENTIFIER_STR,
-            found: AstNode::BOOL_STR,
+            expected: NodeName::IDENTIFIER,
+            found: NodeName::BOOL,
             ..
         })
     ));

@@ -6,7 +6,7 @@
 
 - [x] Review cli and data for standalone const usage. Refactor to zero-variant struct.
 
-- [ ] Fix compile errors in frontend/data
+- [x] Fix compile errors in frontend/data
 
 - [ ] Coerce Int to Float in data parser if type definition in schema is Float.
 

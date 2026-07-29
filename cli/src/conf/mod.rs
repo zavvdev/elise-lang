@@ -8,7 +8,9 @@ pub mod config;
 
 use std::collections::HashMap;
 
-use config::{ArgValue, ArgName, VALIDATE_ARGS, RUN_ARGS, BUILD_ARGS, EXEC_ARGS};
+use config::{ArgName, ArgValue, BUILD_ARGS, EXEC_ARGS, RUN_ARGS, VALIDATE_ARGS};
+
+use crate::conf::config::ArgType;
 
 #[derive(Debug, PartialEq)]
 pub struct InvalidArg {

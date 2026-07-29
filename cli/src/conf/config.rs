@@ -77,7 +77,7 @@ pub const RUN_ARGS: &[Arg] = &[
         name: ArgName::PRINT_BYTECODE,
         ty: ArgType::Boolean,
         req: false,
-        def: Some(BOOL_FALSE),
+        def: Some(ArgValue::BOOL_FALSE),
     },
 ];
 
