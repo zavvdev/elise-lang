@@ -38,20 +38,26 @@ elise-validate\:release:
 test:
 	cargo test
 
-test\:parser:
-	cargo test -p elise-parser
-
-test\:frontend\:csv:
-	cargo test -p elise-csv
+test\:bytecode:
+	cargo test -p elise-bytecode
 
 test\:cli:
 	cargo test -p elise
 
-test\:binder:
-	cargo test -p elise-binder
+test\:compiler:
+	cargo test -p elise-compiler
 
-test\:sema:
+test\:frontend\:data:
+	cargo test -p elise-data
+
+test\:frontend\:parser:
+	cargo test -p elise-parser
+
+test\:frontend\:semanalyzer:
 	cargo test -p elise-semanalyzer
+
+test\:runtime\:vm:
+	cargo test -p elise-vm
 
 check:
 	cargo check

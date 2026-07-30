@@ -1,8 +1,8 @@
 .schema(
     .row(
-        name     .string()
-        age      .number()
-        salary   .number()
-        employed .bool()
-        employed .bool()
+        string   .string()
+        int      .int()
+        float    .float()
+        boolean  .bool()
+        opt      .optional(.bool())
     ))

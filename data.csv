@@ -1,3 +1,2 @@
-name,age,salary,employed,employed
-John,33,12,false,true
-Jane,34,12,no,false
+string,int,float,boolean,null_val,opt
+John,33,12.3,FALSE,NULL,

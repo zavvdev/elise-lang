@@ -96,6 +96,7 @@ pub fn run<'a>(
         if config.data_path.ends_with(FileExt::CSV) {
             s.spawn(|_| {
                 let parsed = CsvParser::new(data).parse();
+                println!("parsed: {:#?}", parsed);
                 parsed_data = Some(DataParseResult::Csv(parsed));
             });
         }

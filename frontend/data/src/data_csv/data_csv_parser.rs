@@ -3,6 +3,12 @@ use elise_shared::{shared_errors::errors_csv_parser::CsvParserErr, shared_types:
 
 use crate::data_types::DataType;
 
+// ==================================================================
+//
+// PARSER START
+//
+// ==================================================================
+
 pub struct CsvParser<'a> {
     data: &'a str,
 }
@@ -49,11 +55,11 @@ impl<'a> CsvParser<'a> {
     }
 
     fn is_int(value: &str) -> bool {
-        value.parse::<i64>().is_ok()
+        value.trim().parse::<i64>().is_ok()
     }
 
     fn is_float(value: &str) -> bool {
-        value.parse::<f64>().is_ok()
+        value.trim().parse::<f64>().is_ok()
     }
 
     fn is_null(value: &str) -> bool {
@@ -89,7 +95,7 @@ impl<'a> CsvParser<'a> {
             for (col_index, col) in str_record.iter().enumerate() {
                 row_record.cols.push(CsvCol {
                     ty: Self::infer_type(col),
-                    value: col.to_string(),
+                    value: col.trim().to_string(),
                     row: row_index,
                     col: col_index,
                 });
@@ -103,9 +109,16 @@ impl<'a> CsvParser<'a> {
 
 // ==================================================================
 //
-//  TESTS START
+// PARSER END
 //
 // ==================================================================
+
+// ==================================================================
+//
+// TESTS START
+//
+// ==================================================================
+
 #[cfg(test)]
 mod tests {
     use elise_shared::shared_errors::errors_csv_parser::CsvParserErr::*;
@@ -115,28 +128,19 @@ mod tests {
         data_types::DataType,
     };
 
-    // TODO: Diff tests for int and float
+    fn build_csv(row: &Vec<&str>) -> String {
+        let head: Vec<String> = (0..row.len()).map(|i| format!("n{}", i)).collect();
+        format!("{}\n{}", head.join(","), row.join(","))
+    }
+
+    // ==================================================================
+    // NUMBER TESTS START
+    // ==================================================================
 
     #[test]
-    fn parse_should_parse_number() {
-        let row = vec![
-            "42",
-            "4.2",
-            "-42",
-            "-4.2",
-            "1e3",
-            "1E-3",
-            "1.5e10",
-            "1.504E101",
-            "-1e3",
-            "-1E-3",
-            "-1.5e10",
-            "-1.504E101",
-        ];
-
-        let head: Vec<String> = (0..row.len()).map(|i| format!("n{}", i)).collect();
-
-        let csv = format!("{}\n{}", head.join(","), row.join(","));
+    fn should_parse_int() {
+        let row = vec!["42", "-42", "0", "-0", "9999999"];
+        let csv = build_csv(&row);
         let parser = CsvParser::new(&csv);
 
         let result = CsvRow {
@@ -156,15 +160,54 @@ mod tests {
     }
 
     #[test]
-    fn parse_should_parse_bool() {
+    fn should_parse_float() {
         let row = vec![
-            "true", "True", "TRUE", "false", "False", "FALSE", "yes", "Yes", "YES", "no", "No",
-            "NO", "on", "On", "ON", "off", "Off", "OFF", "y", "Y", "n", "N",
+            "0.0",
+            "-0.0",
+            "0.1",
+            "4.2",
+            "-4.2",
+            "1e3",
+            "1E-3",
+            "1.5e10",
+            "1.504E101",
+            "-1e3",
+            "-1E-3",
+            "-1.5e10",
+            "-1.504E101",
         ];
 
-        let head: Vec<String> = (0..row.len()).map(|i| format!("n{}", i)).collect();
+        let csv = build_csv(&row);
+        let parser = CsvParser::new(&csv);
 
-        let csv = format!("{}\n{}", head.join(","), row.join(","));
+        let result = CsvRow {
+            cols: row
+                .iter()
+                .enumerate()
+                .map(|(i, n)| CsvCol {
+                    value: n.to_string(),
+                    ty: DataType::Float,
+                    row: 0,
+                    col: i,
+                })
+                .collect(),
+        };
+
+        assert_eq!(parser.parse(), Ok(vec![result]));
+    }
+
+    // ==================================================================
+    // NUMBER TESTS END
+    // ==================================================================
+
+    // ==================================================================
+    // BOOLEAN TESTS START
+    // ==================================================================
+
+    #[test]
+    fn should_parse_bool() {
+        let row = vec!["true", "True", "TRUE", "false", "False", "FALSE"];
+        let csv = build_csv(&row);
         let parser = CsvParser::new(&csv);
 
         let result = CsvRow {
@@ -183,10 +226,46 @@ mod tests {
         assert_eq!(parser.parse(), Ok(vec![result]));
     }
 
+    // ==================================================================
+    // BOOLEAN TESTS END
+    // ==================================================================
+
+    // ==================================================================
+    // STRING TESTS START
+    // ==================================================================
+
     #[test]
-    fn parse_should_parse_string() {
-        let data = "empty1,empty2\n\"\",\"   \"";
-        let parser = CsvParser::new(&data);
+    fn should_parse_string() {
+        let row = vec!["john"];
+        let csv = build_csv(&row);
+        let parser = CsvParser::new(&csv);
+
+        assert_eq!(
+            parser.parse(),
+            Ok(vec![CsvRow {
+                cols: vec![CsvCol {
+                    value: "john".to_string(),
+                    ty: DataType::String,
+                    row: 0,
+                    col: 0,
+                }],
+            }])
+        );
+    }
+
+    // ==================================================================
+    // STRING TESTS END
+    // ==================================================================
+
+    // ==================================================================
+    // NULL TESTS START
+    // ==================================================================
+
+    #[test]
+    fn should_parse_null() {
+        let row = vec!["", " ", "null", "NULL", "Null"];
+        let csv = build_csv(&row);
+        let parser = CsvParser::new(&csv);
 
         assert_eq!(
             parser.parse(),
@@ -203,6 +282,24 @@ mod tests {
                         ty: DataType::Null,
                         row: 0,
                         col: 1,
+                    },
+                    CsvCol {
+                        value: "null".to_string(),
+                        ty: DataType::Null,
+                        row: 0,
+                        col: 2,
+                    },
+                    CsvCol {
+                        value: "NULL".to_string(),
+                        ty: DataType::Null,
+                        row: 0,
+                        col: 3,
+                    },
+                    CsvCol {
+                        value: "Null".to_string(),
+                        ty: DataType::Null,
+                        row: 0,
+                        col: 4,
                     }
                 ],
             }])
@@ -210,32 +307,75 @@ mod tests {
     }
 
     #[test]
-    fn parse_should_parse_empty() {
-        let data = "name\n\"John\"";
-        let parser = CsvParser::new(&data);
-
-        assert_eq!(
-            parser.parse(),
-            Ok(vec![CsvRow {
-                cols: vec![CsvCol {
-                    value: "John".to_string(),
-                    ty: DataType::String,
-                    row: 0,
-                    col: 0,
-                }],
-            }])
-        );
-    }
-
-    #[test]
-    fn parse_should_parse_empty_csv() {
+    fn should_parse_empty_csv() {
         let data = "name,age";
         let parser = CsvParser::new(&data);
         assert_eq!(parser.parse(), Ok(vec![]));
     }
 
+    // ==================================================================
+    // NULL TESTS START
+    // ==================================================================
+
+    // ==================================================================
+    // MISC TESTS START
+    // ==================================================================
+
     #[test]
-    fn parse_should_return_uneq_len_error() {
+    fn should_trim_values() {
+        let row = vec![" 12.3  ", "  12 ", "  S  ", "  Null ", "   "];
+        let csv = build_csv(&row);
+        let parser = CsvParser::new(&csv);
+
+        assert_eq!(
+            parser.parse(),
+            Ok(vec![CsvRow {
+                cols: vec![
+                    CsvCol {
+                        value: "12.3".to_string(),
+                        ty: DataType::Float,
+                        row: 0,
+                        col: 0,
+                    },
+                    CsvCol {
+                        value: "12".to_string(),
+                        ty: DataType::Int,
+                        row: 0,
+                        col: 1,
+                    },
+                    CsvCol {
+                        value: "S".to_string(),
+                        ty: DataType::String,
+                        row: 0,
+                        col: 2,
+                    },
+                    CsvCol {
+                        value: "Null".to_string(),
+                        ty: DataType::Null,
+                        row: 0,
+                        col: 3,
+                    },
+                    CsvCol {
+                        value: "".to_string(),
+                        ty: DataType::Null,
+                        row: 0,
+                        col: 4,
+                    }
+                ],
+            }])
+        );
+    }
+
+    // ==================================================================
+    // MISC TESTS END
+    // ==================================================================
+
+    // ==================================================================
+    // ERROR TESTS START
+    // ==================================================================
+
+    #[test]
+    fn should_return_uneq_len_error() {
         let data = "name,age\n\"John\"\n\"Jane\",\"26\"";
         let parser = CsvParser::new(&data);
 
@@ -248,6 +388,10 @@ mod tests {
             })
         );
     }
+
+    // ==================================================================
+    // ERROR TESTS END
+    // ==================================================================
 }
 
 // ==================================================================

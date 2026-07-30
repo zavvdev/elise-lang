@@ -10,9 +10,9 @@
 
 - [x] Coerce Int to Float in data parser if type definition in schema is Float.
 
-- [ ] Refactor Csv Parser
+- [x] Refactor Csv Parser
 
-- [ ] Review tests for frontend/data
+- [ ] Refactor Csv schema resolver
 
 - [ ] IMPORTANT! Review compilation stage and semanalyzer stage.
       These 2 must not depend on DataBindingTable in any way!
