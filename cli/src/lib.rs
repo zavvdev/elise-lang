@@ -96,14 +96,13 @@ pub fn run<'a>(
         if config.data_path.ends_with(FileExt::CSV) {
             s.spawn(|_| {
                 let parsed = CsvParser::new(data).parse();
-                println!("parsed: {:#?}", parsed);
+                println!("PARSED DATA: {:#?}", parsed);
                 parsed_data = Some(DataParseResult::Csv(parsed));
             });
         }
     });
 
     let source_code_ast = source_code_ast.unwrap()?;
-    println!("AST: {:#?}", source_code_ast);
     let schema_ast = schema_ast.unwrap()?;
     let parsed_data = parsed_data.ok_or(LangErr::Common(CommonErr::MissingParserData))?;
 
@@ -115,17 +114,17 @@ pub fn run<'a>(
                 .resolve()
                 .map_err(LangErr::CsvSchemaResolver)?;
 
+            println!("RESOLVED SCHEMA: {:#?}", res);
+
             CsvDataBinder::new(rec, res)
                 .bind()
                 .map_err(LangErr::CsvBinder)?
         }
     };
 
-    let hir = Harmony::new(&source_code_ast, &data_binding)
+    let _hir = Harmony::new(&source_code_ast, &data_binding)
         .analyze()
         .map_err(LangErr::SemanticAnalyzer)?;
-
-    println!("HIR: {:#?}", hir);
 
     Ok(RunResult {
         config,

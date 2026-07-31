@@ -34,6 +34,8 @@ pub fn print_err(schema_err: &CsvSchemaResolverErr, schema_source_code: &[u8]) {
 
         ColTypeNoArgs { span } => ("Type functions must not have arguments", span),
 
+        ColDuplicate { span } => ("Duplicate column definition", span),
+
         OptArgsLen { span } => ("Invalid number of arguments for .optional function", span),
 
         OptEmpty { span } => (

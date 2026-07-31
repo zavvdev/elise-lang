@@ -11,6 +11,7 @@ pub enum CsvSchemaResolverErr {
     ColInvalName { span: Span },
     ColInvalType { span: Span },
     ColTypeNoArgs { span: Span },
+    ColDuplicate { span: Span },
 
     OptArgsLen { span: Span },
 

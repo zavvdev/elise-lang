@@ -128,7 +128,13 @@ impl<'a> CsvSchemaResolver<'a> {
         let types: Vec<_> = call.children.iter().skip(1).step_by(2).collect();
 
         let mut index = 0;
+        // We MUST use a Vec here because we want to preserve the order of
+        // type definitions since it MUST be the same as the order of
+        // columns in csv file itself. --- TODO: Do we really need this?
+        // TODO: Pre-allocate capacity.
         let mut resolved_row: Vec<CsvColDescriptor> = vec![];
+        // TODO: Pre-allocate capacity.
+        let mut column_names: Vec<String> = vec![];
 
         while index < cols.len() {
             // Since we split arguments to cols and types and the number
@@ -141,11 +147,18 @@ impl<'a> CsvSchemaResolver<'a> {
             let col_name = Self::resolve_col_name(col)?;
             let (col_type, optional) = Self::resolve_col_type(ty)?;
 
+            if column_names.contains(&col_name) {
+                return Err(ColDuplicate {
+                    span: Self::err_span(col.span().start, col.span().end),
+                });
+            }
+
             resolved_row.push(CsvColDescriptor {
-                name: col_name,
+                name: col_name.clone(),
                 ty: col_type,
                 opt: optional,
             });
+            column_names.push(col_name);
 
             index += 1;
         }

@@ -83,6 +83,10 @@ impl<'a> CsvParser<'a> {
     }
 
     pub fn parse(&self) -> Result<Vec<CsvRow>, CsvParserErr> {
+        // TODO: Check if it's possible to pre-allocate a capacity for records.
+        // At this moment I know that Reader doesn't know the length of records
+        // until it walks down to the last one. Maybe we can rely on some
+        // rough guess but this must be investigated further.
         let mut records: Vec<CsvRow> = vec![];
 
         let mut reader = ReaderBuilder::new()

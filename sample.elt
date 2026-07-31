@@ -1,8 +1,9 @@
-.schema(
-    .row(
+.schema (
+    .row (
         string   .string()
         int      .int()
         float    .float()
         boolean  .bool()
+        null_val .optional(.bool())
         opt      .optional(.bool())
     ))

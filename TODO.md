@@ -13,6 +13,12 @@
 - [x] Refactor Csv Parser
 
 - [ ] Refactor Csv schema resolver
+    
+    - [ ] Schema definition must not have field duplicates
+
+- [ ] Refactor Csv binder
+
+    - [ ] Check if column names match schema definition column names
 
 - [ ] IMPORTANT! Review compilation stage and semanalyzer stage.
       These 2 must not depend on DataBindingTable in any way!
@@ -25,10 +31,6 @@
 
 - [ ] ?Use the same data types in parser, data schema, data parser, data schema resolution, data
       binding and semanalyzer
-
-- [ ] CSV data file must not have col duplicates
-
-- [ ] Schema definition must not have field duplicates
 
 - [x] CLI
   

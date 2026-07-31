@@ -1,2 +1,2 @@
-string,int,float,boolean,null_val,opt
-John,33,12.3,FALSE,NULL,
+string,int,float,boolean,opt,null_val
+John,33,12.3,FALSE,NULL,NULL
