@@ -12,9 +12,15 @@
 
 - [x] Refactor Csv Parser
 
+    - [x] We need to preserve column names in parser result
+
 - [ ] Refactor Csv schema resolver
     
-    - [ ] Schema definition must not have field duplicates
+    - [x] Schema definition must not have field duplicates
+
+    - [ ] We must not match col with types by index, instead match by col name
+
+    - [ ] Tests
 
 - [ ] Refactor Csv binder
 

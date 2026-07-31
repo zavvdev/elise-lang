@@ -15,6 +15,7 @@ pub struct CsvParser<'a> {
 
 #[derive(Debug, PartialEq)]
 pub struct CsvCol {
+    pub name: String,
     pub ty: DataType,
     pub value: String,
     pub row: usize,
@@ -93,11 +94,24 @@ impl<'a> CsvParser<'a> {
             .has_headers(true)
             .from_reader(self.data.as_bytes());
 
+        let headers = reader
+            .headers()
+            .map_err(|err| Self::map_lib_error(err.kind()))?
+            .clone();
+
         for (row_index, result) in reader.records().enumerate() {
             let str_record = result.map_err(|err| Self::map_lib_error(err.kind()))?;
-            let mut row_record = CsvRow { cols: vec![] };
+            let mut row_record = CsvRow {
+                cols: Vec::with_capacity(headers.len()),
+            };
             for (col_index, col) in str_record.iter().enumerate() {
+                let col_name = headers
+                    .get(col_index)
+                    .ok_or(CsvParserErr::MissingHeader { col: col_index })?
+                    .to_string();
+
                 row_record.cols.push(CsvCol {
+                    name: col_name,
                     ty: Self::infer_type(col),
                     value: col.trim().to_string(),
                     row: row_index,
@@ -132,8 +146,12 @@ mod tests {
         data_types::DataType,
     };
 
+    fn build_csv_header(index: usize) -> String {
+        format!("n{}", index)
+    }
+
     fn build_csv(row: &Vec<&str>) -> String {
-        let head: Vec<String> = (0..row.len()).map(|i| format!("n{}", i)).collect();
+        let head: Vec<String> = (0..row.len()).map(|i| build_csv_header(i)).collect();
         format!("{}\n{}", head.join(","), row.join(","))
     }
 
@@ -152,6 +170,7 @@ mod tests {
                 .iter()
                 .enumerate()
                 .map(|(i, n)| CsvCol {
+                    name: build_csv_header(i),
                     value: n.to_string(),
                     ty: DataType::Int,
                     row: 0,
@@ -189,6 +208,7 @@ mod tests {
                 .iter()
                 .enumerate()
                 .map(|(i, n)| CsvCol {
+                    name: build_csv_header(i),
                     value: n.to_string(),
                     ty: DataType::Float,
                     row: 0,
@@ -219,6 +239,7 @@ mod tests {
                 .iter()
                 .enumerate()
                 .map(|(i, n)| CsvCol {
+                    name: build_csv_header(i),
                     value: n.to_string(),
                     ty: DataType::Bool,
                     row: 0,
@@ -248,6 +269,7 @@ mod tests {
             parser.parse(),
             Ok(vec![CsvRow {
                 cols: vec![CsvCol {
+                    name: build_csv_header(0),
                     value: "john".to_string(),
                     ty: DataType::String,
                     row: 0,
@@ -271,43 +293,21 @@ mod tests {
         let csv = build_csv(&row);
         let parser = CsvParser::new(&csv);
 
-        assert_eq!(
-            parser.parse(),
-            Ok(vec![CsvRow {
-                cols: vec![
-                    CsvCol {
-                        value: "".to_string(),
-                        ty: DataType::Null,
-                        row: 0,
-                        col: 0,
-                    },
-                    CsvCol {
-                        value: "".to_string(),
-                        ty: DataType::Null,
-                        row: 0,
-                        col: 1,
-                    },
-                    CsvCol {
-                        value: "null".to_string(),
-                        ty: DataType::Null,
-                        row: 0,
-                        col: 2,
-                    },
-                    CsvCol {
-                        value: "NULL".to_string(),
-                        ty: DataType::Null,
-                        row: 0,
-                        col: 3,
-                    },
-                    CsvCol {
-                        value: "Null".to_string(),
-                        ty: DataType::Null,
-                        row: 0,
-                        col: 4,
-                    }
-                ],
-            }])
-        );
+        let result = CsvRow {
+            cols: row
+                .iter()
+                .enumerate()
+                .map(|(i, n)| CsvCol {
+                    name: build_csv_header(i),
+                    value: n.trim().to_string(),
+                    ty: DataType::Null,
+                    row: 0,
+                    col: i,
+                })
+                .collect(),
+        };
+
+        assert_eq!(parser.parse(), Ok(vec![result]));
     }
 
     #[test]
@@ -328,46 +328,33 @@ mod tests {
     #[test]
     fn should_trim_values() {
         let row = vec![" 12.3  ", "  12 ", "  S  ", "  Null ", "   "];
+
+        let types = vec![
+            DataType::Float,
+            DataType::Int,
+            DataType::String,
+            DataType::Null,
+            DataType::Null,
+        ];
+
         let csv = build_csv(&row);
         let parser = CsvParser::new(&csv);
 
-        assert_eq!(
-            parser.parse(),
-            Ok(vec![CsvRow {
-                cols: vec![
-                    CsvCol {
-                        value: "12.3".to_string(),
-                        ty: DataType::Float,
-                        row: 0,
-                        col: 0,
-                    },
-                    CsvCol {
-                        value: "12".to_string(),
-                        ty: DataType::Int,
-                        row: 0,
-                        col: 1,
-                    },
-                    CsvCol {
-                        value: "S".to_string(),
-                        ty: DataType::String,
-                        row: 0,
-                        col: 2,
-                    },
-                    CsvCol {
-                        value: "Null".to_string(),
-                        ty: DataType::Null,
-                        row: 0,
-                        col: 3,
-                    },
-                    CsvCol {
-                        value: "".to_string(),
-                        ty: DataType::Null,
-                        row: 0,
-                        col: 4,
-                    }
-                ],
-            }])
-        );
+        let result = CsvRow {
+            cols: row
+                .iter()
+                .enumerate()
+                .map(|(i, n)| CsvCol {
+                    name: build_csv_header(i),
+                    value: n.trim().to_string(),
+                    ty: types.get(i).unwrap().clone(),
+                    row: 0,
+                    col: i,
+                })
+                .collect(),
+        };
+
+        assert_eq!(parser.parse(), Ok(vec![result]));
     }
 
     // ==================================================================

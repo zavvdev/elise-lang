@@ -99,6 +99,7 @@ mod tests {
     fn bind_should_return_error_if_schema_row_len_bigger_than_csv_row_len() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
+                name: "a".to_string(),
                 ty: DataType::Int,
                 value: "32".to_string(),
                 row: 0,
@@ -131,12 +132,14 @@ mod tests {
         let data = vec![CsvRow {
             cols: vec![
                 CsvCol {
+                    name: "a".to_string(),
                     ty: DataType::Int,
                     value: "32".to_string(),
                     row: 0,
                     col: 0,
                 },
                 CsvCol {
+                    name: "b".to_string(),
                     ty: DataType::Int,
                     value: "33".to_string(),
                     row: 0,
@@ -162,6 +165,7 @@ mod tests {
     fn bind_should_return_error_if_type_mismatch_and_opt_false() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
+                name: "a".to_string(),
                 ty: DataType::Int,
                 value: "32".to_string(),
                 row: 0,
@@ -190,6 +194,7 @@ mod tests {
     fn bind_should_return_error_if_type_mismatch_opt_true_and_not_empty() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
+                name: "a".to_string(),
                 ty: DataType::Int,
                 value: "32".to_string(),
                 row: 0,
@@ -218,6 +223,7 @@ mod tests {
     fn bind_should_bind_if_type_match_and_opt_false() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
+                name: "a".to_string(),
                 ty: DataType::Int,
                 value: "32".to_string(),
                 row: 0,
@@ -252,6 +258,7 @@ mod tests {
     fn bind_should_bind_if_type_match_and_opt_true() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
+                name: "a".to_string(),
                 ty: DataType::Int,
                 value: "32".to_string(),
                 row: 0,
@@ -286,6 +293,7 @@ mod tests {
     fn bind_should_bind_if_opt_true_and_empty() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
+                name: "a".to_string(),
                 ty: DataType::Null,
                 value: "".to_string(),
                 row: 0,

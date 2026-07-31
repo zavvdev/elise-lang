@@ -33,6 +33,7 @@ pub fn print_err(csv_parser_err: &CsvParserErr) {
             }
         }
         Io { kind, detail } => format!("Unable to read.\n{}, {}.", kind, detail),
+        MissingHeader { col } => format!("Missing header at col: {}", col),
         Unknown => "Unknown failure.".to_string(),
     };
 

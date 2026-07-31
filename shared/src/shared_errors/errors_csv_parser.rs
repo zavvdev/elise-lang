@@ -21,5 +21,8 @@ pub enum CsvParserErr {
     // =================================
     // Lib types end.
     // =================================
+    MissingHeader {
+        col: usize,
+    },
     Unknown,
 }
