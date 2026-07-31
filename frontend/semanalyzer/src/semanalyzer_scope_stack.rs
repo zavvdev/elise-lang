@@ -29,6 +29,7 @@ impl Default for ScopeStack {
 
 impl ScopeStack {
     pub fn new() -> Self {
+        // TODO: ?Add upper limit
         Self { scopes: vec![] }
     }
 
