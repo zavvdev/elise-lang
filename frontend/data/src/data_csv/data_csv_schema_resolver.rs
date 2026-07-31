@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use elise_ast::{AstCall, AstNode, AstPrimitive};
 
 use elise_shared::shared_errors::errors_csv_schema_resolver::{
@@ -10,14 +12,13 @@ use crate::data_types::SchemaFnLexeme;
 
 #[derive(Debug, PartialEq)]
 pub struct CsvColDescriptor {
-    pub name: String,
     pub ty: DataType,
     pub opt: bool,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct CsvResolvedSchema {
-    pub row: Vec<CsvColDescriptor>,
+    pub resolved_schema: HashMap<String, CsvColDescriptor>,
 }
 
 pub struct CsvSchemaResolver<'a> {
@@ -128,13 +129,9 @@ impl<'a> CsvSchemaResolver<'a> {
         let types: Vec<_> = call.children.iter().skip(1).step_by(2).collect();
 
         let mut index = 0;
-        // We MUST use a Vec here because we want to preserve the order of
-        // type definitions since it MUST be the same as the order of
-        // columns in csv file itself. --- TODO: Do we really need this?
-        // TODO: Pre-allocate capacity.
-        let mut resolved_row: Vec<CsvColDescriptor> = vec![];
-        // TODO: Pre-allocate capacity.
-        let mut column_names: Vec<String> = vec![];
+
+        let mut resolved_schema: HashMap<String, CsvColDescriptor> = HashMap::new();
+        let mut column_names: Vec<String> = Vec::with_capacity(cols.len());
 
         while index < cols.len() {
             // Since we split arguments to cols and types and the number
@@ -153,17 +150,19 @@ impl<'a> CsvSchemaResolver<'a> {
                 });
             }
 
-            resolved_row.push(CsvColDescriptor {
-                name: col_name.clone(),
-                ty: col_type,
-                opt: optional,
-            });
+            resolved_schema.insert(
+                col_name.clone(),
+                CsvColDescriptor {
+                    ty: col_type,
+                    opt: optional,
+                },
+            );
             column_names.push(col_name);
 
             index += 1;
         }
 
-        Ok(CsvResolvedSchema { row: resolved_row })
+        Ok(CsvResolvedSchema { resolved_schema })
     }
 
     pub fn resolve(&self) -> Result<CsvResolvedSchema, CsvSchemaResolverErr> {
@@ -211,6 +210,8 @@ impl<'a> CsvSchemaResolver<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use elise_ast::{AstCall, AstNode, AstPrimitive};
     use elise_shared::shared_errors::errors_csv_schema_resolver::CsvSchemaResolverErr::*;
     use elise_shared::shared_types::Span;
@@ -482,13 +483,15 @@ mod tests {
             children: vec![row_def],
         })];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let resolved = CsvResolvedSchema {
-            row: vec![CsvColDescriptor {
-                name: "name".to_string(),
+        let mut resolved_schema = HashMap::new();
+        resolved_schema.insert(
+            "name".to_string(),
+            CsvColDescriptor {
                 ty: DataType::Int,
                 opt: false,
-            }],
-        };
+            },
+        );
+        let resolved = CsvResolvedSchema { resolved_schema };
         assert_eq!(result, Ok(resolved));
     }
 
@@ -566,14 +569,15 @@ mod tests {
             children: vec![row_def],
         })];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let resolved = CsvResolvedSchema {
-            row: vec![CsvColDescriptor {
-                name: "name".to_string(),
+        let mut resolved_schema = HashMap::new();
+        resolved_schema.insert(
+            "name".to_string(),
+            CsvColDescriptor {
                 ty: DataType::Int,
                 opt: true,
-            }],
-        };
-        assert_eq!(result, Ok(resolved));
+            },
+        );
+        assert_eq!(result, Ok(CsvResolvedSchema { resolved_schema }));
     }
 
     // ==================================================================
@@ -608,13 +612,15 @@ mod tests {
             children: vec![row_def],
         })];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let resolved = CsvResolvedSchema {
-            row: vec![CsvColDescriptor {
-                name: "age".to_string(),
+        let mut resolved_schema = HashMap::new();
+        resolved_schema.insert(
+            "age".to_string(),
+            CsvColDescriptor {
                 ty: DataType::Int,
                 opt: false,
-            }],
-        };
+            },
+        );
+        let resolved = CsvResolvedSchema { resolved_schema };
         assert_eq!(result, Ok(resolved));
     }
 
@@ -683,13 +689,15 @@ mod tests {
             children: vec![row_def],
         })];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let resolved = CsvResolvedSchema {
-            row: vec![CsvColDescriptor {
-                name: "name".to_string(),
+        let mut resolved_schema = HashMap::new();
+        resolved_schema.insert(
+            "name".to_string(),
+            CsvColDescriptor {
                 ty: DataType::String,
                 opt: false,
-            }],
-        };
+            },
+        );
+        let resolved = CsvResolvedSchema { resolved_schema };
         assert_eq!(result, Ok(resolved));
     }
 
@@ -758,13 +766,15 @@ mod tests {
             children: vec![row_def],
         })];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let resolved = CsvResolvedSchema {
-            row: vec![CsvColDescriptor {
-                name: "employed".to_string(),
+        let mut resolved_schema = HashMap::new();
+        resolved_schema.insert(
+            "employed".to_string(),
+            CsvColDescriptor {
                 ty: DataType::Bool,
                 opt: false,
-            }],
-        };
+            },
+        );
+        let resolved = CsvResolvedSchema { resolved_schema };
         assert_eq!(result, Ok(resolved));
     }
 

@@ -5,15 +5,16 @@ pub struct PosInfo {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct TypeMismatchInfo {
-    pub pos: PosInfo,
-    pub expected: &'static str,
-    pub got: &'static str,
-}
-
-#[derive(Debug, PartialEq)]
 pub enum CsvBinderErr {
     NoData,
     RowLenMismatch(PosInfo),
-    TypeMismatch(TypeMismatchInfo),
+    TypeMismatch {
+        pos: PosInfo,
+        expected: &'static str,
+        got: &'static str,
+    },
+    MissingTypeDefinition {
+        pos: PosInfo,
+        col: String,
+    },
 }

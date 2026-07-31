@@ -9,28 +9,28 @@ docker\:dev:
 
 # LOCAL DEV TEST COMMANDS START
 
-elise-run:
+elise\:run:
 	./target/debug/elise --mode=run --source-code=sample.eli --data=data.csv --data-schema=sample.elt --print-bytecode
 
-elise-run\:release:
+elise\:run\:release:
 	./target/debug/elise --mode=run --source-code=sample.eli --data=data.csv --data-schema=sample.elt --print-bytecode
 
-elise-build:
+elise\:build:
 	./target/debug/elise --mode=build --source-code=sample.eli --data-schema=sample.elt --output=sample.elb
 
-elise-build\:release:
+elise\:build\:release:
 	./target/debug/elise --mode=build --source-code=sample.eli --data-schema=sample.elt --output=sample.elb
 
-elise-exec:
+elise\:exec:
 	./target/debug/elise --mode=exec --executable=sample.elb --data=data.csv
 
-elise-exec\:release:
+elise\:exec\:release:
 	./target/debug/elise --mode=exec --executable=sample.elb --data=data.csv
 
-elise-validate:
+elise\:validate:
 	./target/debug/elise --mode=validate --data=data.csv --data-schema=sample.elt 
 
-elise-validate\:release:
+elise\:validate\:release:
 	./target/debug/elise --mode=validate --data=data.csv --data-schema=sample.elt 
 
 # LOCAL DEV TEST COMMANDS END

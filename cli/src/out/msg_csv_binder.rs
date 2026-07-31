@@ -16,10 +16,14 @@ pub fn print_err(parser_err: &CsvBinderErr) {
             );
             utils::print_err_source_code_pos(info.row, info.col);
         }
-        TypeMismatch(info) => {
+        TypeMismatch { pos, expected, got } => {
             utils::print_err("Type mismatch", label);
-            utils::print_err_source_code_pos(info.pos.row, info.pos.col);
-            utils::print_err_type_mismatch(info.expected, info.got);
+            utils::print_err_source_code_pos(pos.row, pos.col);
+            utils::print_err_type_mismatch(expected, got);
+        }
+        MissingTypeDefinition { pos, col } => {
+            utils::print_err(&format!("Missing type definition for column: {col}"), label);
+            utils::print_err_source_code_pos(pos.row, pos.col);
         }
     };
 }

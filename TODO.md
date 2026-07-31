@@ -18,25 +18,22 @@
     
     - [x] Schema definition must not have field duplicates
 
-    - [ ] We must not match col with types by index, instead match by col name
+    - [x] We must not match col with types by index, instead match by col name
 
     - [ ] Tests
 
 - [ ] Refactor Csv binder
 
-    - [ ] Check if column names match schema definition column names
+    - [x] Check if column names match schema definition column names
 
-- [ ] IMPORTANT! Review compilation stage and semanalyzer stage.
-      These 2 must not depend on DataBindingTable in any way!
-      Consider adding SchemaBindingTable that uses hashmap with
-      PathSegment => DataType. This DS is what compiler
-      needs to use instead of DataBindingTable that must be
-      used only by VM. (Runtime bindings and Compile time bindings).
-      These are 2 separate data structures that share the same PathSegment.
-      Need to find out how to reduce code duplication on them.
-
-- [ ] ?Use the same data types in parser, data schema, data parser, data schema resolution, data
-      binding and semanalyzer
+    - [ ] IMPORTANT! Review compilation stage and semanalyzer stage.
+          These 2 must not depend on DataBindingTable in any way!
+          Consider adding SchemaBindingTable that uses hashmap with
+          PathSegment => DataType. This DS is what compiler
+          needs to use instead of DataBindingTable that must be
+          used only by VM. (Runtime bindings and Compile time bindings).
+          These are 2 separate data structures that share the same PathSegment.
+          Need to find out how to reduce code duplication on them.
 
 - [x] CLI
   
