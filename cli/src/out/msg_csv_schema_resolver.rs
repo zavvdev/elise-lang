@@ -38,10 +38,7 @@ pub fn print_err(schema_err: &CsvSchemaResolverErr, schema_source_code: &[u8]) {
 
         OptArgsLen { span } => ("Invalid number of arguments for .optional function", span),
 
-        OptEmpty { span } => (
-            "Empty type cannot be optional since it's already represents an empty value that cannot have an alternative",
-            span,
-        ),
+        OptOpt { span } => ("Optional cannot be optional", span),
     };
 
     utils::print_err(msg, Some("Schema error"));

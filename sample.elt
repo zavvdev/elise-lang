@@ -3,4 +3,5 @@
         name     .string()
         age      .int()
         employed .bool()
+        some     .optional(.optional())
     ))

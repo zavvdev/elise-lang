@@ -106,7 +106,7 @@ mod tests {
     use crate::data_types::DataType;
 
     #[test]
-    fn bind_should_return_error_if_schema_row_len_bigger_than_csv_row_len() {
+    fn should_return_error_if_schema_row_len_bigger_than_csv_row_len() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
                 name: "a".to_string(),
@@ -143,7 +143,7 @@ mod tests {
     }
 
     #[test]
-    fn bind_should_return_error_if_csv_row_len_bigger_than_schema_row_len() {
+    fn should_return_error_if_csv_row_len_bigger_than_schema_row_len() {
         let data = vec![CsvRow {
             cols: vec![
                 CsvCol {
@@ -182,7 +182,7 @@ mod tests {
     }
 
     #[test]
-    fn bind_should_return_error_if_type_mismatch_and_opt_false() {
+    fn should_return_error_if_type_mismatch_and_opt_false() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
                 name: "name".to_string(),
@@ -216,7 +216,7 @@ mod tests {
     }
 
     #[test]
-    fn bind_should_return_error_if_typedef_not_found() {
+    fn should_return_error_if_typedef_not_found() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
                 name: "a".to_string(),
@@ -249,7 +249,7 @@ mod tests {
     }
 
     #[test]
-    fn bind_should_return_error_if_type_mismatch_opt_true_and_not_empty() {
+    fn should_return_error_if_type_mismatch_opt_true_and_not_empty() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
                 name: "age".to_string(),
@@ -283,7 +283,7 @@ mod tests {
     }
 
     #[test]
-    fn bind_should_bind_if_type_match_and_opt_false() {
+    fn should_bind_if_type_match_and_opt_false() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
                 name: "age".to_string(),
@@ -322,7 +322,7 @@ mod tests {
     }
 
     #[test]
-    fn bind_should_bind_if_type_match_and_opt_true() {
+    fn should_bind_if_type_match_and_opt_true() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
                 name: "age".to_string(),
@@ -361,7 +361,7 @@ mod tests {
     }
 
     #[test]
-    fn bind_should_bind_if_opt_true_and_empty() {
+    fn should_bind_if_opt_true_and_empty() {
         let data = vec![CsvRow {
             cols: vec![CsvCol {
                 name: "age".to_string(),

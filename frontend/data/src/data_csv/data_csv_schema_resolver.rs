@@ -92,12 +92,12 @@ impl<'a> CsvSchemaResolver<'a> {
                 SchemaFnLexeme::OPT => {
                     if children.len() == 1 {
                         let literal_type = Self::resolve_literal_type(children.first().unwrap())?;
-                        if literal_type != DataType::Null {
-                            return Ok((literal_type, true));
+                        if literal_type == DataType::Null {
+                            return Err(OptOpt {
+                                span: Self::err_span(span.start, span.end),
+                            });
                         }
-                        return Err(OptEmpty {
-                            span: Self::err_span(span.start, span.end),
-                        });
+                        return Ok((literal_type, true));
                     }
                     Err(OptArgsLen {
                         span: Self::err_span(span.start, span.end),
@@ -533,7 +533,7 @@ mod tests {
             children: vec![row_def],
         })];
         let result = CsvSchemaResolver::new(&ast).resolve();
-        let err = Err(OptEmpty {
+        let err = Err(OptOpt {
             span: Span { start: 15, end: 18 },
         });
         assert_eq!(result, err);
@@ -585,11 +585,11 @@ mod tests {
     // ==================================================================
 
     // ==================================================================
-    // TESTS NUMBER START
+    // TESTS INT START
     // ==================================================================
 
     #[test]
-    fn number_should_resolve() {
+    fn int_should_resolve() {
         let row_children = vec![
             Box::new(AstNode::Identifier(AstPrimitive {
                 value: "age".to_string(),
@@ -625,7 +625,7 @@ mod tests {
     }
 
     #[test]
-    fn number_should_return_error_if_has_args() {
+    fn int_should_return_error_if_has_args() {
         let row_children = vec![
             Box::new(AstNode::Identifier(AstPrimitive {
                 value: "name".to_string(),
@@ -658,7 +658,84 @@ mod tests {
     }
 
     // ==================================================================
-    // TESTS NUMBER END
+    // TESTS INT END
+    // ==================================================================
+
+    // ==================================================================
+    // TESTS FLOAT START
+    // ==================================================================
+
+    #[test]
+    fn float_should_resolve() {
+        let row_children = vec![
+            Box::new(AstNode::Identifier(AstPrimitive {
+                value: "age".to_string(),
+                span: Span { start: 9, end: 12 },
+            })),
+            Box::new(AstNode::Call(AstCall {
+                lexeme: SchemaFnLexeme::FLOAT.to_string(),
+                span: Span { start: 12, end: 15 },
+                children: vec![],
+            })),
+        ];
+        let row_def = Box::new(AstNode::Call(AstCall {
+            lexeme: SchemaFnLexeme::ROW.to_string(),
+            span: Span { start: 3, end: 6 },
+            children: row_children,
+        }));
+        let ast = vec![AstNode::Call(AstCall {
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
+            span: Span { start: 0, end: 3 },
+            children: vec![row_def],
+        })];
+        let result = CsvSchemaResolver::new(&ast).resolve();
+        let mut resolved_schema = HashMap::new();
+        resolved_schema.insert(
+            "age".to_string(),
+            CsvColDescriptor {
+                ty: DataType::Float,
+                opt: false,
+            },
+        );
+        let resolved = CsvResolvedSchema { resolved_schema };
+        assert_eq!(result, Ok(resolved));
+    }
+
+    #[test]
+    fn float_should_return_error_if_has_args() {
+        let row_children = vec![
+            Box::new(AstNode::Identifier(AstPrimitive {
+                value: "name".to_string(),
+                span: Span { start: 9, end: 12 },
+            })),
+            Box::new(AstNode::Call(AstCall {
+                lexeme: SchemaFnLexeme::FLOAT.to_string(),
+                span: Span { start: 12, end: 15 },
+                children: vec![Box::new(AstNode::Int(AstPrimitive {
+                    value: "1".to_string(),
+                    span: Span { start: 0, end: 3 },
+                }))],
+            })),
+        ];
+        let row_def = Box::new(AstNode::Call(AstCall {
+            lexeme: SchemaFnLexeme::ROW.to_string(),
+            span: Span { start: 3, end: 6 },
+            children: row_children,
+        }));
+        let ast = vec![AstNode::Call(AstCall {
+            lexeme: SchemaFnLexeme::ROOT.to_string(),
+            span: Span { start: 0, end: 3 },
+            children: vec![row_def],
+        })];
+        let result = CsvSchemaResolver::new(&ast).resolve();
+        let err = Err(ColTypeNoArgs {
+            span: Span { start: 12, end: 15 },
+        });
+        assert_eq!(result, err);
+    }
+
+    // ==================================================================
+    // TESTS FLOAT END
     // ==================================================================
 
     // ==================================================================

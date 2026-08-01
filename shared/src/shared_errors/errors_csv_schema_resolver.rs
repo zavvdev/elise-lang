@@ -15,5 +15,5 @@ pub enum CsvSchemaResolverErr {
 
     OptArgsLen { span: Span },
 
-    OptEmpty { span: Span },
+    OptOpt { span: Span },
 }
