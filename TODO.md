@@ -11,6 +11,8 @@
           so this data structure can be used during compilation.
           Check sample.elt for more details
 
+- [ ] Validation of data against schema must be a separate stage. See DOCUMENTAITON
+
 - [ ] Refactor Csv binder
 
     - [ ] Use data agnostic resolved schema

@@ -1,4 +1,39 @@
 ```
+SC - Source Code
+SCH -> Schema
+
+RUN (SC, SCH, Data)
+    -> Parse(SC) -> SC_AST
+    -> Parse(SCH) -> SCH_AST
+    -> Parse(Data) -> ParsedData
+    -> Sema(SC_AST) -> SC_AAST 
+    -> Resolve(SCH_AST) -> ResolvedSchema
+    -> Bind(ParsedData) -> DataBindingTable
+    -> Validate(ResolvedSchema, DataBindingTable)
+    -> Compile(ResolvedSchema, SC_AAST) -> Bytecode
+    -> VM(Bytecode, DataBindingTable)
+
+BUILD (SC, SCH)
+    -> Parse(SC) -> SC_AST
+    -> Parse(SCH) -> SCH_AST
+    -> Sema(SC_AST) -> SC_AAST 
+    -> Resolve(SCH_AST) -> ResolvedSchema
+    -> Compile(ResolvedSchema, SC_AAST) -> Bytecode
+
+VALIDATE(SCH, Data)
+    -> Parse(SCH) -> SCH_AST
+    -> Parse(Data) -> ParsedData
+    -> Bind(ParsedData) -> DataBindingTable
+    -> Resolve(SCH_AST) -> ResolvedSchema
+    -> Validate(ResolvedSchema, DataBindingTable)
+
+EXEC(Bytecode, Data)
+    -> Parse(Data) -> ParsedData
+    -> Bind(ParsedData) -> DataBindingTable
+    -> VM(Bytecode, DataBindingTable)
+```
+
+```
 Source code
     -> Prelude (parser)
     -> Harmony (semanalyzer)

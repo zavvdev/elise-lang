@@ -38,6 +38,4 @@
 
 [Field("address"), Field("some"), Index(1)] -> TBool
 
-
 .get("address", "indexes", 0)
-

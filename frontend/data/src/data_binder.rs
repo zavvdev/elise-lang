@@ -11,7 +11,7 @@
 
 use std::collections::HashMap;
 
-use crate::data_types::{DataType, Path};
+use crate::data_types::{DataType, ResolutionPath};
 
 /// Provides some basic information for about
 /// underlying data.
@@ -36,7 +36,7 @@ pub struct DataDescriptor {
 /// its own constant pool for data access.
 #[derive(Debug, PartialEq)]
 pub struct DataBindingTable {
-    pub table: HashMap<Path, DataDescriptor>,
+    pub table: HashMap<ResolutionPath, DataDescriptor>,
 }
 
 /// Must be implemented for any binder of any data type.
