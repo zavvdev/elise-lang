@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use elise_shared::shared_node_names::NodeName;
 
 /// Types for data that is being transformed (csv, json).
@@ -8,6 +10,20 @@ pub enum DataType {
     String,
     Bool,
     Null,
+    // Placeholder for any index if list
+    // is of type ListOf.
+    AbstractIndex,
+    // Index for any access of the List type.
+    Index(usize),
+    // Allows any number of values of the same type.
+    ListOf(Box<DataType>),
+    // Allows to provide a fixed amount of arguments
+    // of the different types.
+    List(Vec<Box<DataType>>),
+
+    // TODO: ?Maybe we need to use another DS
+    // instead of HashMap.
+    Dict(HashMap<String, Box<DataType>>),
 }
 
 impl DataType {
@@ -18,6 +34,11 @@ impl DataType {
             DataType::String => NodeName::STRING,
             DataType::Bool => NodeName::BOOL,
             DataType::Null => NodeName::NULL,
+            DataType::AbstractIndex => NodeName::INDEX,
+            DataType::Index(_) => NodeName::INDEX,
+            DataType::ListOf(_) => NodeName::LIST,
+            DataType::List(_) => NodeName::LIST,
+            DataType::Dict(_) => NodeName::DICT,
         }
     }
 }
@@ -30,5 +51,20 @@ impl SchemaFnLexeme {
     pub const FLOAT: &'static str = "float";
     pub const STRING: &'static str = "string";
     pub const BOOL: &'static str = "bool";
+    pub const LIST: &'static str = "list";
+    pub const DICT: &'static str = "dict";
     pub const OPT: &'static str = "optional";
 }
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub enum PathSegment {
+    // We can use index for cases when user iterates
+    // over some iterable data and we can track indexes
+    // and use them for building a Path key.
+    Index(usize),
+    // Just a regular string segment such as csv column
+    // name or json object property.
+    Field(String),
+}
+
+pub type Path = Vec<PathSegment>;

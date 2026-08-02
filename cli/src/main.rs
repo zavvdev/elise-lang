@@ -25,7 +25,7 @@ use crate::out::msg_fsys;
 use crate::out::msg_modes;
 use crate::out::msg_parser;
 use crate::out::utils::{panic_hook, print_bytecode};
-use crate::out::{msg_common, msg_csv_schema_resolver};
+use crate::out::{msg_common, msg_schema_resolver};
 use crate::out::{msg_conf, msg_csv_binder};
 use crate::out::{msg_csv_parser, msg_semanalyzer};
 
@@ -36,9 +36,9 @@ fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &
         Common(err) => msg_common::print_err(err),
         ParserSource(err) => msg_parser::print_err(err, source_code),
         ParserSchema(err) => msg_parser::print_err(err, schema_source_code),
+        SchemaResolver(err) => msg_schema_resolver::print_err(err, schema_source_code),
         SemanticAnalyzer(err) => msg_semanalyzer::print_err(err, source_code),
         CsvParser(err) => msg_csv_parser::print_err(err),
-        CsvSchemaResolver(err) => msg_csv_schema_resolver::print_err(err, schema_source_code),
         CsvBinder(err) => msg_csv_binder::print_err(err),
     }
 

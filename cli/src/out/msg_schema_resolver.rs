@@ -1,4 +1,4 @@
-use elise_shared::shared_errors::errors_csv_schema_resolver::CsvSchemaResolverErr;
+use elise_shared::shared_errors::errors_schema_resolver::SchemaResolverErr;
 use elise_shared::shared_types::Span;
 
 use crate::out::utils;
@@ -7,8 +7,8 @@ use crate::out::utils::{
     get_source_code_slice, print_err_source_code_pos, print_err_source_code_slice,
 };
 
-pub fn print_err(schema_err: &CsvSchemaResolverErr, schema_source_code: &[u8]) {
-    use CsvSchemaResolverErr::*;
+pub fn print_err(schema_err: &SchemaResolverErr, schema_source_code: &[u8]) {
+    use SchemaResolverErr::*;
 
     let (msg, span): (&str, &Span) = match schema_err {
         RootInval { span } => (

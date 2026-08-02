@@ -1,7 +1,7 @@
 use crate::shared_types::Span;
 
 #[derive(Debug, PartialEq)]
-pub enum CsvSchemaResolverErr {
+pub enum SchemaResolverErr {
     RootInval { span: Span },
     RootArgsLen { span: Span },
 

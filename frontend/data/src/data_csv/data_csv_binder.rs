@@ -6,9 +6,9 @@ use elise_shared::shared_errors::errors_csv_binder::{
 };
 
 use crate::{
-    data_binder::{DataBinder, DataBindingTable, DataDescriptor, Path, PathSegment::*},
+    data_binder::{DataBinder, DataBindingTable, DataDescriptor},
     data_csv::{data_csv_parser::CsvRow, data_csv_schema_resolver::CsvResolvedSchema},
-    data_types::DataType,
+    data_types::{DataType, Path, PathSegment::*},
 };
 
 type Rows = Vec<CsvRow>;
@@ -99,11 +99,12 @@ mod tests {
     use elise_shared::shared_node_names::NodeName;
 
     use crate::data_binder::DataBinder;
-    use crate::data_binder::{DataBindingTable, DataDescriptor, PathSegment::*};
+    use crate::data_binder::{DataBindingTable, DataDescriptor};
     use crate::data_csv::data_csv_binder::CsvDataBinder;
     use crate::data_csv::data_csv_parser::{CsvCol, CsvRow};
     use crate::data_csv::data_csv_schema_resolver::{CsvColDescriptor, CsvResolvedSchema};
     use crate::data_types::DataType;
+    use crate::data_types::PathSegment::*;
 
     #[test]
     fn should_return_error_if_schema_row_len_bigger_than_csv_row_len() {

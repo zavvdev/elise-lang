@@ -2,30 +2,30 @@ use std::collections::HashMap;
 
 use elise_ast::{AstCall, AstNode, AstPrimitive};
 
-use elise_shared::shared_errors::errors_csv_schema_resolver::{
-    CsvSchemaResolverErr, CsvSchemaResolverErr::*,
+use elise_shared::shared_errors::errors__schema_resolver::{
+    SchemaResolverErr, SchemaResolverErr::*,
 };
 use elise_shared::shared_types::Span;
 
-use crate::data_types::DataType;
+use crate::data_types::{DataType, Path};
 use crate::data_types::SchemaFnLexeme;
 
 #[derive(Debug, PartialEq)]
-pub struct CsvColDescriptor {
+pub struct TypeDescriptor {
     pub ty: DataType,
     pub opt: bool,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct CsvResolvedSchema {
-    pub resolved_schema: HashMap<String, CsvColDescriptor>,
+pub struct ResolvedSchema {
+    pub resolved_schema: HashMap<Path, TypeDescriptor>,
 }
 
-pub struct CsvSchemaResolver<'a> {
+pub struct SchemaResolver<'a> {
     schema_ast: &'a Vec<AstNode>,
 }
 
-impl<'a> CsvSchemaResolver<'a> {
+impl<'a> SchemaResolver<'a> {
     pub fn new(schema_ast: &'a Vec<AstNode>) -> Self {
         Self { schema_ast }
     }
@@ -38,7 +38,7 @@ impl<'a> CsvSchemaResolver<'a> {
         call_name: &str,
         start: usize,
         end: usize,
-    ) -> Result<DataType, CsvSchemaResolverErr> {
+    ) -> Result<DataType, SchemaResolverErr> {
         match call_name {
             SchemaFnLexeme::BOOL => Ok(DataType::Bool),
             SchemaFnLexeme::INT => Ok(DataType::Int),
@@ -51,7 +51,7 @@ impl<'a> CsvSchemaResolver<'a> {
         }
     }
 
-    fn resolve_col_name(col: &AstNode) -> Result<String, CsvSchemaResolverErr> {
+    fn resolve_col_name(col: &AstNode) -> Result<String, SchemaResolverErr> {
         match col {
             // Column name must always be an identifier type.
             AstNode::Identifier(AstPrimitive { value, span: _ }) => Ok(value.clone()),
@@ -61,7 +61,7 @@ impl<'a> CsvSchemaResolver<'a> {
         }
     }
 
-    fn resolve_literal_type(node: &AstNode) -> Result<DataType, CsvSchemaResolverErr> {
+    fn resolve_literal_type(node: &AstNode) -> Result<DataType, SchemaResolverErr> {
         match node {
             AstNode::Call(AstCall {
                 lexeme: name,
@@ -81,7 +81,7 @@ impl<'a> CsvSchemaResolver<'a> {
         }
     }
 
-    fn resolve_col_type(ty: &AstNode) -> Result<(DataType, bool), CsvSchemaResolverErr> {
+    fn resolve_col_type(ty: &AstNode) -> Result<(DataType, bool), SchemaResolverErr> {
         match ty {
             // Column type must always be a function call.
             AstNode::Call(AstCall {
@@ -111,7 +111,7 @@ impl<'a> CsvSchemaResolver<'a> {
         }
     }
 
-    fn resolve_row(call: &AstCall) -> Result<CsvResolvedSchema, CsvSchemaResolverErr> {
+    fn resolve_row(call: &AstCall) -> Result<ResolvedSchema, SchemaResolverErr> {
         let row_args_len = call.children.len();
         let start = call.span.start;
         let end = call.span.end;
@@ -165,7 +165,7 @@ impl<'a> CsvSchemaResolver<'a> {
         Ok(CsvResolvedSchema { resolved_schema })
     }
 
-    pub fn resolve(&self) -> Result<CsvResolvedSchema, CsvSchemaResolverErr> {
+    pub fn resolve(&self) -> Result<CsvResolvedSchema, SchemaResolverErr> {
         // Root refers to a first function call that defines a schema.
         let root = self.schema_ast.first().ok_or_else(|| RootInval {
             span: Self::err_span(1, 1),
@@ -213,7 +213,7 @@ mod tests {
     use std::collections::HashMap;
 
     use elise_ast::{AstCall, AstNode, AstPrimitive};
-    use elise_shared::shared_errors::errors_csv_schema_resolver::CsvSchemaResolverErr::*;
+    use elise_shared::shared_errors::errors_schema_resolver::SchemaResolverErr::*;
     use elise_shared::shared_types::Span;
 
     use crate::data_csv::data_csv_schema_resolver::{

@@ -1,39 +1,19 @@
 # TODO
 
 ## Things to implement
- 
-- [x] Move number type differentiation into parser
 
-- [x] Review cli and data for standalone const usage. Refactor to zero-variant struct.
+- [ ] Refactor schema resolver
 
-- [x] Fix compile errors in frontend/data
+    - [ ] Make it data agnostic that works only on schema ast.
+          Add .list and .dict types which can be used for JSON.
 
-- [x] Coerce Int to Float in data parser if type definition in schema is Float.
-
-- [x] Refactor Csv Parser
-
-    - [x] We need to preserve column names in parser result
-
-- [x] Refactor Csv schema resolver
-    
-    - [x] Schema definition must not have field duplicates
-
-    - [x] We must not match col with types by index, instead match by col name
-
-    - [x] Tests
+    - [ ] Use path segments instead of strings for hash table keys,
+          so this data structure can be used during compilation.
+          Check sample.elt for more details
 
 - [ ] Refactor Csv binder
 
-    - [x] Check if column names match schema definition column names
-
-    - [ ] IMPORTANT! Review compilation stage and semanalyzer stage.
-          These 2 must not depend on DataBindingTable in any way!
-          Consider adding SchemaBindingTable that uses hashmap with
-          PathSegment => DataType. This DS is what compiler
-          needs to use instead of DataBindingTable that must be
-          used only by VM. (Runtime bindings and Compile time bindings).
-          These are 2 separate data structures that share the same PathSegment.
-          Need to find out how to reduce code duplication on them.
+    - [ ] Use data agnostic resolved schema
 
 - [x] CLI
   

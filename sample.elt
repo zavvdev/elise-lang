@@ -1,7 +1,32 @@
 .schema (
-    .row (
-        name     .string()
-        age      .int()
-        employed .bool()
-        some     .optional(.optional())
-    ))
+    .dict (
+        "name"         .string()
+        "age"          .int()
+        "employed"     .bool()
+        "nicknames"    .list(.of(.string())) 
+        "address"      .dict(
+                            "street"  .string()
+                            "town"    .string()
+                            "indexes" .list(.of(.int()))
+                            "some"    .list(.int() .bool())
+                        )
+    )
+)
+
+
+Field("name")      -> TString
+Field("age")       -> TInt
+Field("employed")  -> TBool
+Field("nicknames") -> TListOf(TString)
+Field("nicknames") -> AbstractIndex -> TString
+Field("address")   -> TDict
+Field("address")   -> Field("street") -> TString
+Field("address")   -> Field("town") -> TString
+Field("address")   -> Field("indexes") -> TListOf(TInt)
+Field("address")   -> Field("some") -> TList(TInt, TBool)
+Field("address")   -> Field("some") -> Index(0) -> TInt
+Field("address")   -> Field("some") -> Index(1) -> TBool
+
+
+.get("address", "indexes", 0)
+

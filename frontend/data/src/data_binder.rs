@@ -11,25 +11,7 @@
 
 use std::collections::HashMap;
 
-use crate::data_types::DataType;
-
-/// Building blocks of the HashMap key.
-/// We can represent any data access path
-/// using these segments by replicating
-/// nesting.
-#[derive(Debug, Eq, Hash, PartialEq)]
-pub enum PathSegment {
-    // We can use index for cases when user iterates
-    // over some iterable data and we can track indexes
-    // and use them for building a Path key.
-    Index(usize),
-    // Just a regular string segment such as csv column
-    // name or json object property.
-    Field(String),
-}
-
-/// Key for HashMap in order to access data descriptor.
-pub type Path = Vec<PathSegment>;
+use crate::data_types::{DataType, Path};
 
 /// Provides some basic information for about
 /// underlying data.
