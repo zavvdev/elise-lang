@@ -7,9 +7,9 @@ use elise_shared::shared_errors::errors_schema_resolver::{
 };
 use elise_shared::shared_types::{ArityMismatchKind, Span};
 
+use crate::data_config::ROOT_ARGS_LEN;
 use crate::data_types::SchemaFnLexeme;
 use crate::data_types::{DataType, ResolutionPath};
-use crate::data_config::ROOT_ARGS_LEN;
 
 #[derive(Debug, PartialEq)]
 pub struct TypeDescriptor {
@@ -32,34 +32,38 @@ impl<'a> SchemaResolver<'a> {
     }
 
     pub fn resolve(&self) -> Result<ResolvedSchema, SchemaResolverErr> {
-        let root_call = self.get_root()?;
-        let parent_type = root_call.children.first().unwrap();
-        
+        let root_schema_call = self.get_root_schema_call()?;
+        let parent = root_schema_call.children.first().unwrap();
+
         let mut resolved_schema = ResolvedSchema {
             resolved_schema: HashMap::new(),
         };
 
-        match &**parent_type {
-            AstNode::Call(call) => Self::resolve_types(call, &mut resolved_schema),
-            node => Err(InvalTypeDef {
-                span: Self::err_span(node.span().start, node.span().end),
-            }),
+        match &**parent {
+            AstNode::Call(call) => Self::resolve_types(call, &mut resolved_schema)?,
+            node => {
+                return Err(InvalTypeDef {
+                    span: node.span().clone(),
+                });
+            }
         }
+
+        Ok(resolved_schema)
     }
-    
+
     // Ensures that the very top call is .schema function call.
     // We do this in case we want to provide any additional metadata
     // in future for schema.
-    fn get_root(&self) -> Result<&AstCall, SchemaResolverErr> {
+    fn get_root_schema_call(&self) -> Result<&AstCall, SchemaResolverErr> {
         let root = self.schema_ast.first().ok_or_else(|| InvalRoot {
-            span: Self::err_span(1, 1),
+            span: Span { start: 1, end: 1 },
         })?;
 
         let root_call = match root {
             AstNode::Call(call) if call.lexeme == SchemaFnLexeme::ROOT => call,
             node => {
                 return Err(InvalRoot {
-                    span: Self::err_span(node.span().start, node.span().end),
+                    span: node.span().clone(),
                 });
             }
         };
@@ -73,18 +77,24 @@ impl<'a> SchemaResolver<'a> {
                     expected: ROOT_ARGS_LEN,
                     kind: ArityMismatchKind::Eq,
                     found: args_len,
-                    span: Self::err_span(root_call.span.start, root_call.span.end),
+                    span: root_call.span.clone(),
                 });
             }
         }
     }
 
-    fn resolve_types(type_def_call: &AstCall, resolved_schema: &mut ResolvedSchema) -> Result<ResolvedSchema, SchemaResolverErr> {
-        // TODO
-    }
-
-    fn err_span(start: usize, end: usize) -> Span {
-        Span { start, end }
+    fn resolve_types(
+        parent: &AstCall,
+        resolved_schema: &mut ResolvedSchema,
+    ) -> Result<(), SchemaResolverErr> {
+        let parent_lexeme = &parent.lexeme;
+        match parent_lexeme.as_str() {
+            SchemaFnLexeme::DICT  => Ok(()),
+            SchemaFnLexeme::LIST => Ok(()),
+            _ => Err(SchemaResolverErr::InvalTypeDef {
+                span: parent.span.clone(),
+            }),
+        }
     }
 
     fn resolve_type(
@@ -99,7 +109,7 @@ impl<'a> SchemaResolver<'a> {
             SchemaFnLexeme::STRING => Ok(DataType::String),
             SchemaFnLexeme::OPT => Ok(DataType::Null),
             _ => Err(ColInvalType {
-                span: Self::err_span(start, end),
+                span: Span { start, end },
             }),
         }
     }
@@ -109,7 +119,7 @@ impl<'a> SchemaResolver<'a> {
             // Column name must always be an identifier type.
             AstNode::Identifier(AstPrimitive { value, span: _ }) => Ok(value.clone()),
             node => Err(ColInvalName {
-                span: Self::err_span(node.span().start, node.span().end),
+                span: node.span().clone(),
             }),
         }
     }
@@ -125,11 +135,11 @@ impl<'a> SchemaResolver<'a> {
                     return Self::resolve_type(name, span.start, span.end);
                 }
                 Err(ColTypeNoArgs {
-                    span: Self::err_span(span.start, span.end),
+                    span: span.clone(),
                 })
             }
             node => Err(ColInvalType {
-                span: Self::err_span(node.span().start, node.span().end),
+                span: node.span().clone(),
             }),
         }
     }
@@ -147,19 +157,19 @@ impl<'a> SchemaResolver<'a> {
                         let literal_type = Self::resolve_literal_type(children.first().unwrap())?;
                         if literal_type == DataType::Null {
                             return Err(OptOpt {
-                                span: Self::err_span(span.start, span.end),
+                                span: span.clone(),
                             });
                         }
                         return Ok((literal_type, true));
                     }
                     Err(OptArgsLen {
-                        span: Self::err_span(span.start, span.end),
+                        span: span.clone(),
                     })
                 }
                 _ => Ok((Self::resolve_literal_type(ty)?, false)),
             },
             node => Err(ColInvalType {
-                span: Self::err_span(node.span().start, node.span().end),
+                span: node.span().clone(),
             }),
         }
     }

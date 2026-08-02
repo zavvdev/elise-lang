@@ -13,29 +13,45 @@
     )
 )
 
+- We start from empty key buffer Vec [];
 
-[Field("name")] -> TString
+- When we encounter type definition we push Root PathSegment
+  into the buffer and insert it as key to resolved type;
 
-[Field("age")] -> TInt
+- If resolved type was primitive, we pop from buffer;
 
-[Field("employed")] -> TBool
+- When we encounter compound type like list or dict,
+  we do not pop from buffer until we resolve inner types,
+  which allows us to build keys with prefix of prev buffer;
 
-[Field("nicknames")] -> TListOf(TString)
+- This gives us an ability to re-define fields which we want,
+  but for root we limit it deliberately to 1, although we could
+  just leave it.
 
-[Field("nicknames"), AbstractIndex] -> TString
+[Root] -> TDict
 
-[Field("address")] -> TDict
+[Root, Field("name")] -> TString
 
-[Field("address"), Field("street")] -> TString
+[Root, Field("age")] -> TInt
 
-[Field("address"), Field("town")] -> TString
+[Root, Field("employed")] -> TBool
 
-[Field("address"), Field("indexes")] -> TListOf(TInt)
+[Root, Field("nicknames")] -> TListOf(TString)
 
-[Field("address"), Field("some")] -> TList(TInt, TBool)
+[Root, Field("nicknames"), AbstractIndex] -> TString
 
-[Field("address"), Field("some"), Index(0)] -> TInt
+[Root, Field("address")] -> TDict
 
-[Field("address"), Field("some"), Index(1)] -> TBool
+[Root, Field("address"), Field("street")] -> TString
+
+[Root, Field("address"), Field("town")] -> TString
+
+[Root, Field("address"), Field("indexes")] -> TListOf(TInt)
+
+[Root, Field("address"), Field("some")] -> TList(TInt, TBool)
+
+[Root, Field("address"), Field("some"), Index(0)] -> TInt
+
+[Root, Field("address"), Field("some"), Index(1)] -> TBool
 
 .get("address", "indexes", 0)

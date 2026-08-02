@@ -51,6 +51,9 @@ impl SchemaFnLexeme {
 
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub enum ResolutionPathSegment {
+    // Root type definition reference key.
+    Root,
+
     // We can use index for cases when user iterates
     // over some iterable data and we can track indexes
     // and use them for building a Path key.
@@ -59,6 +62,7 @@ pub enum ResolutionPathSegment {
     // Means that we can use any index. For example,
     // if list has all items of the same type.
     AbstractIndex,
+    
     // Just a regular string segment such as csv column
     // name or json object property.
     Field(String),
