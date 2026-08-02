@@ -12,6 +12,7 @@ pub enum SchemaResolverErr {
     InvalTypeDef {
         span: Span,
     },
+    Todo,
     InvalRoot {
         span: Span,
     },

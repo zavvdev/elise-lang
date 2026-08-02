@@ -49,7 +49,7 @@ impl SchemaFnLexeme {
     pub const OPT: &'static str = "optional";
 }
 
-#[derive(Debug, Eq, Hash, PartialEq)]
+#[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub enum ResolutionPathSegment {
     // Root type definition reference key.
     Root,

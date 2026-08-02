@@ -6,13 +6,11 @@ use elise_shared::shared_errors::errors_csv_binder::{
 };
 
 use crate::{
-    data_binder::{DataBinder, DataBindingTable, DataDescriptor},
-    data_csv::{data_csv_parser::CsvRow, data_csv_schema_resolver::CsvResolvedSchema},
-    data_types::{DataType, Path, PathSegment::*},
+    data_binder::{DataBinder, DataBindingTable, DataDescriptor}, data_csv::data_csv_parser::CsvRow, data_schema_resolver::ResolvedSchema, data_types::{DataType, ResolutionPath, ResolutionPathSegment::*}
 };
 
 type Rows = Vec<CsvRow>;
-type Schema = CsvResolvedSchema;
+type Schema = ResolvedSchema;
 
 pub struct CsvDataBinder {
     pub rows: Rows,
@@ -25,7 +23,7 @@ impl DataBinder<Rows, Schema, CsvBinderErr> for CsvDataBinder {
     }
 
     fn bind(&self) -> Result<DataBindingTable, CsvBinderErr> {
-        let mut table: HashMap<Path, DataDescriptor> = HashMap::new();
+        let mut table: HashMap<ResolutionPath, DataDescriptor> = HashMap::new();
 
         for (row_idx, row) in self.rows.iter().enumerate() {
             // We can check against the first record only since
@@ -104,7 +102,7 @@ mod tests {
     use crate::data_csv::data_csv_parser::{CsvCol, CsvRow};
     use crate::data_csv::data_csv_schema_resolver::{CsvColDescriptor, CsvResolvedSchema};
     use crate::data_types::DataType;
-    use crate::data_types::PathSegment::*;
+    use crate::data_types::ResolutionPathSegment::*;
 
     #[test]
     fn should_return_error_if_schema_row_len_bigger_than_csv_row_len() {
