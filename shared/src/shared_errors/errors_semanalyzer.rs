@@ -1,14 +1,4 @@
-use crate::shared_types::Span;
-
-/// Determines what exactly expected arguments number means.
-#[derive(Debug, PartialEq)]
-pub enum ArityMismatchKind {
-    Eq,
-    MoreEq,
-    LessEq,
-    More,
-    Less,
-}
+use crate::shared_types::{ArityMismatchKind, Span};
 
 #[derive(Debug, PartialEq)]
 pub enum SemanalyzerErr {

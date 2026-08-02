@@ -1,19 +1,43 @@
-use crate::shared_types::Span;
+use crate::shared_types::{ArityMismatchKind, Span};
 
 #[derive(Debug, PartialEq)]
 pub enum SchemaResolverErr {
-    RootInval { span: Span },
-    RootArgsLen { span: Span },
+    ArityMismatch {
+        fn_name: &'static str,
+        expected: usize,
+        kind: ArityMismatchKind,
+        found: usize,
+        span: Span,
+    },
+    InvalTypeDef {
+        span: Span,
+    },
+    InvalRoot {
+        span: Span,
+    },
 
-    RowInval { span: Span },
-    RowArgsLen { span: Span },
+    ArgsLen {
+        span: Span,
+    },
 
-    ColInvalName { span: Span },
-    ColInvalType { span: Span },
-    ColTypeNoArgs { span: Span },
-    ColDuplicate { span: Span },
+    ColInvalName {
+        span: Span,
+    },
+    ColInvalType {
+        span: Span,
+    },
+    ColTypeNoArgs {
+        span: Span,
+    },
+    ColDuplicate {
+        span: Span,
+    },
 
-    OptArgsLen { span: Span },
+    OptArgsLen {
+        span: Span,
+    },
 
-    OptOpt { span: Span },
+    OptOpt {
+        span: Span,
+    },
 }

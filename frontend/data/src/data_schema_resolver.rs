@@ -2,13 +2,14 @@ use std::collections::HashMap;
 
 use elise_ast::{AstCall, AstNode, AstPrimitive};
 
-use elise_shared::shared_errors::errors__schema_resolver::{
+use elise_shared::shared_errors::errors_schema_resolver::{
     SchemaResolverErr, SchemaResolverErr::*,
 };
-use elise_shared::shared_types::Span;
+use elise_shared::shared_types::{ArityMismatchKind, Span};
 
-use crate::data_types::{DataType, Path};
 use crate::data_types::SchemaFnLexeme;
+use crate::data_types::{DataType, ResolutionPath};
+use crate::data_config::ROOT_ARGS_LEN;
 
 #[derive(Debug, PartialEq)]
 pub struct TypeDescriptor {
@@ -18,7 +19,7 @@ pub struct TypeDescriptor {
 
 #[derive(Debug, PartialEq)]
 pub struct ResolvedSchema {
-    pub resolved_schema: HashMap<Path, TypeDescriptor>,
+    pub resolved_schema: HashMap<ResolutionPath, TypeDescriptor>,
 }
 
 pub struct SchemaResolver<'a> {
@@ -28,6 +29,58 @@ pub struct SchemaResolver<'a> {
 impl<'a> SchemaResolver<'a> {
     pub fn new(schema_ast: &'a Vec<AstNode>) -> Self {
         Self { schema_ast }
+    }
+
+    pub fn resolve(&self) -> Result<ResolvedSchema, SchemaResolverErr> {
+        let root_call = self.get_root()?;
+        let parent_type = root_call.children.first().unwrap();
+        
+        let mut resolved_schema = ResolvedSchema {
+            resolved_schema: HashMap::new(),
+        };
+
+        match &**parent_type {
+            AstNode::Call(call) => Self::resolve_types(call, &mut resolved_schema),
+            node => Err(InvalTypeDef {
+                span: Self::err_span(node.span().start, node.span().end),
+            }),
+        }
+    }
+    
+    // Ensures that the very top call is .schema function call.
+    // We do this in case we want to provide any additional metadata
+    // in future for schema.
+    fn get_root(&self) -> Result<&AstCall, SchemaResolverErr> {
+        let root = self.schema_ast.first().ok_or_else(|| InvalRoot {
+            span: Self::err_span(1, 1),
+        })?;
+
+        let root_call = match root {
+            AstNode::Call(call) if call.lexeme == SchemaFnLexeme::ROOT => call,
+            node => {
+                return Err(InvalRoot {
+                    span: Self::err_span(node.span().start, node.span().end),
+                });
+            }
+        };
+
+        // Root call should have only one children.
+        match root_call.children.len() {
+            ROOT_ARGS_LEN => Ok(root_call),
+            args_len => {
+                return Err(SchemaResolverErr::ArityMismatch {
+                    fn_name: SchemaFnLexeme::ROOT,
+                    expected: ROOT_ARGS_LEN,
+                    kind: ArityMismatchKind::Eq,
+                    found: args_len,
+                    span: Self::err_span(root_call.span.start, root_call.span.end),
+                });
+            }
+        }
+    }
+
+    fn resolve_types(type_def_call: &AstCall, resolved_schema: &mut ResolvedSchema) -> Result<ResolvedSchema, SchemaResolverErr> {
+        // TODO
     }
 
     fn err_span(start: usize, end: usize) -> Span {
@@ -106,96 +159,6 @@ impl<'a> SchemaResolver<'a> {
                 _ => Ok((Self::resolve_literal_type(ty)?, false)),
             },
             node => Err(ColInvalType {
-                span: Self::err_span(node.span().start, node.span().end),
-            }),
-        }
-    }
-
-    fn resolve_row(call: &AstCall) -> Result<ResolvedSchema, SchemaResolverErr> {
-        let row_args_len = call.children.len();
-        let start = call.span.start;
-        let end = call.span.end;
-
-        // Check if we have even number of arguments.
-        if !row_args_len.is_multiple_of(2) || row_args_len == 0 {
-            return Err(RowArgsLen {
-                span: Self::err_span(start, end),
-            });
-        }
-
-        // Since we know here that number of arguments is even,
-        // then we can extract each odd and even argument.
-        let cols: Vec<_> = call.children.iter().step_by(2).collect();
-        let types: Vec<_> = call.children.iter().skip(1).step_by(2).collect();
-
-        let mut index = 0;
-
-        let mut resolved_schema: HashMap<String, CsvColDescriptor> = HashMap::new();
-        let mut column_names: Vec<String> = Vec::with_capacity(cols.len());
-
-        while index < cols.len() {
-            // Since we split arguments to cols and types and the number
-            // of arguments is even, then we have 2 vectors with the same
-            // length where items on the same index represent a key-value pair
-            // (column name -> column type).
-            let col = *cols.get(index).unwrap();
-            let ty = *types.get(index).unwrap();
-
-            let col_name = Self::resolve_col_name(col)?;
-            let (col_type, optional) = Self::resolve_col_type(ty)?;
-
-            if column_names.contains(&col_name) {
-                return Err(ColDuplicate {
-                    span: Self::err_span(col.span().start, col.span().end),
-                });
-            }
-
-            resolved_schema.insert(
-                col_name.clone(),
-                CsvColDescriptor {
-                    ty: col_type,
-                    opt: optional,
-                },
-            );
-            column_names.push(col_name);
-
-            index += 1;
-        }
-
-        Ok(CsvResolvedSchema { resolved_schema })
-    }
-
-    pub fn resolve(&self) -> Result<CsvResolvedSchema, SchemaResolverErr> {
-        // Root refers to a first function call that defines a schema.
-        let root = self.schema_ast.first().ok_or_else(|| RootInval {
-            span: Self::err_span(1, 1),
-        })?;
-
-        // Extract root node descriptor if it matches type and name.
-        let root_call = match root {
-            AstNode::Call(call) if call.lexeme == SchemaFnLexeme::ROOT => call,
-            node => {
-                return Err(RootInval {
-                    span: Self::err_span(node.span().start, node.span().end),
-                });
-            }
-        };
-
-        // Root call should have only one children.
-        match root_call.children.len() {
-            1 => {}
-            _ => {
-                return Err(RootArgsLen {
-                    span: Self::err_span(root_call.span.start, root_call.span.end),
-                });
-            }
-        }
-
-        let row = root_call.children.first().unwrap();
-
-        match &**row {
-            AstNode::Call(call) if call.lexeme == SchemaFnLexeme::ROW => Self::resolve_row(call),
-            node => Err(RowInval {
                 span: Self::err_span(node.span().start, node.span().end),
             }),
         }

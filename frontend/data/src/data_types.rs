@@ -10,11 +10,6 @@ pub enum DataType {
     String,
     Bool,
     Null,
-    // Placeholder for any index if list
-    // is of type ListOf.
-    AbstractIndex,
-    // Index for any access of the List type.
-    Index(usize),
     // Allows any number of values of the same type.
     ListOf(Box<DataType>),
     // Allows to provide a fixed amount of arguments
@@ -34,8 +29,6 @@ impl DataType {
             DataType::String => NodeName::STRING,
             DataType::Bool => NodeName::BOOL,
             DataType::Null => NodeName::NULL,
-            DataType::AbstractIndex => NodeName::INDEX,
-            DataType::Index(_) => NodeName::INDEX,
             DataType::ListOf(_) => NodeName::LIST,
             DataType::List(_) => NodeName::LIST,
             DataType::Dict(_) => NodeName::DICT,
@@ -46,25 +39,29 @@ impl DataType {
 pub struct SchemaFnLexeme;
 impl SchemaFnLexeme {
     pub const ROOT: &'static str = "schema";
-    pub const ROW: &'static str = "row";
     pub const INT: &'static str = "int";
     pub const FLOAT: &'static str = "float";
     pub const STRING: &'static str = "string";
     pub const BOOL: &'static str = "bool";
     pub const LIST: &'static str = "list";
+    pub const LIST_OF: &'static str = "of";
     pub const DICT: &'static str = "dict";
     pub const OPT: &'static str = "optional";
 }
 
 #[derive(Debug, Eq, Hash, PartialEq)]
-pub enum PathSegment {
+pub enum ResolutionPathSegment {
     // We can use index for cases when user iterates
     // over some iterable data and we can track indexes
     // and use them for building a Path key.
     Index(usize),
+    
+    // Means that we can use any index. For example,
+    // if list has all items of the same type.
+    AbstractIndex,
     // Just a regular string segment such as csv column
     // name or json object property.
     Field(String),
 }
 
-pub type Path = Vec<PathSegment>;
+pub type ResolutionPath = Vec<ResolutionPathSegment>;

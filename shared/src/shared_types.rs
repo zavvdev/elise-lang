@@ -13,3 +13,13 @@ impl Keyword {
     pub const FALSE: &str = "false";
     pub const NULL: &str = "null";
 }
+
+/// Determines what exactly expected arguments number means.
+#[derive(Debug, PartialEq)]
+pub enum ArityMismatchKind {
+    Eq,
+    MoreEq,
+    LessEq,
+    More,
+    Less,
+}
