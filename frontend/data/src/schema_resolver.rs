@@ -7,7 +7,7 @@ use elise_shared::shared_types::ArityMismatchKind;
 
 use elise_shared::shared_node_names::NodeName;
 
-use crate::data_resolution_path::{ResolutionPath, ResolutionPathSegment};
+use crate::resolution_path::{ResolutionPath, ResolutionPathSegment};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum SchemaDataType {

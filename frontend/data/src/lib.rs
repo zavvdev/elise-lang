@@ -1,11 +1,11 @@
 use elise_shared::shared_errors::errors_csv_parser::CsvParserErr;
 
-use crate::data_csv::data_csv_parser::CsvRow;
+use crate::csv::csv_parser::CsvRow;
 
-//pub mod data_binder;
-pub mod data_csv;
-pub mod data_resolution_path;
-pub mod data_schema_resolver;
+//pub mod binder;
+pub mod csv;
+pub mod resolution_path;
+pub mod schema_resolver;
 
 /// Result of the data parsing operation.
 pub enum DataParseResult {

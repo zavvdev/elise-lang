@@ -9,7 +9,7 @@
 
 use elise_shared::{shared_node_names::NodeName, shared_types::Span};
 
-use crate::semanalyzer_symbol_table::SymbolId;
+use crate::symbol_table::SymbolId;
 
 /// AAstNode must store primitive values as String type instead of
 /// parsed values since emitter only needs to know the type in order

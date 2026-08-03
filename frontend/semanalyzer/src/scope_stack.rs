@@ -11,7 +11,7 @@
 
 use std::collections::HashMap;
 
-use crate::semanalyzer_symbol_table::SymbolId;
+use crate::symbol_table::SymbolId;
 
 pub struct Scope {
     pub bindings: HashMap<String, SymbolId>,

@@ -17,7 +17,7 @@ use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 //    },
 //};
 
-use elise_data::data_schema_resolver::SchemaResolver;
+use elise_data::schema_resolver::SchemaResolver;
 use elise_parser::Prelude;
 //use elise_semanalyzer::Harmony;
 use elise_shared::shared_errors::LangErr;

@@ -148,7 +148,7 @@ impl<'a> CsvParser<'a> {
 mod tests {
     use elise_shared::shared_errors::errors_csv_parser::CsvParserErr::*;
 
-    use crate::data_csv::data_csv_parser::{CsvCol, CsvParser, CsvRow, ParserDataType};
+    use crate::csv::csv_parser::{CsvCol, CsvParser, CsvRow, ParserDataType};
 
     fn build_csv_header(index: usize) -> String {
         format!("n{}", index)

@@ -1,9 +1,9 @@
-pub mod parser_config;
+pub mod config;
 
 use elise_shared::shared_types::{Keyword, Span};
 use std::str::from_utf8;
 
-use crate::parser_config::CharCode;
+use crate::config::CharCode;
 
 use elise_ast::{AstCall, AstCompound, AstKeyValuePair, AstNode, AstPrimitive};
 use elise_shared::shared_errors::errors_parser::{ParserErr, ParserErrInfo};

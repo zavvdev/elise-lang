@@ -36,7 +36,7 @@
 
 use std::collections::HashMap;
 
-use crate::semanalyzer_data_types::LangType;
+use crate::data_types::LangType;
 
 type TSymbolId = u32;
 
