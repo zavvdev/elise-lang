@@ -1,13 +1,56 @@
+// - We start from empty key buffer Vec [];
+//
+// - When we encounter type definition we push Root PathSegment
+//   into the buffer and insert it as key to resolved type;
+//
+// - If resolved type was primitive, we pop from buffer;
+//
+// - When we encounter compound type like list or dict,
+//   we do not pop from buffer until we resolve inner types,
+//   which allows us to build keys with prefix of prev buffer;
+//
+// - This gives us an ability to re-define fields which we want,
+//   but for root we limit it deliberately to 1, although we could
+//   just leave it.
+//
+// [Root] -> TDict
+//
+// [Root, Field("name")] -> TString
+//
+// [Root, Field("age")] -> TInt
+//
+// [Root, Field("employed")] -> TBool
+//
+// [Root, Field("nicknames")] -> TListOf(TString)
+//
+// [Root, Field("nicknames"), AbstractIndex] -> TString
+//
+// [Root, Field("address")] -> TDict
+//
+// [Root, Field("address"), Field("street")] -> TString
+//
+// [Root, Field("address"), Field("town")] -> TString
+//
+// [Root, Field("address"), Field("indexes")] -> TListOf(TInt)
+//
+// [Root, Field("address"), Field("some")] -> TList(TInt, TBool)
+//
+// [Root, Field("address"), Field("some"), Index(0)] -> TInt
+//
+// [Root, Field("address"), Field("some"), Index(1)] -> TBool
+//
+// .get("address", "indexes", 0)
+
 use std::collections::HashMap;
 
-use elise_ast::{AstCall, AstNode, AstPrimitive};
+use elise_ast::{AstCall, AstNode};
 
 use elise_shared::shared_errors::errors_schema_resolver::{
     SchemaResolverErr, SchemaResolverErr::*,
 };
 use elise_shared::shared_types::{ArityMismatchKind, Span};
 
-use crate::data_config::{INT_ARGS_LEN, ROOT_ARGS_LEN};
+use crate::data_config::{OPT_ARGS_LEN, PRIMITIVE_ARGS_LEN, ROOT_ARGS_LEN};
 use crate::data_types::{DataType, ResolutionPath};
 use crate::data_types::{ResolutionPathSegment, SchemaFnLexeme};
 
@@ -48,13 +91,6 @@ impl<'a> SchemaResolver<'a> {
     }
 
     pub fn resolve(&mut self) -> Result<ResolvedSchema, SchemaResolverErr> {
-        let root_node = self.get_root_node()?;
-        let mut resolved_schema: TResolvedSchema = HashMap::new();
-        self.resolve_from_node(root_node, &mut resolved_schema)?;
-        Ok(ResolvedSchema { resolved_schema })
-    }
-
-    fn get_root_node(&self) -> Result<&AstNode, SchemaResolverErr> {
         let first_node = self.schema_ast.first().ok_or_else(|| InvalRoot {
             span: Span { start: 1, end: 1 },
         })?;
@@ -69,7 +105,12 @@ impl<'a> SchemaResolver<'a> {
         };
 
         match call.children.len() {
-            ROOT_ARGS_LEN => Ok(call.children.first().unwrap()),
+            ROOT_ARGS_LEN => {
+                let root_node = call.children.first().unwrap();
+                let mut resolved_schema: TResolvedSchema = HashMap::new();
+                self.resolve_from_node(root_node, &mut resolved_schema)?;
+                Ok(ResolvedSchema { resolved_schema })
+            }
             args_len => {
                 return Err(SchemaResolverErr::ArityMismatch {
                     fn_name: SchemaFnLexeme::ROOT,
@@ -82,7 +123,7 @@ impl<'a> SchemaResolver<'a> {
         }
     }
 
-    fn commit(&self, resolved_schema: &mut TResolvedSchema) -> Result<(), SchemaResolverErr> {
+    fn commit(&mut self, resolved_schema: &mut TResolvedSchema) -> Result<(), SchemaResolverErr> {
         if let Some(dtype) = &self.current_type {
             resolved_schema.insert(
                 self.current_path.clone(),
@@ -91,6 +132,7 @@ impl<'a> SchemaResolver<'a> {
                     optional: self.current_optional,
                 },
             );
+            self.current_type = None;
             return Ok(());
         }
         Err(SchemaResolverErr::Todo)
@@ -103,16 +145,36 @@ impl<'a> SchemaResolver<'a> {
     fn resolve_from_node(
         &mut self,
         node: &AstNode,
-        _resolved_schema: &mut TResolvedSchema,
+        resolved_schema: &mut TResolvedSchema,
     ) -> Result<(), SchemaResolverErr> {
         let result = match node {
             AstNode::Call(call) => match call.lexeme.as_str() {
-                SchemaFnLexeme::INT => Ok(()),
-                SchemaFnLexeme::FLOAT => Ok(()),
-                SchemaFnLexeme::STRING => Ok(()),
-                SchemaFnLexeme::BOOL => Ok(()),
-                SchemaFnLexeme::OPT => Ok(()),
-                SchemaFnLexeme::DICT => Ok(()),
+                SchemaFnLexeme::INT => self.resolve_primitive(
+                    call,
+                    DataType::Int,
+                    SchemaFnLexeme::INT,
+                    resolved_schema,
+                ),
+                SchemaFnLexeme::FLOAT => self.resolve_primitive(
+                    call,
+                    DataType::Float,
+                    SchemaFnLexeme::FLOAT,
+                    resolved_schema,
+                ),
+                SchemaFnLexeme::STRING => self.resolve_primitive(
+                    call,
+                    DataType::String,
+                    SchemaFnLexeme::STRING,
+                    resolved_schema,
+                ),
+                SchemaFnLexeme::BOOL => self.resolve_primitive(
+                    call,
+                    DataType::Bool,
+                    SchemaFnLexeme::BOOL,
+                    resolved_schema,
+                ),
+                SchemaFnLexeme::OPT => self.resolve_optional(call, resolved_schema),
+                SchemaFnLexeme::DICT => self.resolve_dict(call, resolved_schema),
                 SchemaFnLexeme::LIST => Ok(()),
                 SchemaFnLexeme::LIST_OF => Ok(()),
                 _ => Err(SchemaResolverErr::InvalTypeDef {
@@ -125,22 +187,25 @@ impl<'a> SchemaResolver<'a> {
                 });
             }
         };
-        
+
         self.backtrack();
         result
     }
 
-    fn resolve_int(
-        &self,
+    fn resolve_primitive(
+        &mut self,
         call: &AstCall,
+        dtype: DataType,
+        lexeme: &'static str,
         resolved_schema: &mut TResolvedSchema,
     ) -> Result<(), SchemaResolverErr> {
         let args_len = call.children.len();
+        self.current_type = Some(dtype);
 
         if args_len > 0 {
             return Err(SchemaResolverErr::ArityMismatch {
-                fn_name: SchemaFnLexeme::INT,
-                expected: INT_ARGS_LEN,
+                fn_name: lexeme,
+                expected: PRIMITIVE_ARGS_LEN,
                 kind: ArityMismatchKind::Eq,
                 found: args_len,
                 span: call.span.clone(),
@@ -150,75 +215,73 @@ impl<'a> SchemaResolver<'a> {
         self.commit(resolved_schema)
     }
 
-    fn resolve_type(
-        call_name: &str,
-        start: usize,
-        end: usize,
-    ) -> Result<DataType, SchemaResolverErr> {
-        match call_name {
-            SchemaFnLexeme::BOOL => Ok(DataType::Bool),
-            SchemaFnLexeme::INT => Ok(DataType::Int),
-            SchemaFnLexeme::FLOAT => Ok(DataType::Float),
-            SchemaFnLexeme::STRING => Ok(DataType::String),
-            SchemaFnLexeme::OPT => Ok(DataType::Null),
-            _ => Err(ColInvalType {
-                span: Span { start, end },
-            }),
+    fn resolve_optional(
+        &mut self,
+        call: &AstCall,
+        resolved_schema: &mut TResolvedSchema,
+    ) -> Result<(), SchemaResolverErr> {
+        let args_len = call.children.len();
+
+        if args_len != OPT_ARGS_LEN {
+            return Err(SchemaResolverErr::ArityMismatch {
+                fn_name: SchemaFnLexeme::OPT,
+                expected: OPT_ARGS_LEN,
+                kind: ArityMismatchKind::Eq,
+                found: args_len,
+                span: call.span.clone(),
+            });
         }
+
+        if self.current_optional {
+            return Err(SchemaResolverErr::Todo);
+        }
+
+        self.current_optional = true;
+        self.resolve_from_node(call.children.first().unwrap(), resolved_schema)?;
+        self.current_optional = false;
+
+        Ok(())
     }
 
-    fn resolve_col_name(col: &AstNode) -> Result<String, SchemaResolverErr> {
-        match col {
-            // Column name must always be an identifier type.
-            AstNode::Identifier(AstPrimitive { value, span: _ }) => Ok(value.clone()),
-            node => Err(ColInvalName {
-                span: node.span().clone(),
-            }),
-        }
-    }
+    fn resolve_dict(
+        &mut self,
+        call: &AstCall,
+        resolved_schema: &mut TResolvedSchema,
+    ) -> Result<(), SchemaResolverErr> {
+        let args_len = call.children.len();
 
-    fn resolve_literal_type(node: &AstNode) -> Result<DataType, SchemaResolverErr> {
-        match node {
-            AstNode::Call(AstCall {
-                lexeme: name,
-                children,
-                span,
-            }) => {
-                if children.is_empty() {
-                    return Self::resolve_type(name, span.start, span.end);
+        if !args_len.is_multiple_of(2) || args_len == 0 {
+            return Err(SchemaResolverErr::Todo);
+        }
+
+        // TODO: We either need to include a full data type descriptor
+        // into DataType::N or just rely on the expanded tree type hints
+        // that we're building now.
+        //self.current_type = Some(DataType::?);
+        let keys: Vec<_> = call.children.iter().step_by(2).collect();
+        let values: Vec<_> = call.children.iter().skip(1).step_by(2).collect();
+
+        let mut index = 0;
+
+        while index < keys.len() {
+            let key = *keys.get(index).unwrap();
+            let value = *values.get(index).unwrap();
+
+            match &**key {
+                AstNode::String(prim) => {
+                    self.current_path
+                        .push(ResolutionPathSegment::Field(prim.value.clone()));
+                    self.resolve_from_node(value, resolved_schema)?;
                 }
-                Err(ColTypeNoArgs { span: span.clone() })
-            }
-            node => Err(ColInvalType {
-                span: node.span().clone(),
-            }),
-        }
-    }
-
-    fn resolve_col_type(ty: &AstNode) -> Result<(DataType, bool), SchemaResolverErr> {
-        match ty {
-            // Column type must always be a function call.
-            AstNode::Call(AstCall {
-                lexeme: name,
-                children,
-                span,
-            }) => match name.as_str() {
-                SchemaFnLexeme::OPT => {
-                    if children.len() == 1 {
-                        let literal_type = Self::resolve_literal_type(children.first().unwrap())?;
-                        if literal_type == DataType::Null {
-                            return Err(OptOpt { span: span.clone() });
-                        }
-                        return Ok((literal_type, true));
-                    }
-                    Err(OptArgsLen { span: span.clone() })
+                _ => {
+                    return Err(SchemaResolverErr::Todo);
                 }
-                _ => Ok((Self::resolve_literal_type(ty)?, false)),
-            },
-            node => Err(ColInvalType {
-                span: node.span().clone(),
-            }),
+            };
+
+            index += 1;
         }
+
+        Ok(())
     }
 }
 

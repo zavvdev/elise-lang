@@ -2,7 +2,9 @@
 
 ## Things to implement
 
-- [ ] Refactor schema resolver
+- [ ] Refactor schema resolver (?Maybe we need to create a global type resolver instead of this
+                                so we can use this resolution algorithm for any data structs in
+                                the source code as well that user creates)
 
     - [ ] Make it data agnostic that works only on schema ast.
           Add .list and .dict types which can be used for JSON.

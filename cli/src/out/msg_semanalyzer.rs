@@ -1,4 +1,4 @@
-use elise_shared::shared_errors::errors_semanalyzer::{ArityMismatchKind, SemanalyzerErr};
+use elise_shared::{shared_errors::errors_semanalyzer::SemanalyzerErr, shared_types::ArityMismatchKind};
 
 use crate::out::utils::{
     self, get_source_code_slice, print_err_source_code_pos, print_err_source_code_slice,

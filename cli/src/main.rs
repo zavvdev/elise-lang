@@ -32,6 +32,8 @@ use crate::out::{msg_csv_parser, msg_semanalyzer};
 fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &[u8]) -> ! {
     use LangErr::*;
 
+    println!("LANG ERR: {:#?}", lang_err);
+
     match lang_err {
         Common(err) => msg_common::print_err(err),
         ParserSource(err) => msg_parser::print_err(err, source_code),

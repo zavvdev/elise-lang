@@ -1,57 +1,10 @@
 .schema (
     .dict (
-        "name"         .string()
-        "age"          .int()
-        "employed"     .bool()
-        "nicknames"    .list(.of(.string())) 
-        "address"      .dict(
-                            "street"  .string()
-                            "town"    .string()
-                            "indexes" .list(.of(.int()))
-                            "some"    .list(.int() .bool())
-                        )
+        "name"     .string()
+        "age"      .int()
+        "employed" .bool()
+        "street"   .dict(
+                        "house" .int()
+                        "town"  .string())
     )
 )
-
-- We start from empty key buffer Vec [];
-
-- When we encounter type definition we push Root PathSegment
-  into the buffer and insert it as key to resolved type;
-
-- If resolved type was primitive, we pop from buffer;
-
-- When we encounter compound type like list or dict,
-  we do not pop from buffer until we resolve inner types,
-  which allows us to build keys with prefix of prev buffer;
-
-- This gives us an ability to re-define fields which we want,
-  but for root we limit it deliberately to 1, although we could
-  just leave it.
-
-[Root] -> TDict
-
-[Root, Field("name")] -> TString
-
-[Root, Field("age")] -> TInt
-
-[Root, Field("employed")] -> TBool
-
-[Root, Field("nicknames")] -> TListOf(TString)
-
-[Root, Field("nicknames"), AbstractIndex] -> TString
-
-[Root, Field("address")] -> TDict
-
-[Root, Field("address"), Field("street")] -> TString
-
-[Root, Field("address"), Field("town")] -> TString
-
-[Root, Field("address"), Field("indexes")] -> TListOf(TInt)
-
-[Root, Field("address"), Field("some")] -> TList(TInt, TBool)
-
-[Root, Field("address"), Field("some"), Index(0)] -> TInt
-
-[Root, Field("address"), Field("some"), Index(1)] -> TBool
-
-.get("address", "indexes", 0)
