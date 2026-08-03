@@ -1,3 +1,37 @@
+//! # SchemaResolver
+//!
+//! The reason we want to have a schema resolution is to be able to
+//! build a convenient way of retrieving type information during
+//! compilation stage.
+//! Schema definition is just a source code with special semantics
+//! which means that the result of its parsing is the same AST.
+//!
+//! This file contains the algorithm of transforming schema AST
+//! into resolved schema which is represented as a HashMap
+//! where each key is a resolution path, and value is a type descriptor.
+//! This allows us to build a map for each possible path of data access.
+//!
+//! For example, consider this schema definition:
+//! .schema(
+//!    .dict(
+//!       "name"    .string()
+//!       "address" .dict(
+//!                    "street" .string()
+//!                    "house"  .int())
+//!    )
+//! )
+//!
+//! In this case our resolved schema will look like this:
+//! [Root, Field("name")] => TypeString
+//! [Root, Field("address")] => TypeDict
+//! [Root, Field("address"), Field("street")] => TypeString
+//! [Root, Field("address"), Field("house")] => TypeInt
+//!
+//! So during compilation when we work with some source code that accesses data
+//! like: .get(@data "address" "street"), we can build a resolution path from
+//! .get function arguments and access type descriptor from this SchemaResolver
+//! result.
+
 use std::collections::HashMap;
 
 use elise_ast::{AstCall, AstNode};
@@ -93,6 +127,7 @@ pub struct ResolvedSchema {
 }
 
 pub struct SchemaResolver<'a> {
+    // AST of the schema definition file.
     schema_ast: &'a Vec<AstNode>,
     current_path: ResolutionPath,
     current_type: Option<SchemaDataType>,
@@ -103,8 +138,17 @@ impl<'a> SchemaResolver<'a> {
     pub fn new(schema_ast: &'a Vec<AstNode>) -> Self {
         Self {
             schema_ast,
+            // Current path that changes according to nesting.
+            // We push here every time we recurse into nested fields
+            // like list items or dict keys in order to resolve them.
             current_path: ResolutionPath::new(),
+            // Data type that we're currently in and want to resolve.
+            // Whenever we encounter a type definition that we distinguish,
+            // we capture it into this field.
             current_type: None,
+            // Whenever we enter .nullable type we set it to true in order
+            // to make all nested types nullable, since if parent is nullable,
+            // then accessing any nested items might give you null value.
             current_nullable: false,
         }
     }
@@ -140,6 +184,8 @@ impl<'a> SchemaResolver<'a> {
         }
     }
 
+    /// Captures the current state and inserts a new record into the
+    /// resolved schema.
     fn commit(&mut self, resolved_schema: &mut TResolvedSchema) -> Result<(), SchemaResolverErr> {
         if let Some(dtype) = &self.current_type {
             resolved_schema.insert(
@@ -156,6 +202,7 @@ impl<'a> SchemaResolver<'a> {
         })
     }
 
+    /// Main function for resolving type from AST nodes.
     fn resolve_from_node(
         &mut self,
         node: &AstNode,
@@ -205,6 +252,8 @@ impl<'a> SchemaResolver<'a> {
         result
     }
 
+    /// We use the same function for all primitives since they all
+    /// adhere to the same semantics.
     fn resolve_primitive(
         &mut self,
         call: &AstCall,
@@ -245,14 +294,24 @@ impl<'a> SchemaResolver<'a> {
             });
         }
 
+        // Do not allow to define nullable inside nullable like:
+        // .nullable(.nullable(.int()))
         if self.current_nullable {
             return Err(SchemaResolverErr::NullableNullable {
                 span: call.span.clone(),
             });
         }
 
+        // Set nullable flag to true before recursing deeper.
         self.current_nullable = true;
+
+        // After this stage, all nested type definitions will be
+        // resolved as nullable. For now this is intentional since
+        // accessing any data of the parent might give you null because
+        // parent might not be accessible.
         self.resolve_from_node(call.children.first().unwrap(), resolved_schema)?;
+
+        // Reset nullable state after we out of nullable definition scope.
         self.current_nullable = false;
 
         Ok(())
@@ -265,15 +324,29 @@ impl<'a> SchemaResolver<'a> {
     ) -> Result<(), SchemaResolverErr> {
         let args_len = call.children.len();
 
+        // TODO: Might not be correct to enforce these semantics
+        // here, but I don't know how to solve it for now.
+        // Maybe we could run semantic analysis for schema AST
+        // before type resolution?
         if !args_len.is_multiple_of(2) || args_len == 0 {
             return Err(SchemaResolverErr::InvalDict {
                 span: call.span.clone(),
             });
         }
 
+        // Capture current type as Dict and resolve it right away
+        // in order to create a parent entry like:
+        // [Root, Field("some")] => TDict
+        // We do this before recursing into tested definitions
+        // because resolving nested types will alter current_path
+        // state, so commiting parent after resolving recursively
+        // will produce invalid path segments to the parent.
         self.current_type = Some(SchemaDataType::Dict);
         self.commit(resolved_schema)?;
 
+        // Since we know that the number of arguments is even, then
+        // odd elements are keys, and even elements are values (type
+        // definitions).
         let keys: Vec<_> = call.children.iter().step_by(2).collect();
         let values: Vec<_> = call.children.iter().skip(1).step_by(2).collect();
 
@@ -284,9 +357,16 @@ impl<'a> SchemaResolver<'a> {
             let value = *values.get(index).unwrap();
 
             match &**key {
+                // TODO: Same here..
+                // Probably needs to be enforced during some premature
+                // semantic analysis.
                 AstNode::String(prim) => {
+                    // Push new segment into the current_path since we enter a new
+                    // scope with dict key.
                     self.current_path
                         .push(ResolutionPathSegment::Field(prim.value.clone()));
+                    // Recurse into the key value type definition. This will commit
+                    // new type definitions with path including the respective key.
                     self.resolve_from_node(value, resolved_schema)?;
                 }
                 node => {
@@ -321,8 +401,14 @@ impl<'a> SchemaResolver<'a> {
 
         let first_arg = call.children.first().unwrap();
 
+        // Capture current type and commit it before recursing
+        // in order to prevent committing parent type with invalid
+        // path segments since recursing will alter current_path.
         self.current_type = Some(SchemaDataType::List);
         self.commit(resolved_schema)?;
+
+        // Pusing AbstractIndex since our list can have any number of
+        // items of the same type.
         self.current_path.push(ResolutionPathSegment::AbstractIndex);
         self.resolve_from_node(first_arg, resolved_schema)?;
 

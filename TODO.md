@@ -13,7 +13,7 @@
           so this data structure can be used during compilation.
           Check sample.elt for more details
 
-    - [ ] Docs
+    - [x] Docs
 
     - [ ] Tests
 

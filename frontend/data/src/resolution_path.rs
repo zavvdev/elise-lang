@@ -1,11 +1,21 @@
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub enum ResolutionPathSegment {
+    // The beginning of the path.
     Root,
+    // When we want to access data stored at numeric indexes,
+    // like lists.
     Index(usize),
+    // Represents any index. For example, when we want to
+    // build a schema resolution path, we don't need to describe
+    // what type each list element has, we can just say that if
+    // our list is a list of integers, then any index points to
+    // some data with type Int.
     AbstractIndex,
+    // Any field like dict key.
     Field(String),
 }
 impl ResolutionPathSegment {
+    // For anything that requires string representation, like error reports.
     pub fn as_str(&self) -> String {
         match self {
             ResolutionPathSegment::Root => "Root".to_string(),
@@ -16,6 +26,22 @@ impl ResolutionPathSegment {
     }
 }
 
+/// Data structure that allows us to represent a path to follow
+/// in order to get some data. In our case we can use it to
+/// describe a path to type descriptors or data itself.
+///
+/// Internal representation uses a Vector of PathSegment's
+/// where the first segment must always be Root segment
+/// which cannot be removed.
+///
+/// This data structure was created specifically for cases
+/// when we use expressions that extract some data, for example:
+/// .get(@data, "name")
+/// In this case we can say that path is [Root, Field("name")].
+///
+/// This data structure is intended to be used for schema resolution
+/// and data binding, where former is used at compilation stage,
+/// and latter is used at runtime stage.
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct ResolutionPath(Vec<ResolutionPathSegment>);
 impl Default for ResolutionPath {
@@ -23,8 +49,8 @@ impl Default for ResolutionPath {
         Self::new()
     }
 }
-
 impl ResolutionPath {
+    // Root must always be the first segment.
     pub fn new() -> Self {
         Self(vec![ResolutionPathSegment::Root])
     }
@@ -33,6 +59,7 @@ impl ResolutionPath {
         self.0.push(segment);
     }
 
+    // Don't allow to remove the last element.
     pub fn pop(&mut self) -> Option<ResolutionPathSegment> {
         if self.0.len() > 1 {
             return self.0.pop();
