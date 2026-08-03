@@ -1,46 +1,3 @@
-// - We start from empty key buffer Vec [];
-//
-// - When we encounter type definition we push Root PathSegment
-//   into the buffer and insert it as key to resolved type;
-//
-// - If resolved type was primitive, we pop from buffer;
-//
-// - When we encounter compound type like list or dict,
-//   we do not pop from buffer until we resolve inner types,
-//   which allows us to build keys with prefix of prev buffer;
-//
-// - This gives us an ability to re-define fields which we want,
-//   but for root we limit it deliberately to 1, although we could
-//   just leave it.
-//
-// [Root] -> TDict
-//
-// [Root, Field("name")] -> TString
-//
-// [Root, Field("age")] -> TInt
-//
-// [Root, Field("employed")] -> TBool
-//
-// [Root, Field("nicknames")] -> TListOf(TString)
-//
-// [Root, Field("nicknames"), AbstractIndex] -> TString
-//
-// [Root, Field("address")] -> TDict
-//
-// [Root, Field("address"), Field("street")] -> TString
-//
-// [Root, Field("address"), Field("town")] -> TString
-//
-// [Root, Field("address"), Field("indexes")] -> TListOf(TInt)
-//
-// [Root, Field("address"), Field("some")] -> TList(TInt, TBool)
-//
-// [Root, Field("address"), Field("some"), Index(0)] -> TInt
-//
-// [Root, Field("address"), Field("some"), Index(1)] -> TBool
-//
-// .get("address", "indexes", 0)
-
 use std::collections::HashMap;
 
 use elise_ast::{AstCall, AstNode};
@@ -50,17 +7,87 @@ use elise_shared::shared_errors::errors_schema_resolver::{
 };
 use elise_shared::shared_types::{ArityMismatchKind, Span};
 
-use crate::data_config::{OPT_ARGS_LEN, PRIMITIVE_ARGS_LEN, ROOT_ARGS_LEN};
-use crate::data_types::{DataType, ResolutionPath};
-use crate::data_types::{ResolutionPathSegment, SchemaFnLexeme};
+use elise_shared::shared_node_names::NodeName;
 
+use crate::data_types::{ResolutionPath, ResolutionPathSegment};
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum SchemaDataType {
+    // We don't carry full type information
+    // for compound data types, like dict and
+    // lists because:
+    // 1. These data structures can have deep
+    //    nesting;
+    // 2. We only need to know a type of the
+    //    data being accessed at the lowest
+    //    level, so it's enough to follow the
+    //    resolution path in order to get
+    //    underlying type descriptor.
+    Int,
+    Float,
+    String,
+    Bool,
+    Null,
+    List,
+    Dict,
+}
+
+// TODO: Check if we need this.
+impl SchemaDataType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SchemaDataType::Int => NodeName::INT,
+            SchemaDataType::Float => NodeName::FLOAT,
+            SchemaDataType::String => NodeName::STRING,
+            SchemaDataType::Bool => NodeName::BOOL,
+            SchemaDataType::Null => NodeName::NULL,
+            SchemaDataType::List => NodeName::LIST,
+            SchemaDataType::Dict => NodeName::DICT,
+        }
+    }
+}
+
+/// Set of known function calls that are used for
+/// type definitions.
+pub struct SchemaFnLexeme;
+impl SchemaFnLexeme {
+    // Top level call. Technically we don't need this
+    // but I left it in case we need to provide some
+    // specific metadata for schema being defined
+    // in the future.
+    pub const ROOT: &'static str = "schema";
+    pub const INT: &'static str = "int";
+    pub const FLOAT: &'static str = "float";
+    pub const STRING: &'static str = "string";
+    pub const BOOL: &'static str = "bool";
+    pub const NULLABLE: &'static str = "nullable";
+    pub const DICT: &'static str = "dict";
+    pub const LIST: &'static str = "list";
+}
+
+/// Argument length requirements for different type
+/// definition calls.
+pub struct ArgLen;
+impl ArgLen {
+    pub const ROOT: usize = 1;
+    // All primitives don't need any arguments for now.
+    // If needed, create a separate variable for each 
+    // primitive and remove this PRIMITIVE variable.
+    pub const PRIMITIVE: usize = 0;
+    pub const NULLABLE: usize = 1;
+    // We support only a list of one data type for now.
+    pub const LIST: usize = 1;
+}
+
+/// Data type descriptor that is a value each resolution
+/// path resolves to.
 #[derive(Debug, PartialEq)]
-pub struct TypeDescriptor {
-    pub dtype: DataType,
+pub struct SchemaTypeDescriptor {
+    pub dtype: SchemaDataType,
     pub nullable: bool,
 }
 
-type TResolvedSchema = HashMap<ResolutionPath, TypeDescriptor>;
+type TResolvedSchema = HashMap<ResolutionPath, SchemaTypeDescriptor>;
 
 #[derive(Debug, PartialEq)]
 pub struct ResolvedSchema {
@@ -70,7 +97,7 @@ pub struct ResolvedSchema {
 pub struct SchemaResolver<'a> {
     schema_ast: &'a Vec<AstNode>,
     current_path: ResolutionPath,
-    current_type: Option<DataType>,
+    current_type: Option<SchemaDataType>,
     current_nullable: bool,
 }
 
@@ -99,7 +126,7 @@ impl<'a> SchemaResolver<'a> {
         };
 
         match call.children.len() {
-            ROOT_ARGS_LEN => {
+            ArgLen::ROOT => {
                 let root_node = call.children.first().unwrap();
                 let mut resolved_schema: TResolvedSchema = HashMap::new();
                 self.resolve_from_node(root_node, &mut resolved_schema)?;
@@ -108,7 +135,7 @@ impl<'a> SchemaResolver<'a> {
             args_len => {
                 return Err(SchemaResolverErr::ArityMismatch {
                     fn_name: SchemaFnLexeme::ROOT,
-                    expected: ROOT_ARGS_LEN,
+                    expected: ArgLen::ROOT,
                     kind: ArityMismatchKind::Eq,
                     found: args_len,
                     span: call.span.clone(),
@@ -121,7 +148,7 @@ impl<'a> SchemaResolver<'a> {
         if let Some(dtype) = &self.current_type {
             resolved_schema.insert(
                 self.current_path.clone(),
-                TypeDescriptor {
+                SchemaTypeDescriptor {
                     dtype: dtype.clone(),
                     nullable: self.current_nullable,
                 },
@@ -146,25 +173,25 @@ impl<'a> SchemaResolver<'a> {
             AstNode::Call(call) => match call.lexeme.as_str() {
                 SchemaFnLexeme::INT => self.resolve_primitive(
                     call,
-                    DataType::Int,
+                    SchemaDataType::Int,
                     SchemaFnLexeme::INT,
                     resolved_schema,
                 ),
                 SchemaFnLexeme::FLOAT => self.resolve_primitive(
                     call,
-                    DataType::Float,
+                    SchemaDataType::Float,
                     SchemaFnLexeme::FLOAT,
                     resolved_schema,
                 ),
                 SchemaFnLexeme::STRING => self.resolve_primitive(
                     call,
-                    DataType::String,
+                    SchemaDataType::String,
                     SchemaFnLexeme::STRING,
                     resolved_schema,
                 ),
                 SchemaFnLexeme::BOOL => self.resolve_primitive(
                     call,
-                    DataType::Bool,
+                    SchemaDataType::Bool,
                     SchemaFnLexeme::BOOL,
                     resolved_schema,
                 ),
@@ -189,7 +216,7 @@ impl<'a> SchemaResolver<'a> {
     fn resolve_primitive(
         &mut self,
         call: &AstCall,
-        dtype: DataType,
+        dtype: SchemaDataType,
         lexeme: &'static str,
         resolved_schema: &mut TResolvedSchema,
     ) -> Result<(), SchemaResolverErr> {
@@ -199,7 +226,7 @@ impl<'a> SchemaResolver<'a> {
         if args_len > 0 {
             return Err(SchemaResolverErr::ArityMismatch {
                 fn_name: lexeme,
-                expected: PRIMITIVE_ARGS_LEN,
+                expected: ArgLen::PRIMITIVE,
                 kind: ArityMismatchKind::Eq,
                 found: args_len,
                 span: call.span.clone(),
@@ -216,10 +243,10 @@ impl<'a> SchemaResolver<'a> {
     ) -> Result<(), SchemaResolverErr> {
         let args_len = call.children.len();
 
-        if args_len != OPT_ARGS_LEN {
+        if args_len != ArgLen::NULLABLE {
             return Err(SchemaResolverErr::ArityMismatch {
                 fn_name: SchemaFnLexeme::NULLABLE,
-                expected: OPT_ARGS_LEN,
+                expected: ArgLen::NULLABLE,
                 kind: ArityMismatchKind::Eq,
                 found: args_len,
                 span: call.span.clone(),
@@ -248,7 +275,7 @@ impl<'a> SchemaResolver<'a> {
             return Err(SchemaResolverErr::Todo("dict args not even".to_string()));
         }
 
-        self.current_type = Some(DataType::Dict);
+        self.current_type = Some(SchemaDataType::Dict);
         self.commit(resolved_schema)?;
 
         let keys: Vec<_> = call.children.iter().step_by(2).collect();
@@ -280,7 +307,6 @@ impl<'a> SchemaResolver<'a> {
         Ok(())
     }
 
-    // TODO
     fn resolve_list(
         &mut self,
         call: &AstCall,
@@ -288,38 +314,16 @@ impl<'a> SchemaResolver<'a> {
     ) -> Result<(), SchemaResolverErr> {
         let args_len = call.children.len();
 
-        if !args_len.is_multiple_of(2) || args_len == 0 {
-            return Err(SchemaResolverErr::Todo("dict args not even".to_string()));
+        if args_len != ArgLen::LIST {
+            return Err(SchemaResolverErr::Todo("list args len".to_string()));
         }
 
-        self.current_type = Some(DataType::Dict);
+        let first_arg = call.children.first().unwrap();
+
+        self.current_type = Some(SchemaDataType::List);
         self.commit(resolved_schema)?;
-
-        let keys: Vec<_> = call.children.iter().step_by(2).collect();
-        let values: Vec<_> = call.children.iter().skip(1).step_by(2).collect();
-
-        let mut index = 0;
-
-        while index < keys.len() {
-            let key = *keys.get(index).unwrap();
-            let value = *values.get(index).unwrap();
-
-            match &**key {
-                AstNode::String(prim) => {
-                    println!("seg {:#?}", self.current_path);
-                    self.current_path
-                        .push(ResolutionPathSegment::Field(prim.value.clone()));
-                    self.resolve_from_node(value, resolved_schema)?;
-                }
-                _ => {
-                    return Err(SchemaResolverErr::Todo(
-                        "dict key is not string".to_string(),
-                    ));
-                }
-            };
-
-            index += 1;
-        }
+        self.current_path.push(ResolutionPathSegment::AbstractIndex);
+        self.resolve_from_node(first_arg, resolved_schema)?;
 
         Ok(())
     }
