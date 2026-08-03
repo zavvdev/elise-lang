@@ -1,10 +1,10 @@
 .schema (
     .dict (
-        "name"     .string()
-        "age"      .int()
-        "employed" .bool()
-        "street"   .dict(
-                        "house" .int()
-                        "town"  .string())
+        "name"    .string()
+        "address" .nullable(.dict(
+                        "street"    .string()
+                        "city_info" .dict(
+                                        "name"  .string()
+                                        "state" .string())))
     )
 )

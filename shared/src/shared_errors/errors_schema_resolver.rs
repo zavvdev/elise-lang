@@ -12,7 +12,7 @@ pub enum SchemaResolverErr {
     InvalTypeDef {
         span: Span,
     },
-    Todo,
+    Todo(String),
     InvalRoot {
         span: Span,
     },
