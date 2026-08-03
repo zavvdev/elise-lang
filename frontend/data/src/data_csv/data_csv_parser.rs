@@ -1,13 +1,20 @@
 use csv::{ErrorKind, ReaderBuilder};
 use elise_shared::{shared_errors::errors_csv_parser::CsvParserErr, shared_types::Keyword};
 
-use crate::data_types::DataType;
-
 // ==================================================================
 //
 // PARSER START
 //
 // ==================================================================
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum ParserDataType {
+    Int,
+    Float,
+    String,
+    Bool,
+    Null,
+}
 
 pub struct CsvParser<'a> {
     data: &'a str,
@@ -16,7 +23,7 @@ pub struct CsvParser<'a> {
 #[derive(Debug, PartialEq)]
 pub struct CsvCol {
     pub name: String,
-    pub ty: DataType,
+    pub ty: ParserDataType,
     pub value: String,
     pub row: usize,
     pub col: usize,
@@ -73,13 +80,13 @@ impl<'a> CsvParser<'a> {
         value == Keyword::TRUE || value == Keyword::FALSE
     }
 
-    fn infer_type(value: &str) -> DataType {
+    fn infer_type(value: &str) -> ParserDataType {
         match value {
-            v if Self::is_null(v) => DataType::Null,
-            v if Self::is_bool(v) => DataType::Bool,
-            v if Self::is_int(v) => DataType::Int,
-            v if Self::is_float(v) => DataType::Float,
-            _ => DataType::String,
+            v if Self::is_null(v) => ParserDataType::Null,
+            v if Self::is_bool(v) => ParserDataType::Bool,
+            v if Self::is_int(v) => ParserDataType::Int,
+            v if Self::is_float(v) => ParserDataType::Float,
+            _ => ParserDataType::String,
         }
     }
 
@@ -141,10 +148,7 @@ impl<'a> CsvParser<'a> {
 mod tests {
     use elise_shared::shared_errors::errors_csv_parser::CsvParserErr::*;
 
-    use crate::{
-        data_csv::data_csv_parser::{CsvCol, CsvParser, CsvRow},
-        data_types::DataType,
-    };
+    use crate::data_csv::data_csv_parser::{CsvCol, CsvParser, CsvRow, ParserDataType};
 
     fn build_csv_header(index: usize) -> String {
         format!("n{}", index)
@@ -172,7 +176,7 @@ mod tests {
                 .map(|(i, n)| CsvCol {
                     name: build_csv_header(i),
                     value: n.to_string(),
-                    ty: DataType::Int,
+                    ty: ParserDataType::Int,
                     row: 0,
                     col: i,
                 })
@@ -210,7 +214,7 @@ mod tests {
                 .map(|(i, n)| CsvCol {
                     name: build_csv_header(i),
                     value: n.to_string(),
-                    ty: DataType::Float,
+                    ty: ParserDataType::Float,
                     row: 0,
                     col: i,
                 })
@@ -241,7 +245,7 @@ mod tests {
                 .map(|(i, n)| CsvCol {
                     name: build_csv_header(i),
                     value: n.to_string(),
-                    ty: DataType::Bool,
+                    ty: ParserDataType::Bool,
                     row: 0,
                     col: i,
                 })
@@ -271,7 +275,7 @@ mod tests {
                 cols: vec![CsvCol {
                     name: build_csv_header(0),
                     value: "john".to_string(),
-                    ty: DataType::String,
+                    ty: ParserDataType::String,
                     row: 0,
                     col: 0,
                 }],
@@ -300,7 +304,7 @@ mod tests {
                 .map(|(i, n)| CsvCol {
                     name: build_csv_header(i),
                     value: n.trim().to_string(),
-                    ty: DataType::Null,
+                    ty: ParserDataType::Null,
                     row: 0,
                     col: i,
                 })
@@ -330,11 +334,11 @@ mod tests {
         let row = vec![" 12.3  ", "  12 ", "  S  ", "  Null ", "   "];
 
         let types = vec![
-            DataType::Float,
-            DataType::Int,
-            DataType::String,
-            DataType::Null,
-            DataType::Null,
+            ParserDataType::Float,
+            ParserDataType::Int,
+            ParserDataType::String,
+            ParserDataType::Null,
+            ParserDataType::Null,
         ];
 
         let csv = build_csv(&row);

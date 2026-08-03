@@ -23,3 +23,15 @@ pub enum ArityMismatchKind {
     More,
     Less,
 }
+impl ArityMismatchKind {
+    pub fn symbol(&self) -> String {
+        let res = match self {
+            ArityMismatchKind::Eq => "",
+            ArityMismatchKind::MoreEq => ">=",
+            ArityMismatchKind::LessEq => "<=",
+            ArityMismatchKind::More => ">",
+            ArityMismatchKind::Less => "<",
+        };
+        res.to_string()
+    }
+}

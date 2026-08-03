@@ -20,11 +20,8 @@ use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise_data::data_schema_resolver::SchemaResolver;
 use elise_parser::Prelude;
 //use elise_semanalyzer::Harmony;
-use elise_shared::shared_errors::{LangErr, errors_common::CommonErr};
-use rayon::scope;
+use elise_shared::shared_errors::LangErr;
 use std::time::Instant;
-
-use crate::conf::config::FileExt;
 
 /// Representation of the successful execution of the
 /// program in 'RUN' mode.
@@ -64,9 +61,9 @@ pub struct ValidateResult<'a> {
 
 /// Entry point for running the program in 'RUN' mode.
 pub fn run<'a>(
-    source_code: &'a [u8],
+    _source_code: &'a [u8],
     // TODO: Why it's not vec of bytes?
-    data: &'a str,
+    _data: &'a str,
     data_schema: &'a [u8],
     config: &'a ModeRunConf,
 ) -> Result<RunResult<'a>, LangErr> {
@@ -79,63 +76,63 @@ pub fn run<'a>(
         .resolve()
         .map_err(LangErr::SchemaResolver)?;
 
-   println!("RESOLVED SCHEMA: {:#?}", res);
+    println!("RESOLVED SCHEMA: {:#?}", res);
 
-   let start = Instant::now();
+    let start = Instant::now();
 
-   // let (mut source_code_ast, mut schema_ast, mut parsed_data) = (None, None, None);
+    // let (mut source_code_ast, mut schema_ast, mut parsed_data) = (None, None, None);
 
-   // // Run in parallel since these processes don't depend on one another.
-   // scope(|s| {
-   //     s.spawn(|_| {
-   //         // Map ParserErr to LangErr::ParserSource in order to differentiate
-   //         // between data being parsed since we can use Prelude for parsing
-   //         // source code or schema source code.
-   //         let ast = Prelude::new(source_code)
-   //             .parse()
-   //             .map_err(LangErr::ParserSource);
-   //         source_code_ast = Some(ast);
-   //     });
-   //     s.spawn(|_| {
-   //         // Map ParserErr to LangErr::ParserSchema since data schema syntax
-   //         // is the same as a source code syntax.
-   //         let ast = Prelude::new(data_schema)
-   //             .parse()
-   //             .map_err(LangErr::ParserSchema);
-   //         schema_ast = Some(ast);
-   //     });
+    // // Run in parallel since these processes don't depend on one another.
+    // scope(|s| {
+    //     s.spawn(|_| {
+    //         // Map ParserErr to LangErr::ParserSource in order to differentiate
+    //         // between data being parsed since we can use Prelude for parsing
+    //         // source code or schema source code.
+    //         let ast = Prelude::new(source_code)
+    //             .parse()
+    //             .map_err(LangErr::ParserSource);
+    //         source_code_ast = Some(ast);
+    //     });
+    //     s.spawn(|_| {
+    //         // Map ParserErr to LangErr::ParserSchema since data schema syntax
+    //         // is the same as a source code syntax.
+    //         let ast = Prelude::new(data_schema)
+    //             .parse()
+    //             .map_err(LangErr::ParserSchema);
+    //         schema_ast = Some(ast);
+    //     });
 
-   //     if config.data_path.ends_with(FileExt::CSV) {
-   //         s.spawn(|_| {
-   //             let parsed = CsvParser::new(data).parse();
-   //             parsed_data = Some(DataParseResult::Csv(parsed));
-   //         });
-   //     }
-   // });
+    //     if config.data_path.ends_with(FileExt::CSV) {
+    //         s.spawn(|_| {
+    //             let parsed = CsvParser::new(data).parse();
+    //             parsed_data = Some(DataParseResult::Csv(parsed));
+    //         });
+    //     }
+    // });
 
-   // let source_code_ast = source_code_ast.unwrap()?;
-   // let schema_ast = schema_ast.unwrap()?;
-   // let parsed_data = parsed_data.ok_or(LangErr::Common(CommonErr::MissingParserData))?;
+    // let source_code_ast = source_code_ast.unwrap()?;
+    // let schema_ast = schema_ast.unwrap()?;
+    // let parsed_data = parsed_data.ok_or(LangErr::Common(CommonErr::MissingParserData))?;
 
-   // let data_binding = match parsed_data {
-   //     DataParseResult::Csv(records) => {
-   //         let rec = records.map_err(LangErr::CsvParser)?;
+    // let data_binding = match parsed_data {
+    //     DataParseResult::Csv(records) => {
+    //         let rec = records.map_err(LangErr::CsvParser)?;
 
-   //         let res = CsvSchemaResolver::new(&schema_ast)
-   //             .resolve()
-   //             .map_err(LangErr::CsvSchemaResolver)?;
+    //         let res = CsvSchemaResolver::new(&schema_ast)
+    //             .resolve()
+    //             .map_err(LangErr::CsvSchemaResolver)?;
 
-   //         println!("RESOLVED SCHEMA: {:#?}", res);
+    //         println!("RESOLVED SCHEMA: {:#?}", res);
 
-   //         CsvDataBinder::new(rec, res)
-   //             .bind()
-   //             .map_err(LangErr::CsvBinder)?
-   //     }
-   // };
+    //         CsvDataBinder::new(rec, res)
+    //             .bind()
+    //             .map_err(LangErr::CsvBinder)?
+    //     }
+    // };
 
-   // let _hir = Harmony::new(&source_code_ast, &data_binding)
-   //     .analyze()
-   //     .map_err(LangErr::SemanticAnalyzer)?;
+    // let _hir = Harmony::new(&source_code_ast, &data_binding)
+    //     .analyze()
+    //     .map_err(LangErr::SemanticAnalyzer)?;
 
     Ok(RunResult {
         config,

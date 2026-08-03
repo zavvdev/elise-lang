@@ -2,6 +2,10 @@ use crate::shared_types::{ArityMismatchKind, Span};
 
 #[derive(Debug, PartialEq)]
 pub enum SchemaResolverErr {
+    Empty,
+    UnexpCall {
+        span: Span,
+    },
     ArityMismatch {
         fn_name: &'static str,
         expected: usize,
@@ -9,36 +13,16 @@ pub enum SchemaResolverErr {
         found: usize,
         span: Span,
     },
+    UnresolvablePath {
+        path: String,
+    },
     InvalTypeDef {
         span: Span,
     },
-    Todo(String),
-    InvalRoot {
+    NullableNullable {
         span: Span,
     },
-
-    ArgsLen {
-        span: Span,
-    },
-
-    ColInvalName {
-        span: Span,
-    },
-    ColInvalType {
-        span: Span,
-    },
-    ColTypeNoArgs {
-        span: Span,
-    },
-    ColDuplicate {
-        span: Span,
-    },
-
-    OptArgsLen {
-        span: Span,
-    },
-
-    OptOpt {
+    InvalDict {
         span: Span,
     },
 }

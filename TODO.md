@@ -6,12 +6,16 @@
                                 so we can use this resolution algorithm for any data structs in
                                 the source code as well that user creates)
 
-    - [ ] Make it data agnostic that works only on schema ast.
+    - [x] Make it data agnostic that works only on schema ast.
           Add .list and .dict types which can be used for JSON.
 
-    - [ ] Use path segments instead of strings for hash table keys,
+    - [x] Use path segments instead of strings for hash table keys,
           so this data structure can be used during compilation.
           Check sample.elt for more details
+
+    - [ ] Docs
+
+    - [ ] Tests
 
 - [ ] Validation of data against schema must be a separate stage. See DOCUMENTAITON
 

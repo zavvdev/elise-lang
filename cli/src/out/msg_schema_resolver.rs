@@ -10,41 +10,39 @@ use crate::out::utils::{
 pub fn print_err(schema_err: &SchemaResolverErr, schema_source_code: &[u8]) {
     use SchemaResolverErr::*;
 
-   // let (msg, span): (&str, &Span) = match schema_err {
-   //     RootInval { span } => (
-   //         "Schema definition must start with .schema function call at the top level",
-   //         span,
-   //     ),
+    let (msg, span): (&str, Option<&Span>) = match schema_err {
+        Empty => ("Schema file must not be empty", None),
 
-   //     RootArgsLen { span } => (
-   //         "Invalid number of arguments for .schema function call. It must have one argument",
-   //         span,
-   //     ),
+        UnexpCall { span } => ("Unexpected call", Some(span)),
 
-   //     RowInval { span } => ("Row must be defined using .row function", span),
+        ArityMismatch {
+            fn_name,
+            expected,
+            found,
+            span,
+            kind,
+        } => (
+            &format!(
+                "Invalid number of arguments for \"{}\" function. Expected: {}{}, found: {}",
+                fn_name,
+                kind.symbol(),
+                expected,
+                found,
+            ),
+            Some(span),
+        ),
+        UnresolvablePath { path } => (&format!("Unresolvable path: {}", path), None),
+        InvalTypeDef { span } => ("Invalid type definition", Some(span)),
+        NullableNullable { span } => ("Cannot apply nullable modifier to nullable", Some(span)),
+        InvalDict { span } => ("Invalid dictionary", Some(span)),
+    };
 
-   //     RowArgsLen { span } => (
-   //         "Invalid number of arguments for .row function call. Number of arguments must be even",
-   //         span,
-   //     ),
+    utils::print_err(msg, Some("Schema error"));
 
-   //     ColInvalName { span } => ("Invalid column name", span),
-
-   //     ColInvalType { span } => ("Invalid column type definition", span),
-
-   //     ColTypeNoArgs { span } => ("Type functions must not have arguments", span),
-
-   //     ColDuplicate { span } => ("Duplicate column definition", span),
-
-   //     OptArgsLen { span } => ("Invalid number of arguments for .optional function", span),
-
-   //     OptOpt { span } => ("Optional cannot be optional", span),
-   // };
-
-    //utils::print_err(msg, Some("Schema error"));
-
-   // if let Some(code) = &get_source_code_slice(schema_source_code, span.start) {
-   //     print_err_source_code_pos(code.row, code.col);
-   //     print_err_source_code_slice(&code.slice, code.col);
-   // };
+    if let Some(span) = span
+        && let Some(code) = get_source_code_slice(schema_source_code, span.start)
+    {
+        print_err_source_code_pos(code.row, code.col);
+        print_err_source_code_slice(&code.slice, code.col);
+    }
 }

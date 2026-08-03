@@ -2,14 +2,12 @@ use std::collections::HashMap;
 
 use elise_ast::{AstCall, AstNode};
 
-use elise_shared::shared_errors::errors_schema_resolver::{
-    SchemaResolverErr, SchemaResolverErr::*,
-};
-use elise_shared::shared_types::{ArityMismatchKind, Span};
+use elise_shared::shared_errors::errors_schema_resolver::SchemaResolverErr;
+use elise_shared::shared_types::ArityMismatchKind;
 
 use elise_shared::shared_node_names::NodeName;
 
-use crate::data_types::{ResolutionPath, ResolutionPathSegment};
+use crate::data_resolution_path::{ResolutionPath, ResolutionPathSegment};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum SchemaDataType {
@@ -71,7 +69,7 @@ pub struct ArgLen;
 impl ArgLen {
     pub const ROOT: usize = 1;
     // All primitives don't need any arguments for now.
-    // If needed, create a separate variable for each 
+    // If needed, create a separate variable for each
     // primitive and remove this PRIMITIVE variable.
     pub const PRIMITIVE: usize = 0;
     pub const NULLABLE: usize = 1;
@@ -105,21 +103,21 @@ impl<'a> SchemaResolver<'a> {
     pub fn new(schema_ast: &'a Vec<AstNode>) -> Self {
         Self {
             schema_ast,
-            current_path: vec![ResolutionPathSegment::Root],
+            current_path: ResolutionPath::new(),
             current_type: None,
             current_nullable: false,
         }
     }
 
     pub fn resolve(&mut self) -> Result<ResolvedSchema, SchemaResolverErr> {
-        let first_node = self.schema_ast.first().ok_or_else(|| InvalRoot {
-            span: Span { start: 1, end: 1 },
-        })?;
+        // Do not allow schema to be empty.
+        let first_node = self.schema_ast.first().ok_or(SchemaResolverErr::Empty)?;
 
+        // First node must always be a root function call.
         let call = match first_node {
             AstNode::Call(call) if call.lexeme == SchemaFnLexeme::ROOT => call,
             node => {
-                return Err(InvalRoot {
+                return Err(SchemaResolverErr::UnexpCall {
                     span: node.span().clone(),
                 });
             }
@@ -132,15 +130,13 @@ impl<'a> SchemaResolver<'a> {
                 self.resolve_from_node(root_node, &mut resolved_schema)?;
                 Ok(ResolvedSchema { resolved_schema })
             }
-            args_len => {
-                return Err(SchemaResolverErr::ArityMismatch {
-                    fn_name: SchemaFnLexeme::ROOT,
-                    expected: ArgLen::ROOT,
-                    kind: ArityMismatchKind::Eq,
-                    found: args_len,
-                    span: call.span.clone(),
-                });
-            }
+            args_len => Err(SchemaResolverErr::ArityMismatch {
+                fn_name: SchemaFnLexeme::ROOT,
+                expected: ArgLen::ROOT,
+                kind: ArityMismatchKind::Eq,
+                found: args_len,
+                span: call.span.clone(),
+            }),
         }
     }
 
@@ -155,13 +151,9 @@ impl<'a> SchemaResolver<'a> {
             );
             return Ok(());
         }
-        Err(SchemaResolverErr::Todo("Commit".to_string()))
-    }
-
-    fn backtrack(&mut self) {
-        if self.current_path.len() > 1 {
-            self.current_path.pop();
-        }
+        Err(SchemaResolverErr::UnresolvablePath {
+            path: self.current_path.as_str(),
+        })
     }
 
     fn resolve_from_node(
@@ -203,13 +195,13 @@ impl<'a> SchemaResolver<'a> {
                 }),
             },
             node => {
-                return Err(InvalTypeDef {
+                return Err(SchemaResolverErr::InvalTypeDef {
                     span: node.span().clone(),
                 });
             }
         };
 
-        self.backtrack();
+        self.current_path.pop();
         result
     }
 
@@ -254,7 +246,9 @@ impl<'a> SchemaResolver<'a> {
         }
 
         if self.current_nullable {
-            return Err(SchemaResolverErr::Todo("optional of optional".to_string()));
+            return Err(SchemaResolverErr::NullableNullable {
+                span: call.span.clone(),
+            });
         }
 
         self.current_nullable = true;
@@ -272,7 +266,9 @@ impl<'a> SchemaResolver<'a> {
         let args_len = call.children.len();
 
         if !args_len.is_multiple_of(2) || args_len == 0 {
-            return Err(SchemaResolverErr::Todo("dict args not even".to_string()));
+            return Err(SchemaResolverErr::InvalDict {
+                span: call.span.clone(),
+            });
         }
 
         self.current_type = Some(SchemaDataType::Dict);
@@ -289,15 +285,14 @@ impl<'a> SchemaResolver<'a> {
 
             match &**key {
                 AstNode::String(prim) => {
-                    println!("seg {:#?}", self.current_path);
                     self.current_path
                         .push(ResolutionPathSegment::Field(prim.value.clone()));
                     self.resolve_from_node(value, resolved_schema)?;
                 }
-                _ => {
-                    return Err(SchemaResolverErr::Todo(
-                        "dict key is not string".to_string(),
-                    ));
+                node => {
+                    return Err(SchemaResolverErr::InvalDict {
+                        span: node.span().clone(),
+                    });
                 }
             };
 
@@ -315,7 +310,13 @@ impl<'a> SchemaResolver<'a> {
         let args_len = call.children.len();
 
         if args_len != ArgLen::LIST {
-            return Err(SchemaResolverErr::Todo("list args len".to_string()));
+            return Err(SchemaResolverErr::ArityMismatch {
+                fn_name: SchemaFnLexeme::LIST,
+                expected: ArgLen::LIST,
+                kind: ArityMismatchKind::Eq,
+                found: args_len,
+                span: call.span.clone(),
+            });
         }
 
         let first_arg = call.children.first().unwrap();
