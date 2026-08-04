@@ -1,5 +1,5 @@
 use elise_data::{
-    resolution_path::ResolutionPath,
+    resolution_path::{ResolutionPath, ResolutionPathSegment::*},
     schema_resolver::{
         ArgLen, SchemaDataType, SchemaFnLexeme, SchemaResolver, SchemaTypeDescriptor,
     },
@@ -117,6 +117,26 @@ fn should_return_error_if_nullable_has_nullable_arg() {
     ));
 }
 
+#[test]
+fn should_return_error_if_dict_has_not_even_args() {
+    let ast = parse(r#".schema(.dict("name" .string(), "age"))"#);
+    let resolved_schema = SchemaResolver::new(&ast).resolve();
+    assert!(matches!(
+        resolved_schema,
+        Err(SchemaResolverErr::InvalDict { .. })
+    ));
+}
+
+#[test]
+fn should_return_error_if_dict_invalid_keys() {
+    let ast = parse(".schema(.dict(name .string(), age .int()))");
+    let resolved_schema = SchemaResolver::new(&ast).resolve();
+    assert!(matches!(
+        resolved_schema,
+        Err(SchemaResolverErr::InvalDict { .. })
+    ));
+}
+
 // ==================================================================
 //
 //  ERROR CASES END
@@ -136,6 +156,30 @@ fn should_resolve_single_primitive() {
         (".float()", SchemaDataType::Float),
         (".string()", SchemaDataType::String),
         (".bool()", SchemaDataType::Bool),
+    ];
+
+    for input in inputs {
+        let ast = parse(&format!(".schema({})", input.0));
+        let resolved_schema = SchemaResolver::new(&ast).resolve().unwrap();
+
+        assert_eq!(
+            *resolved_schema
+                .resolved_schema
+                .get(&ResolutionPath::new())
+                .unwrap(),
+            SchemaTypeDescriptor {
+                dtype: input.1,
+                nullable: false,
+            }
+        );
+    }
+}
+
+#[test]
+fn should_resolve_single_compound() {
+    let inputs = vec![
+        (r#".dict("name" .string())"#, SchemaDataType::Dict),
+        (".list(.int())", SchemaDataType::List),
     ];
 
     for input in inputs {
@@ -180,6 +224,133 @@ fn should_resolve_single_nullable_primitive() {
         );
     }
 }
+
+#[test]
+fn should_resolve_single_nullable_compound() {
+    let inputs = vec![
+        (r#".dict("name" .string())"#, SchemaDataType::Dict),
+        (".list(.int())", SchemaDataType::List),
+    ];
+
+    for input in inputs {
+        let ast = parse(&format!(".schema(.nullable({}))", input.0));
+        let resolved_schema = SchemaResolver::new(&ast).resolve().unwrap();
+
+        assert_eq!(
+            *resolved_schema
+                .resolved_schema
+                .get(&ResolutionPath::new())
+                .unwrap(),
+            SchemaTypeDescriptor {
+                dtype: input.1,
+                nullable: true,
+            }
+        );
+    }
+}
+
+#[test]
+fn should_resolve_one_level_dict() {
+    let s = r##"
+        .schema(
+            .dict(
+                "name"     .string()
+                "age"      .nullable(.int())
+                "score"    .float()
+                "employed" .bool()
+            )
+        )
+    "##;
+
+    let ast = parse(s);
+    let resolved_schema = SchemaResolver::new(&ast).resolve().unwrap();
+
+    let cases = vec![
+        (
+            ResolutionPath::new(),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Dict,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![Field("name".to_string())]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::String,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![Field("age".to_string())]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Int,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![Field("score".to_string())]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Float,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![Field("employed".to_string())]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Bool,
+                nullable: false,
+            },
+        ),
+    ];
+
+    for case in cases {
+        assert_eq!(
+            *resolved_schema.resolved_schema.get(&case.0).unwrap(),
+            case.1
+        );
+    }
+}
+
+#[test]
+fn should_resolve_one_level_list() {
+    let inputs = vec![
+        (SchemaFnLexeme::INT, SchemaDataType::Int),
+        (SchemaFnLexeme::FLOAT, SchemaDataType::Float),
+        (SchemaFnLexeme::STRING, SchemaDataType::String),
+        (SchemaFnLexeme::BOOL, SchemaDataType::Bool),
+    ];
+
+    for input in inputs {
+        let ast = parse(&format!(".schema(.list(.{}()))", input.0));
+        let resolved_schema = SchemaResolver::new(&ast).resolve().unwrap();
+
+        let cases = vec![
+            (
+                ResolutionPath::new(),
+                SchemaTypeDescriptor {
+                    dtype: SchemaDataType::List,
+                    nullable: false,
+                },
+            ),
+            (
+                ResolutionPath::with_segments(vec![AbstractIndex]),
+                SchemaTypeDescriptor {
+                    dtype: input.1,
+                    nullable: false,
+                },
+            ),
+        ];
+
+        for case in cases {
+            assert_eq!(
+                *resolved_schema.resolved_schema.get(&case.0).unwrap(),
+                case.1
+            );
+        }
+    }
+}
+
+// TODO: Add tests for complex schemas.
 
 // ==================================================================
 //

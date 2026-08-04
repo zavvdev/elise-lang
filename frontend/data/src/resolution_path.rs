@@ -55,8 +55,21 @@ impl ResolutionPath {
         Self(vec![ResolutionPathSegment::Root])
     }
 
+    // It's better to map over segments and push them in order
+    // to use logic inside push function.
+    pub fn with_segments(segments: Vec<ResolutionPathSegment>) -> Self {
+        let mut new = Self::new();
+        for segment in segments {
+            new.push(segment);
+        }
+        new
+    }
+
+    // Do not allow to push Root segment since it's there by default.
     pub fn push(&mut self, segment: ResolutionPathSegment) {
-        self.0.push(segment);
+        if segment != ResolutionPathSegment::Root {
+            self.0.push(segment);
+        }
     }
 
     // Don't allow to remove the last element.
@@ -96,6 +109,39 @@ mod tests {
     }
 
     #[test]
+    fn should_create_with_initial_segments() {
+        let path = ResolutionPath::with_segments(vec![
+            ResolutionPathSegment::AbstractIndex,
+            ResolutionPathSegment::Index(1),
+        ]);
+        assert_eq!(
+            path,
+            ResolutionPath(vec![
+                ResolutionPathSegment::Root,
+                ResolutionPathSegment::AbstractIndex,
+                ResolutionPathSegment::Index(1),
+            ])
+        );
+    }
+
+    #[test]
+    fn should_skip_root_segment_if_creating_with_segments() {
+        let path = ResolutionPath::with_segments(vec![
+            ResolutionPathSegment::AbstractIndex,
+            ResolutionPathSegment::Root,
+            ResolutionPathSegment::Index(1),
+        ]);
+        assert_eq!(
+            path,
+            ResolutionPath(vec![
+                ResolutionPathSegment::Root,
+                ResolutionPathSegment::AbstractIndex,
+                ResolutionPathSegment::Index(1),
+            ])
+        );
+    }
+
+    #[test]
     fn should_push_new_path_segment() {
         let mut path = ResolutionPath::new();
         assert_eq!(path, ResolutionPath(vec![ResolutionPathSegment::Root]));
@@ -107,6 +153,14 @@ mod tests {
                 ResolutionPathSegment::Field("test".to_string())
             ])
         );
+    }
+
+    #[test]
+    fn should_not_allow_to_push_root_segment() {
+        let mut path = ResolutionPath::new();
+        assert_eq!(path, ResolutionPath(vec![ResolutionPathSegment::Root]));
+        path.push(ResolutionPathSegment::Root);
+        assert_eq!(path, ResolutionPath(vec![ResolutionPathSegment::Root,]));
     }
 
     #[test]
