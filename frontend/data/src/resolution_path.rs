@@ -21,7 +21,7 @@ impl ResolutionPathSegment {
             ResolutionPathSegment::Root => "Root".to_string(),
             ResolutionPathSegment::Index(i) => format!("Index({})", i),
             ResolutionPathSegment::AbstractIndex => "AbstractIndex".to_string(),
-            ResolutionPathSegment::Field(name) => format!("Field({})", name),
+            ResolutionPathSegment::Field(name) => format!("Field(\"{}\")", name),
         }
     }
 }
@@ -78,3 +78,75 @@ impl ResolutionPath {
         )
     }
 }
+
+// ==================================================================
+//
+// TESTS START
+//
+// ==================================================================
+
+#[cfg(test)]
+mod tests {
+    use crate::resolution_path::{ResolutionPath, ResolutionPathSegment};
+
+    #[test]
+    fn should_create_default_path() {
+        let path = ResolutionPath::default();
+        assert_eq!(path, ResolutionPath(vec![ResolutionPathSegment::Root]));
+    }
+
+    #[test]
+    fn should_push_new_path_segment() {
+        let mut path = ResolutionPath::new();
+        assert_eq!(path, ResolutionPath(vec![ResolutionPathSegment::Root]));
+        path.push(ResolutionPathSegment::Field("test".to_string()));
+        assert_eq!(
+            path,
+            ResolutionPath(vec![
+                ResolutionPathSegment::Root,
+                ResolutionPathSegment::Field("test".to_string())
+            ])
+        );
+    }
+
+    #[test]
+    fn should_pop_last_segment() {
+        let mut path = ResolutionPath::new();
+        path.push(ResolutionPathSegment::Field("test".to_string()));
+        assert_eq!(
+            path,
+            ResolutionPath(vec![
+                ResolutionPathSegment::Root,
+                ResolutionPathSegment::Field("test".to_string())
+            ])
+        );
+        path.pop();
+        assert_eq!(path, ResolutionPath(vec![ResolutionPathSegment::Root,]));
+    }
+
+    #[test]
+    fn should_not_pop_if_len_is_1() {
+        let mut path = ResolutionPath::new();
+        assert_eq!(path, ResolutionPath(vec![ResolutionPathSegment::Root]));
+        path.pop();
+        assert_eq!(path, ResolutionPath(vec![ResolutionPathSegment::Root]));
+    }
+
+    #[test]
+    fn should_return_segments_as_str() {
+        let mut path = ResolutionPath::new();
+        path.push(ResolutionPathSegment::Field("test".to_string()));
+        path.push(ResolutionPathSegment::Index(1));
+        path.push(ResolutionPathSegment::AbstractIndex);
+        assert_eq!(
+            path.as_str(),
+            "[Root, Field(\"test\"), Index(1), AbstractIndex]"
+        );
+    }
+}
+
+// ==================================================================
+//
+// TESTS END
+//
+// ==================================================================
