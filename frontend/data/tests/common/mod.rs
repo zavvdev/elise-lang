@@ -1,9 +1,6 @@
-//use std::collections::HashMap;
-//
-//use elise_ast::AstNode;
-//use elise_data::binder::DataBindingTable;
-//use elise_parser::Prelude;
+use elise_ast::AstNode;
+use elise_parser::Prelude;
 
-//pub fn parse(source_code: &str) -> Vec<AstNode> {
-//    Prelude::new(&source_code.as_bytes()).parse().unwrap()
-//}
+pub fn parse(source_code: &str) -> Vec<AstNode> {
+    Prelude::new(&source_code.as_bytes()).parse().unwrap()
+}

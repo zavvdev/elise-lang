@@ -161,7 +161,7 @@ impl<'a> SchemaResolver<'a> {
         let call = match first_node {
             AstNode::Call(call) if call.lexeme == SchemaFnLexeme::ROOT => call,
             node => {
-                return Err(SchemaResolverErr::UnexpCall {
+                return Err(SchemaResolverErr::Unexp {
                     span: node.span().clone(),
                 });
             }

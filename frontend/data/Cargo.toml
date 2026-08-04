@@ -10,3 +10,6 @@ path = "src/lib.rs"
 csv.workspace = true
 elise-shared = { path = "../../shared" }
 elise-ast = { path = "../ast" }
+
+[dev-dependencies]
+elise-parser = { path = "../parser" }

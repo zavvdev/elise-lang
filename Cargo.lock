@@ -113,6 +113,7 @@ version = "0.1.0"
 dependencies = [
  "csv",
  "elise-ast",
+ "elise-parser",
  "elise-shared",
 ]
 

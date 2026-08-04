@@ -3,7 +3,7 @@ use crate::shared_types::{ArityMismatchKind, Span};
 #[derive(Debug, PartialEq)]
 pub enum SchemaResolverErr {
     Empty,
-    UnexpCall {
+    Unexp {
         span: Span,
     },
     ArityMismatch {

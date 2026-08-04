@@ -13,7 +13,7 @@ pub fn print_err(schema_err: &SchemaResolverErr, schema_source_code: &[u8]) {
     let (msg, span): (&str, Option<&Span>) = match schema_err {
         Empty => ("Schema file must not be empty", None),
 
-        UnexpCall { span } => ("Unexpected call", Some(span)),
+        Unexp { span } => ("Unexpected expression", Some(span)),
 
         ArityMismatch {
             fn_name,
