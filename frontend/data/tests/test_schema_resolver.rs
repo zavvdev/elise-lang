@@ -433,7 +433,6 @@ fn should_resolve_complex_schema() {
                 nullable: true,
             },
         ),
-        // TODO: Fails
         (
             ResolutionPath::with_segments(vec![AbstractIndex, Field("address".to_string())]),
             SchemaTypeDescriptor {
@@ -441,6 +440,7 @@ fn should_resolve_complex_schema() {
                 nullable: false,
             },
         ),
+        // TODO
     ];
 
     for case in cases {

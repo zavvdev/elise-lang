@@ -208,7 +208,7 @@ impl<'a> SchemaResolver<'a> {
         node: &AstNode,
         resolved_schema: &mut TResolvedSchema,
     ) -> Result<(), SchemaResolverErr> {
-        let result = match node {
+        match node {
             AstNode::Call(call) => match call.lexeme.as_str() {
                 SchemaFnLexeme::INT => self.resolve_primitive(
                     call,
@@ -242,14 +242,11 @@ impl<'a> SchemaResolver<'a> {
                 }),
             },
             node => {
-                return Err(SchemaResolverErr::InvalTypeDef {
+                Err(SchemaResolverErr::InvalTypeDef {
                     span: node.span().clone(),
-                });
+                })
             }
-        };
-
-        self.current_path.pop();
-        result
+        }
     }
 
     /// We use the same function for all primitives since they all
@@ -274,7 +271,10 @@ impl<'a> SchemaResolver<'a> {
             });
         }
 
-        self.commit(resolved_schema)
+        self.commit(resolved_schema)?;
+        self.current_path.pop();
+
+        Ok(())
     }
 
     fn resolve_nullable(
@@ -314,6 +314,7 @@ impl<'a> SchemaResolver<'a> {
         // Reset nullable state after we out of nullable definition scope.
         self.current_nullable = false;
 
+        // We do not pop path segment after resolving nullable since it's just a modifier.
         Ok(())
     }
 
@@ -379,6 +380,7 @@ impl<'a> SchemaResolver<'a> {
             index += 1;
         }
 
+        self.current_path.pop();
         Ok(())
     }
 
@@ -412,6 +414,7 @@ impl<'a> SchemaResolver<'a> {
         self.current_path.push(ResolutionPathSegment::AbstractIndex);
         self.resolve_from_node(first_arg, resolved_schema)?;
 
+        self.current_path.pop();
         Ok(())
     }
 }
