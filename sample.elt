@@ -1,6 +1,21 @@
-.schema (
-    .dict (
-        "scores" .list(.list(.dict(
-                                "name" .string())))
-    )
-)
+.schema(
+    .list(
+        .dict(
+            "id"       .int()
+            "name"     .string()
+            "age"      .int()
+            "emails"   .nullable(.list(.string()))
+            
+            "address"  .dict(
+                          "city"   .string()
+                          "street" .string()
+                          "house"  .string()
+                          "index"  .nullable(.int()))
+            
+            "scores"   .list(.list(.float()))
+            "employed" .bool()
+            
+            "admin"    .nullable(.dict(
+                                    "id"          .int()
+                                    "email"       .string()
+                                    "permissions" .list(.string()))))))
