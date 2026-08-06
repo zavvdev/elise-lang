@@ -14,8 +14,10 @@
           Check sample.elt for more details
 
     - [x] Docs
+    
+    - [ ] Add explicit .null type definition
 
-    - [ ] ?Should we make children nullable if parent is nullable
+    - [ ] Apply nullable modifier only for the direct child
 
     - [ ] Mixed array
     
@@ -34,7 +36,9 @@
 
 - [x] Schema file parsing
 
-- [x] Csv data file parsing
+- [ ] Csv data file parsing
+
+    - [ ] Empty string == NULL ?
 
 - [x] Csv schema resolution (take schema AST and build CsvResolvedSchema
       that maps each col to type descriptor)

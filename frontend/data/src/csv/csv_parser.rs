@@ -293,6 +293,7 @@ mod tests {
 
     #[test]
     fn should_parse_null() {
+        // TODO: Check this. We might not want to treat empty strings as null.
         let row = vec!["", " ", "null", "NULL", "Null"];
         let csv = build_csv(&row);
         let parser = CsvParser::new(&csv);
