@@ -38,7 +38,7 @@
 
 - [ ] Csv data file parsing
 
-    - [ ] Empty string == NULL ?
+    - [ ] Do not coerce empty strings to Null
 
 - [x] Csv schema resolution (take schema AST and build CsvResolvedSchema
       that maps each col to type descriptor)

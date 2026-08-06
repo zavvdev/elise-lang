@@ -17,7 +17,7 @@ use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 //    },
 //};
 
-use elise_data::schema_resolver::SchemaResolver;
+use elise_data::{csv::csv_parser::CsvParser, schema_resolver::SchemaResolver};
 use elise_parser::Prelude;
 //use elise_semanalyzer::Harmony;
 use elise_shared::shared_errors::LangErr;
@@ -63,10 +63,14 @@ pub struct ValidateResult<'a> {
 pub fn run<'a>(
     _source_code: &'a [u8],
     // TODO: Why it's not vec of bytes?
-    _data: &'a str,
+    data: &'a str,
     data_schema: &'a [u8],
     config: &'a ModeRunConf,
 ) -> Result<RunResult<'a>, LangErr> {
+    let parsed_data = CsvParser::new(data).parse();
+
+    println!("PARSED DATA: {:#?}", parsed_data);
+
     let schema_ast = Prelude::new(data_schema)
         .parse()
         .map_err(LangErr::ParserSchema)

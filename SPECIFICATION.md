@@ -392,3 +392,8 @@ the _Function_ evaluation.
 .let ([my-function2 .fn([value]
                         .add(2 value))] ...)
 ```
+
+## CSV
+
+Empty cells like `,,`, `,"",` or `,"  ",` are always treated as String type. They don't coerce to
+Null. Null only equals to itself.
