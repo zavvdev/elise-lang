@@ -234,7 +234,7 @@ impl<'a> SchemaResolver<'a> {
                     SchemaFnLexeme::BOOL,
                     resolved_schema,
                 ),
-                SchemaFnLexeme::NULLABLE => self.resolve_nullable(call, resolved_schema),
+                SchemaFnLexeme::NULLABLE => self.resolve_modifier_nullable(call, resolved_schema),
                 SchemaFnLexeme::DICT => self.resolve_dict(call, resolved_schema),
                 SchemaFnLexeme::LIST => self.resolve_list(call, resolved_schema),
                 _ => Err(SchemaResolverErr::InvalTypeDef {
@@ -270,12 +270,20 @@ impl<'a> SchemaResolver<'a> {
         }
 
         self.commit(resolved_schema)?;
+        // We always remove the last path segment after resolving primitives
+        // regardless if they nested or not, because if they are nested,
+        // then it removes nested path segment which is correct. If they are not
+        // nested, which means they are top level type definition, then this will
+        // be noop because we can't remove Root segment from Path.
         self.current_path.pop();
 
         Ok(())
     }
 
-    fn resolve_nullable(
+    /// Provides nullable metadata for nested type definitions.
+    /// Does not create/remove any path segments from the current_path
+    /// after resolution.
+    fn resolve_modifier_nullable(
         &mut self,
         call: &AstCall,
         resolved_schema: &mut TResolvedSchema,
