@@ -15,7 +15,12 @@
 
     - [x] Docs
 
+    - [ ] ?Should we make children nullable if parent is nullable
+
+    - [ ] Mixed array
+    
     - [ ] Tests
+
 
 - [ ] Validation of data against schema must be a separate stage. See DOCUMENTAITON
 

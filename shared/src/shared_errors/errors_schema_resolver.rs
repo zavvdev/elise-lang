@@ -19,9 +19,6 @@ pub enum SchemaResolverErr {
     InvalTypeDef {
         span: Span,
     },
-    NullableNullable {
-        span: Span,
-    },
     InvalDict {
         span: Span,
     },

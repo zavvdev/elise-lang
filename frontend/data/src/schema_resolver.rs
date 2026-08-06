@@ -241,11 +241,9 @@ impl<'a> SchemaResolver<'a> {
                     span: call.span.clone(),
                 }),
             },
-            node => {
-                Err(SchemaResolverErr::InvalTypeDef {
-                    span: node.span().clone(),
-                })
-            }
+            node => Err(SchemaResolverErr::InvalTypeDef {
+                span: node.span().clone(),
+            }),
         }
     }
 
@@ -290,14 +288,6 @@ impl<'a> SchemaResolver<'a> {
                 expected: ArgLen::NULLABLE,
                 kind: ArityMismatchKind::Eq,
                 found: args_len,
-                span: call.span.clone(),
-            });
-        }
-
-        // Do not allow to define nullable inside nullable like:
-        // .nullable(.nullable(.int()))
-        if self.current_nullable {
-            return Err(SchemaResolverErr::NullableNullable {
                 span: call.span.clone(),
             });
         }

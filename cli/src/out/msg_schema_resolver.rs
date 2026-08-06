@@ -33,7 +33,6 @@ pub fn print_err(schema_err: &SchemaResolverErr, schema_source_code: &[u8]) {
         ),
         UnresolvablePath { path } => (&format!("Unresolvable path: {}", path), None),
         InvalTypeDef { span } => ("Invalid type definition", Some(span)),
-        NullableNullable { span } => ("Cannot apply nullable modifier to nullable", Some(span)),
         InvalDict { span } => ("Invalid dictionary", Some(span)),
     };
 

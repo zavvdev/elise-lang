@@ -108,16 +108,6 @@ fn should_return_error_if_primitive_has_arguments() {
 }
 
 #[test]
-fn should_return_error_if_nullable_has_nullable_arg() {
-    let ast = parse(".schema(.nullable(.nullable(.int())))");
-    let resolved_schema = SchemaResolver::new(&ast).resolve();
-    assert!(matches!(
-        resolved_schema,
-        Err(SchemaResolverErr::NullableNullable { .. })
-    ));
-}
-
-#[test]
 fn should_return_error_if_dict_has_not_even_args() {
     let ast = parse(r#".schema(.dict("name" .string(), "age"))"#);
     let resolved_schema = SchemaResolver::new(&ast).resolve();
@@ -364,7 +354,7 @@ fn should_resolve_complex_schema() {
                     "address"  .dict(
                                   "city"   .string()
                                   "street" .string()
-                                  "house"  .string()
+                                  "house"  .nullable(.int())
                                   "index"  .nullable(.int()))
                     
                     "scores"   .list(.list(.float()))
@@ -373,7 +363,10 @@ fn should_resolve_complex_schema() {
                     "admin"    .nullable(.dict(
                                             "id"          .int()
                                             "email"       .string()
-                                            "permissions" .list(.string()))))))
+                                            "permissions" .list(.string())
+                                            "address"     .dict(
+                                                             "city"   .string()
+                                                             "street" .nullable(.string())))))))
     "##;
 
     let ast = parse(s);
@@ -440,7 +433,163 @@ fn should_resolve_complex_schema() {
                 nullable: false,
             },
         ),
-        // TODO
+        (
+            ResolutionPath::with_segments(vec![
+                AbstractIndex,
+                Field("address".to_string()),
+                Field("city".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::String,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                AbstractIndex,
+                Field("address".to_string()),
+                Field("street".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::String,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                AbstractIndex,
+                Field("address".to_string()),
+                Field("house".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Int,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                AbstractIndex,
+                Field("address".to_string()),
+                Field("index".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Int,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![AbstractIndex, Field("scores".to_string())]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::List,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                AbstractIndex,
+                Field("scores".to_string()),
+                AbstractIndex,
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::List,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                AbstractIndex,
+                Field("scores".to_string()),
+                AbstractIndex,
+                AbstractIndex,
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Float,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![AbstractIndex, Field("employed".to_string())]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Bool,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![AbstractIndex, Field("admin".to_string())]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Dict,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                AbstractIndex,
+                Field("admin".to_string()),
+                Field("id".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Int,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                AbstractIndex,
+                Field("admin".to_string()),
+                Field("email".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::String,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                AbstractIndex,
+                Field("admin".to_string()),
+                Field("permissions".to_string()),
+                AbstractIndex,
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::String,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                AbstractIndex,
+                Field("admin".to_string()),
+                Field("address".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Dict,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                AbstractIndex,
+                Field("admin".to_string()),
+                Field("address".to_string()),
+                Field("city".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::String,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                AbstractIndex,
+                Field("admin".to_string()),
+                Field("address".to_string()),
+                Field("street".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::String,
+                nullable: true,
+            },
+        ),
     ];
 
     for case in cases {
