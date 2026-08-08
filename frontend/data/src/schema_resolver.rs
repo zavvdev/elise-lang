@@ -228,7 +228,6 @@ impl<'a> SchemaResolver<'a> {
             current_type: None,
             // Track current modifier in order to be able to provide metadata
             // for the type being resolved.
-            // TODO: Replace with LinkedList.
             current_modifiers: vec![],
         }
     }
