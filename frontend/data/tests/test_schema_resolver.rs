@@ -240,6 +240,137 @@ fn should_resolve_single_nullable_compound() {
 }
 
 #[test]
+fn should_resolve_nested_nullables() {
+    let s = r##"
+        .schema(
+            .dict(
+                "name"    .string()
+
+                "email"   .nullable(.string())
+
+                "address" .nullable(.dict(
+                                        "street" .string()
+                                        "house"  .nullable(.int())
+                                        "state"  .dict(
+                                                    "name" .string()
+                                                    "code" .nullable(.string()))))
+                
+                "score"   .nullable(.float())
+                
+                "id"      .int()
+            )
+        )
+    "##;
+
+    let ast = parse(s);
+    let resolved_schema = SchemaResolver::new(&ast).resolve().unwrap();
+
+    let cases = vec![
+        (
+            ResolutionPath::new(),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Dict,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![Field("name".to_string())]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::String,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![Field("email".to_string())]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::String,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![Field("address".to_string())]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Dict,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                Field("address".to_string()),
+                Field("street".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::String,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                Field("address".to_string()),
+                Field("house".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Int,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                Field("address".to_string()),
+                Field("state".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Dict,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                Field("address".to_string()),
+                Field("state".to_string()),
+                Field("name".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::String,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                Field("address".to_string()),
+                Field("state".to_string()),
+                Field("code".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::String,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![Field("score".to_string())]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Float,
+                nullable: true,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![Field("id".to_string())]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::Int,
+                nullable: false,
+            },
+        ),
+    ];
+
+    for case in cases {
+        assert_eq!(
+            *resolved_schema.resolved_schema.get(&case.0).unwrap(),
+            case.1
+        );
+    }
+}
+
+#[test]
 fn should_resolve_one_level_dict() {
     let s = r##"
         .schema(
@@ -350,20 +481,20 @@ fn should_resolve_complex_schema() {
                     "name"     .string()
                     "age"      .int()
                     "emails"   .nullable(.list(.string()))
-                    
+
                     "address"  .dict(
                                   "city"   .string()
                                   "street" .string()
                                   "house"  .nullable(.int())
                                   "index"  .nullable(.int()))
-                    
+
                     "scores"   .list(.list(.float()))
                     "employed" .bool()
-                    
+
                     "admin"    .nullable(.dict(
                                             "id"          .int()
                                             "email"       .string()
-                                            "permissions" .list(.string())
+                                            "permissions" .list(.nullable(.string()))
                                             "address"     .dict(
                                                              "city"   .string()
                                                              "street" .nullable(.string())))))))
@@ -423,7 +554,7 @@ fn should_resolve_complex_schema() {
             ]),
             SchemaTypeDescriptor {
                 dtype: SchemaDataType::String,
-                nullable: true,
+                nullable: false,
             },
         ),
         (
@@ -496,18 +627,6 @@ fn should_resolve_complex_schema() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
-                AbstractIndex,
-                Field("scores".to_string()),
-                AbstractIndex,
-                AbstractIndex,
-            ]),
-            SchemaTypeDescriptor {
-                dtype: SchemaDataType::Float,
-                nullable: false,
-            },
-        ),
-        (
             ResolutionPath::with_segments(vec![AbstractIndex, Field("employed".to_string())]),
             SchemaTypeDescriptor {
                 dtype: SchemaDataType::Bool,
@@ -529,7 +648,7 @@ fn should_resolve_complex_schema() {
             ]),
             SchemaTypeDescriptor {
                 dtype: SchemaDataType::Int,
-                nullable: true,
+                nullable: false,
             },
         ),
         (
@@ -540,7 +659,18 @@ fn should_resolve_complex_schema() {
             ]),
             SchemaTypeDescriptor {
                 dtype: SchemaDataType::String,
-                nullable: true,
+                nullable: false,
+            },
+        ),
+        (
+            ResolutionPath::with_segments(vec![
+                AbstractIndex,
+                Field("admin".to_string()),
+                Field("permissions".to_string()),
+            ]),
+            SchemaTypeDescriptor {
+                dtype: SchemaDataType::List,
+                nullable: false,
             },
         ),
         (
@@ -563,7 +693,7 @@ fn should_resolve_complex_schema() {
             ]),
             SchemaTypeDescriptor {
                 dtype: SchemaDataType::Dict,
-                nullable: true,
+                nullable: false,
             },
         ),
         (
@@ -575,7 +705,7 @@ fn should_resolve_complex_schema() {
             ]),
             SchemaTypeDescriptor {
                 dtype: SchemaDataType::String,
-                nullable: true,
+                nullable: false,
             },
         ),
         (

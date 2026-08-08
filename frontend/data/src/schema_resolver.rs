@@ -43,6 +43,12 @@ use elise_shared::shared_node_names::NodeName;
 
 use crate::resolution_path::{ResolutionPath, ResolutionPathSegment};
 
+// ==================================================================
+//
+//  DATA TYPES START
+//
+// ==================================================================
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum SchemaDataType {
     // We don't carry full type information
@@ -59,11 +65,9 @@ pub enum SchemaDataType {
     Float,
     String,
     Bool,
-    Null,
     List,
     Dict,
 }
-
 // TODO: Check if we need this.
 impl SchemaDataType {
     pub fn as_str(&self) -> &'static str {
@@ -72,12 +76,23 @@ impl SchemaDataType {
             SchemaDataType::Float => NodeName::FLOAT,
             SchemaDataType::String => NodeName::STRING,
             SchemaDataType::Bool => NodeName::BOOL,
-            SchemaDataType::Null => NodeName::NULL,
             SchemaDataType::List => NodeName::LIST,
             SchemaDataType::Dict => NodeName::DICT,
         }
     }
 }
+
+// ==================================================================
+//
+//  DATA TYPES END
+//
+// ==================================================================
+
+// ==================================================================
+//
+//  FN SETTINGS START
+//
+// ==================================================================
 
 /// Set of known function calls that are used for
 /// type definitions.
@@ -88,11 +103,15 @@ impl SchemaFnLexeme {
     // specific metadata for schema being defined
     // in the future.
     pub const ROOT: &'static str = "schema";
+
+    // Modifiers.
+    pub const NULLABLE: &'static str = "nullable";
+
+    // Type resolution functions.
     pub const INT: &'static str = "int";
     pub const FLOAT: &'static str = "float";
     pub const STRING: &'static str = "string";
     pub const BOOL: &'static str = "bool";
-    pub const NULLABLE: &'static str = "nullable";
     pub const DICT: &'static str = "dict";
     pub const LIST: &'static str = "list";
 }
@@ -110,6 +129,67 @@ impl ArgLen {
     // We support only a list of one data type for now.
     pub const LIST: usize = 1;
 }
+
+// ==================================================================
+//
+//  FN SETTINGS END
+//
+// ==================================================================
+
+// ==================================================================
+//
+//  MODIFIER START
+//
+// ==================================================================
+
+/// Descriptor for modifier itself to provide a
+/// settings of its behavior.
+#[derive(Debug, PartialEq)]
+struct ModifierDescriptor {
+    // Whether we need to apply this modifier for all
+    // nested types or only for the direct child.
+    deep: bool,
+    // Whether it can be applied again or not.
+    // Used together with `deep`. For example, if we
+    // have a modifier with `deep=false`, then after
+    // applying it we set `active` to `true` therefore
+    // this modifier will be skipped for nested nodes.
+    active: bool,
+}
+impl Default for ModifierDescriptor {
+    fn default() -> Self {
+        Self {
+            deep: false,
+            active: true,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+enum ModifierKind {
+    Nullable,
+}
+
+/// Modifier is a special type of schema function
+/// that does not produce a type definition but
+/// rather provide some metadata for its children.
+#[derive(Debug, PartialEq)]
+struct Modifier {
+    kind: ModifierKind,
+    descriptor: ModifierDescriptor,
+}
+
+// ==================================================================
+//
+//  MODIFIER END
+//
+// ==================================================================
+
+// ==================================================================
+//
+//  SCHEMA RESOLVER START
+//
+// ==================================================================
 
 /// Data type descriptor that is a value each resolution
 /// path resolves to.
@@ -131,7 +211,7 @@ pub struct SchemaResolver<'a> {
     schema_ast: &'a Vec<AstNode>,
     current_path: ResolutionPath,
     current_type: Option<SchemaDataType>,
-    current_nullable: bool,
+    current_modifiers: Vec<Modifier>,
 }
 
 impl<'a> SchemaResolver<'a> {
@@ -146,10 +226,9 @@ impl<'a> SchemaResolver<'a> {
             // Whenever we encounter a type definition that we distinguish,
             // we capture it into this field.
             current_type: None,
-            // Whenever we enter .nullable type we set it to true in order
-            // to make all nested types nullable, since if parent is nullable,
-            // then accessing any nested items might give you null value.
-            current_nullable: false,
+            // Track current modifier in order to be able to provide metadata
+            // for the type being resolved.
+            current_modifiers: vec![],
         }
     }
 
@@ -184,24 +263,6 @@ impl<'a> SchemaResolver<'a> {
         }
     }
 
-    /// Captures the current state and inserts a new record into the
-    /// resolved schema.
-    fn commit(&mut self, resolved_schema: &mut TResolvedSchema) -> Result<(), SchemaResolverErr> {
-        if let Some(dtype) = &self.current_type {
-            resolved_schema.insert(
-                self.current_path.clone(),
-                SchemaTypeDescriptor {
-                    dtype: dtype.clone(),
-                    nullable: self.current_nullable,
-                },
-            );
-            return Ok(());
-        }
-        Err(SchemaResolverErr::UnresolvablePath {
-            path: self.current_path.as_str(),
-        })
-    }
-
     /// Main function for resolving type from AST nodes.
     fn resolve_from_node(
         &mut self,
@@ -210,6 +271,9 @@ impl<'a> SchemaResolver<'a> {
     ) -> Result<(), SchemaResolverErr> {
         match node {
             AstNode::Call(call) => match call.lexeme.as_str() {
+                SchemaFnLexeme::NULLABLE => {
+                    self.resolve_modifier(ModifierKind::Nullable, call, resolved_schema)
+                }
                 SchemaFnLexeme::INT => self.resolve_primitive(
                     call,
                     SchemaDataType::Int,
@@ -234,7 +298,6 @@ impl<'a> SchemaResolver<'a> {
                     SchemaFnLexeme::BOOL,
                     resolved_schema,
                 ),
-                SchemaFnLexeme::NULLABLE => self.resolve_modifier_nullable(call, resolved_schema),
                 SchemaFnLexeme::DICT => self.resolve_dict(call, resolved_schema),
                 SchemaFnLexeme::LIST => self.resolve_list(call, resolved_schema),
                 _ => Err(SchemaResolverErr::InvalTypeDef {
@@ -245,6 +308,91 @@ impl<'a> SchemaResolver<'a> {
                 span: node.span().clone(),
             }),
         }
+    }
+
+    fn appy_modifiers(&mut self, type_descriptor: &mut SchemaTypeDescriptor) {
+        // Iterate over mutable modifiers since we need to update
+        // descriptor in case we need to.
+        for modifier in self.current_modifiers.iter_mut() {
+            if !modifier.descriptor.active {
+                continue;
+            }
+            match modifier.kind {
+                ModifierKind::Nullable => {
+                    type_descriptor.nullable = true;
+                }
+            }
+            if !modifier.descriptor.deep {
+                modifier.descriptor.active = false;
+            }
+        }
+    }
+
+    /// Captures the current state and inserts a new record into the
+    /// resolved schema.
+    fn commit(&mut self, resolved_schema: &mut TResolvedSchema) -> Result<(), SchemaResolverErr> {
+        if let Some(dtype) = &self.current_type {
+            let mut type_descriptor = SchemaTypeDescriptor {
+                dtype: dtype.clone(),
+                nullable: false,
+            };
+            self.appy_modifiers(&mut type_descriptor);
+            resolved_schema.insert(self.current_path.clone(), type_descriptor);
+            return Ok(());
+        }
+        Err(SchemaResolverErr::UnresolvablePath {
+            path: self.current_path.as_str(),
+        })
+    }
+
+    fn resolve_modifier(
+        &mut self,
+        modifier_kind: ModifierKind,
+        call: &AstCall,
+        resolved_schema: &mut TResolvedSchema,
+    ) -> Result<(), SchemaResolverErr> {
+        let result = match modifier_kind {
+            ModifierKind::Nullable => self.resolve_modifier_nullable(call, resolved_schema),
+        };
+        self.current_modifiers.clear();
+        result
+    }
+
+    /// Provides nullable metadata for nested type definitions.
+    /// Does not create/remove any path segments from the current_path
+    /// after resolution.
+    fn resolve_modifier_nullable(
+        &mut self,
+        call: &AstCall,
+        resolved_schema: &mut TResolvedSchema,
+    ) -> Result<(), SchemaResolverErr> {
+        let args_len = call.children.len();
+
+        if args_len != ArgLen::NULLABLE {
+            return Err(SchemaResolverErr::ArityMismatch {
+                fn_name: SchemaFnLexeme::NULLABLE,
+                expected: ArgLen::NULLABLE,
+                kind: ArityMismatchKind::Eq,
+                found: args_len,
+                span: call.span.clone(),
+            });
+        }
+
+        let descriptor = ModifierDescriptor {
+            // Nullable modifier is not supposed to be a deep modifier.
+            deep: false,
+            ..ModifierDescriptor::default()
+        };
+
+        self.current_modifiers.push(Modifier {
+            kind: ModifierKind::Nullable,
+            descriptor,
+        });
+
+        self.resolve_from_node(call.children.first().unwrap(), resolved_schema)?;
+
+        // We do not pop path segment after resolving nullable since it's just a modifier.
+        Ok(())
     }
 
     /// We use the same function for all primitives since they all
@@ -277,42 +425,6 @@ impl<'a> SchemaResolver<'a> {
         // be noop because we can't remove Root segment from Path.
         self.current_path.pop();
 
-        Ok(())
-    }
-
-    /// Provides nullable metadata for nested type definitions.
-    /// Does not create/remove any path segments from the current_path
-    /// after resolution.
-    fn resolve_modifier_nullable(
-        &mut self,
-        call: &AstCall,
-        resolved_schema: &mut TResolvedSchema,
-    ) -> Result<(), SchemaResolverErr> {
-        let args_len = call.children.len();
-
-        if args_len != ArgLen::NULLABLE {
-            return Err(SchemaResolverErr::ArityMismatch {
-                fn_name: SchemaFnLexeme::NULLABLE,
-                expected: ArgLen::NULLABLE,
-                kind: ArityMismatchKind::Eq,
-                found: args_len,
-                span: call.span.clone(),
-            });
-        }
-
-        // Set nullable flag to true before recursing deeper.
-        self.current_nullable = true;
-
-        // After this stage, all nested type definitions will be
-        // resolved as nullable. For now this is intentional since
-        // accessing any data of the parent might give you null because
-        // parent might not be accessible.
-        self.resolve_from_node(call.children.first().unwrap(), resolved_schema)?;
-
-        // Reset nullable state after we out of nullable definition scope.
-        self.current_nullable = false;
-
-        // We do not pop path segment after resolving nullable since it's just a modifier.
         Ok(())
     }
 
@@ -416,3 +528,9 @@ impl<'a> SchemaResolver<'a> {
         Ok(())
     }
 }
+
+// ==================================================================
+//
+//  SCHEMA RESOLVER END
+//
+// ==================================================================

@@ -69,7 +69,7 @@ impl<'a> CsvParser<'a> {
     fn is_float(value: &str) -> bool {
         value.trim().parse::<f64>().is_ok()
     }
-    
+
     // TODO: Do not coerce empty strings to NULL.
     // ,, and ,"", must always be empty strings.
     fn is_null(value: &str) -> bool {

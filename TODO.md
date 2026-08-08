@@ -15,9 +15,23 @@
 
     - [x] Docs
     
-    - [ ] Add explicit .null type definition
+    - [x] Apply .nullable modifier only for the direct child
+    
+    - [ ] Add doc comments for modifiers
 
-    - [ ] Apply nullable modifier only for the direct child
+    - [ ] Add .nullable-deep modifier (deep=true)
+
+    - [ ] Add .non-nullable modifier (deep=false)
+    
+    - [ ] Add .non-nullable-deep modifier (deep=true)
+
+    - [ ] Add .optional modifier (deep=false)
+    
+    - [ ] Add .optional-deep modifier (deep=true)
+    
+    - [ ] Add .non-optional modifier (deep=false)
+    
+    - [ ] Add .non-optional-deep modifier (deep=true)
 
     - [ ] Mixed array
     
