@@ -45,7 +45,7 @@ use crate::resolution_path::{ResolutionPath, ResolutionPathSegment};
 
 // ==================================================================
 //
-//  DATA TYPES START
+// DATA TYPES START
 //
 // ==================================================================
 
@@ -84,13 +84,13 @@ impl SchemaDataType {
 
 // ==================================================================
 //
-//  DATA TYPES END
+// DATA TYPES END
 //
 // ==================================================================
 
 // ==================================================================
 //
-//  FN SETTINGS START
+// FN SETTINGS START
 //
 // ==================================================================
 
@@ -132,13 +132,63 @@ impl ArgLen {
 
 // ==================================================================
 //
-//  FN SETTINGS END
+// FN SETTINGS END
 //
 // ==================================================================
 
 // ==================================================================
 //
-//  MODIFIER START
+// MODIFIERS START
+//
+// Modifiers are functions that wrap type definitions in order
+// to provide some additional metadata. They can modify inner types
+// in a different way. They can be applied either to one direct
+// child type, or to all inner nested types. The list of available
+// modifiers:
+//
+// 1. .nullable - makes a type to be nullable, so it can be either
+//                NULL or type itself. Ex: .nullable(.int()), so
+//                here it's either Int or Null. It applies to
+//                the direct child only. If its argument is
+//                any compound structure like list or dict,
+//                values of these compound structures won't be
+//                nullable.
+//
+// 2. .nullable-deep - makes all nested types nullable. It applies
+//                     nullable modifier not only for one level
+//                     type definitions but also for any nested
+//                     definition.
+//                     Ex: .nullable-deep(.dict(
+//                                  "address" .dict(...)))
+//                     So "address" and all other inner types inside
+//                     will be nullable.
+//
+// 3. .non-nullable - makes a type to be non-nullable. Applies to
+//                    the direct child only. Useful if you have
+//                    a dict where each field is a nullable type
+//                    except some of them, so you can make them
+//                    non-nullable.
+//
+// 4. .non-nullable-deep - same as non-nullable but applies to all
+//                         nested type definitions.
+//
+// 5. .optional - makes its direct child type definition to be
+//                an optional field. Optional is not the same as
+//                nullable. Nullable means that field itself
+//                exists but its value can be NULL. Optional on the
+//                other hand implies that value can be either some
+//                type or this field that holds this type can be
+//                missing. When optional applied to a type, that
+//                type cannot be null. When nullable applied to
+//                a type, that type cannot be optional.
+//
+// 6. .optional-deep - same as optional, but applies to all nested
+//                    type definitions.
+//
+// 7. .non-optional - same as non-nullable but for optional modifier.
+//
+// 8. .non-optional-deep - same as non-optional but applies to all
+//                         nested type definitions.
 //
 // ==================================================================
 
@@ -181,13 +231,13 @@ struct Modifier {
 
 // ==================================================================
 //
-//  MODIFIER END
+// MODIFIERS END
 //
 // ==================================================================
 
 // ==================================================================
 //
-//  SCHEMA RESOLVER START
+// SCHEMA RESOLVER START
 //
 // ==================================================================
 
@@ -531,6 +581,6 @@ impl<'a> SchemaResolver<'a> {
 
 // ==================================================================
 //
-//  SCHEMA RESOLVER END
+// SCHEMA RESOLVER END
 //
 // ==================================================================

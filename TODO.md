@@ -17,7 +17,7 @@
     
     - [x] Apply .nullable modifier only for the direct child
     
-    - [ ] Add doc comments for modifiers
+    - [x] Add doc comments for modifiers
 
     - [ ] Add .nullable-deep modifier (deep=true)
 
