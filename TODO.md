@@ -2,7 +2,7 @@
 
 ## Things to implement
 
-- [x] Refactor schema resolver (?Maybe we need to create a global type resolver instead of this
+- [ ] Refactor schema resolver (?Maybe we need to create a global type resolver instead of this
                                 so we can use this resolution algorithm for any data structs in
                                 the source code as well that user creates)
 
@@ -20,8 +20,12 @@
     - [x] Add doc comments for modifiers
 
     - [x] Add .optional modifier (deep=false)
+
+    - [ ] Try to add .union for .list typedef
+
+    - [ ] Try to add a list capacity for .list typedef: .list(.string(), 2)
     
-    - [x] Tests
+    - [ ] Tests
 
 - [ ] Csv data file parsing
 
