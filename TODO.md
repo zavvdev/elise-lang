@@ -21,7 +21,7 @@
 
     - [x] Add .optional modifier (deep=false)
     
-    - [ ] Mixed array
+    - [ ] Mixed list .list(.union(.int(), .float())) ??? RETHINK LIST DESIGN
     
     - [ ] Tests
 

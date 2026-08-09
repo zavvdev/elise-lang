@@ -1,2 +1,19 @@
 .schema(
-    .list(.optional(.int())))
+    .list(.union(
+            .int()
+            .list(.union(
+                    .string(),
+                    .float())))))
+
+[Root, List]
+[Root, Index, Union<Int, List>]
+[Root, Index, Index, Union<String, Float>]
+
+.schema(
+    .list(
+        .union(
+            .list(.string()),
+            .list(.int()))))
+
+[Root, List]
+[Root, Index, Union<List, List>] ??
