@@ -21,7 +21,8 @@
 
     - [x] Add .optional modifier (deep=false)
     
-    - [ ] Mixed list .list(.union(.int(), .float())) ??? RETHINK LIST DESIGN
+    - [ ] Mixed list .list(.union(.int(), .float())) ??? RETHINK LIST DESIGN - They must be
+      monomorphic (update grammar). lists are monomorphic because schema resolution is a single deterministic AST walk producing one path→type entry — there is no representation for a path resolving to more than one type.
     
     - [ ] Tests
 

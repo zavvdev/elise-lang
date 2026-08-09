@@ -17,3 +17,6 @@
 
 [Root, List]
 [Root, Index, Union<List, List>] ??
+
+
+.list(.list(.string()))
