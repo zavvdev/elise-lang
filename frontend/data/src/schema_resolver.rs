@@ -586,6 +586,10 @@ impl<'a> SchemaResolver<'a> {
         Ok(())
     }
 
+    /// Lists are monomorphic because schema resolution is a single
+    /// deterministic AST walk producing one path -> type entry —
+    /// there is no representation for a path resolving
+    /// to more than one type.
     fn resolve_list(
         &mut self,
         call: &AstCall,

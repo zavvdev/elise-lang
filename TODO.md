@@ -2,7 +2,7 @@
 
 ## Things to implement
 
-- [ ] Refactor schema resolver (?Maybe we need to create a global type resolver instead of this
+- [x] Refactor schema resolver (?Maybe we need to create a global type resolver instead of this
                                 so we can use this resolution algorithm for any data structs in
                                 the source code as well that user creates)
 
@@ -21,33 +21,21 @@
 
     - [x] Add .optional modifier (deep=false)
     
-    - [ ] Mixed list .list(.union(.int(), .float())) ??? RETHINK LIST DESIGN - They must be
-      monomorphic (update grammar). lists are monomorphic because schema resolution is a single deterministic AST walk producing one path→type entry — there is no representation for a path resolving to more than one type.
-    
-    - [ ] Tests
-
-
-- [ ] Validation of data against schema must be a separate stage. See DOCUMENTAITON
-
-- [ ] Refactor Csv binder
-
-    - [ ] Use data agnostic resolved schema
-
-- [x] CLI
-  
-- [x] Parser
-
-- [x] Schema file parsing
+    - [x] Tests
 
 - [ ] Csv data file parsing
 
     - [ ] Do not coerce empty strings to Null
 
-- [x] Csv schema resolution (take schema AST and build CsvResolvedSchema
-      that maps each col to type descriptor)
+- [ ] Refactor Data Binder (data agnostic repr. that uses the same path segment as resolved schema)
 
-- [x] Combine CsvResolvedSchema with parsed csv records to produce DataBindingTable 
-      IR that describes data in agnostic way.
+    - [ ] Csv binder
+
+- [ ] Validation of data binding against resolved schema (must be a separate stage. See DOCUMENTAITON)
+
+- [x] CLI
+  
+- [x] Parser
 
 - [ ] Semantic analyzer (preserve as much types as you can)
 
