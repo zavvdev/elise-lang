@@ -106,6 +106,7 @@ impl SchemaFnLexeme {
 
     // Modifiers.
     pub const NULLABLE: &'static str = "nullable";
+    pub const OPTIONAL: &'static str = "optional";
 
     // Type resolution functions.
     pub const INT: &'static str = "int";
@@ -125,7 +126,11 @@ impl ArgLen {
     // If needed, create a separate variable for each
     // primitive and remove this PRIMITIVE variable.
     pub const PRIMITIVE: usize = 0;
+
+    // Modifiers.
     pub const NULLABLE: usize = 1;
+    pub const OPTIONAL: usize = 1;
+
     // We support only a list of one data type for now.
     pub const LIST: usize = 1;
 }
@@ -154,25 +159,7 @@ impl ArgLen {
 //                values of these compound structures won't be
 //                nullable.
 //
-// 2. .nullable-deep - makes all nested types nullable. It applies
-//                     nullable modifier not only for one level
-//                     type definitions but also for any nested
-//                     definition.
-//                     Ex: .nullable-deep(.dict(
-//                                  "address" .dict(...)))
-//                     So "address" and all other inner types inside
-//                     will be nullable.
-//
-// 3. .non-nullable - makes a type to be non-nullable. Applies to
-//                    the direct child only. Useful if you have
-//                    a dict where each field is a nullable type
-//                    except some of them, so you can make them
-//                    non-nullable.
-//
-// 4. .non-nullable-deep - same as non-nullable but applies to all
-//                         nested type definitions.
-//
-// 5. .optional - makes its direct child type definition to be
+// 2. .optional - makes its direct child type definition to be
 //                an optional field. Optional is not the same as
 //                nullable. Nullable means that field itself
 //                exists but its value can be NULL. Optional on the
@@ -181,14 +168,8 @@ impl ArgLen {
 //                missing. When optional applied to a type, that
 //                type cannot be null. When nullable applied to
 //                a type, that type cannot be optional.
-//
-// 6. .optional-deep - same as optional, but applies to all nested
-//                    type definitions.
-//
-// 7. .non-optional - same as non-nullable but for optional modifier.
-//
-// 8. .non-optional-deep - same as non-optional but applies to all
-//                         nested type definitions.
+//                Optional modifier cannot be applied to a list item
+//                type.
 //
 // ==================================================================
 
@@ -198,6 +179,8 @@ impl ArgLen {
 struct ModifierDescriptor {
     // Whether we need to apply this modifier for all
     // nested types or only for the direct child.
+    // We don't have modifiers that apply to all
+    // nested types for now.
     deep: bool,
     // Whether it can be applied again or not.
     // Used together with `deep`. For example, if we
@@ -218,6 +201,7 @@ impl Default for ModifierDescriptor {
 #[derive(Debug, PartialEq)]
 enum ModifierKind {
     Nullable,
+    Optional,
 }
 
 /// Modifier is a special type of schema function
@@ -246,7 +230,22 @@ struct Modifier {
 #[derive(Debug, PartialEq)]
 pub struct SchemaTypeDescriptor {
     pub dtype: SchemaDataType,
+    // Either type or NULL.
     pub nullable: bool,
+    // Either type or field is missing.
+    pub optional: bool,
+}
+impl SchemaTypeDescriptor {
+    pub fn with_defaults(dtype: SchemaDataType) -> Self {
+        Self {
+            dtype,
+            // We set all modifiers to false by default
+            // because we need to use apply_modifiers
+            // after we create type descriptor.
+            nullable: false,
+            optional: false,
+        }
+    }
 }
 
 type TResolvedSchema = HashMap<ResolutionPath, SchemaTypeDescriptor>;
@@ -324,6 +323,9 @@ impl<'a> SchemaResolver<'a> {
                 SchemaFnLexeme::NULLABLE => {
                     self.resolve_modifier(ModifierKind::Nullable, call, resolved_schema)
                 }
+                SchemaFnLexeme::OPTIONAL => {
+                    self.resolve_modifier(ModifierKind::Optional, call, resolved_schema)
+                }
                 SchemaFnLexeme::INT => self.resolve_primitive(
                     call,
                     SchemaDataType::Int,
@@ -371,6 +373,9 @@ impl<'a> SchemaResolver<'a> {
                 ModifierKind::Nullable => {
                     type_descriptor.nullable = true;
                 }
+                ModifierKind::Optional => {
+                    type_descriptor.optional = true;
+                }
             }
             if !modifier.descriptor.deep {
                 modifier.descriptor.active = false;
@@ -382,10 +387,7 @@ impl<'a> SchemaResolver<'a> {
     /// resolved schema.
     fn commit(&mut self, resolved_schema: &mut TResolvedSchema) -> Result<(), SchemaResolverErr> {
         if let Some(dtype) = &self.current_type {
-            let mut type_descriptor = SchemaTypeDescriptor {
-                dtype: dtype.clone(),
-                nullable: false,
-            };
+            let mut type_descriptor = SchemaTypeDescriptor::with_defaults(dtype.clone());
             self.appy_modifiers(&mut type_descriptor);
             resolved_schema.insert(self.current_path.clone(), type_descriptor);
             return Ok(());
@@ -403,6 +405,7 @@ impl<'a> SchemaResolver<'a> {
     ) -> Result<(), SchemaResolverErr> {
         let result = match modifier_kind {
             ModifierKind::Nullable => self.resolve_modifier_nullable(call, resolved_schema),
+            ModifierKind::Optional => self.resolve_modifier_optional(call, resolved_schema),
         };
         self.current_modifiers.clear();
         result
@@ -442,6 +445,45 @@ impl<'a> SchemaResolver<'a> {
         self.resolve_from_node(call.children.first().unwrap(), resolved_schema)?;
 
         // We do not pop path segment after resolving nullable since it's just a modifier.
+        Ok(())
+    }
+
+    fn resolve_modifier_optional(
+        &mut self,
+        call: &AstCall,
+        resolved_schema: &mut TResolvedSchema,
+    ) -> Result<(), SchemaResolverErr> {
+        let args_len = call.children.len();
+
+        if args_len != ArgLen::OPTIONAL {
+            return Err(SchemaResolverErr::ArityMismatch {
+                fn_name: SchemaFnLexeme::OPTIONAL,
+                expected: ArgLen::OPTIONAL,
+                kind: ArityMismatchKind::Eq,
+                found: args_len,
+                span: call.span.clone(),
+            });
+        }
+
+        if let Some(ty) = &self.current_type
+            && ty == &SchemaDataType::List
+        {
+            return Err(SchemaResolverErr::InvalUseOfModifier {
+                span: call.span.clone(),
+            });
+        }
+
+        let descriptor = ModifierDescriptor {
+            deep: false,
+            ..ModifierDescriptor::default()
+        };
+
+        self.current_modifiers.push(Modifier {
+            kind: ModifierKind::Optional,
+            descriptor,
+        });
+
+        self.resolve_from_node(call.children.first().unwrap(), resolved_schema)?;
         Ok(())
     }
 

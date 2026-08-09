@@ -22,4 +22,7 @@ pub enum SchemaResolverErr {
     InvalDict {
         span: Span,
     },
+    InvalUseOfModifier {
+        span: Span,
+    },
 }

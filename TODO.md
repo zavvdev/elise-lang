@@ -19,20 +19,8 @@
     
     - [x] Add doc comments for modifiers
 
-    - [ ] Add .nullable-deep modifier (deep=true)
-
-    - [ ] Add .non-nullable modifier (deep=false)
+    - [x] Add .optional modifier (deep=false)
     
-    - [ ] Add .non-nullable-deep modifier (deep=true)
-
-    - [ ] Add .optional modifier (deep=false)
-    
-    - [ ] Add .optional-deep modifier (deep=true)
-    
-    - [ ] Add .non-optional modifier (deep=false)
-    
-    - [ ] Add .non-optional-deep modifier (deep=true)
-
     - [ ] Mixed array
     
     - [ ] Tests

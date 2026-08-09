@@ -34,6 +34,7 @@ pub fn print_err(schema_err: &SchemaResolverErr, schema_source_code: &[u8]) {
         UnresolvablePath { path } => (&format!("Unresolvable path: {}", path), None),
         InvalTypeDef { span } => ("Invalid type definition", Some(span)),
         InvalDict { span } => ("Invalid dictionary", Some(span)),
+        InvalUseOfModifier { span } => ("Invalid usage of modifier", Some(span)),
     };
 
     utils::print_err(msg, Some("Schema error"));
