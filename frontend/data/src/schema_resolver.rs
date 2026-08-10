@@ -65,7 +65,8 @@ pub enum SchemaDataType {
     Float,
     String,
     Bool,
-    List,
+    ListAbstract,
+    ListFixed(usize),
     Dict,
 }
 // TODO: Check if we need this.
@@ -76,7 +77,8 @@ impl SchemaDataType {
             SchemaDataType::Float => NodeName::FLOAT,
             SchemaDataType::String => NodeName::STRING,
             SchemaDataType::Bool => NodeName::BOOL,
-            SchemaDataType::List => NodeName::LIST,
+            SchemaDataType::ListAbstract => NodeName::LIST,
+            SchemaDataType::ListFixed(_) => NodeName::LIST,
             SchemaDataType::Dict => NodeName::DICT,
         }
     }
@@ -132,7 +134,7 @@ impl ArgLen {
     pub const OPTIONAL: usize = 1;
 
     // We support only a list of one data type for now.
-    pub const LIST: usize = 1;
+    pub const LIST: (usize, usize) = (1, 2);
 }
 
 // ==================================================================
@@ -304,8 +306,7 @@ impl<'a> SchemaResolver<'a> {
             }
             args_len => Err(SchemaResolverErr::ArityMismatch {
                 fn_name: SchemaFnLexeme::ROOT,
-                expected: ArgLen::ROOT,
-                kind: ArityMismatchKind::Eq,
+                kind: ArityMismatchKind::Eq(ArgLen::ROOT),
                 found: args_len,
                 span: call.span.clone(),
             }),
@@ -424,8 +425,7 @@ impl<'a> SchemaResolver<'a> {
         if args_len != ArgLen::NULLABLE {
             return Err(SchemaResolverErr::ArityMismatch {
                 fn_name: SchemaFnLexeme::NULLABLE,
-                expected: ArgLen::NULLABLE,
-                kind: ArityMismatchKind::Eq,
+                kind: ArityMismatchKind::Eq(ArgLen::NULLABLE),
                 found: args_len,
                 span: call.span.clone(),
             });
@@ -458,15 +458,14 @@ impl<'a> SchemaResolver<'a> {
         if args_len != ArgLen::OPTIONAL {
             return Err(SchemaResolverErr::ArityMismatch {
                 fn_name: SchemaFnLexeme::OPTIONAL,
-                expected: ArgLen::OPTIONAL,
-                kind: ArityMismatchKind::Eq,
+                kind: ArityMismatchKind::Eq(ArgLen::OPTIONAL),
                 found: args_len,
                 span: call.span.clone(),
             });
         }
 
         if let Some(ty) = &self.current_type
-            && ty == &SchemaDataType::List
+            && (matches!(ty, &SchemaDataType::ListFixed(..)) || ty == &SchemaDataType::ListAbstract)
         {
             return Err(SchemaResolverErr::InvalUseOfModifier {
                 span: call.span.clone(),
@@ -502,8 +501,7 @@ impl<'a> SchemaResolver<'a> {
         if args_len > 0 {
             return Err(SchemaResolverErr::ArityMismatch {
                 fn_name: lexeme,
-                expected: ArgLen::PRIMITIVE,
-                kind: ArityMismatchKind::Eq,
+                kind: ArityMismatchKind::Eq(ArgLen::PRIMITIVE),
                 found: args_len,
                 span: call.span.clone(),
             });
@@ -586,6 +584,20 @@ impl<'a> SchemaResolver<'a> {
         Ok(())
     }
 
+    fn resolve_list_size(ast_node: &AstNode) -> Result<usize, SchemaResolverErr> {
+        match ast_node {
+            AstNode::Int(prim) => {
+                let size: usize = prim.value.parse().unwrap();
+                Ok(size)
+            }
+            node => Err(SchemaResolverErr::UndexpType {
+                expected: NodeName::INT.to_string(),
+                found: node.as_str().to_string(),
+                span: node.span().clone(),
+            }),
+        }
+    }
+
     /// Lists are monomorphic because schema resolution is a single
     /// deterministic AST walk producing one path -> type entry —
     /// there is no representation for a path resolving
@@ -597,26 +609,36 @@ impl<'a> SchemaResolver<'a> {
     ) -> Result<(), SchemaResolverErr> {
         let args_len = call.children.len();
 
-        if args_len != ArgLen::LIST {
+        if args_len > ArgLen::LIST.1 || args_len < ArgLen::LIST.0 {
             return Err(SchemaResolverErr::ArityMismatch {
                 fn_name: SchemaFnLexeme::LIST,
-                expected: ArgLen::LIST,
-                kind: ArityMismatchKind::Eq,
+                kind: ArityMismatchKind::Range(ArgLen::LIST),
                 found: args_len,
                 span: call.span.clone(),
             });
         }
 
         let first_arg = call.children.first().unwrap();
+        let mut list_size: Option<usize> = None;
+
+        if call.children.len() == ArgLen::LIST.1 {
+            let size_arg = call.children.last().unwrap();
+            list_size = Some(Self::resolve_list_size(size_arg)?);
+        }
 
         // Capture current type and commit it before recursing
         // in order to prevent committing parent type with invalid
         // path segments since recursing will alter current_path.
-        self.current_type = Some(SchemaDataType::List);
+        if let Some(size) = list_size {
+            self.current_type = Some(SchemaDataType::ListFixed(size));
+        } else {
+            self.current_type = Some(SchemaDataType::ListAbstract);
+        }
         self.commit(resolved_schema)?;
 
         // Pusing AbstractIndex since our list can have any number of
         // items of the same type.
+        // TODO: Should we push Index(usize) if ListFixed?
         self.current_path.push(ResolutionPathSegment::AbstractIndex);
         self.resolve_from_node(first_arg, resolved_schema)?;
 

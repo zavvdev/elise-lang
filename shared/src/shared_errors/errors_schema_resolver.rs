@@ -8,7 +8,6 @@ pub enum SchemaResolverErr {
     },
     ArityMismatch {
         fn_name: &'static str,
-        expected: usize,
         kind: ArityMismatchKind,
         found: usize,
         span: Span,
@@ -23,6 +22,11 @@ pub enum SchemaResolverErr {
         span: Span,
     },
     InvalUseOfModifier {
+        span: Span,
+    },
+    UndexpType {
+        expected: String,
+        found: String,
         span: Span,
     },
 }

@@ -132,10 +132,9 @@
 //        if call.children.len() != FnDefine::ARGS_LEN {
 //            return Err(SemanalyzerErr::ArityMismatch {
 //                fn_name: FnDefine::LEXEME,
-//                expected: FnDefine::ARGS_LEN,
 //                found: call.children.len(),
 //                span: call.span.clone(),
-//                kind: ArityMismatchKind::Eq,
+//                kind: ArityMismatchKind::Eq(FnDefine::ARGS_LEN),
 //            });
 //        }
 //
@@ -217,10 +216,9 @@
 //        if call.children.len() < FnLet::MIN_ARGS_LEN {
 //            return Err(SemanalyzerErr::ArityMismatch {
 //                fn_name: FnLet::LEXEME,
-//                expected: FnLet::MIN_ARGS_LEN,
 //                found: call.children.len(),
 //                span: call.span.clone(),
-//                kind: ArityMismatchKind::MoreEq,
+//                kind: ArityMismatchKind::MoreEq(FnLet::MIX_ARGS_LEN),
 //            });
 //        }
 //

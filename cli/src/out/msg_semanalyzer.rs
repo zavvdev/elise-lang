@@ -13,16 +13,14 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
 
         ArityMismatch {
             fn_name,
-            expected,
             found,
             span,
             kind,
         } => (
             format!(
-                "Invalid number of arguments for \"{}\" function. Expected: {}{}, found: {}",
+                "Invalid number of arguments for \"{}\" function. Expected: {}, found: {}",
                 fn_name,
-                kind.symbol(),
-                expected,
+                kind.as_str(),
                 found,
             ),
             span,

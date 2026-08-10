@@ -17,16 +17,14 @@ pub fn print_err(schema_err: &SchemaResolverErr, schema_source_code: &[u8]) {
 
         ArityMismatch {
             fn_name,
-            expected,
+            kind,
             found,
             span,
-            kind,
         } => (
             &format!(
-                "Invalid number of arguments for \"{}\" function. Expected: {}{}, found: {}",
+                "Invalid number of arguments for \"{}\" function. Expected: {}, found: {}",
                 fn_name,
-                kind.symbol(),
-                expected,
+                kind.as_str(),
                 found,
             ),
             Some(span),
@@ -35,6 +33,17 @@ pub fn print_err(schema_err: &SchemaResolverErr, schema_source_code: &[u8]) {
         InvalTypeDef { span } => ("Invalid type definition", Some(span)),
         InvalDict { span } => ("Invalid dictionary", Some(span)),
         InvalUseOfModifier { span } => ("Invalid usage of modifier", Some(span)),
+        UndexpType {
+            expected,
+            found,
+            span,
+        } => (
+            &format!(
+                "Unexpected type. Expected \"{}\", found \"{}\"",
+                expected, found
+            ),
+            Some(span),
+        ),
     };
 
     utils::print_err(msg, Some("Schema error"));

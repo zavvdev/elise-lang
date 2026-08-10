@@ -1,22 +1,13 @@
 .schema(
-    .list(.union(
-            .int()
-            .list(.union(
-                    .string(),
-                    .float())))))
+    .dict(
+        "emails" .list(.string(), 2)
+        "names" .list(.string())
+    )
+)
 
-[Root, List]
-[Root, Index, Union<Int, List>]
-[Root, Index, Index, Union<String, Float>]
-
-.schema(
-    .list(
-        .union(
-            .list(.string()),
-            .list(.int()))))
-
-[Root, List]
-[Root, Index, Union<List, List>] ??
-
-
-.list(.list(.string()))
+[Root] -> Dict
+[Root, "emails"] -> ListFixed
+[Root, "emails", Index(0)] -> String
+[Root, "emails", Index(1)] -> String
+[Root, "names"] -> ListAbstract
+[Root, "names", AbstractIndex] -> String

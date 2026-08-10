@@ -17,21 +17,22 @@ impl Keyword {
 /// Determines what exactly expected arguments number means.
 #[derive(Debug, PartialEq)]
 pub enum ArityMismatchKind {
-    Eq,
-    MoreEq,
-    LessEq,
-    More,
-    Less,
+    Eq(usize),
+    MoreEq(usize),
+    LessEq(usize),
+    More(usize),
+    Less(usize),
+    Range((usize, usize)),
 }
 impl ArityMismatchKind {
-    pub fn symbol(&self) -> String {
-        let res = match self {
-            ArityMismatchKind::Eq => "",
-            ArityMismatchKind::MoreEq => ">=",
-            ArityMismatchKind::LessEq => "<=",
-            ArityMismatchKind::More => ">",
-            ArityMismatchKind::Less => "<",
-        };
-        res.to_string()
+    pub fn as_str(&self) -> String {
+        match self {
+            ArityMismatchKind::Eq(n) => format!("{}", n),
+            ArityMismatchKind::MoreEq(n) => format!(">={n}"),
+            ArityMismatchKind::LessEq(n) => format!("<={n}"),
+            ArityMismatchKind::More(n) => format!(">{n}"),
+            ArityMismatchKind::Less(n) => format!("<{n}"),
+            ArityMismatchKind::Range((min, max)) => format!(">={min}, <={max}"),
+        }
     }
 }

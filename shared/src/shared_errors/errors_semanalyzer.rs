@@ -10,7 +10,6 @@ pub enum SemanalyzerErr {
     },
     ArityMismatch {
         fn_name: &'static str,
-        expected: usize,
         kind: ArityMismatchKind,
         found: usize,
         span: Span,
