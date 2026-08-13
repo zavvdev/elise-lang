@@ -1,13 +1,39 @@
 .schema(
     .dict(
-        "emails" .list(.string(), 2)
-        "names" .list(.string())
+        "case1" .list(.union(
+                        .string(),
+                        .float()))
+        "case2" .list(.union(
+                        .list(.string()),
+                        .list(.int())))
+        "case3" .list(.union(
+                        .string(),
+                        .list(.int())))
+        "case2" .list(.union(
+                        .list(.dict(
+                                "some" .int()
+                        )),
+                        .list(.dict(
+                                "some" .string()
+                        ))))
     )
 )
 
+New PathSegment for assertion?
+
 [Root] -> Dict
-[Root, "emails"] -> ListFixed
-[Root, "emails", Index(0)] -> String
-[Root, "emails", Index(1)] -> String
-[Root, "names"] -> ListAbstract
-[Root, "names", AbstractIndex] -> String
+
+[Root, "case1"] -> ListAbstract
+[Root, "case1", AbstractIndex] -> Union<String, Float>
+[Root, "case1", AbstractIndex, Assertion(String)] -> String
+[Root, "case1", AbstractIndex, Assertion(Float)] -> Float
+
+[Root, "case2"] -> ListAbstract
+[Root, "case2", AbstractIndex] -> Union<List, List> <--- What about here? Assert what? Maybe extract
+                                                         nested types in this case?
+[Root, "case2", AbstractIndex, AbstractIndex] -> List
+
+[Root, "case3"] -> ListAbstract
+[Root, "case3", AbstractIndex] -> Union<String, List>
+
+.get(@data, "case2", 0)
