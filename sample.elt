@@ -7,39 +7,77 @@
                         .list(.string()),
                         .list(.int())))
         "case3" .list(.union(
-                        .string(),
-                        .list(.int())))
-        "case2" .list(.union(
                         .list(.dict(
-                                "some" .int()
+                                "some"  .int()
+                                "some2" .float()
                         )),
                         .list(.dict(
-                                "some" .string()
+                                "some3" .string()
+                                "some"  .list(.int())
                         ))))
     )
 )
 
-New PathSegment for assertion?
-
 [Root] -> Dict
 
 [Root, "case1"] -> ListAbstract
-[Root, "case1", AbstractIndex] -> Union<String, Float>
+[Root, "case1", AbstractIndex] -> Assertable<String, Float>
+
+vec![Root, "case1", AbstractIndex, String]
+vec![Root, "case1", AbstractIndex, Float] 
+
+intersect = vec![Root, "case1", AbstractIndex]
+
 [Root, "case1", AbstractIndex, Assertion(String)] -> String
 [Root, "case1", AbstractIndex, Assertion(Float)] -> Float
 
+------------------
+
+[Root] -> Dict
+
 [Root, "case2"] -> ListAbstract
-[Root, "case2", AbstractIndex] -> Union<List, List> <--- What about here? Assert what? Maybe extract
-                                                         nested types in this case? What if we pass
-                                                         through it like .get("case2", 0, 1,
-                                                         "some")?
-                                                         Technically it must resolve but type is
-                                                         ambiguous in this case. Detect on Path
-                                                         insertion duplicate and require Assertion
-                                                         before accessing?
-[Root, "case2", AbstractIndex, AbstractIndex] -> List
+
+vec![Root, "case2", AbstractIndex, AbstractIndex, String]
+vec![Root, "case2", AbstractIndex, AbstractIndex, Int] 
+
+intersect = vec![Root, "case2", AbstractIndex, AbstractIndex]
+
+[Root, "case2", AbstractIndex, AbstractIndex] -> Assertable<String, Int>
+[Root, "case2", AbstractIndex, AbstractIndex, Assertion(String)] -> String
+[Root, "case2", AbstractIndex, AbstractIndex, Assertion(Int)] -> Int
+
+------------------
+
+[Root] -> Dict
 
 [Root, "case3"] -> ListAbstract
-[Root, "case3", AbstractIndex] -> Union<String, List>
 
-.get(@data, "case2", 0)
+vec![
+    (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some"), Int),
+    (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some2"), Float)
+]
+vec![
+    (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some3"), String)
+    (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some"), List)
+]
+
+intersect = vec![
+    (Root, "case3", AbstractIndex, AbstractIndex, Dict),
+    (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some")),
+    (Root, "case3", AbstractIndex, AbstractIndex, Dict),
+    (Root, "case3", AbstractIndex, AbstractIndex, Dict),
+].filter(duplicates)
+
+We might now event need next stuff, but we can just slice by each intersection and get next node and
+construct: [Root, "case3", AbstractIndex, AbstractIndex, Dict] -> Assertable<Field("some"), Field("some3"), Field("some2")>. 
+Same for path with Field("some").
+
+[Root, "case3", AbstractIndex, AbstractIndex, Dict] -> Assertable<Field("some"), Field("some3")>
+[Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some")] -> Assertable<Float, List>
+[Root, "case3", AbstractIndex, AbstractIndex, Dict] -> Assertable<Field("some2"), Field("some3")>
+[Root, "case3", AbstractIndex, AbstractIndex, Dict] -> Assertable<Field("some2"), Field("some")>
+
+Collapses into:
+
+[Root, "case3", AbstractIndex, AbstractIndex, Dict] -> Assertable<Field("some"), Field("some3"), Field("some2")>
+[Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some")] -> Assertable<Float, List>
