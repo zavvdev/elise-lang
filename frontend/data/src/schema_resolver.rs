@@ -638,7 +638,6 @@ impl<'a> SchemaResolver<'a> {
 
         // Pusing AbstractIndex since our list can have any number of
         // items of the same type.
-        // TODO: Should we push Index(usize) if ListFixed?
         self.current_path.push(ResolutionPathSegment::AbstractIndex);
         self.resolve_from_node(first_arg, resolved_schema)?;
 

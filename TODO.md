@@ -23,7 +23,7 @@
 
     - [ ] Try to add .union for .list typedef
 
-    - [ ] Try to add a list capacity for .list typedef: .list(.string(), 2)
+    - [x] Try to add a list capacity for .list typedef: .list(.string(), 2)
     
     - [ ] Tests
 

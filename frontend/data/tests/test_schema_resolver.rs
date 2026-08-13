@@ -57,8 +57,7 @@ fn should_return_error_if_root_arg_len_is_0() {
         resolved_schema,
         Err(SchemaResolverErr::ArityMismatch {
             fn_name: SchemaFnLexeme::ROOT,
-            expected: ArgLen::ROOT,
-            kind: ArityMismatchKind::Eq,
+            kind: ArityMismatchKind::Eq(ArgLen::ROOT),
             found: 0,
             ..
         })
@@ -73,8 +72,7 @@ fn should_return_error_if_root_arg_len_is_more_than_1() {
         resolved_schema,
         Err(SchemaResolverErr::ArityMismatch {
             fn_name: SchemaFnLexeme::ROOT,
-            expected: ArgLen::ROOT,
-            kind: ArityMismatchKind::Eq,
+            kind: ArityMismatchKind::Eq(ArgLen::ROOT),
             found: 2,
             ..
         })
@@ -104,14 +102,12 @@ fn should_return_error_if_primitive_has_arguments() {
         match resolved_schema {
             Err(SchemaResolverErr::ArityMismatch {
                 fn_name,
-                expected,
                 kind,
                 found,
                 ..
             }) => {
                 assert_eq!(fn_name, input.1);
-                assert_eq!(expected, ArgLen::PRIMITIVE);
-                assert_eq!(kind, ArityMismatchKind::Eq);
+                assert_eq!(kind, ArityMismatchKind::Eq(ArgLen::PRIMITIVE));
                 assert_eq!(found, 1);
             }
             other => panic!("expected ArityMismatch, got {:?}", other),
@@ -162,30 +158,26 @@ fn should_return_error_if_modifiers_have_invalid_arity() {
         (
             ".nullable()",
             SchemaFnLexeme::NULLABLE,
-            ArgLen::NULLABLE,
-            ArityMismatchKind::Eq,
+            ArityMismatchKind::Eq(ArgLen::NULLABLE),
             0,
         ),
         (
             ".nullable(.float(), .int())",
             SchemaFnLexeme::NULLABLE,
-            ArgLen::NULLABLE,
-            ArityMismatchKind::Eq,
+            ArityMismatchKind::Eq(ArgLen::NULLABLE),
             2,
         ),
         // Optional
         (
             ".optional()",
             SchemaFnLexeme::OPTIONAL,
-            ArgLen::OPTIONAL,
-            ArityMismatchKind::Eq,
+            ArityMismatchKind::Eq(ArgLen::OPTIONAL),
             0,
         ),
         (
             ".optional(.float(), .int())",
             SchemaFnLexeme::OPTIONAL,
-            ArgLen::OPTIONAL,
-            ArityMismatchKind::Eq,
+            ArityMismatchKind::Eq(ArgLen::OPTIONAL),
             2,
         ),
     ];
@@ -197,15 +189,13 @@ fn should_return_error_if_modifiers_have_invalid_arity() {
         match resolved_schema {
             Err(SchemaResolverErr::ArityMismatch {
                 fn_name,
-                expected,
                 kind,
                 found,
                 ..
             }) => {
                 assert_eq!(fn_name, input.1);
-                assert_eq!(expected, input.2);
-                assert_eq!(kind, input.3);
-                assert_eq!(found, input.4);
+                assert_eq!(kind, input.2);
+                assert_eq!(found, input.3);
             }
             other => panic!("expected ArityMismatch, got {:?}", other),
         }
@@ -295,7 +285,8 @@ fn should_resolve_single_primitive() {
 fn should_resolve_single_compound() {
     let inputs = vec![
         (r#".dict("name" .string())"#, SchemaDataType::Dict),
-        (".list(.int())", SchemaDataType::List),
+        (".list(.int())", SchemaDataType::ListAbstract),
+        (".list(.int(), 2)", SchemaDataType::ListFixed(2)),
     ];
 
     for input in inputs {
@@ -334,7 +325,8 @@ fn should_resolve_one_nullable_child() {
         (".string()", SchemaDataType::String),
         (".bool()", SchemaDataType::Bool),
         (r#".dict("name" .string())"#, SchemaDataType::Dict),
-        (".list(.int())", SchemaDataType::List),
+        (".list(.int())", SchemaDataType::ListAbstract),
+        (".list(.int(), 3)", SchemaDataType::ListFixed(3)),
     ];
 
     for input in inputs {
@@ -509,7 +501,8 @@ fn should_resolve_one_optional_child() {
         (".string()", SchemaDataType::String),
         (".bool()", SchemaDataType::Bool),
         (r#".dict("name" .string())"#, SchemaDataType::Dict),
-        (".list(.int())", SchemaDataType::List),
+        (".list(.int())", SchemaDataType::ListAbstract),
+        (".list(.int(), 2)", SchemaDataType::ListFixed(2)),
     ];
 
     for input in inputs {
@@ -807,7 +800,7 @@ fn should_resolve_one_level_dict() {
 // ==================================================================
 
 #[test]
-fn should_resolve_one_level_list() {
+fn should_resolve_one_level_abstract_list() {
     let inputs = vec![
         (SchemaFnLexeme::INT, SchemaDataType::Int),
         (SchemaFnLexeme::FLOAT, SchemaDataType::Float),
@@ -823,7 +816,48 @@ fn should_resolve_one_level_list() {
             (
                 ResolutionPath::new(),
                 SchemaTypeDescriptor {
-                    dtype: SchemaDataType::List,
+                    dtype: SchemaDataType::ListAbstract,
+                    nullable: false,
+                    optional: false,
+                },
+            ),
+            (
+                ResolutionPath::with_segments(vec![AbstractIndex]),
+                SchemaTypeDescriptor {
+                    dtype: input.1,
+                    nullable: false,
+                    optional: false,
+                },
+            ),
+        ];
+
+        for case in cases {
+            assert_eq!(
+                *resolved_schema.resolved_schema.get(&case.0).unwrap(),
+                case.1
+            );
+        }
+    }
+}
+
+#[test]
+fn should_resolve_one_level_fixed_list() {
+    let inputs = vec![
+        (SchemaFnLexeme::INT, SchemaDataType::Int),
+        (SchemaFnLexeme::FLOAT, SchemaDataType::Float),
+        (SchemaFnLexeme::STRING, SchemaDataType::String),
+        (SchemaFnLexeme::BOOL, SchemaDataType::Bool),
+    ];
+
+    for input in inputs {
+        let ast = parse(&format!(".schema(.list(.{}(), 2))", input.0));
+        let resolved_schema = SchemaResolver::new(&ast).resolve().unwrap();
+
+        let cases = vec![
+            (
+                ResolutionPath::new(),
+                SchemaTypeDescriptor {
+                    dtype: SchemaDataType::ListFixed(2),
                     nullable: false,
                     optional: false,
                 },
@@ -864,7 +898,7 @@ fn should_resolve_complex_schema_with_nullables() {
                     "id"       .int()
                     "name"     .string()
                     "age"      .int()
-                    "emails"   .nullable(.list(.string()))
+                    "emails"   .nullable(.list(.string(), 3))
 
                     "address"  .dict(
                                   "city"   .string()
@@ -872,7 +906,7 @@ fn should_resolve_complex_schema_with_nullables() {
                                   "house"  .nullable(.int())
                                   "index"  .nullable(.int()))
 
-                    "scores"   .list(.list(.float()))
+                    "scores"   .list(.list(.float(), 2))
                     "employed" .bool()
 
                     "admin"    .nullable(.dict(
@@ -891,7 +925,7 @@ fn should_resolve_complex_schema_with_nullables() {
         (
             ResolutionPath::new(),
             SchemaTypeDescriptor {
-                dtype: SchemaDataType::List,
+                dtype: SchemaDataType::ListAbstract,
                 nullable: false,
                 optional: false,
             },
@@ -931,7 +965,7 @@ fn should_resolve_complex_schema_with_nullables() {
         (
             ResolutionPath::with_segments(vec![AbstractIndex, Field("emails".to_string())]),
             SchemaTypeDescriptor {
-                dtype: SchemaDataType::List,
+                dtype: SchemaDataType::ListFixed(3),
                 nullable: true,
                 optional: false,
             },
@@ -1007,7 +1041,7 @@ fn should_resolve_complex_schema_with_nullables() {
         (
             ResolutionPath::with_segments(vec![AbstractIndex, Field("scores".to_string())]),
             SchemaTypeDescriptor {
-                dtype: SchemaDataType::List,
+                dtype: SchemaDataType::ListAbstract,
                 nullable: false,
                 optional: false,
             },
@@ -1019,7 +1053,7 @@ fn should_resolve_complex_schema_with_nullables() {
                 AbstractIndex,
             ]),
             SchemaTypeDescriptor {
-                dtype: SchemaDataType::List,
+                dtype: SchemaDataType::ListFixed(2),
                 nullable: false,
                 optional: false,
             },
@@ -1084,7 +1118,7 @@ fn should_resolve_complex_schema_with_nullables() {
                 Field("permissions".to_string()),
             ]),
             SchemaTypeDescriptor {
-                dtype: SchemaDataType::List,
+                dtype: SchemaDataType::ListAbstract,
                 nullable: false,
                 optional: false,
             },
@@ -1157,14 +1191,14 @@ fn should_resolve_complex_schema_with_optionals() {
             .list(
                 .dict(
                     "id"       .int()
-                    "emails"   .optional(.list(.string()))
+                    "emails"   .optional(.list(.string(), 3))
 
                     "address"  .dict(
                                   "street" .string()
                                   "house"  .optional(.int())
                                   "index"  .optional(.int()))
 
-                    "scores"   .optional(.list(.list(.float())))
+                    "scores"   .optional(.list(.list(.float(), 2)))
                     "employed" .optional(.bool())
 
                     "admin"    .optional(.dict(
@@ -1182,7 +1216,7 @@ fn should_resolve_complex_schema_with_optionals() {
         (
             ResolutionPath::new(),
             SchemaTypeDescriptor {
-                dtype: SchemaDataType::List,
+                dtype: SchemaDataType::ListAbstract,
                 nullable: false,
                 optional: false,
             },
@@ -1206,7 +1240,7 @@ fn should_resolve_complex_schema_with_optionals() {
         (
             ResolutionPath::with_segments(vec![AbstractIndex, Field("emails".to_string())]),
             SchemaTypeDescriptor {
-                dtype: SchemaDataType::List,
+                dtype: SchemaDataType::ListFixed(3),
                 nullable: false,
                 optional: true,
             },
@@ -1270,7 +1304,7 @@ fn should_resolve_complex_schema_with_optionals() {
         (
             ResolutionPath::with_segments(vec![AbstractIndex, Field("scores".to_string())]),
             SchemaTypeDescriptor {
-                dtype: SchemaDataType::List,
+                dtype: SchemaDataType::ListAbstract,
                 nullable: false,
                 optional: true,
             },
@@ -1282,7 +1316,7 @@ fn should_resolve_complex_schema_with_optionals() {
                 AbstractIndex,
             ]),
             SchemaTypeDescriptor {
-                dtype: SchemaDataType::List,
+                dtype: SchemaDataType::ListFixed(2),
                 nullable: false,
                 optional: false,
             },
@@ -1335,7 +1369,7 @@ fn should_resolve_complex_schema_with_optionals() {
                 Field("permissions".to_string()),
             ]),
             SchemaTypeDescriptor {
-                dtype: SchemaDataType::List,
+                dtype: SchemaDataType::ListAbstract,
                 nullable: false,
                 optional: true,
             },

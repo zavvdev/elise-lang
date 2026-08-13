@@ -2,9 +2,6 @@
 pub enum ResolutionPathSegment {
     // The beginning of the path.
     Root,
-    // When we want to access data stored at numeric indexes,
-    // like lists.
-    Index(usize),
     // Represents any index. For example, when we want to
     // build a schema resolution path, we don't need to describe
     // what type each list element has, we can just say that if
@@ -19,7 +16,6 @@ impl ResolutionPathSegment {
     pub fn as_str(&self) -> String {
         match self {
             ResolutionPathSegment::Root => "Root".to_string(),
-            ResolutionPathSegment::Index(i) => format!("Index({})", i),
             ResolutionPathSegment::AbstractIndex => "AbstractIndex".to_string(),
             ResolutionPathSegment::Field(name) => format!("Field(\"{}\")", name),
         }
@@ -110,16 +106,12 @@ mod tests {
 
     #[test]
     fn should_create_with_initial_segments() {
-        let path = ResolutionPath::with_segments(vec![
-            ResolutionPathSegment::AbstractIndex,
-            ResolutionPathSegment::Index(1),
-        ]);
+        let path = ResolutionPath::with_segments(vec![ResolutionPathSegment::AbstractIndex]);
         assert_eq!(
             path,
             ResolutionPath(vec![
                 ResolutionPathSegment::Root,
                 ResolutionPathSegment::AbstractIndex,
-                ResolutionPathSegment::Index(1),
             ])
         );
     }
@@ -129,14 +121,12 @@ mod tests {
         let path = ResolutionPath::with_segments(vec![
             ResolutionPathSegment::AbstractIndex,
             ResolutionPathSegment::Root,
-            ResolutionPathSegment::Index(1),
         ]);
         assert_eq!(
             path,
             ResolutionPath(vec![
                 ResolutionPathSegment::Root,
                 ResolutionPathSegment::AbstractIndex,
-                ResolutionPathSegment::Index(1),
             ])
         );
     }
@@ -190,12 +180,8 @@ mod tests {
     fn should_return_segments_as_str() {
         let mut path = ResolutionPath::new();
         path.push(ResolutionPathSegment::Field("test".to_string()));
-        path.push(ResolutionPathSegment::Index(1));
         path.push(ResolutionPathSegment::AbstractIndex);
-        assert_eq!(
-            path.as_str(),
-            "[Root, Field(\"test\"), Index(1), AbstractIndex]"
-        );
+        assert_eq!(path.as_str(), "[Root, Field(\"test\"), AbstractIndex]");
     }
 }
 
