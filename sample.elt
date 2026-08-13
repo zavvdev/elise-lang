@@ -30,7 +30,13 @@ New PathSegment for assertion?
 
 [Root, "case2"] -> ListAbstract
 [Root, "case2", AbstractIndex] -> Union<List, List> <--- What about here? Assert what? Maybe extract
-                                                         nested types in this case?
+                                                         nested types in this case? What if we pass
+                                                         through it like .get("case2", 0, 1,
+                                                         "some")?
+                                                         Technically it must resolve but type is
+                                                         ambiguous in this case. Detect on Path
+                                                         insertion duplicate and require Assertion
+                                                         before accessing?
 [Root, "case2", AbstractIndex, AbstractIndex] -> List
 
 [Root, "case3"] -> ListAbstract
