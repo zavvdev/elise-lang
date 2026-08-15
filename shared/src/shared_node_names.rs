@@ -16,4 +16,5 @@ impl NodeName {
     pub const PRIMITIVE: &'static str = "Primitive";
     pub const CALL_DEFINE: &'static str = "CallDefine";
     pub const CALL_LET: &'static str = "CallLet";
+    pub const UNION: &'static str = "Union";
 }

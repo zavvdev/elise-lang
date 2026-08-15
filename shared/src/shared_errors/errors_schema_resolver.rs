@@ -29,4 +29,7 @@ pub enum SchemaResolverErr {
         found: String,
         span: Span,
     },
+    NoUnionOfUnion {
+        span: Span,
+    },
 }

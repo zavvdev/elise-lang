@@ -68,6 +68,7 @@ pub enum SchemaDataType {
     ListAbstract,
     ListFixed(usize),
     Dict,
+    Union,
 }
 // TODO: Check if we need this.
 impl SchemaDataType {
@@ -80,6 +81,7 @@ impl SchemaDataType {
             SchemaDataType::ListAbstract => NodeName::LIST,
             SchemaDataType::ListFixed(_) => NodeName::LIST,
             SchemaDataType::Dict => NodeName::DICT,
+            SchemaDataType::Union => NodeName::UNION,
         }
     }
 }
@@ -117,6 +119,7 @@ impl SchemaFnLexeme {
     pub const BOOL: &'static str = "bool";
     pub const DICT: &'static str = "dict";
     pub const LIST: &'static str = "list";
+    pub const UNION: &'static str = "union";
 }
 
 /// Argument length requirements for different type
@@ -133,8 +136,9 @@ impl ArgLen {
     pub const NULLABLE: usize = 1;
     pub const OPTIONAL: usize = 1;
 
-    // We support only a list of one data type for now.
     pub const LIST: (usize, usize) = (1, 2);
+
+    pub const UNION_MIN: usize = 2;
 }
 
 // ==================================================================
@@ -353,6 +357,7 @@ impl<'a> SchemaResolver<'a> {
                 ),
                 SchemaFnLexeme::DICT => self.resolve_dict(call, resolved_schema),
                 SchemaFnLexeme::LIST => self.resolve_list(call, resolved_schema),
+                SchemaFnLexeme::UNION => self.resolve_union(call, resolved_schema),
                 _ => Err(SchemaResolverErr::InvalTypeDef {
                     span: call.span.clone(),
                 }),
@@ -397,6 +402,10 @@ impl<'a> SchemaResolver<'a> {
             path: self.current_path.as_str(),
         })
     }
+
+    // ==================================================================
+    // MODIFIERS START
+    // ==================================================================
 
     fn resolve_modifier(
         &mut self,
@@ -486,6 +495,14 @@ impl<'a> SchemaResolver<'a> {
         Ok(())
     }
 
+    // ==================================================================
+    // MODIFIERS END
+    // ==================================================================
+
+    // ==================================================================
+    // PRIMITIVES START
+    // ==================================================================
+
     /// We use the same function for all primitives since they all
     /// adhere to the same semantics.
     fn resolve_primitive(
@@ -517,6 +534,14 @@ impl<'a> SchemaResolver<'a> {
 
         Ok(())
     }
+
+    // ==================================================================
+    // PRIMITIVES END
+    // ==================================================================
+
+    // ==================================================================
+    // DICT START
+    // ==================================================================
 
     fn resolve_dict(
         &mut self,
@@ -584,6 +609,14 @@ impl<'a> SchemaResolver<'a> {
         Ok(())
     }
 
+    // ==================================================================
+    // DICT END
+    // ==================================================================
+
+    // ==================================================================
+    // LIST START
+    // ==================================================================
+
     fn resolve_list_size(ast_node: &AstNode) -> Result<usize, SchemaResolverErr> {
         match ast_node {
             AstNode::Int(prim) => {
@@ -644,6 +677,48 @@ impl<'a> SchemaResolver<'a> {
         self.current_path.pop();
         Ok(())
     }
+
+    // ==================================================================
+    // LIST END
+    // ==================================================================
+
+    // ==================================================================
+    // UNION START
+    // ==================================================================
+
+    fn resolve_union(
+        &mut self,
+        call: &AstCall,
+        _resolved_schema: &mut TResolvedSchema,
+    ) -> Result<(), SchemaResolverErr> {
+        let args_len = call.children.len();
+
+        if args_len < ArgLen::UNION_MIN {
+            return Err(SchemaResolverErr::ArityMismatch {
+                fn_name: SchemaFnLexeme::UNION,
+                kind: ArityMismatchKind::MoreEq(ArgLen::UNION_MIN),
+                found: args_len,
+                span: call.span.clone(),
+            });
+        }
+
+        // Disallow direct usage of union inside the union.
+        for child in &call.children {
+            if let AstNode::Call(inner) = &**child
+                && inner.lexeme == SchemaFnLexeme::UNION
+            {
+                return Err(SchemaResolverErr::NoUnionOfUnion {
+                    span: inner.span.clone(),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    // ==================================================================
+    // UNION END
+    // ==================================================================
 }
 
 // ==================================================================

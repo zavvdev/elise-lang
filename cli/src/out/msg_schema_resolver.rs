@@ -44,6 +44,10 @@ pub fn print_err(schema_err: &SchemaResolverErr, schema_source_code: &[u8]) {
             ),
             Some(span),
         ),
+        NoUnionOfUnion { span } => (
+            "Union cannot be used as a direct child of another union",
+            Some(span),
+        ),
     };
 
     utils::print_err(msg, Some("Schema error"));

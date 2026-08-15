@@ -15,8 +15,18 @@
                                 "some3" .string()
                                 "some"  .list(.int())
                         ))))
+
+        "case4"  .list(.union(
+                         .float()
+                         .float()))
     )
 )
+
+-----Case 4 start------
+
+[Root, "case4", AbstractIndex] -> Union
+
+-----Case 4 end------
 
 [Root] -> Dict
 
@@ -59,16 +69,24 @@ vec![
 vec![
     (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some3"), String)
     (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some"), List)
+    (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some"), AbstractIndex, Int)
 ]
 
 intersect = vec![
     (Root, "case3", AbstractIndex, AbstractIndex, Dict),
     (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some")),
+    (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some")),
+    (Root, "case3", AbstractIndex, AbstractIndex, Dict),
     (Root, "case3", AbstractIndex, AbstractIndex, Dict),
     (Root, "case3", AbstractIndex, AbstractIndex, Dict),
 ].filter(duplicates)
 
-We might now event need next stuff, but we can just slice by each intersection and get next node and
+vec![
+    (Root, "case3", AbstractIndex, AbstractIndex, Dict),
+    (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some")),
+]
+
+We might not event need next stuff, but we can just slice by each intersection and get next node and
 construct: [Root, "case3", AbstractIndex, AbstractIndex, Dict] -> Assertable<Field("some"), Field("some3"), Field("some2")>. 
 Same for path with Field("some").
 
