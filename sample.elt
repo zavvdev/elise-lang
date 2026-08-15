@@ -3,9 +3,11 @@
         "case1" .list(.union(
                         .string(),
                         .float()))
+        
         "case2" .list(.union(
                         .list(.string()),
                         .list(.int())))
+        
         "case3" .list(.union(
                         .list(.dict(
                                 "some"  .int()
@@ -21,12 +23,6 @@
                          .float()))
     )
 )
-
------Case 4 start------
-
-[Root, "case4", AbstractIndex] -> Union
-
------Case 4 end------
 
 [Root] -> Dict
 
@@ -62,15 +58,30 @@ intersect = vec![Root, "case2", AbstractIndex, AbstractIndex]
 
 [Root, "case3"] -> ListAbstract
 
-vec![
-    (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some"), Int),
-    (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some2"), Float)
-]
-vec![
-    (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some3"), String)
-    (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some"), List)
-    (Root, "case3", AbstractIndex, AbstractIndex, Dict, Field("some"), AbstractIndex, Int)
-]
+HashMap {
+    (Root, "case3", AbstractIndex, AbstractIndex) => Dict,
+    (Root, "case3", AbstractIndex, AbstractIndex, Field("some")) => Int,
+    (Root, "case3", AbstractIndex, AbstractIndex, Field("some2")) => Float,
+}
+
+HashMap {
+    (Root, "case3", AbstractIndex, AbstractIndex) => Dict
+    (Root, "case3", AbstractIndex, AbstractIndex, Field("some")) => List
+    (Root, "case3", AbstractIndex, AbstractIndex, Field("some"), AbstractIndex) => Int
+    (Root, "case3", AbstractIndex, AbstractIndex, Field("some3")) => String
+}
+
+Keys Intersection:
+
+1. Take a HashMap which has smaller amount of records (bcs obviously the bigger one won't have some keys in the smaller and we would need to skip them anyway because there is no ambiguity of types).
+
+2. Iterate over keys, get the value by key from itself and from all other HashMaps
+
+// finish algorithm
+
+HashSet {
+    
+}
 
 intersect = vec![
     (Root, "case3", AbstractIndex, AbstractIndex, Dict),

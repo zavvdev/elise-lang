@@ -181,7 +181,7 @@ impl ArgLen {
 
 /// Descriptor for modifier itself to provide a
 /// settings of its behavior.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 struct ModifierDescriptor {
     // Whether we need to apply this modifier for all
     // nested types or only for the direct child.
@@ -204,7 +204,7 @@ impl Default for ModifierDescriptor {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum ModifierKind {
     Nullable,
     Optional,
@@ -213,7 +213,7 @@ enum ModifierKind {
 /// Modifier is a special type of schema function
 /// that does not produce a type definition but
 /// rather provide some metadata for its children.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 struct Modifier {
     kind: ModifierKind,
     descriptor: ModifierDescriptor,
@@ -689,7 +689,7 @@ impl<'a> SchemaResolver<'a> {
     fn resolve_union(
         &mut self,
         call: &AstCall,
-        _resolved_schema: &mut TResolvedSchema,
+        resolved_schema: &mut TResolvedSchema,
     ) -> Result<(), SchemaResolverErr> {
         let args_len = call.children.len();
 
@@ -712,6 +712,18 @@ impl<'a> SchemaResolver<'a> {
                 });
             }
         }
+
+        self.current_type = Some(SchemaDataType::Union);
+        self.commit(resolved_schema)?;
+
+        // Capture global state at the moment of the branches resolution start
+        // since each of the branches needs to start its own resolution from
+        // the same state.
+        let _captured_path = self.current_path.clone();
+        let _captured_modifiers = self.current_modifiers.clone();
+
+        // 1. Resolve each union variant separately and create a hashmap for each branch.
+        // 2. Go through each key of each hashmap and create a hashset of their intersections.
 
         Ok(())
     }
