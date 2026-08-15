@@ -71,13 +71,17 @@ HashMap {
     (Root, "case3", AbstractIndex, AbstractIndex, Field("some3")) => String
 }
 
-Keys Intersection:
-
-1. Take a HashMap which has smaller amount of records (bcs obviously the bigger one won't have some keys in the smaller and we would need to skip them anyway because there is no ambiguity of types).
+1. Take a HashMap which has bigger amount of records.
 
 2. Iterate over keys, get the value by key from itself and from all other HashMaps
 
-// finish algorithm
+3. If only one hashmap or all hashmaps have the same value at a particular key - insert into main as is
+
+4. Collect values from all hashmaps by key, append Assertable<ValueType> for each path and insert
+into main with value of Value
+
+5. Somehow we need to replace all paths with appended value instead of the path before appending for
+all records in the same hashmap. Maybe check intersection each time we iterate?
 
 HashSet {
     
