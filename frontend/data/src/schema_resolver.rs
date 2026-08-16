@@ -686,10 +686,49 @@ impl<'a> SchemaResolver<'a> {
     // UNION START
     // ==================================================================
 
+    // "case3" .list(.union(
+    //                    .list(.dict(
+    //                            "some"  .int()
+    //                            "some2" .float()
+    //                    )),
+    //                    .list(.dict(
+    //                            "some3" .string()
+    //                            "some"  .list(.int())
+    //                    ))))
+    //
+    // [Root] -> Dict
+
+    // [Root, "case3"] -> ListAbstract
+
+    // HashMap {
+    //     (Root, "case3", AbstractIndex, AbstractIndex) => Dict,
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some")) => Int,
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some2")) => Float,
+    // }
+
+    // HashMap {
+    //     (Root, "case3", AbstractIndex, AbstractIndex) => Dict
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some")) => List
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some"), AbstractIndex) => Int
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some3")) => String
+    // }
+
+    // 1. Take a HashMap which has bigger amount of records.
+
+    // 2. Iterate over keys, get the value by key from itself and from all other HashMaps
+
+    // 3. If only one hashmap or all hashmaps have the same value at a particular key - insert into main as is
+
+    // 4. Collect values from all hashmaps by key, append Assertable<ValueType> for each path and insert
+    // into main with value of Value
+
+    // 5. Somehow we need to replace all paths with appended value instead of the path before appending for
+    // all records in the same hashmap. Maybe check intersection each time we iterate?
+
     fn resolve_union(
         &mut self,
         call: &AstCall,
-        resolved_schema: &mut TResolvedSchema,
+        _resolved_schema: &mut TResolvedSchema,
     ) -> Result<(), SchemaResolverErr> {
         let args_len = call.children.len();
 
@@ -713,17 +752,50 @@ impl<'a> SchemaResolver<'a> {
             }
         }
 
-        self.current_type = Some(SchemaDataType::Union);
-        self.commit(resolved_schema)?;
-
         // Capture global state at the moment of the branches resolution start
         // since each of the branches needs to start its own resolution from
         // the same state.
-        let _captured_path = self.current_path.clone();
-        let _captured_modifiers = self.current_modifiers.clone();
+        let captured_path = self.current_path.clone();
+        let captured_modifiers = self.current_modifiers.clone();
 
-        // 1. Resolve each union variant separately and create a hashmap for each branch.
-        // 2. Go through each key of each hashmap and create a hashset of their intersections.
+        // Main {
+        //     (Root) => Dict
+        //     (Root, "case3") => List
+        // }
+        //
+        // [
+        //     HashMap {
+        //         (Root, "case3", Index) => List
+        //         (Root, "case3", Index, Index) => Dict
+        //         (Root, "case3", Index, Index, "some") => Int
+        //         (Root, "case3", Index, Index, "some2") => Float
+        //     }
+        //
+        //     HashMap {
+        //        (Root, "case3", Index) => List
+        //        (Root, "case3", Index, Index) => Dict
+        //        (Root, "case3", Index, Index, "some") => List
+        //        (Root, "case3", Index, Index, "some", Index) => Int
+        //        (Root, "case3", Index, Index, "some3") => String
+        //     }
+        // ]
+
+        // New resolution table for each Union branch.
+        let mut resolution_tables: Vec<TResolvedSchema> = Vec::with_capacity(call.children.len());
+
+        for child in &call.children {
+            // TODO: Works but cloning on each iteration again is not good.
+            // Although there is less likely to be a case where we have
+            // hundreds of Union branches, but I think we need to check
+            // if we can find another solution here.
+            self.current_path = captured_path.clone();
+            self.current_modifiers = captured_modifiers.clone();
+            let mut table: TResolvedSchema = HashMap::new();
+            self.resolve_from_node(child, &mut table)?;
+            resolution_tables.push(table);
+        }
+
+        println!("-------- Children tables: {:#?}", resolution_tables);
 
         Ok(())
     }
