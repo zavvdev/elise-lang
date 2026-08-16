@@ -713,17 +713,45 @@ impl<'a> SchemaResolver<'a> {
     //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some3")) => String
     // }
 
-    // 1. Take a HashMap which has bigger amount of records.
+    // Remove common prefix:
 
-    // 2. Iterate over keys, get the value by key from itself and from all other HashMaps
+    // common_prefix: (Root, "case3", AbstractIndex, AbstractIndex)
 
-    // 3. If only one hashmap or all hashmaps have the same value at a particular key - insert into main as is
+    // HashMap {
+    //     (Field("some")) => Int
+    //     (Field("some2")) => Float <-- unique, goes into main
+    // }
 
-    // 4. Collect values from all hashmaps by key, append Assertable<ValueType> for each path and insert
-    // into main with value of Value
+    // HashMap {
+    //     (Field("some")) => List
+    //     (Field("some"), AbstractIndex) => Int
+    //     (Field("some3")) => String <-- unique, goes into main
+    // }
+    
+    // HashMap {
+    //    ("some") => [
+    //      (("some"), Int),
+    //      (("some"), List),
+    //      (("some", Index), Int)
+    //    ]
+    //    ("some2") => [
+    //      (("some2"), Float)
+    //    ],
+    //    ("some3") => [
+    //      (("some3"), String)
+    //    ],
+    // }
 
-    // 5. Somehow we need to replace all paths with appended value instead of the path before appending for
-    // all records in the same hashmap. Maybe check intersection each time we iterate?
+    // Needs to be transformed into:
+    // 
+    // HashMap {
+    //     (Root, "case3", AbstractIndex, AbstractIndex) => Dict,
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some"), Assertion(Int)) => Int
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some"), Assertion(List)) => List
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some2")) => Float
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some"), Assertion(List), AbstractIndex) => Int
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some3")) => String
+    // }
 
     fn resolve_union(
         &mut self,
