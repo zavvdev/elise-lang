@@ -233,7 +233,7 @@ struct Modifier {
 
 /// Data type descriptor that is a value each resolution
 /// path resolves to.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct SchemaTypeDescriptor {
     pub dtype: SchemaDataType,
     // Either type or NULL.
@@ -713,37 +713,21 @@ impl<'a> SchemaResolver<'a> {
     //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some3")) => String
     // }
 
-    // Remove common prefix:
-
-    // common_prefix: (Root, "case3", AbstractIndex, AbstractIndex)
+    // Remove common key-value pairs and insert into main:
 
     // HashMap {
-    //     (Field("some")) => Int
-    //     (Field("some2")) => Float <-- unique, goes into main
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some")) => Int,
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some2")) => Float,
     // }
 
     // HashMap {
-    //     (Field("some")) => List
-    //     (Field("some"), AbstractIndex) => Int
-    //     (Field("some3")) => String <-- unique, goes into main
-    // }
-    
-    // HashMap {
-    //    ("some") => [
-    //      (("some"), Int),
-    //      (("some"), List),
-    //      (("some", Index), Int)
-    //    ]
-    //    ("some2") => [
-    //      (("some2"), Float)
-    //    ],
-    //    ("some3") => [
-    //      (("some3"), String)
-    //    ],
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some")) => List
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some"), AbstractIndex) => Int
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some3")) => String
     // }
 
     // Needs to be transformed into:
-    // 
+    //
     // HashMap {
     //     (Root, "case3", AbstractIndex, AbstractIndex) => Dict,
     //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some"), Assertion(Int)) => Int
@@ -753,10 +737,29 @@ impl<'a> SchemaResolver<'a> {
     //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some3")) => String
     // }
 
+    fn remove_common_path_segments(
+        resolved_schemas: &Vec<TResolvedSchema>,
+    ) -> Vec<Vec<(ResolutionPathSegment, SchemaTypeDescriptor)>> {
+        let mut common_prefix: Vec<ResolutionPathSegment> = vec![];
+        for schema in resolved_schemas {
+            for key in schema.keys() {
+                if !common_prefix.is_empty() {
+                    common_prefix = key
+                        .iter()
+                        .zip(common_prefix.iter())
+                        .take_while(|(x, y)| x == y)
+                        .map(|(x, _)| x.clone())
+                        .collect();
+                }
+            }
+        }
+        vec![]
+    }
+
     fn resolve_union(
         &mut self,
         call: &AstCall,
-        _resolved_schema: &mut TResolvedSchema,
+        resolved_schema: &mut TResolvedSchema,
     ) -> Result<(), SchemaResolverErr> {
         let args_len = call.children.len();
 
@@ -823,6 +826,52 @@ impl<'a> SchemaResolver<'a> {
             resolution_tables.push(table);
         }
 
+        // Remove the same key-value pairs from all union branch tables
+        // only if each key-value pair is present in each table.
+
+        let smallest_table_index = resolution_tables
+            .iter()
+            .enumerate()
+            // Enumerate gives us a tuple with (index, map), min_by_key
+            // returns the item that yields the smallest number in predicate.
+            .min_by_key(|(_, map)| map.len())
+            // Extract only index.
+            .map(|(i, _)| i)
+            .unwrap();
+
+        // We start from the smallest table since we want to remove the key-value pairs
+        // that are present in ALL union branch tables, so the subset of all potential
+        // entries is a smallest one.
+        let smallest_table = &resolution_tables[smallest_table_index];
+
+        // Key-value pairs that are present in ALL union branch tables.
+        let common_key_values: Vec<(ResolutionPath, SchemaTypeDescriptor)> = smallest_table
+            .iter()
+            .filter(|(key, value)| {
+                resolution_tables
+                    .iter()
+                    .enumerate()
+                    // Skip smallest table since we're already iterating over its values.
+                    .filter(|(index, _)| *index != smallest_table_index)
+                    // Tests if all elements (tables) match the predicate.
+                    // In our case, each table must have the same key-value in order to be removed
+                    // and inserted into the main resolution table.
+                    .all(|(_, table)| table.get(*key) == Some(*value))
+            })
+            .map(|(key, value)| (key.clone(), value.clone()))
+            .collect();
+
+        // Remove common key-value pairs from all Union branch tables
+        // and insert them into the main resolution table since there is
+        // no type ambiguity in this case.
+        for (key, value) in common_key_values {
+            for table in resolution_tables.iter_mut() {
+                table.remove(&key);
+            }
+            resolved_schema.insert(key, value);
+        }
+
+        //let _without_common_prefix = Self::remove_common_path_segments(&resolution_tables);
         println!("-------- Children tables: {:#?}", resolution_tables);
 
         Ok(())

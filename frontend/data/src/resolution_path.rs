@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub enum ResolutionPathSegment {
     // The beginning of the path.
@@ -40,11 +42,26 @@ impl ResolutionPathSegment {
 /// and latter is used at runtime stage.
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct ResolutionPath(Vec<ResolutionPathSegment>);
+
+// Implementing Deref gives us an ability to extract
+// the underlying vector in order to use .iter(), .len(),
+// .first etc without implementing their traits separately
+// (like Index trait or IntoIterator). So we have all native
+// Vec methods for free.
+impl Deref for ResolutionPath {
+    type Target = [ResolutionPathSegment];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl Default for ResolutionPath {
     fn default() -> Self {
         Self::new()
     }
 }
+
 impl ResolutionPath {
     // Root must always be the first segment.
     pub fn new() -> Self {
