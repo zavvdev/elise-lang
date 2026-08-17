@@ -3,11 +3,11 @@ SC - Source Code
 SCH -> Schema
 
 RUN (SC, SCH, Data)
-    -> Parse(SC) -> SC_AST
-    -> Parse(SCH) -> SCH_AST
+    -> Parse(SC) -> SC_AST +
+    -> Parse(SCH) -> SCH_AST +
     -> Parse(Data) -> ParsedData
     -> Sema(SC_AST) -> SC_AAST 
-    -> Resolve(SCH_AST) -> ResolvedSchema
+    -> Resolve(SCH_AST) -> ResolvedSchema +
     -> Bind(ParsedData) -> DataBindingTable
     -> Validate(ResolvedSchema, DataBindingTable)
     -> Compile(ResolvedSchema, SC_AAST) -> Bytecode

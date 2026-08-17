@@ -2,7 +2,7 @@
 
 ## Things to implement
 
-- [ ] Refactor schema resolver (?Maybe we need to create a global type resolver instead of this
+- [x] Refactor schema resolver (?Maybe we need to create a global type resolver instead of this
                                 so we can use this resolution algorithm for any data structs in
                                 the source code as well that user creates)
 
@@ -21,11 +21,9 @@
 
     - [x] Add .optional modifier (deep=false)
 
-    - [ ] Try to add .union for .list typedef
-
     - [x] Try to add a list capacity for .list typedef: .list(.string(), 2)
     
-    - [ ] Tests
+    - [x] Tests
 
 - [ ] Csv data file parsing
 
@@ -80,6 +78,8 @@
     - [ ] Add support for IEEE-754 numbers format
 
     - [ ] ...
+
+- [ ] Try to add .union for schema resolver
 
 - [ ] Optimizations
     

@@ -1,11 +1,6 @@
 .schema(
     .dict(
-        "case3" .list(.union(
-                        .list(.dict(
+        "case3" .list(.list(.dict(
                                 "some"  .int()
                                 "some2" .float()
-                        )),
-                        .list(.dict(
-                                "some3" .string()
-                                "some"  .list(.int())
-                        ))))))
+                        )))))

@@ -68,7 +68,7 @@ pub enum SchemaDataType {
     ListAbstract,
     ListFixed(usize),
     Dict,
-    Union,
+    // Union,
 }
 // TODO: Check if we need this.
 impl SchemaDataType {
@@ -81,7 +81,7 @@ impl SchemaDataType {
             SchemaDataType::ListAbstract => NodeName::LIST,
             SchemaDataType::ListFixed(_) => NodeName::LIST,
             SchemaDataType::Dict => NodeName::DICT,
-            SchemaDataType::Union => NodeName::UNION,
+            // SchemaDataType::Union => NodeName::UNION,
         }
     }
 }
@@ -119,7 +119,7 @@ impl SchemaFnLexeme {
     pub const BOOL: &'static str = "bool";
     pub const DICT: &'static str = "dict";
     pub const LIST: &'static str = "list";
-    pub const UNION: &'static str = "union";
+    // pub const UNION: &'static str = "union";
 }
 
 /// Argument length requirements for different type
@@ -138,7 +138,7 @@ impl ArgLen {
 
     pub const LIST: (usize, usize) = (1, 2);
 
-    pub const UNION_MIN: usize = 2;
+    // pub const UNION_MIN: usize = 2;
 }
 
 // ==================================================================
@@ -357,7 +357,7 @@ impl<'a> SchemaResolver<'a> {
                 ),
                 SchemaFnLexeme::DICT => self.resolve_dict(call, resolved_schema),
                 SchemaFnLexeme::LIST => self.resolve_list(call, resolved_schema),
-                SchemaFnLexeme::UNION => self.resolve_union(call, resolved_schema),
+                // SchemaFnLexeme::UNION => self.resolve_union(call, resolved_schema),
                 _ => Err(SchemaResolverErr::InvalTypeDef {
                     span: call.span.clone(),
                 }),
@@ -695,6 +695,11 @@ impl<'a> SchemaResolver<'a> {
     //                            "some3" .string()
     //                            "some"  .list(.int())
     //                    ))))
+    //                    .list(.dict(
+    //                            "some3" .float()
+    //                            "some"  .list(.string())
+    //                            "other" .string()
+    //                    ))))
     //
     // [Root] -> Dict
 
@@ -713,7 +718,7 @@ impl<'a> SchemaResolver<'a> {
     //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some3")) => String
     // }
 
-    // Remove common key-value pairs and insert into main:
+    // Remove common key-value pairs and insert them into main:
 
     // HashMap {
     //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some")) => Int,
@@ -726,6 +731,23 @@ impl<'a> SchemaResolver<'a> {
     //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some3")) => String
     // }
 
+    // HashMap {
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some")) => List
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some"), AbstractIndex) => String
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some3")) => Float
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("other")) => String
+    // }
+
+    // 1. Create a HashMap<key, [usize; N]> where N is a number of tables;
+    // 2. Iterate over each table key:
+    //    if key is not in hashmap, then insert it with key => [0, 0, 0]
+    //    and increment the number on the index of the current table by one;
+    //    if key is inside the hashmap, then increment the number on the index
+    //    of the current table by one;
+    //
+    // This gives us information about how many keys are present inside each table and how
+    // many times.
+
     // Needs to be transformed into:
     //
     // HashMap {
@@ -733,149 +755,131 @@ impl<'a> SchemaResolver<'a> {
     //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some"), Assertion(Int)) => Int
     //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some"), Assertion(List)) => List
     //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some2")) => Float
-    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some"), Assertion(List), AbstractIndex) => Int
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some"), Assertion(List), AbstractIndex, Assertion(Int)) => Int
+    //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some"), Assertion(List), AbstractIndex, Assertion(String)) => String
     //     (Root, "case3", AbstractIndex, AbstractIndex, Field("some3")) => String
     // }
 
-    fn remove_common_path_segments(
-        resolved_schemas: &Vec<TResolvedSchema>,
-    ) -> Vec<Vec<(ResolutionPathSegment, SchemaTypeDescriptor)>> {
-        let mut common_prefix: Vec<ResolutionPathSegment> = vec![];
-        for schema in resolved_schemas {
-            for key in schema.keys() {
-                if !common_prefix.is_empty() {
-                    common_prefix = key
-                        .iter()
-                        .zip(common_prefix.iter())
-                        .take_while(|(x, y)| x == y)
-                        .map(|(x, _)| x.clone())
-                        .collect();
-                }
-            }
-        }
-        vec![]
-    }
+    // fn resolve_union(
+    //     &mut self,
+    //     call: &AstCall,
+    //     resolved_schema: &mut TResolvedSchema,
+    // ) -> Result<(), SchemaResolverErr> {
+    //     let args_len = call.children.len();
 
-    fn resolve_union(
-        &mut self,
-        call: &AstCall,
-        resolved_schema: &mut TResolvedSchema,
-    ) -> Result<(), SchemaResolverErr> {
-        let args_len = call.children.len();
+    //     if args_len < ArgLen::UNION_MIN {
+    //         return Err(SchemaResolverErr::ArityMismatch {
+    //             fn_name: SchemaFnLexeme::UNION,
+    //             kind: ArityMismatchKind::MoreEq(ArgLen::UNION_MIN),
+    //             found: args_len,
+    //             span: call.span.clone(),
+    //         });
+    //     }
 
-        if args_len < ArgLen::UNION_MIN {
-            return Err(SchemaResolverErr::ArityMismatch {
-                fn_name: SchemaFnLexeme::UNION,
-                kind: ArityMismatchKind::MoreEq(ArgLen::UNION_MIN),
-                found: args_len,
-                span: call.span.clone(),
-            });
-        }
+    //     // Disallow direct usage of union inside the union.
+    //     for child in &call.children {
+    //         if let AstNode::Call(inner) = &**child
+    //             && inner.lexeme == SchemaFnLexeme::UNION
+    //         {
+    //             return Err(SchemaResolverErr::NoUnionOfUnion {
+    //                 span: inner.span.clone(),
+    //             });
+    //         }
+    //     }
 
-        // Disallow direct usage of union inside the union.
-        for child in &call.children {
-            if let AstNode::Call(inner) = &**child
-                && inner.lexeme == SchemaFnLexeme::UNION
-            {
-                return Err(SchemaResolverErr::NoUnionOfUnion {
-                    span: inner.span.clone(),
-                });
-            }
-        }
+    //     // Capture global state at the moment of the branches resolution start
+    //     // since each of the branches needs to start its own resolution from
+    //     // the same state.
+    //     let captured_path = self.current_path.clone();
+    //     let captured_modifiers = self.current_modifiers.clone();
 
-        // Capture global state at the moment of the branches resolution start
-        // since each of the branches needs to start its own resolution from
-        // the same state.
-        let captured_path = self.current_path.clone();
-        let captured_modifiers = self.current_modifiers.clone();
+    //     // Main {
+    //     //     (Root) => Dict
+    //     //     (Root, "case3") => List
+    //     // }
+    //     //
+    //     // [
+    //     //     HashMap {
+    //     //         (Root, "case3", Index) => List
+    //     //         (Root, "case3", Index, Index) => Dict
+    //     //         (Root, "case3", Index, Index, "some") => Int
+    //     //         (Root, "case3", Index, Index, "some2") => Float
+    //     //     }
+    //     //
+    //     //     HashMap {
+    //     //        (Root, "case3", Index) => List
+    //     //        (Root, "case3", Index, Index) => Dict
+    //     //        (Root, "case3", Index, Index, "some") => List
+    //     //        (Root, "case3", Index, Index, "some", Index) => Int
+    //     //        (Root, "case3", Index, Index, "some3") => String
+    //     //     }
+    //     // ]
 
-        // Main {
-        //     (Root) => Dict
-        //     (Root, "case3") => List
-        // }
-        //
-        // [
-        //     HashMap {
-        //         (Root, "case3", Index) => List
-        //         (Root, "case3", Index, Index) => Dict
-        //         (Root, "case3", Index, Index, "some") => Int
-        //         (Root, "case3", Index, Index, "some2") => Float
-        //     }
-        //
-        //     HashMap {
-        //        (Root, "case3", Index) => List
-        //        (Root, "case3", Index, Index) => Dict
-        //        (Root, "case3", Index, Index, "some") => List
-        //        (Root, "case3", Index, Index, "some", Index) => Int
-        //        (Root, "case3", Index, Index, "some3") => String
-        //     }
-        // ]
+    //     // New resolution table for each Union branch.
+    //     let mut resolution_tables: Vec<TResolvedSchema> = Vec::with_capacity(call.children.len());
 
-        // New resolution table for each Union branch.
-        let mut resolution_tables: Vec<TResolvedSchema> = Vec::with_capacity(call.children.len());
+    //     for child in &call.children {
+    //         // TODO: Works but cloning on each iteration again is not good.
+    //         // Although there is less likely to be a case where we have
+    //         // hundreds of Union branches, but I think we need to check
+    //         // if we can find another solution here.
+    //         self.current_path = captured_path.clone();
+    //         self.current_modifiers = captured_modifiers.clone();
+    //         let mut table: TResolvedSchema = HashMap::new();
+    //         self.resolve_from_node(child, &mut table)?;
+    //         resolution_tables.push(table);
+    //     }
 
-        for child in &call.children {
-            // TODO: Works but cloning on each iteration again is not good.
-            // Although there is less likely to be a case where we have
-            // hundreds of Union branches, but I think we need to check
-            // if we can find another solution here.
-            self.current_path = captured_path.clone();
-            self.current_modifiers = captured_modifiers.clone();
-            let mut table: TResolvedSchema = HashMap::new();
-            self.resolve_from_node(child, &mut table)?;
-            resolution_tables.push(table);
-        }
+    //     // Remove the same key-value pairs from all union branch tables
+    //     // only if each key-value pair is present in each table.
 
-        // Remove the same key-value pairs from all union branch tables
-        // only if each key-value pair is present in each table.
+    //     let smallest_table_index = resolution_tables
+    //         .iter()
+    //         .enumerate()
+    //         // Enumerate gives us a tuple with (index, map), min_by_key
+    //         // returns the item that yields the smallest number in predicate.
+    //         .min_by_key(|(_, map)| map.len())
+    //         // Extract only index.
+    //         .map(|(i, _)| i)
+    //         .unwrap();
 
-        let smallest_table_index = resolution_tables
-            .iter()
-            .enumerate()
-            // Enumerate gives us a tuple with (index, map), min_by_key
-            // returns the item that yields the smallest number in predicate.
-            .min_by_key(|(_, map)| map.len())
-            // Extract only index.
-            .map(|(i, _)| i)
-            .unwrap();
+    //     // We start from the smallest table since we want to remove the key-value pairs
+    //     // that are present in ALL union branch tables, so the subset of all potential
+    //     // entries is a smallest one.
+    //     let smallest_table = &resolution_tables[smallest_table_index];
 
-        // We start from the smallest table since we want to remove the key-value pairs
-        // that are present in ALL union branch tables, so the subset of all potential
-        // entries is a smallest one.
-        let smallest_table = &resolution_tables[smallest_table_index];
+    //     // Key-value pairs that are present in ALL union branch tables.
+    //     let common_key_values: Vec<(ResolutionPath, SchemaTypeDescriptor)> = smallest_table
+    //         .iter()
+    //         .filter(|(key, value)| {
+    //             resolution_tables
+    //                 .iter()
+    //                 .enumerate()
+    //                 // Skip smallest table since we're already iterating over its values.
+    //                 .filter(|(index, _)| *index != smallest_table_index)
+    //                 // Tests if all elements (tables) match the predicate.
+    //                 // In our case, each table must have the same key-value in order to be removed
+    //                 // and inserted into the main resolution table.
+    //                 .all(|(_, table)| table.get(*key) == Some(*value))
+    //         })
+    //         .map(|(key, value)| (key.clone(), value.clone()))
+    //         .collect();
 
-        // Key-value pairs that are present in ALL union branch tables.
-        let common_key_values: Vec<(ResolutionPath, SchemaTypeDescriptor)> = smallest_table
-            .iter()
-            .filter(|(key, value)| {
-                resolution_tables
-                    .iter()
-                    .enumerate()
-                    // Skip smallest table since we're already iterating over its values.
-                    .filter(|(index, _)| *index != smallest_table_index)
-                    // Tests if all elements (tables) match the predicate.
-                    // In our case, each table must have the same key-value in order to be removed
-                    // and inserted into the main resolution table.
-                    .all(|(_, table)| table.get(*key) == Some(*value))
-            })
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect();
+    //     // Remove common key-value pairs from all Union branch tables
+    //     // and insert them into the main resolution table since there is
+    //     // no type ambiguity in this case.
+    //     for (key, value) in common_key_values {
+    //         for table in resolution_tables.iter_mut() {
+    //             table.remove(&key);
+    //         }
+    //         resolved_schema.insert(key, value);
+    //     }
 
-        // Remove common key-value pairs from all Union branch tables
-        // and insert them into the main resolution table since there is
-        // no type ambiguity in this case.
-        for (key, value) in common_key_values {
-            for table in resolution_tables.iter_mut() {
-                table.remove(&key);
-            }
-            resolved_schema.insert(key, value);
-        }
+    //     //let _without_common_prefix = Self::remove_common_path_segments(&resolution_tables);
+    //     println!("-------- Children tables: {:#?}", resolution_tables);
 
-        //let _without_common_prefix = Self::remove_common_path_segments(&resolution_tables);
-        println!("-------- Children tables: {:#?}", resolution_tables);
-
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     // ==================================================================
     // UNION END
