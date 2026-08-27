@@ -5,7 +5,7 @@ SCH -> Schema
 RUN (SC, SCH, Data)
     -> Parse(SC) -> SC_AST +
     -> Parse(SCH) -> SCH_AST +
-    -> Parse(Data) -> ParsedData
+    -> Parse(Data) -> ParsedData +
     -> Sema(SC_AST) -> SC_AAST 
     -> Resolve(SCH_AST) -> ResolvedSchema +
     -> Bind(ParsedData) -> DataBindingTable

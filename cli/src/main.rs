@@ -25,15 +25,15 @@ use crate::out::msg_fsys;
 use crate::out::msg_modes;
 use crate::out::msg_parser;
 use crate::out::utils::{panic_hook, print_bytecode};
-use crate::out::{msg_common, msg_schema_resolver};
 use crate::out::{msg_conf, msg_csv_binder};
 use crate::out::{msg_csv_parser, msg_semanalyzer};
+use crate::out::{msg_preexec, msg_schema_resolver};
 
 fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &[u8]) -> ! {
     use LangErr::*;
 
     match lang_err {
-        Common(err) => msg_common::print_err(err),
+        PreExec(err) => msg_preexec::print_err(err),
         ParserSource(err) => msg_parser::print_err(err, source_code),
         ParserSchema(err) => msg_parser::print_err(err, schema_source_code),
         SchemaResolver(err) => msg_schema_resolver::print_err(err, schema_source_code),

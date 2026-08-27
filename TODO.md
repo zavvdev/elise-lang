@@ -2,42 +2,13 @@
 
 ## Things to implement
 
-- [x] Refactor schema resolver (?Maybe we need to create a global type resolver instead of this
-                                so we can use this resolution algorithm for any data structs in
-                                the source code as well that user creates)
+- [x] Refactor schema resolver
 
-    - [x] Make it data agnostic that works only on schema ast.
-          Add .list and .dict types which can be used for JSON.
+- [x] Do not coerce empty strings to Null in CSV parser
 
-    - [x] Use path segments instead of strings for hash table keys,
-          so this data structure can be used during compilation.
-          Check sample.elt for more details
-
-    - [x] Docs
-    
-    - [x] Apply .nullable modifier only for the direct child
-    
-    - [x] Add doc comments for modifiers
-
-    - [x] Add .optional modifier (deep=false)
-
-    - [x] Try to add a list capacity for .list typedef: .list(.string(), 2)
-    
-    - [x] Tests
-
-- [x] Csv data file parsing
-
-    - [x] Do not coerce empty strings to Null
-
-- [ ] Refactor Data Binder (data agnostic repr. that uses the same path segment as resolved schema)
-
-    - [ ] Csv binder
+- [ ] Refactor Csv Data Binder (data agnostic repr. that uses the same path segment as resolved schema)
 
 - [ ] Validation of data binding against resolved schema (must be a separate stage. See DOCUMENTAITON)
-
-- [x] CLI
-  
-- [x] Parser
 
 - [ ] Semantic analyzer (preserve as much types as you can)
 

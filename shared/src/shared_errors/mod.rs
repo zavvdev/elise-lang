@@ -1,7 +1,7 @@
-pub mod errors_common;
 pub mod errors_csv_binder;
 pub mod errors_csv_parser;
 pub mod errors_parser;
+pub mod errors_preexec;
 pub mod errors_schema_resolver;
 pub mod errors_semanalyzer;
 
@@ -11,11 +11,11 @@ use errors_parser::ParserErr;
 use errors_schema_resolver::SchemaResolverErr;
 use errors_semanalyzer::SemanalyzerErr;
 
-use crate::shared_errors::errors_common::CommonErr;
+use crate::shared_errors::errors_preexec::PreExecErr;
 
 #[derive(Debug, PartialEq)]
 pub enum LangErr {
-    Common(CommonErr),
+    PreExec(PreExecErr),
     ParserSource(ParserErr),
     ParserSchema(ParserErr),
     SchemaResolver(SchemaResolverErr),

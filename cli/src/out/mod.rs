@@ -3,13 +3,13 @@
 //! This module includes a functions
 //! for displaying messages to the end user.
 
-pub mod msg_common;
 pub mod msg_conf;
 pub mod msg_csv_binder;
 pub mod msg_csv_parser;
 pub mod msg_fsys;
 pub mod msg_modes;
 pub mod msg_parser;
+pub mod msg_preexec;
 pub mod msg_schema_resolver;
 pub mod msg_semanalyzer;
 pub mod utils;
