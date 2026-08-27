@@ -70,11 +70,8 @@ impl<'a> CsvParser<'a> {
         value.trim().parse::<f64>().is_ok()
     }
 
-    // TODO: Do not coerce empty strings to NULL.
-    // ,, and ,"", must always be empty strings.
     fn is_null(value: &str) -> bool {
-        let value = value.trim().to_lowercase();
-        value.is_empty() || value == Keyword::NULL
+        value.trim().to_lowercase() == Keyword::NULL
     }
 
     fn is_bool(value: &str) -> bool {
@@ -267,20 +264,43 @@ mod tests {
 
     #[test]
     fn should_parse_string() {
-        let row = vec!["john"];
+        let row = vec!["john", " ", "", "     "];
         let csv = build_csv(&row);
         let parser = CsvParser::new(&csv);
 
         assert_eq!(
             parser.parse(),
             Ok(vec![CsvRow {
-                cols: vec![CsvCol {
-                    name: build_csv_header(0),
-                    value: "john".to_string(),
-                    ty: ParserDataType::String,
-                    row: 0,
-                    col: 0,
-                }],
+                cols: vec![
+                    CsvCol {
+                        name: build_csv_header(0),
+                        value: "john".to_string(),
+                        ty: ParserDataType::String,
+                        row: 0,
+                        col: 0,
+                    },
+                    CsvCol {
+                        name: build_csv_header(1),
+                        value: "".to_string(),
+                        ty: ParserDataType::String,
+                        row: 0,
+                        col: 1,
+                    },
+                    CsvCol {
+                        name: build_csv_header(2),
+                        value: "".to_string(),
+                        ty: ParserDataType::String,
+                        row: 0,
+                        col: 2,
+                    },
+                    CsvCol {
+                        name: build_csv_header(3),
+                        value: "".to_string(),
+                        ty: ParserDataType::String,
+                        row: 0,
+                        col: 3,
+                    }
+                ],
             }])
         );
     }
@@ -295,8 +315,7 @@ mod tests {
 
     #[test]
     fn should_parse_null() {
-        // TODO: Check this. We might not want to treat empty strings as null.
-        let row = vec!["", " ", "null", "NULL", "Null"];
+        let row = vec!["null", "NULL", "Null"];
         let csv = build_csv(&row);
         let parser = CsvParser::new(&csv);
 
@@ -341,7 +360,7 @@ mod tests {
             ParserDataType::Int,
             ParserDataType::String,
             ParserDataType::Null,
-            ParserDataType::Null,
+            ParserDataType::String,
         ];
 
         let csv = build_csv(&row);

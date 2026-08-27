@@ -25,9 +25,9 @@
     
     - [x] Tests
 
-- [ ] Csv data file parsing
+- [x] Csv data file parsing
 
-    - [ ] Do not coerce empty strings to Null
+    - [x] Do not coerce empty strings to Null
 
 - [ ] Refactor Data Binder (data agnostic repr. that uses the same path segment as resolved schema)
 
