@@ -7,6 +7,7 @@ use std::collections::HashMap;
 
 use crate::resolution_path::ResolutionPath;
 
+#[derive(Debug, PartialEq)]
 pub enum BinderDataType {
     Int,
     Float,
@@ -17,13 +18,10 @@ pub enum BinderDataType {
     // Dict,
 }
 
-/// Provides some basic information for about
-/// underlying data.
 #[derive(Debug, PartialEq)]
 pub struct DataDescriptor {
     pub ty: BinderDataType,
     pub value: String,
-    // How can we represent position if we can have json as well?
 }
 
 #[derive(Debug, PartialEq)]
