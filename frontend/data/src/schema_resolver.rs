@@ -70,21 +70,6 @@ pub enum SchemaDataType {
     Dict,
     // Union,
 }
-// TODO: Check if we need this.
-impl SchemaDataType {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            SchemaDataType::Int => NodeName::INT,
-            SchemaDataType::Float => NodeName::FLOAT,
-            SchemaDataType::String => NodeName::STRING,
-            SchemaDataType::Bool => NodeName::BOOL,
-            SchemaDataType::ListAbstract => NodeName::LIST,
-            SchemaDataType::ListFixed(_) => NodeName::LIST,
-            SchemaDataType::Dict => NodeName::DICT,
-            // SchemaDataType::Union => NodeName::UNION,
-        }
-    }
-}
 
 // ==================================================================
 //

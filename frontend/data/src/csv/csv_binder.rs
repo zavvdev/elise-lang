@@ -6,7 +6,10 @@ use elise_shared::shared_errors::errors_csv_binder::{
 };
 
 use crate::{
-    data_binder::{DataBinder, DataBindingTable, DataDescriptor}, data_csv::data_csv_parser::CsvRow, data_schema_resolver::ResolvedSchema, data_types::{DataType, ResolutionPath, ResolutionPathSegment::*}
+    data_binder::{DataBinder, DataBindingTable, DataDescriptor},
+    data_csv::data_csv_parser::CsvRow,
+    data_schema_resolver::ResolvedSchema,
+    data_types::{DataType, ResolutionPath, ResolutionPathSegment::*},
 };
 
 type Rows = Vec<CsvRow>;
