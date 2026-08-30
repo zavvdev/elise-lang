@@ -1,4 +1,4 @@
 #[derive(Debug, PartialEq)]
-pub enum CsvBinderErr {
+pub enum CsvDataBinderErr {
     NoData,
 }

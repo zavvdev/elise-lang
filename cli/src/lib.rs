@@ -9,8 +9,8 @@ pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise_data::{
-    binder::{DataBinder, DataBindingTable},
-    csv::{csv_binder::CsvDataBinder, csv_parser::CsvParser},
+    csv::{csv_data_binder::CsvDataBinder, csv_parser::CsvParser},
+    data_binder::{DataBinder, DataBindingTable},
     schema_resolver::{ResolvedSchema, SchemaResolver},
 };
 use elise_parser::Prelude;
@@ -111,7 +111,7 @@ pub fn run<'a>(
                 if let Ok(parsed) = CsvParser::new(data).parse() {
                     data_binding = CsvDataBinder::new(&parsed)
                         .bind()
-                        .map_err(LangErr::CsvBinder);
+                        .map_err(LangErr::CsvDataBinder);
                 }
             });
         }

@@ -8,7 +8,7 @@ RUN (SC, SCH, Data)
     -> Parse(Data) -> ParsedData +
     -> Sema(SC_AST) -> SC_AAST 
     -> Resolve(SCH_AST) -> ResolvedSchema +
-    -> Bind(ParsedData) -> DataBindingTable
+    -> Bind(ParsedData) -> DataBindingTable +
     -> Validate(ResolvedSchema, DataBindingTable)
     -> Compile(ResolvedSchema, SC_AAST) -> Bytecode
     -> VM(Bytecode, DataBindingTable)

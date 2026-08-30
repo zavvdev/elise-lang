@@ -2,13 +2,7 @@
 
 ## Things to implement
 
-- [x] Refactor schema resolver
-
-- [x] Do not coerce empty strings to Null in CSV parser
-
-- [ ] Refactor Csv Data Binder (data agnostic repr. that uses the same path segment as resolved schema)
-
-- [ ] Validation of data binding against resolved schema (must be a separate stage. See DOCUMENTAITON)
+- [ ] Validation of data binding against resolved schema
 
 - [ ] Semantic analyzer (preserve as much types as you can)
 

@@ -8,7 +8,7 @@ use elise_shared::{shared_errors::errors_csv_parser::CsvParserErr, shared_types:
 // ==================================================================
 
 #[derive(PartialEq, Debug, Clone)]
-pub enum ParserDataType {
+pub enum CsvParserDataType {
     Int,
     Float,
     String,
@@ -23,7 +23,7 @@ pub struct CsvParser<'a> {
 #[derive(Debug, PartialEq)]
 pub struct CsvCol {
     pub name: String,
-    pub ty: ParserDataType,
+    pub ty: CsvParserDataType,
     pub value: String,
     pub row: usize,
     pub col: usize,
@@ -79,13 +79,13 @@ impl<'a> CsvParser<'a> {
         value == Keyword::TRUE || value == Keyword::FALSE
     }
 
-    fn infer_type(value: &str) -> ParserDataType {
+    fn infer_type(value: &str) -> CsvParserDataType {
         match value {
-            v if Self::is_null(v) => ParserDataType::Null,
-            v if Self::is_bool(v) => ParserDataType::Bool,
-            v if Self::is_int(v) => ParserDataType::Int,
-            v if Self::is_float(v) => ParserDataType::Float,
-            _ => ParserDataType::String,
+            v if Self::is_null(v) => CsvParserDataType::Null,
+            v if Self::is_bool(v) => CsvParserDataType::Bool,
+            v if Self::is_int(v) => CsvParserDataType::Int,
+            v if Self::is_float(v) => CsvParserDataType::Float,
+            _ => CsvParserDataType::String,
         }
     }
 
@@ -147,7 +147,7 @@ impl<'a> CsvParser<'a> {
 mod tests {
     use elise_shared::shared_errors::errors_csv_parser::CsvParserErr::*;
 
-    use crate::csv::csv_parser::{CsvCol, CsvParser, CsvRow, ParserDataType};
+    use crate::csv::csv_parser::{CsvCol, CsvParser, CsvParserDataType, CsvRow};
 
     fn build_csv_header(index: usize) -> String {
         format!("n{}", index)
@@ -175,7 +175,7 @@ mod tests {
                 .map(|(i, n)| CsvCol {
                     name: build_csv_header(i),
                     value: n.to_string(),
-                    ty: ParserDataType::Int,
+                    ty: CsvParserDataType::Int,
                     row: 0,
                     col: i,
                 })
@@ -213,7 +213,7 @@ mod tests {
                 .map(|(i, n)| CsvCol {
                     name: build_csv_header(i),
                     value: n.to_string(),
-                    ty: ParserDataType::Float,
+                    ty: CsvParserDataType::Float,
                     row: 0,
                     col: i,
                 })
@@ -244,7 +244,7 @@ mod tests {
                 .map(|(i, n)| CsvCol {
                     name: build_csv_header(i),
                     value: n.to_string(),
-                    ty: ParserDataType::Bool,
+                    ty: CsvParserDataType::Bool,
                     row: 0,
                     col: i,
                 })
@@ -275,28 +275,28 @@ mod tests {
                     CsvCol {
                         name: build_csv_header(0),
                         value: "john".to_string(),
-                        ty: ParserDataType::String,
+                        ty: CsvParserDataType::String,
                         row: 0,
                         col: 0,
                     },
                     CsvCol {
                         name: build_csv_header(1),
                         value: "".to_string(),
-                        ty: ParserDataType::String,
+                        ty: CsvParserDataType::String,
                         row: 0,
                         col: 1,
                     },
                     CsvCol {
                         name: build_csv_header(2),
                         value: "".to_string(),
-                        ty: ParserDataType::String,
+                        ty: CsvParserDataType::String,
                         row: 0,
                         col: 2,
                     },
                     CsvCol {
                         name: build_csv_header(3),
                         value: "".to_string(),
-                        ty: ParserDataType::String,
+                        ty: CsvParserDataType::String,
                         row: 0,
                         col: 3,
                     }
@@ -326,7 +326,7 @@ mod tests {
                 .map(|(i, n)| CsvCol {
                     name: build_csv_header(i),
                     value: n.trim().to_string(),
-                    ty: ParserDataType::Null,
+                    ty: CsvParserDataType::Null,
                     row: 0,
                     col: i,
                 })
@@ -356,11 +356,11 @@ mod tests {
         let row = vec![" 12.3  ", "  12 ", "  S  ", "  Null ", "   "];
 
         let types = vec![
-            ParserDataType::Float,
-            ParserDataType::Int,
-            ParserDataType::String,
-            ParserDataType::Null,
-            ParserDataType::String,
+            CsvParserDataType::Float,
+            CsvParserDataType::Int,
+            CsvParserDataType::String,
+            CsvParserDataType::Null,
+            CsvParserDataType::String,
         ];
 
         let csv = build_csv(&row);

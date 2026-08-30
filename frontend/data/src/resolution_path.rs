@@ -4,12 +4,17 @@ use std::ops::Deref;
 pub enum ResolutionPathSegment {
     // The beginning of the path.
     Root,
+
     // Represents any index. For example, when we want to
     // build a schema resolution path, we don't need to describe
     // what type each list element has, we can just say that if
     // our list is a list of integers, then any index points to
     // some data with type Int.
     AbstractIndex,
+
+    // Specific index.
+    Index(usize),
+
     // Any field like dict key.
     Field(String),
 }
@@ -20,6 +25,7 @@ impl ResolutionPathSegment {
             ResolutionPathSegment::Root => "Root".to_string(),
             ResolutionPathSegment::AbstractIndex => "AbstractIndex".to_string(),
             ResolutionPathSegment::Field(name) => format!("Field(\"{}\")", name),
+            ResolutionPathSegment::Index(idx) => format!("Index(\"{}\")", idx),
         }
     }
 }
