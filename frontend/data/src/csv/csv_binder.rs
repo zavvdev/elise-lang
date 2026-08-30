@@ -3,26 +3,51 @@ use std::collections::HashMap;
 use elise_shared::shared_errors::errors_csv_binder::CsvBinderErr;
 
 use crate::{
-    binder::{DataBinder, DataBindingTable, DataDescriptor},
-    csv::csv_parser::CsvRow,
-    resolution_path::ResolutionPath,
+    binder::{BinderDataDescriptor, BinderDataType, DataBinder, DataBindingTable},
+    csv::csv_parser::{CsvRow, ParserDataType},
+    resolution_path::{ResolutionPath, ResolutionPathSegment},
 };
 
 type Rows = Vec<CsvRow>;
 
-pub struct CsvDataBinder {
-    pub rows: Rows,
+pub struct CsvDataBinder<'a> {
+    pub rows: &'a Rows,
 }
 
-impl DataBinder<Rows, CsvBinderErr> for CsvDataBinder {
-    fn new(rows: Rows) -> Self {
+impl<'a> CsvDataBinder<'a> {
+    fn map_data_type(ty: &ParserDataType) -> BinderDataType {
+        match ty {
+            ParserDataType::Int => BinderDataType::Int,
+            ParserDataType::Float => BinderDataType::Float,
+            ParserDataType::String => BinderDataType::String,
+            ParserDataType::Bool => BinderDataType::Bool,
+            ParserDataType::Null => BinderDataType::Null,
+        }
+    }
+}
+
+impl<'a> DataBinder<'a, Rows, CsvBinderErr> for CsvDataBinder<'a> {
+    fn new(rows: &'a Rows) -> Self {
         CsvDataBinder { rows }
     }
 
     fn bind(&self) -> Result<DataBindingTable, CsvBinderErr> {
-        let table: HashMap<ResolutionPath, DataDescriptor> = HashMap::new();
+        let mut table: HashMap<ResolutionPath, BinderDataDescriptor> = HashMap::new();
 
-        for (_row_idx, _row) in self.rows.iter().enumerate() {}
+        for row in self.rows {
+            for col in &row.cols {
+                table.insert(
+                    ResolutionPath::with_segments(vec![
+                        ResolutionPathSegment::AbstractIndex,
+                        ResolutionPathSegment::Field(col.name.clone()),
+                    ]),
+                    BinderDataDescriptor {
+                        ty: Self::map_data_type(&col.ty),
+                        value: col.value.clone(),
+                    },
+                );
+            }
+        }
 
         if table.is_empty() {
             return Err(CsvBinderErr::NoData);

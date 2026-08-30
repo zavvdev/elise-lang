@@ -7,6 +7,7 @@ pub fn print_err(err: &PreExecErr) {
 
     let info = match err {
         NoResolvedSchema => "Missing schema resolution",
+        NoDataBinding => "Missing data binding table",
     };
 
     utils::print_err(info, Some("Pre-execution Error"));

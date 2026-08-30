@@ -41,7 +41,7 @@ impl ResolutionPathSegment {
 /// and data binding, where former is used at compilation stage,
 /// and latter is used at runtime stage.
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
-pub struct ResolutionPath(Vec<ResolutionPathSegment>);
+pub struct ResolutionPath(pub Vec<ResolutionPathSegment>);
 
 // Implementing Deref gives us an ability to extract
 // the underlying vector in order to use .iter(), .len(),

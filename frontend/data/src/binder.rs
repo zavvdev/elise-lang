@@ -12,6 +12,7 @@ pub enum BinderDataType {
     Int,
     Float,
     String,
+    Bool,
     Null,
     // Since we support only CSV for now, we skip these
     // List,
@@ -19,18 +20,18 @@ pub enum BinderDataType {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct DataDescriptor {
+pub struct BinderDataDescriptor {
     pub ty: BinderDataType,
     pub value: String,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct DataBindingTable {
-    pub table: HashMap<ResolutionPath, DataDescriptor>,
+    pub table: HashMap<ResolutionPath, BinderDataDescriptor>,
 }
 
 /// Must be implemented for any binder of any data type.
-pub trait DataBinder<D, E> {
-    fn new(data: D) -> Self;
+pub trait DataBinder<'a, D, E> {
+    fn new(data: &'a D) -> Self;
     fn bind(&self) -> Result<DataBindingTable, E>;
 }

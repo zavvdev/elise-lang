@@ -9,7 +9,8 @@ pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise_data::{
-    csv::csv_parser::CsvParser,
+    binder::{DataBinder, DataBindingTable},
+    csv::{csv_binder::CsvDataBinder, csv_parser::CsvParser},
     schema_resolver::{ResolvedSchema, SchemaResolver},
 };
 use elise_parser::Prelude;
@@ -70,7 +71,8 @@ pub fn run<'a>(
     let mut resolved_schema: Result<ResolvedSchema, LangErr> =
         Err(LangErr::PreExec(PreExecErr::NoResolvedSchema));
 
-    //let mut data_binding = ...;
+    let mut data_binding: Result<DataBindingTable, LangErr> =
+        Err(LangErr::PreExec(PreExecErr::NoDataBinding));
 
     // Run in parallel since these processes don't depend on one another.
     scope(|s| {
@@ -106,8 +108,10 @@ pub fn run<'a>(
 
         if config.data_path.to_lowercase().ends_with(FileExt::CSV) {
             s.spawn(|_| {
-                if let Ok(_parsed) = CsvParser::new(data).parse() {
-                    // data_binding = ...
+                if let Ok(parsed) = CsvParser::new(data).parse() {
+                    data_binding = CsvDataBinder::new(&parsed)
+                        .bind()
+                        .map_err(LangErr::CsvBinder);
                 }
             });
         }
@@ -116,7 +120,8 @@ pub fn run<'a>(
     //let _hir = hir.unwrap()?;
     let resolved_schema = resolved_schema?;
     println!("resolved schema: {:#?}", resolved_schema);
-    //let _data_binding = data_binding.ok_or(LangErr::Common(CommonErr::MissingParserData))?;
+    let data_binding = data_binding?;
+    println!("data binding: {:#?}", data_binding);
 
     Ok(RunResult {
         config,
