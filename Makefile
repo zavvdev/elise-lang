@@ -10,10 +10,10 @@ docker\:dev:
 # LOCAL DEV TEST COMMANDS START
 
 elise\:run:
-	./target/debug/elise --mode=run --source-code=sample.eli --data=data.csv --data-schema=sample.elt --print-bytecode
+	./target/debug/elise --mode=run --source-code=sample.eli --data=sample.csv --data-schema=sample.elt --print-bytecode
 
 elise\:run\:release:
-	./target/debug/elise --mode=run --source-code=sample.eli --data=data.csv --data-schema=sample.elt --print-bytecode
+	./target/debug/elise --mode=run --source-code=sample.eli --data=sample.csv --data-schema=sample.elt --print-bytecode
 
 elise\:build:
 	./target/debug/elise --mode=build --source-code=sample.eli --data-schema=sample.elt --output=sample.elb
@@ -22,16 +22,16 @@ elise\:build\:release:
 	./target/debug/elise --mode=build --source-code=sample.eli --data-schema=sample.elt --output=sample.elb
 
 elise\:exec:
-	./target/debug/elise --mode=exec --executable=sample.elb --data=data.csv
+	./target/debug/elise --mode=exec --executable=sample.elb --data=sample.csv
 
 elise\:exec\:release:
-	./target/debug/elise --mode=exec --executable=sample.elb --data=data.csv
+	./target/debug/elise --mode=exec --executable=sample.elb --data=sample.csv
 
 elise\:validate:
-	./target/debug/elise --mode=validate --data=data.csv --data-schema=sample.elt 
+	./target/debug/elise --mode=validate --data=sample.csv --data-schema=sample.elt 
 
 elise\:validate\:release:
-	./target/debug/elise --mode=validate --data=data.csv --data-schema=sample.elt 
+	./target/debug/elise --mode=validate --data=sample.csv --data-schema=sample.elt 
 
 # LOCAL DEV TEST COMMANDS END
 

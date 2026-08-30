@@ -2,6 +2,11 @@
 
 ## Things to implement
 
+- [ ] ?How can we do type validation in O(1) if we have Index(usize) in data binding table
+      and AbstractIndex in resolved schema. ?Maybe carry some Selector type instead of
+      ResolutionPath in both tables and use some kind of alt selector that will include
+      the same path but with AbstractIndex instead of Index(usize).
+
 - [ ] Validation of data binding against resolved schema
 
 - [ ] Semantic analyzer (preserve as much types as you can)
