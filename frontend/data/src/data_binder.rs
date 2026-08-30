@@ -27,6 +27,16 @@ pub struct DataBinderDataDescriptor {
 
 #[derive(Debug, PartialEq)]
 pub struct DataBindingTable {
+    // TODO:
+    // Carry Selector {
+    //          data_resolution_path: ResolutionPath,
+    //          type_resolution_path: Option<ResolutionPath>
+    //       }
+    // as a key where the former is for accessing data, and the latter
+    // is for type resolution. For example, we can create a data resolution
+    // path with Index(usize) but our schema resolution uses
+    // abstract indexes which means we can't use data accessor path
+    // for type validation. We need to carry both.
     pub table: HashMap<ResolutionPath, DataBinderDataDescriptor>,
 }
 
