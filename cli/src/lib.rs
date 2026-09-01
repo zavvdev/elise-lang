@@ -76,7 +76,9 @@ pub fn run<'a>(
 
     // Run in parallel since these processes don't depend on one another.
     scope(|s| {
-        // Source code parsing thread.
+        // ===================================================================
+        // Source code parsing/semanalizing thread.
+        // ===================================================================
         s.spawn(|_| {
             // Map ParserErr to LangErr::ParserSource in order to differentiate
             // between data being parsed since we can use Prelude for parsing
@@ -92,7 +94,9 @@ pub fn run<'a>(
                 // );
             }
         });
-        // Schema resolution thread.
+        // ===================================================================
+        // Schema parsing/resolution thread.
+        // ===================================================================
         s.spawn(|_| {
             // Map ParserErr to LangErr::ParserSchema since data schema syntax
             // is the same as a source code syntax.
@@ -106,6 +110,9 @@ pub fn run<'a>(
             }
         });
 
+        // ===================================================================
+        // Data parsing/binding thread
+        // ===================================================================
         if config.data_path.to_lowercase().ends_with(FileExt::CSV) {
             s.spawn(|_| {
                 if let Ok(parsed) = CsvParser::new(data).parse() {

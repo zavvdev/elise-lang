@@ -4,7 +4,9 @@ use elise_shared::shared_errors::errors_csv_data_binder::CsvDataBinderErr;
 
 use crate::{
     csv::csv_parser::{CsvParserDataType, CsvRow},
-    data_binder::{DataBinder, DataBinderDataDescriptor, DataBinderDataType, DataBindingTable},
+    data_binder::{
+        BindingKey, DataBinder, DataBinderDataDescriptor, DataBinderDataType, DataBindingTable,
+    },
     resolution_path::{ResolutionPath, ResolutionPathSegment},
 };
 
@@ -33,20 +35,25 @@ impl<'a> DataBinder<'a, Rows, CsvDataBinderErr> for CsvDataBinder<'a> {
     }
 
     fn bind(&self) -> Result<DataBindingTable, CsvDataBinderErr> {
-        let mut table: HashMap<ResolutionPath, DataBinderDataDescriptor> = HashMap::new();
+        let mut table: HashMap<BindingKey, DataBinderDataDescriptor> = HashMap::new();
 
         for (idx, row) in self.rows.iter().enumerate() {
             for col in &row.cols {
-                table.insert(
-                    ResolutionPath::with_segments(vec![
+                let key = BindingKey {
+                    data_resolution_path: ResolutionPath::with_segments(vec![
                         ResolutionPathSegment::Index(idx),
                         ResolutionPathSegment::Field(col.name.clone()),
                     ]),
-                    DataBinderDataDescriptor {
-                        ty: Self::map_data_type(&col.ty),
-                        value: col.value.clone(),
-                    },
-                );
+                    type_resolution_path: ResolutionPath::with_segments(vec![
+                        ResolutionPathSegment::AbstractIndex,
+                        ResolutionPathSegment::Field(col.name.clone()),
+                    ]),
+                };
+                let value = DataBinderDataDescriptor {
+                    ty: Self::map_data_type(&col.ty),
+                    value: col.value.clone(),
+                };
+                table.insert(key, value);
             }
         }
 
@@ -74,9 +81,9 @@ mod tests {
     use crate::csv::csv_data_binder::CsvDataBinder;
     use crate::csv::csv_parser::{CsvCol, CsvParserDataType, CsvRow};
     use crate::data_binder::{
-        DataBinder, DataBinderDataDescriptor, DataBinderDataType, DataBindingTable,
+        BindingKey, DataBinder, DataBinderDataDescriptor, DataBinderDataType, DataBindingTable,
     };
-    use crate::resolution_path::{ResolutionPath, ResolutionPathSegment};
+    use crate::resolution_path::{ResolutionPath, ResolutionPathSegment::*};
 
     #[test]
     fn should_return_no_data_err() {
@@ -148,15 +155,21 @@ mod tests {
             parsed_data.push(CsvRow { cols: final_cols });
         }
 
-        let mut table: HashMap<ResolutionPath, DataBinderDataDescriptor> = HashMap::new();
+        let mut table: HashMap<BindingKey, DataBinderDataDescriptor> = HashMap::new();
 
         for (row_idx, row) in rows.iter().enumerate() {
             for (col_idx, col) in row.iter().enumerate() {
                 table.insert(
-                    ResolutionPath::with_segments(vec![
-                        ResolutionPathSegment::Index(row_idx),
-                        ResolutionPathSegment::Field(cols[col_idx].to_string()),
-                    ]),
+                    BindingKey {
+                        data_resolution_path: ResolutionPath::with_segments(vec![
+                            Index(row_idx),
+                            Field(cols[col_idx].to_string()),
+                        ]),
+                        type_resolution_path: ResolutionPath::with_segments(vec![
+                            AbstractIndex,
+                            Field(cols[col_idx].to_string()),
+                        ]),
+                    },
                     DataBinderDataDescriptor {
                         ty: col.2.clone(),
                         value: col.0.to_string(),

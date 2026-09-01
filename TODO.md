@@ -2,8 +2,6 @@
 
 ## Things to implement
 
-- [ ] Update key for DataBinder to use Selector. Check TODO in data_binder.rs
-
 - [ ] Validation of data binding against resolved schema
 
 - [ ] Semantic analyzer (preserve as much types as you can)
