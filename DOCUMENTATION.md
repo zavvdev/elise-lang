@@ -42,99 +42,76 @@ Source code
     -> Sonata (VM)
 ```
 
-Steps 1–3 run in parallel:
-
-1. `Prelude` (parser) parses source code `.eli` file and produces `AST`
-2. `Prelude` parses schema `.elt` file and produces `AST`
-3. `CsvParser` reads data and produces parsed data representation `Vec<CsvRow>`
-
-Then sequentially:
-
-4. `CsvSchemaResolver` takes schema AST and produces `CsvResolvedSchema` which is a convenient representation of schema types.
-5. `CsvDataBinder` validates `CsvParserRecord` against `CsvResolvedSchema` → `DataBindingTable` which is data agnostic IR
-6. `Harmony` (semantic analyzer) takes source code `AST` and `DataBindingTable` → `HIR` with `SymbolTable` + `AAST` (optimized, annotated)
-7. `compiler` takes `HIR` and produces `bytecode`.
-8. `runtime/vm` takes `bytecode` + `DataBindingTable` and executes bytecode against the data that is injected into runtime.
-
-Note: the same parser (Prelude) is used for both source and schema files. Schema syntax is identical to source syntax by design.
-
----
-
-## Modules
-
-### `shared`
-
-Centralized shared crates such as errors and types. Depends on nothing.
-
-### `frontend`
-
-Module that is responsible for syntax/grammar related manipulations.
-
-### `frontend/ast`
-
-`AstNode` definitions. Depends on `shared`. A frontend-internal artifact — never escapes into `compiler` or `runtime`.
-
-### `frontend/data`
-
-Contains data binder and files that are related to data being processed (csv, json). Depends on `shared` and `frontend/ast`.
-
-### `frontend/parser`
-
-Parses source `.eli` and schema `.elt` files into `AST`. Depends on `frontend/ast`, `shared`.
-
-### `frontend/semanalyzer`
-
-TODO: WRONG IDEA. SEMANALYZER MUST NOT DEPEND ON DATA
-
-Takes source `AST` and `DataBindingTable` → `HIR`. Depends on `frontend/ast`, `frontend/data`, `shared`.
-
-### `compiler`
-
-TODO: WRONG IDEA. COMPILER MUST NOT DEPEND ON DATA
-
-Takes `HIR` + `DataBindingTable`, emits `bytecode`. Depends on `frontend/data`, `frontend/semanalyzer`. Has no knowledge of `ast` or `runtime`.
-
-### `bytecode`
-
-Bytecode instruction definitions. No dependencies. A shared neutral contract between `compiler` (writes) and `runtime/vm` (reads) — owned by neither.
-
-### `runtime/vm`
-
-Executes bytecode. Depends only on `bytecode`. Has no knowledge of `compiler`, `AST`, or any frontend artifact.
-
-### `cli`
-
-Composition root. Orchestrates the pipeline, handles all user-facing error display.
-
----
-
 ## Design decisions
 
 ### Lexing & Parsing
 
-Elise syntax is designed to be _Code as Data_ where source is already shaped like an _AST_. Given
-that, lexing and parsing are combined into a single Parser step in order to reduce number of
+Elise syntax is designed to be _Code as Data_ where the source code is already shaped like an _AST_.
+Given that, lexing and parsing are combined into a single Parser step in order to reduce number of
 iterations and build _AST_ right away.
 
-### Data Binding Stage
+### Data types resolution & validation
 
-The data binding stage is responsible for building a data structure that can simplify accessing data.
-For example, if we have `.csv` file, users will access data by mapping rows and accessing column names. Or, if we're talking about `.json`, it might also we a nested access since we can have arrays and objects in there.
+The main concept behind how data and types are resolved and validated is a usage of a common path
+that is called ResolutionPath.
 
-So, binder takes structured data and its schema and produces `DataBindingTable` that has a hashmap:
+Imagine that you have a data like this:
+
+```json
+{
+    "user": {
+        "email": "test@mail.com",
+        "phone_numbers": ["+00000", "+11111"]
+    }
+}
+```
+
+and let's say you have a schema for this data:
 
 ```
-(Index(0), Field(“name”)) → Descriptor
-(Index(0), Field(“age”))  → Descriptor
+.schema(
+    .dict(
+        "user" .dict(
+                    "email"         .string()
+                    "phone_numbers" .list(.string()))))
 ```
 
-This structure represents a mapping between **data access paths** and their corresponding metadata.
+How can we validate this data against the schema? How can we extract the data during runtime?
+In order to do this, we first resolve the schema into the structure that looks like this:
 
-This data structure is data agnostic and can be used for `csv` and `json`.
+```
+HashMap {
+    [Root] => Dict,
+    [Root, Field("user")] => Dict,
+    [Root, Field("user"), Field("email")] => Descriptor,
+    [Root, Field("user"), Field("phone_numbers")] => List,
+    [Root, Field("user"), Field("phone_numbers"), AbstractIndex] => String,
+}
+```
+
+We can call this HashMap as a schema resolution since we resolve each path that represents a data
+access to a data type.
+
+After that, we build exactly the same HashMap for data itself but each path corresponds to the data
+itself and its type.
+
+So having 2 hash tables where each key is the same (if schema matches), the validation/type
+extraction becomes trivial as well as data access during runtime since all we need to do is to
+re-create the same path and access data/type from the respective hash map.
+
+For example, if user accesses data during runtime:
+
+```
+.get(@data, "user", "email")
+```
+
+this is already tells us how to construct the path. `@data` slot is a Root, `"user"` is a dict key
+(`Field("user")`) and so on. So by tracking resolution path during runtime, we can extract type/data
+in O(1).
 
 ### Semantic Analysis Stage
 
-Semantic analyzer takes `AST` and `DataBindingTable`. The result is `HIR` (High-level Intermediate
+Semantic analyzer takes `AST` and produces `HIR` (High-level Intermediate
 Representation) which includes `SymbolTable` and `AAST` (Annotated Abstract Syntax Tree).
 
 #### Why do we need SymbolTable
@@ -224,14 +201,3 @@ The answer is: **the function object itself carries a copy of (or reference to) 
 2. We add `SymbolId(1)` to the `Fn` node's `captures: Vec<SymbolId>`
 
 3. We mark `symbol_info.is_captured = true` for that symbol
-
-### Compilation Stage
-
-TODO: WRONG IDEA
-
-During compilation stage, we create some `ConstantPool` structure which is represented as a Vector, and a `ResolutionCache` (names can be different) HashMap.
-
-When we walk AST and encounter data access procedure, we build a `Path` from `PathSegments` and resolve metadata from `DataBindingTable` using that `Path`. Now when we have a data, we push it into `ConstantPool` and obtain an index (last element). Then we cache that index into `ResolutionCache` (Path -> Index) so we don't need to construct it every time. Once we resolved the data, we can drop it from DataBindingTable which will be discarded eventually since it's not needed after compilation stage.
-
-So our compiler now can emit bytecode where data load procedures point to a `ConstantPool` index.
-And after the compilation we can also serialize that `ConstantPool` into a deserializable data for further usage in VM.

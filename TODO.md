@@ -2,8 +2,6 @@
 
 ## Things to implement
 
-- [ ] Review/update documentation, specification and code comments
-
 - [ ] Validation of data binding against resolved schema
 
 - [ ] Semantic analyzer (preserve as much types as you can)
