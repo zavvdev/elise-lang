@@ -21,7 +21,7 @@ use elise_shared::shared_errors::LangErr;
 
 use std::env;
 
-use crate::out::msg_fsys;
+use crate::out::{msg_csv_data_validator, msg_fsys};
 use crate::out::msg_modes;
 use crate::out::msg_parser;
 use crate::out::utils::{panic_hook, print_bytecode};
@@ -40,6 +40,7 @@ fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &
         SemanticAnalyzer(err) => msg_semanalyzer::print_err(err, source_code),
         CsvParser(err) => msg_csv_parser::print_err(err),
         CsvDataBinder(err) => msg_csv_data_binder::print_err(err),
+        CsvDataValidator(err) => msg_csv_data_validator::print_err(err),
     }
 
     std::process::exit(1);

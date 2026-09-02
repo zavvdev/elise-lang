@@ -16,8 +16,10 @@ pub enum CsvParserDataType {
     Null,
 }
 
-pub struct CsvParser<'a> {
-    data: &'a str,
+#[derive(Debug, PartialEq, Clone)]
+pub struct CsvColPos {
+    pub row: usize,
+    pub col: usize,
 }
 
 #[derive(Debug, PartialEq)]
@@ -25,13 +27,16 @@ pub struct CsvCol {
     pub name: String,
     pub ty: CsvParserDataType,
     pub value: String,
-    pub row: usize,
-    pub col: usize,
+    pub pos: CsvColPos,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct CsvRow {
     pub cols: Vec<CsvCol>,
+}
+
+pub struct CsvParser<'a> {
+    data: &'a str,
 }
 
 impl<'a> CsvParser<'a> {
@@ -120,8 +125,10 @@ impl<'a> CsvParser<'a> {
                     name: col_name,
                     ty: Self::infer_type(col),
                     value: col.trim().to_string(),
-                    row: row_index,
-                    col: col_index,
+                    pos: CsvColPos {
+                        row: row_index,
+                        col: col_index,
+                    },
                 });
             }
             records.push(row_record);
@@ -147,7 +154,7 @@ impl<'a> CsvParser<'a> {
 mod tests {
     use elise_shared::shared_errors::errors_csv_parser::CsvParserErr::*;
 
-    use crate::csv::csv_parser::{CsvCol, CsvParser, CsvParserDataType, CsvRow};
+    use crate::csv::csv_parser::{CsvCol, CsvColPos, CsvParser, CsvParserDataType, CsvRow};
 
     fn build_csv_header(index: usize) -> String {
         format!("n{}", index)
@@ -176,8 +183,7 @@ mod tests {
                     name: build_csv_header(i),
                     value: n.to_string(),
                     ty: CsvParserDataType::Int,
-                    row: 0,
-                    col: i,
+                    pos: CsvColPos { row: 0, col: i },
                 })
                 .collect(),
         };
@@ -214,8 +220,7 @@ mod tests {
                     name: build_csv_header(i),
                     value: n.to_string(),
                     ty: CsvParserDataType::Float,
-                    row: 0,
-                    col: i,
+                    pos: CsvColPos { row: 0, col: i },
                 })
                 .collect(),
         };
@@ -245,8 +250,7 @@ mod tests {
                     name: build_csv_header(i),
                     value: n.to_string(),
                     ty: CsvParserDataType::Bool,
-                    row: 0,
-                    col: i,
+                    pos: CsvColPos { row: 0, col: i },
                 })
                 .collect(),
         };
@@ -276,29 +280,25 @@ mod tests {
                         name: build_csv_header(0),
                         value: "john".to_string(),
                         ty: CsvParserDataType::String,
-                        row: 0,
-                        col: 0,
+                        pos: CsvColPos { row: 0, col: 0 },
                     },
                     CsvCol {
                         name: build_csv_header(1),
                         value: "".to_string(),
                         ty: CsvParserDataType::String,
-                        row: 0,
-                        col: 1,
+                        pos: CsvColPos { row: 0, col: 1 },
                     },
                     CsvCol {
                         name: build_csv_header(2),
                         value: "".to_string(),
                         ty: CsvParserDataType::String,
-                        row: 0,
-                        col: 2,
+                        pos: CsvColPos { row: 0, col: 2 },
                     },
                     CsvCol {
                         name: build_csv_header(3),
                         value: "".to_string(),
                         ty: CsvParserDataType::String,
-                        row: 0,
-                        col: 3,
+                        pos: CsvColPos { row: 0, col: 3 },
                     }
                 ],
             }])
@@ -327,8 +327,7 @@ mod tests {
                     name: build_csv_header(i),
                     value: n.trim().to_string(),
                     ty: CsvParserDataType::Null,
-                    row: 0,
-                    col: i,
+                    pos: CsvColPos { row: 0, col: i },
                 })
                 .collect(),
         };
@@ -374,8 +373,7 @@ mod tests {
                     name: build_csv_header(i),
                     value: n.trim().to_string(),
                     ty: types.get(i).unwrap().clone(),
-                    row: 0,
-                    col: i,
+                    pos: CsvColPos { row: 0, col: i },
                 })
                 .collect(),
         };
