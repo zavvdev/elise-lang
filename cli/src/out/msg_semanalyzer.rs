@@ -62,7 +62,7 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
     utils::print_err(&info, Some("Semantic error"));
 
     if let Some(code) = get_source_code_slice(source_code, span.start) {
-        print_err_source_code_pos(code.row, code.col);
-        print_err_source_code_slice(&code.slice, code.col);
+        print_err_source_code_pos(code.pos.row, code.pos.col);
+        print_err_source_code_slice(&code.slice, code.pos.col);
     }
 }

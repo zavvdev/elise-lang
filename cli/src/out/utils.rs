@@ -1,11 +1,11 @@
 use std::str::from_utf8;
 
 use colored::Colorize;
+use elise_shared::shared_types::Pos;
 
 pub struct SourceCodeSlice {
     pub slice: String,
-    pub row: usize,
-    pub col: usize,
+    pub pos: Pos,
 }
 
 /// Slices the source code in order to preview an error at `byte_pos`.
@@ -71,8 +71,10 @@ pub fn get_source_code_slice(source_code: &[u8], byte_pos: usize) -> Option<Sour
 
     Some(SourceCodeSlice {
         slice: source_str[preceding_line_start..error_line_end].to_string(),
-        row: error_row,
-        col: error_col,
+        pos: Pos {
+            row: error_row,
+            col: error_col,
+        },
     })
 }
 

@@ -1,13 +1,13 @@
+use crate::shared_types::Pos;
+
 #[derive(Debug, PartialEq)]
-pub enum CsvDataValidatorErr {
+pub enum DataValidatorErr {
     TypeMismatch {
-        row: usize,
-        col: usize,
+        pos: Pos,
         expected: &'static str,
         found: &'static str,
     },
     UnknownDataPath {
-        row: usize,
-        col: usize,
-    }
+        pos: Pos,
+    },
 }

@@ -7,6 +7,12 @@ pub struct Span {
     pub end: usize,
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct Pos {
+    pub row: usize,
+    pub col: usize,
+}
+
 pub struct Keyword;
 impl Keyword {
     pub const TRUE: &str = "true";

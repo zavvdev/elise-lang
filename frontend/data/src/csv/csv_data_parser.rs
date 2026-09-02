@@ -1,5 +1,8 @@
 use csv::{ErrorKind, ReaderBuilder};
-use elise_shared::{shared_errors::errors_csv_parser::CsvParserErr, shared_types::Keyword};
+use elise_shared::{
+    shared_errors::errors_csv_data_parser::CsvDataParserErr,
+    shared_types::{Keyword, Pos},
+};
 
 // ==================================================================
 //
@@ -8,7 +11,7 @@ use elise_shared::{shared_errors::errors_csv_parser::CsvParserErr, shared_types:
 // ==================================================================
 
 #[derive(PartialEq, Debug, Clone)]
-pub enum CsvParserDataType {
+pub enum CsvDataParserDataType {
     Int,
     Float,
     String,
@@ -16,54 +19,48 @@ pub enum CsvParserDataType {
     Null,
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct CsvColPos {
-    pub row: usize,
-    pub col: usize,
-}
-
 #[derive(Debug, PartialEq)]
-pub struct CsvCol {
+pub struct CsvDataCol {
     pub name: String,
-    pub ty: CsvParserDataType,
+    pub ty: CsvDataParserDataType,
     pub value: String,
-    pub pos: CsvColPos,
+    pub pos: Pos,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct CsvRow {
-    pub cols: Vec<CsvCol>,
+pub struct CsvDataRow {
+    pub cols: Vec<CsvDataCol>,
 }
 
-pub struct CsvParser<'a> {
+pub struct CsvDataParser<'a> {
     data: &'a str,
 }
 
-impl<'a> CsvParser<'a> {
+impl<'a> CsvDataParser<'a> {
     pub fn new(data: &'a str) -> Self {
         Self { data }
     }
 
-    fn map_lib_error(kind: &ErrorKind) -> CsvParserErr {
+    fn map_lib_error(kind: &ErrorKind) -> CsvDataParserErr {
         match kind {
             csv::ErrorKind::UnequalLengths {
                 pos,
                 expected_len,
                 len,
-            } => CsvParserErr::UneqLen {
+            } => CsvDataParserErr::UneqLen {
                 line: pos.as_ref().map(|p| p.line() - 1),
                 expected_len: *expected_len,
                 actual_len: *len,
             },
-            csv::ErrorKind::Utf8 { pos, err } => CsvParserErr::InvalidUtf8 {
+            csv::ErrorKind::Utf8 { pos, err } => CsvDataParserErr::InvalidUtf8 {
                 line: pos.as_ref().map(|p| p.line()),
                 detail: err.to_string(),
             },
-            csv::ErrorKind::Io(io_err) => CsvParserErr::Io {
+            csv::ErrorKind::Io(io_err) => CsvDataParserErr::Io {
                 kind: io_err.kind().to_string(),
                 detail: io_err.to_string(),
             },
-            _ => CsvParserErr::Unknown,
+            _ => CsvDataParserErr::Unknown,
         }
     }
 
@@ -84,22 +81,22 @@ impl<'a> CsvParser<'a> {
         value == Keyword::TRUE || value == Keyword::FALSE
     }
 
-    fn infer_type(value: &str) -> CsvParserDataType {
+    fn infer_type(value: &str) -> CsvDataParserDataType {
         match value {
-            v if Self::is_null(v) => CsvParserDataType::Null,
-            v if Self::is_bool(v) => CsvParserDataType::Bool,
-            v if Self::is_int(v) => CsvParserDataType::Int,
-            v if Self::is_float(v) => CsvParserDataType::Float,
-            _ => CsvParserDataType::String,
+            v if Self::is_null(v) => CsvDataParserDataType::Null,
+            v if Self::is_bool(v) => CsvDataParserDataType::Bool,
+            v if Self::is_int(v) => CsvDataParserDataType::Int,
+            v if Self::is_float(v) => CsvDataParserDataType::Float,
+            _ => CsvDataParserDataType::String,
         }
     }
 
-    pub fn parse(&self) -> Result<Vec<CsvRow>, CsvParserErr> {
+    pub fn parse(&self) -> Result<Vec<CsvDataRow>, CsvDataParserErr> {
         // TODO: Check if it's possible to pre-allocate a capacity for records.
         // At this moment I know that Reader doesn't know the length of records
         // until it walks down to the last one. Maybe we can rely on some
         // rough guess but this must be investigated further.
-        let mut records: Vec<CsvRow> = vec![];
+        let mut records: Vec<CsvDataRow> = vec![];
 
         let mut reader = ReaderBuilder::new()
             .has_headers(true)
@@ -112,20 +109,20 @@ impl<'a> CsvParser<'a> {
 
         for (row_index, result) in reader.records().enumerate() {
             let str_record = result.map_err(|err| Self::map_lib_error(err.kind()))?;
-            let mut row_record = CsvRow {
+            let mut row_record = CsvDataRow {
                 cols: Vec::with_capacity(headers.len()),
             };
             for (col_index, col) in str_record.iter().enumerate() {
                 let col_name = headers
                     .get(col_index)
-                    .ok_or(CsvParserErr::MissingHeader { col: col_index })?
+                    .ok_or(CsvDataParserErr::MissingHeader { col: col_index })?
                     .to_string();
 
-                row_record.cols.push(CsvCol {
+                row_record.cols.push(CsvDataCol {
                     name: col_name,
                     ty: Self::infer_type(col),
                     value: col.trim().to_string(),
-                    pos: CsvColPos {
+                    pos: Pos {
                         row: row_index,
                         col: col_index,
                     },
@@ -152,9 +149,13 @@ impl<'a> CsvParser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use elise_shared::shared_errors::errors_csv_parser::CsvParserErr::*;
+    use elise_shared::{
+        shared_errors::errors_csv_data_parser::CsvDataParserErr::*, shared_types::Pos,
+    };
 
-    use crate::csv::csv_parser::{CsvCol, CsvColPos, CsvParser, CsvParserDataType, CsvRow};
+    use crate::csv::csv_data_parser::{
+        CsvDataCol, CsvDataParser, CsvDataParserDataType, CsvDataRow,
+    };
 
     fn build_csv_header(index: usize) -> String {
         format!("n{}", index)
@@ -173,17 +174,17 @@ mod tests {
     fn should_parse_int() {
         let row = vec!["42", "-42", "0", "-0", "9999999"];
         let csv = build_csv(&row);
-        let parser = CsvParser::new(&csv);
+        let parser = CsvDataParser::new(&csv);
 
-        let result = CsvRow {
+        let result = CsvDataRow {
             cols: row
                 .iter()
                 .enumerate()
-                .map(|(i, n)| CsvCol {
+                .map(|(i, n)| CsvDataCol {
                     name: build_csv_header(i),
                     value: n.to_string(),
-                    ty: CsvParserDataType::Int,
-                    pos: CsvColPos { row: 0, col: i },
+                    ty: CsvDataParserDataType::Int,
+                    pos: Pos { row: 0, col: i },
                 })
                 .collect(),
         };
@@ -210,17 +211,17 @@ mod tests {
         ];
 
         let csv = build_csv(&row);
-        let parser = CsvParser::new(&csv);
+        let parser = CsvDataParser::new(&csv);
 
-        let result = CsvRow {
+        let result = CsvDataRow {
             cols: row
                 .iter()
                 .enumerate()
-                .map(|(i, n)| CsvCol {
+                .map(|(i, n)| CsvDataCol {
                     name: build_csv_header(i),
                     value: n.to_string(),
-                    ty: CsvParserDataType::Float,
-                    pos: CsvColPos { row: 0, col: i },
+                    ty: CsvDataParserDataType::Float,
+                    pos: Pos { row: 0, col: i },
                 })
                 .collect(),
         };
@@ -240,17 +241,17 @@ mod tests {
     fn should_parse_bool() {
         let row = vec!["true", "True", "TRUE", "false", "False", "FALSE"];
         let csv = build_csv(&row);
-        let parser = CsvParser::new(&csv);
+        let parser = CsvDataParser::new(&csv);
 
-        let result = CsvRow {
+        let result = CsvDataRow {
             cols: row
                 .iter()
                 .enumerate()
-                .map(|(i, n)| CsvCol {
+                .map(|(i, n)| CsvDataCol {
                     name: build_csv_header(i),
                     value: n.to_string(),
-                    ty: CsvParserDataType::Bool,
-                    pos: CsvColPos { row: 0, col: i },
+                    ty: CsvDataParserDataType::Bool,
+                    pos: Pos { row: 0, col: i },
                 })
                 .collect(),
         };
@@ -270,35 +271,35 @@ mod tests {
     fn should_parse_string() {
         let row = vec!["john", " ", "", "     "];
         let csv = build_csv(&row);
-        let parser = CsvParser::new(&csv);
+        let parser = CsvDataParser::new(&csv);
 
         assert_eq!(
             parser.parse(),
-            Ok(vec![CsvRow {
+            Ok(vec![CsvDataRow {
                 cols: vec![
-                    CsvCol {
+                    CsvDataCol {
                         name: build_csv_header(0),
                         value: "john".to_string(),
-                        ty: CsvParserDataType::String,
-                        pos: CsvColPos { row: 0, col: 0 },
+                        ty: CsvDataParserDataType::String,
+                        pos: Pos { row: 0, col: 0 },
                     },
-                    CsvCol {
+                    CsvDataCol {
                         name: build_csv_header(1),
                         value: "".to_string(),
-                        ty: CsvParserDataType::String,
-                        pos: CsvColPos { row: 0, col: 1 },
+                        ty: CsvDataParserDataType::String,
+                        pos: Pos { row: 0, col: 1 },
                     },
-                    CsvCol {
+                    CsvDataCol {
                         name: build_csv_header(2),
                         value: "".to_string(),
-                        ty: CsvParserDataType::String,
-                        pos: CsvColPos { row: 0, col: 2 },
+                        ty: CsvDataParserDataType::String,
+                        pos: Pos { row: 0, col: 2 },
                     },
-                    CsvCol {
+                    CsvDataCol {
                         name: build_csv_header(3),
                         value: "".to_string(),
-                        ty: CsvParserDataType::String,
-                        pos: CsvColPos { row: 0, col: 3 },
+                        ty: CsvDataParserDataType::String,
+                        pos: Pos { row: 0, col: 3 },
                     }
                 ],
             }])
@@ -317,17 +318,17 @@ mod tests {
     fn should_parse_null() {
         let row = vec!["null", "NULL", "Null"];
         let csv = build_csv(&row);
-        let parser = CsvParser::new(&csv);
+        let parser = CsvDataParser::new(&csv);
 
-        let result = CsvRow {
+        let result = CsvDataRow {
             cols: row
                 .iter()
                 .enumerate()
-                .map(|(i, n)| CsvCol {
+                .map(|(i, n)| CsvDataCol {
                     name: build_csv_header(i),
                     value: n.trim().to_string(),
-                    ty: CsvParserDataType::Null,
-                    pos: CsvColPos { row: 0, col: i },
+                    ty: CsvDataParserDataType::Null,
+                    pos: Pos { row: 0, col: i },
                 })
                 .collect(),
         };
@@ -338,7 +339,7 @@ mod tests {
     #[test]
     fn should_parse_empty_csv() {
         let data = "name,age";
-        let parser = CsvParser::new(&data);
+        let parser = CsvDataParser::new(&data);
         assert_eq!(parser.parse(), Ok(vec![]));
     }
 
@@ -355,25 +356,25 @@ mod tests {
         let row = vec![" 12.3  ", "  12 ", "  S  ", "  Null ", "   "];
 
         let types = vec![
-            CsvParserDataType::Float,
-            CsvParserDataType::Int,
-            CsvParserDataType::String,
-            CsvParserDataType::Null,
-            CsvParserDataType::String,
+            CsvDataParserDataType::Float,
+            CsvDataParserDataType::Int,
+            CsvDataParserDataType::String,
+            CsvDataParserDataType::Null,
+            CsvDataParserDataType::String,
         ];
 
         let csv = build_csv(&row);
-        let parser = CsvParser::new(&csv);
+        let parser = CsvDataParser::new(&csv);
 
-        let result = CsvRow {
+        let result = CsvDataRow {
             cols: row
                 .iter()
                 .enumerate()
-                .map(|(i, n)| CsvCol {
+                .map(|(i, n)| CsvDataCol {
                     name: build_csv_header(i),
                     value: n.trim().to_string(),
                     ty: types.get(i).unwrap().clone(),
-                    pos: CsvColPos { row: 0, col: i },
+                    pos: Pos { row: 0, col: i },
                 })
                 .collect(),
         };
@@ -392,7 +393,7 @@ mod tests {
     #[test]
     fn should_return_uneq_len_error() {
         let data = "name,age\n\"John\"\n\"Jane\",\"26\"";
-        let parser = CsvParser::new(&data);
+        let parser = CsvDataParser::new(&data);
 
         assert_eq!(
             parser.parse(),

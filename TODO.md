@@ -2,9 +2,6 @@
 
 ## Things to implement
 
-- [ ] Create a shared Pos { row, col } type, use it in out/, csv_parser and csv_binder in
-      descriptor instead of generic pos.
-
 - [ ] Validation of data binding against resolved schema
 
 - [ ] Semantic analyzer (preserve as much types as you can)

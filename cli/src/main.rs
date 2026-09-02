@@ -21,12 +21,12 @@ use elise_shared::shared_errors::LangErr;
 
 use std::env;
 
-use crate::out::{msg_csv_data_validator, msg_fsys};
 use crate::out::msg_modes;
 use crate::out::msg_parser;
 use crate::out::utils::{panic_hook, print_bytecode};
 use crate::out::{msg_conf, msg_csv_data_binder};
-use crate::out::{msg_csv_parser, msg_semanalyzer};
+use crate::out::{msg_csv_data_parser, msg_semanalyzer};
+use crate::out::{msg_data_validator, msg_fsys};
 use crate::out::{msg_preexec, msg_schema_resolver};
 
 fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &[u8]) -> ! {
@@ -38,9 +38,9 @@ fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &
         ParserSchema(err) => msg_parser::print_err(err, schema_source_code),
         SchemaResolver(err) => msg_schema_resolver::print_err(err, schema_source_code),
         SemanticAnalyzer(err) => msg_semanalyzer::print_err(err, source_code),
-        CsvParser(err) => msg_csv_parser::print_err(err),
+        DataValidator(err) => msg_data_validator::print_err(err),
+        CsvDataParser(err) => msg_csv_data_parser::print_err(err),
         CsvDataBinder(err) => msg_csv_data_binder::print_err(err),
-        CsvDataValidator(err) => msg_csv_data_validator::print_err(err),
     }
 
     std::process::exit(1);

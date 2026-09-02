@@ -1,6 +1,6 @@
 // https://docs.rs/csv/1.4.0/csv/enum.ErrorKind.html
 #[derive(Debug, PartialEq)]
-pub enum CsvParserErr {
+pub enum CsvDataParserErr {
     // =================================
     // Lib types start.
     // =================================

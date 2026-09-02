@@ -55,7 +55,7 @@ pub fn print_err(schema_err: &SchemaResolverErr, schema_source_code: &[u8]) {
     if let Some(span) = span
         && let Some(code) = get_source_code_slice(schema_source_code, span.start)
     {
-        print_err_source_code_pos(code.row, code.col);
-        print_err_source_code_slice(&code.slice, code.col);
+        print_err_source_code_pos(code.pos.row, code.pos.col);
+        print_err_source_code_slice(&code.slice, code.pos.col);
     }
 }

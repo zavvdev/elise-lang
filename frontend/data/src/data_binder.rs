@@ -12,6 +12,8 @@
 
 use std::collections::HashMap;
 
+use elise_shared::shared_types::Pos;
+
 use crate::resolution_path::ResolutionPath;
 
 /// Union of types that are available for all
@@ -37,7 +39,7 @@ pub enum DataBinderDataType {
 /// struct is not considered as a source of truth and must not
 /// be used as a proof for type validity.
 #[derive(Debug, PartialEq)]
-pub struct DataBinderDataDescriptor<P> {
+pub struct DataBinderDataDescriptor {
     // Data type derived from parser.
     // This type is what we have inside the source file.
     pub ty: DataBinderDataType,
@@ -47,7 +49,7 @@ pub struct DataBinderDataDescriptor<P> {
     // Generic descriptor for the position of the
     // carried value. Can be different for each
     // data types.
-    pub pos_descriptor: P,
+    pub pos: Pos,
 
     // The idea behind ResolutionPath is that we use it as a
     // single source of truth for data access and type validation.
@@ -68,12 +70,12 @@ pub struct DataBinderDataDescriptor<P> {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct DataBindingTable<P> {
-    pub table: HashMap<ResolutionPath, DataBinderDataDescriptor<P>>,
+pub struct DataBindingTable {
+    pub table: HashMap<ResolutionPath, DataBinderDataDescriptor>,
 }
 
 /// Must be implemented for any binder of any data type.
-pub trait DataBinder<'a, Data, Error, PosDescriptor> {
+pub trait DataBinder<'a, Data, Error> {
     fn new(data: &'a Data) -> Self;
-    fn bind(&self) -> Result<DataBindingTable<PosDescriptor>, Error>;
+    fn bind(&self) -> Result<DataBindingTable, Error>;
 }

@@ -1,9 +1,9 @@
-use elise_shared::shared_errors::errors_csv_parser::CsvParserErr;
+use elise_shared::shared_errors::errors_csv_data_parser::CsvDataParserErr;
 
 use crate::out::utils;
 
-pub fn print_err(csv_parser_err: &CsvParserErr) {
-    use CsvParserErr::*;
+pub fn print_err(csv_parser_err: &CsvDataParserErr) {
+    use CsvDataParserErr::*;
 
     let info: String = match csv_parser_err {
         UneqLen {
