@@ -41,7 +41,7 @@ use elise_shared::shared_types::ArityMismatchKind;
 
 use elise_shared::shared_node_names::NodeName;
 
-use crate::resolution_path::{ResolutionPath, ResolutionPathSegment};
+use crate::binding_path::{BindingPath, BindingPathSegment};
 
 // ==================================================================
 //
@@ -239,7 +239,7 @@ impl SchemaBinderTypeDescriptor {
     }
 }
 
-type TSchemaBindings = HashMap<ResolutionPath, SchemaBinderTypeDescriptor>;
+type TSchemaBindings = HashMap<BindingPath, SchemaBinderTypeDescriptor>;
 
 #[derive(Debug, PartialEq)]
 pub struct SchemaBindings {
@@ -249,7 +249,7 @@ pub struct SchemaBindings {
 pub struct SchemaBinder<'a> {
     // AST of the schema definition file.
     schema_ast: &'a Vec<AstNode>,
-    current_path: ResolutionPath,
+    current_path: BindingPath,
     current_type: Option<SchemaBinderDataType>,
     current_modifiers: Vec<Modifier>,
 }
@@ -261,7 +261,7 @@ impl<'a> SchemaBinder<'a> {
             // Current path that changes according to nesting.
             // We push here every time we recurse into nested fields
             // like list items or dict keys in order to resolve them.
-            current_path: ResolutionPath::new(),
+            current_path: BindingPath::new(),
             // Data type that we're currently in and want to resolve.
             // Whenever we encounter a type definition that we distinguish,
             // we capture it into this field.
@@ -576,7 +576,7 @@ impl<'a> SchemaBinder<'a> {
                     // Push new segment into the current_path since we enter a new
                     // scope with dict key.
                     self.current_path
-                        .push(ResolutionPathSegment::Field(prim.value.clone()));
+                        .push(BindingPathSegment::Field(prim.value.clone()));
                     // Recurse into the key value type definition. This will commit
                     // new type definitions with path including the respective key.
                     self.resolve_from_node(value, bindings)?;
@@ -657,7 +657,7 @@ impl<'a> SchemaBinder<'a> {
 
         // Pusing AbstractIndex since our list can have any number of
         // items of the same type.
-        self.current_path.push(ResolutionPathSegment::AbstractIndex);
+        self.current_path.push(BindingPathSegment::AbstractIndex);
         self.resolve_from_node(first_arg, bindings)?;
 
         self.current_path.pop();
@@ -835,7 +835,7 @@ impl<'a> SchemaBinder<'a> {
     //     let smallest_table = &resolution_tables[smallest_table_index];
 
     //     // Key-value pairs that are present in ALL union branch tables.
-    //     let common_key_values: Vec<(ResolutionPath, SchemaBinderTypeDescriptor)> = smallest_table
+    //     let common_key_values: Vec<(BindingPath, SchemaBinderTypeDescriptor)> = smallest_table
     //         .iter()
     //         .filter(|(key, value)| {
     //             resolution_tables

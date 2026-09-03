@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use elise_shared::shared_errors::errors_csv_data_binder::CsvDataBinderErr;
 
 use crate::{
+    binding_path::{BindingPath, BindingPathSegment},
     csv::csv_data_parser::{CsvDataParserDataType, CsvDataRow},
     data_binder::{DataBinder, DataBinderDataDescriptor, DataBinderDataType, DataBindings},
-    resolution_path::{ResolutionPath, ResolutionPathSegment},
 };
 
 type Rows = Vec<CsvDataRow>;
@@ -33,21 +33,21 @@ impl<'a> DataBinder<'a, Rows, CsvDataBinderErr> for CsvDataBinder<'a> {
     }
 
     fn bind(&self) -> Result<DataBindings, CsvDataBinderErr> {
-        let mut bindings: HashMap<ResolutionPath, DataBinderDataDescriptor> = HashMap::new();
+        let mut bindings: HashMap<BindingPath, DataBinderDataDescriptor> = HashMap::new();
 
         for (idx, row) in self.rows.iter().enumerate() {
             for col in &row.cols {
-                let key = ResolutionPath::with_segments(vec![
-                    ResolutionPathSegment::Index(idx),
-                    ResolutionPathSegment::Field(col.name.clone()),
+                let key = BindingPath::with_segments(vec![
+                    BindingPathSegment::Index(idx),
+                    BindingPathSegment::Field(col.name.clone()),
                 ]);
                 let value = DataBinderDataDescriptor {
                     ty: Self::map_data_type(&col.ty),
                     value: col.value.clone(),
                     pos: col.pos.clone(),
-                    type_resolution_path: ResolutionPath::with_segments(vec![
-                        ResolutionPathSegment::AbstractIndex,
-                        ResolutionPathSegment::Field(col.name.clone()),
+                    type_resolution_path: BindingPath::with_segments(vec![
+                        BindingPathSegment::AbstractIndex,
+                        BindingPathSegment::Field(col.name.clone()),
                     ]),
                 };
                 bindings.insert(key, value);
@@ -75,12 +75,12 @@ mod tests {
     use elise_shared::shared_errors::errors_csv_data_binder::CsvDataBinderErr;
     use elise_shared::shared_types::{Keyword, Pos};
 
+    use crate::binding_path::{BindingPath, BindingPathSegment::*};
     use crate::csv::csv_data_binder::CsvDataBinder;
     use crate::csv::csv_data_parser::{CsvDataCol, CsvDataParserDataType, CsvDataRow};
     use crate::data_binder::{
         DataBinder, DataBinderDataDescriptor, DataBinderDataType, DataBindings,
     };
-    use crate::resolution_path::{ResolutionPath, ResolutionPathSegment::*};
 
     #[test]
     fn should_return_no_data_err() {
@@ -162,12 +162,12 @@ mod tests {
             parsed_data.push(CsvDataRow { cols: final_cols });
         }
 
-        let mut bindings: HashMap<ResolutionPath, DataBinderDataDescriptor> = HashMap::new();
+        let mut bindings: HashMap<BindingPath, DataBinderDataDescriptor> = HashMap::new();
 
         for (row_idx, row) in rows.iter().enumerate() {
             for (col_idx, col) in row.iter().enumerate() {
                 bindings.insert(
-                    ResolutionPath::with_segments(vec![
+                    BindingPath::with_segments(vec![
                         Index(row_idx),
                         Field(cols[col_idx].to_string()),
                     ]),
@@ -178,7 +178,7 @@ mod tests {
                             row: row_idx,
                             col: col_idx,
                         },
-                        type_resolution_path: ResolutionPath::with_segments(vec![
+                        type_resolution_path: BindingPath::with_segments(vec![
                             AbstractIndex,
                             Field(cols[col_idx].to_string()),
                         ]),

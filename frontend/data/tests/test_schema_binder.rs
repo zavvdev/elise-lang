@@ -1,5 +1,5 @@
 use elise_data::{
-    resolution_path::{ResolutionPath, ResolutionPathSegment::*},
+    binding_path::{BindingPath, BindingPathSegment::*},
     schema_binder::{
         ArgLen, SchemaBinder, SchemaBinderDataType, SchemaBinderTypeDescriptor, SchemaFnLexeme,
     },
@@ -248,7 +248,7 @@ fn should_resolve_single_primitive() {
         let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
         assert_eq!(
-            *bindings.bindings.get(&ResolutionPath::new()).unwrap(),
+            *bindings.bindings.get(&BindingPath::new()).unwrap(),
             SchemaBinderTypeDescriptor {
                 dtype: input.1,
                 nullable: false,
@@ -279,7 +279,7 @@ fn should_resolve_single_compound() {
         let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
         assert_eq!(
-            *bindings.bindings.get(&ResolutionPath::new()).unwrap(),
+            *bindings.bindings.get(&BindingPath::new()).unwrap(),
             SchemaBinderTypeDescriptor {
                 dtype: input.1,
                 nullable: false,
@@ -316,7 +316,7 @@ fn should_resolve_one_nullable_child() {
         let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
         assert_eq!(
-            *bindings.bindings.get(&ResolutionPath::new()).unwrap(),
+            *bindings.bindings.get(&BindingPath::new()).unwrap(),
             SchemaBinderTypeDescriptor {
                 dtype: input.1,
                 nullable: true,
@@ -354,7 +354,7 @@ fn should_resolve_nested_nullables() {
 
     let cases = vec![
         (
-            ResolutionPath::new(),
+            BindingPath::new(),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
@@ -362,7 +362,7 @@ fn should_resolve_nested_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("name".to_string())]),
+            BindingPath::with_segments(vec![Field("name".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
@@ -370,7 +370,7 @@ fn should_resolve_nested_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("email".to_string())]),
+            BindingPath::with_segments(vec![Field("email".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::String,
                 nullable: true,
@@ -378,7 +378,7 @@ fn should_resolve_nested_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("address".to_string())]),
+            BindingPath::with_segments(vec![Field("address".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: true,
@@ -386,7 +386,7 @@ fn should_resolve_nested_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 Field("address".to_string()),
                 Field("street".to_string()),
             ]),
@@ -397,7 +397,7 @@ fn should_resolve_nested_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 Field("address".to_string()),
                 Field("house".to_string()),
             ]),
@@ -408,7 +408,7 @@ fn should_resolve_nested_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 Field("address".to_string()),
                 Field("state".to_string()),
             ]),
@@ -419,7 +419,7 @@ fn should_resolve_nested_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 Field("address".to_string()),
                 Field("state".to_string()),
                 Field("name".to_string()),
@@ -431,7 +431,7 @@ fn should_resolve_nested_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 Field("address".to_string()),
                 Field("state".to_string()),
                 Field("code".to_string()),
@@ -443,7 +443,7 @@ fn should_resolve_nested_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("score".to_string())]),
+            BindingPath::with_segments(vec![Field("score".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Float,
                 nullable: true,
@@ -451,7 +451,7 @@ fn should_resolve_nested_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("id".to_string())]),
+            BindingPath::with_segments(vec![Field("id".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
@@ -486,7 +486,7 @@ fn should_resolve_one_optional_child() {
         let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
         assert_eq!(
-            *bindings.bindings.get(&ResolutionPath::new()).unwrap(),
+            *bindings.bindings.get(&BindingPath::new()).unwrap(),
             SchemaBinderTypeDescriptor {
                 dtype: input.1,
                 nullable: false,
@@ -524,7 +524,7 @@ fn should_resolve_nested_optionals() {
 
     let cases = vec![
         (
-            ResolutionPath::new(),
+            BindingPath::new(),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
@@ -532,7 +532,7 @@ fn should_resolve_nested_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("name".to_string())]),
+            BindingPath::with_segments(vec![Field("name".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
@@ -540,7 +540,7 @@ fn should_resolve_nested_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("email".to_string())]),
+            BindingPath::with_segments(vec![Field("email".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
@@ -548,7 +548,7 @@ fn should_resolve_nested_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("address".to_string())]),
+            BindingPath::with_segments(vec![Field("address".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
@@ -556,7 +556,7 @@ fn should_resolve_nested_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 Field("address".to_string()),
                 Field("street".to_string()),
             ]),
@@ -567,7 +567,7 @@ fn should_resolve_nested_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 Field("address".to_string()),
                 Field("house".to_string()),
             ]),
@@ -578,7 +578,7 @@ fn should_resolve_nested_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 Field("address".to_string()),
                 Field("state".to_string()),
             ]),
@@ -589,7 +589,7 @@ fn should_resolve_nested_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 Field("address".to_string()),
                 Field("state".to_string()),
                 Field("name".to_string()),
@@ -601,7 +601,7 @@ fn should_resolve_nested_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 Field("address".to_string()),
                 Field("state".to_string()),
                 Field("code".to_string()),
@@ -613,7 +613,7 @@ fn should_resolve_nested_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("score".to_string())]),
+            BindingPath::with_segments(vec![Field("score".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Float,
                 nullable: false,
@@ -621,7 +621,7 @@ fn should_resolve_nested_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("id".to_string())]),
+            BindingPath::with_segments(vec![Field("id".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
@@ -651,7 +651,7 @@ fn should_resolve_optional_with_nullable() {
 
     let cases = vec![
         (
-            ResolutionPath::new(),
+            BindingPath::new(),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
@@ -659,7 +659,7 @@ fn should_resolve_optional_with_nullable() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("name".to_string())]),
+            BindingPath::with_segments(vec![Field("name".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::String,
                 nullable: true,
@@ -667,7 +667,7 @@ fn should_resolve_optional_with_nullable() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("age".to_string())]),
+            BindingPath::with_segments(vec![Field("age".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Int,
                 nullable: true,
@@ -709,7 +709,7 @@ fn should_resolve_one_level_dict() {
 
     let cases = vec![
         (
-            ResolutionPath::new(),
+            BindingPath::new(),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
@@ -717,7 +717,7 @@ fn should_resolve_one_level_dict() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("name".to_string())]),
+            BindingPath::with_segments(vec![Field("name".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
@@ -725,7 +725,7 @@ fn should_resolve_one_level_dict() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("age".to_string())]),
+            BindingPath::with_segments(vec![Field("age".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Int,
                 nullable: true,
@@ -733,7 +733,7 @@ fn should_resolve_one_level_dict() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("score".to_string())]),
+            BindingPath::with_segments(vec![Field("score".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Float,
                 nullable: false,
@@ -741,7 +741,7 @@ fn should_resolve_one_level_dict() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![Field("employed".to_string())]),
+            BindingPath::with_segments(vec![Field("employed".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Bool,
                 nullable: false,
@@ -778,7 +778,7 @@ fn should_resolve_one_level_abstract_list() {
 
         let cases = vec![
             (
-                ResolutionPath::new(),
+                BindingPath::new(),
                 SchemaBinderTypeDescriptor {
                     dtype: SchemaBinderDataType::ListAbstract,
                     nullable: false,
@@ -786,7 +786,7 @@ fn should_resolve_one_level_abstract_list() {
                 },
             ),
             (
-                ResolutionPath::with_segments(vec![AbstractIndex]),
+                BindingPath::with_segments(vec![AbstractIndex]),
                 SchemaBinderTypeDescriptor {
                     dtype: input.1,
                     nullable: false,
@@ -816,7 +816,7 @@ fn should_resolve_one_level_fixed_list() {
 
         let cases = vec![
             (
-                ResolutionPath::new(),
+                BindingPath::new(),
                 SchemaBinderTypeDescriptor {
                     dtype: SchemaBinderDataType::ListFixed(2),
                     nullable: false,
@@ -824,7 +824,7 @@ fn should_resolve_one_level_fixed_list() {
                 },
             ),
             (
-                ResolutionPath::with_segments(vec![AbstractIndex]),
+                BindingPath::with_segments(vec![AbstractIndex]),
                 SchemaBinderTypeDescriptor {
                     dtype: input.1,
                     nullable: false,
@@ -881,7 +881,7 @@ fn should_resolve_complex_schema_with_nullables() {
 
     let cases = vec![
         (
-            ResolutionPath::new(),
+            BindingPath::new(),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::ListAbstract,
                 nullable: false,
@@ -889,7 +889,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex]),
+            BindingPath::with_segments(vec![AbstractIndex]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
@@ -897,7 +897,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("id".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("id".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
@@ -905,7 +905,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("name".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("name".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
@@ -913,7 +913,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("age".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("age".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
@@ -921,7 +921,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("emails".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("emails".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::ListFixed(3),
                 nullable: true,
@@ -929,7 +929,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("emails".to_string()),
                 AbstractIndex,
@@ -941,7 +941,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("address".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("address".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
@@ -949,7 +949,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("address".to_string()),
                 Field("city".to_string()),
@@ -961,7 +961,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("address".to_string()),
                 Field("street".to_string()),
@@ -973,7 +973,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("address".to_string()),
                 Field("house".to_string()),
@@ -985,7 +985,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("address".to_string()),
                 Field("index".to_string()),
@@ -997,7 +997,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("scores".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("scores".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::ListAbstract,
                 nullable: false,
@@ -1005,7 +1005,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("scores".to_string()),
                 AbstractIndex,
@@ -1017,7 +1017,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("scores".to_string()),
                 AbstractIndex,
@@ -1030,7 +1030,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("employed".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("employed".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Bool,
                 nullable: false,
@@ -1038,7 +1038,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("admin".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("admin".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: true,
@@ -1046,7 +1046,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("admin".to_string()),
                 Field("id".to_string()),
@@ -1058,7 +1058,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("admin".to_string()),
                 Field("email".to_string()),
@@ -1070,7 +1070,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("admin".to_string()),
                 Field("permissions".to_string()),
@@ -1082,7 +1082,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("admin".to_string()),
                 Field("permissions".to_string()),
@@ -1095,7 +1095,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("admin".to_string()),
                 Field("address".to_string()),
@@ -1107,7 +1107,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("admin".to_string()),
                 Field("address".to_string()),
@@ -1120,7 +1120,7 @@ fn should_resolve_complex_schema_with_nullables() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("admin".to_string()),
                 Field("address".to_string()),
@@ -1169,7 +1169,7 @@ fn should_resolve_complex_schema_with_optionals() {
 
     let cases = vec![
         (
-            ResolutionPath::new(),
+            BindingPath::new(),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::ListAbstract,
                 nullable: false,
@@ -1177,7 +1177,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex]),
+            BindingPath::with_segments(vec![AbstractIndex]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
@@ -1185,7 +1185,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("id".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("id".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
@@ -1193,7 +1193,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("emails".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("emails".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::ListFixed(3),
                 nullable: false,
@@ -1201,7 +1201,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("emails".to_string()),
                 AbstractIndex,
@@ -1213,7 +1213,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("address".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("address".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
@@ -1221,7 +1221,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("address".to_string()),
                 Field("street".to_string()),
@@ -1233,7 +1233,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("address".to_string()),
                 Field("house".to_string()),
@@ -1245,7 +1245,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("address".to_string()),
                 Field("index".to_string()),
@@ -1257,7 +1257,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("scores".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("scores".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::ListAbstract,
                 nullable: false,
@@ -1265,7 +1265,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("scores".to_string()),
                 AbstractIndex,
@@ -1277,7 +1277,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("scores".to_string()),
                 AbstractIndex,
@@ -1290,7 +1290,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("employed".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("employed".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Bool,
                 nullable: false,
@@ -1298,7 +1298,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![AbstractIndex, Field("admin".to_string())]),
+            BindingPath::with_segments(vec![AbstractIndex, Field("admin".to_string())]),
             SchemaBinderTypeDescriptor {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
@@ -1306,7 +1306,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("admin".to_string()),
                 Field("email".to_string()),
@@ -1318,7 +1318,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("admin".to_string()),
                 Field("permissions".to_string()),
@@ -1330,7 +1330,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("admin".to_string()),
                 Field("permissions".to_string()),
@@ -1343,7 +1343,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("admin".to_string()),
                 Field("address".to_string()),
@@ -1355,7 +1355,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("admin".to_string()),
                 Field("address".to_string()),
@@ -1368,7 +1368,7 @@ fn should_resolve_complex_schema_with_optionals() {
             },
         ),
         (
-            ResolutionPath::with_segments(vec![
+            BindingPath::with_segments(vec![
                 AbstractIndex,
                 Field("admin".to_string()),
                 Field("address".to_string()),
