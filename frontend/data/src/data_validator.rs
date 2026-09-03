@@ -1,21 +1,21 @@
 use elise_shared::shared_errors::errors_data_validator::DataValidatorErr;
 
 use crate::{
-    data_binder::{DataBinderDataType, DataBindingTable},
-    schema_resolver::{ResolvedSchema, SchemaDataType},
+    data_binder::{DataBinderDataType, DataBindings},
+    schema_binder::{SchemaBinderDataType, SchemaBindings},
 };
 
 fn match_data_type(
     data_binding_data_type: &DataBinderDataType,
-    schema_data_type: &SchemaDataType,
+    schema_binding_data_type: &SchemaBinderDataType,
 ) -> bool {
     use DataBinderDataType::*;
 
     match data_binding_data_type {
-        Int => *schema_data_type == SchemaDataType::Int,
-        Float => *schema_data_type == SchemaDataType::Float,
-        String => *schema_data_type == SchemaDataType::String,
-        Bool => *schema_data_type == SchemaDataType::Bool,
+        Int => *schema_binding_data_type == SchemaBinderDataType::Int,
+        Float => *schema_binding_data_type == SchemaBinderDataType::Float,
+        String => *schema_binding_data_type == SchemaBinderDataType::String,
+        Bool => *schema_binding_data_type == SchemaBinderDataType::Bool,
         _ => false,
     }
 }
@@ -32,12 +32,12 @@ fn match_data_type(
 // BINDING TABLE AND RESOLVED SCHEMA. SOMETHING THAT REDUCES RESOLUTION PATHS
 // TO A STABLE INDEXES THAT CAN BE REFERENCED BY BYTECODE AND VM.
 pub fn validate_data(
-    binding_table: &DataBindingTable,
-    resolved_schema: &ResolvedSchema,
+    data_bindings: &DataBindings,
+    schema_bindings: &SchemaBindings,
 ) -> Result<(), DataValidatorErr> {
-    if let Some((_, data_binding_descriptor)) = binding_table.table.iter().next() {
-        if let Some(resolved_type) = resolved_schema
-            .resolved_schema
+    if let Some((_, data_binding_descriptor)) = data_bindings.bindings.iter().next() {
+        if let Some(resolved_type) = schema_bindings
+            .bindings
             .get(&data_binding_descriptor.type_resolution_path)
         {
             if match_data_type(&data_binding_descriptor.ty, &resolved_type.dtype) {

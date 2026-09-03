@@ -1,4 +1,4 @@
-use elise_shared::shared_errors::errors_schema_resolver::SchemaResolverErr;
+use elise_shared::shared_errors::errors_schema_binder::SchemaBinderErr;
 use elise_shared::shared_types::Span;
 
 use crate::out::utils;
@@ -7,8 +7,8 @@ use crate::out::utils::{
     get_source_code_slice, print_err_source_code_pos, print_err_source_code_slice,
 };
 
-pub fn print_err(schema_err: &SchemaResolverErr, schema_source_code: &[u8]) {
-    use SchemaResolverErr::*;
+pub fn print_err(schema_err: &SchemaBinderErr, schema_source_code: &[u8]) {
+    use SchemaBinderErr::*;
 
     let (msg, span): (&str, Option<&Span>) = match schema_err {
         Empty => ("Schema file must not be empty", None),

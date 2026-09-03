@@ -10,8 +10,8 @@ pub mod fsys;
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise_data::{
     csv::{csv_data_binder::CsvDataBinder, csv_data_parser::CsvDataParser},
-    data_binder::{DataBinder, DataBindingTable},
-    schema_resolver::{ResolvedSchema, SchemaResolver},
+    data_binder::{DataBinder, DataBindings},
+    schema_binder::{SchemaBinder, SchemaBindings},
 };
 use elise_parser::Prelude;
 use elise_shared::shared_errors::{LangErr, errors_preexec::PreExecErr};
@@ -68,10 +68,10 @@ pub fn run<'a>(
 
     //let mut hir = ...;
 
-    let mut resolved_schema: Result<ResolvedSchema, LangErr> =
+    let mut schema_bindings: Result<SchemaBindings, LangErr> =
         Err(LangErr::PreExec(PreExecErr::NoResolvedSchema));
 
-    let mut data_binding: Result<DataBindingTable, LangErr> =
+    let mut data_bindings: Result<DataBindings, LangErr> =
         Err(LangErr::PreExec(PreExecErr::NoDataBinding));
 
     // Run in parallel since these processes don't depend on one another.
@@ -95,7 +95,7 @@ pub fn run<'a>(
             }
         });
         // ===================================================================
-        // Schema parsing/resolution thread.
+        // Schema parsing/bindings thread.
         // ===================================================================
         s.spawn(|_| {
             // Map ParserErr to LangErr::ParserSchema since data schema syntax
@@ -104,19 +104,19 @@ pub fn run<'a>(
                 .parse()
                 .map_err(LangErr::ParserSchema)
             {
-                resolved_schema = SchemaResolver::new(&ast)
-                    .resolve()
-                    .map_err(LangErr::SchemaResolver);
+                schema_bindings = SchemaBinder::new(&ast)
+                    .bind()
+                    .map_err(LangErr::SchemaBinder);
             }
         });
 
         // ===================================================================
-        // Data parsing/binding thread
+        // Data parsing/bindings thread.
         // ===================================================================
         if config.data_path.to_lowercase().ends_with(FileExt::CSV) {
             s.spawn(|_| {
                 if let Ok(parsed) = CsvDataParser::new(data).parse() {
-                    data_binding = CsvDataBinder::new(&parsed)
+                    data_bindings = CsvDataBinder::new(&parsed)
                         .bind()
                         .map_err(LangErr::CsvDataBinder);
                 }
@@ -125,10 +125,10 @@ pub fn run<'a>(
     });
 
     //let _hir = hir.unwrap()?;
-    let resolved_schema = resolved_schema?;
-    println!("resolved schema: {:#?}", resolved_schema);
-    let data_binding = data_binding?;
-    println!("data binding: {:#?}", data_binding);
+    let schema_bindings = schema_bindings?;
+    println!("schema bindings: {:#?}", schema_bindings);
+    let data_bindings = data_bindings?;
+    println!("data bindings: {:#?}", data_bindings);
 
     Ok(RunResult {
         config,

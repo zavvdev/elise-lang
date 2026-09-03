@@ -1,15 +1,16 @@
-//! # SchemaResolver
+//! # SchemaBinder
 //!
-//! The reason we want to have a schema resolution is to be able to
+//! The reason we want to have a schema binder is to be able to
 //! build a convenient way of retrieving type information during
 //! compilation stage.
 //! Schema definition is just a source code with special semantics
 //! which means that the result of its parsing is the same AST.
 //!
 //! This file contains the algorithm of transforming schema AST
-//! into resolved schema which is represented as a HashMap
-//! where each key is a resolution path, and value is a type descriptor.
-//! This allows us to build a map for each possible path of data access.
+//! into the binding table which is represented as a HashMap
+//! where each key is a path to the type definition, and value is a
+//! type descriptor. This allows us to build a map for each possible
+//! path of data access.
 //!
 //! For example, consider this schema definition:
 //! .schema(
@@ -21,7 +22,7 @@
 //!    )
 //! )
 //!
-//! In this case our resolved schema will look like this:
+//! In this case our result will look like this:
 //! [Root, Field("name")] => TypeString
 //! [Root, Field("address")] => TypeDict
 //! [Root, Field("address"), Field("street")] => TypeString
@@ -29,14 +30,13 @@
 //!
 //! So during compilation when we work with some source code that accesses data
 //! like: .get(@data "address" "street"), we can build a resolution path from
-//! .get function arguments and access type descriptor from this SchemaResolver
-//! result.
+//! .get function arguments and access type descriptor.
 
 use std::collections::HashMap;
 
 use elise_ast::{AstCall, AstNode};
 
-use elise_shared::shared_errors::errors_schema_resolver::SchemaResolverErr;
+use elise_shared::shared_errors::errors_schema_binder::SchemaBinderErr;
 use elise_shared::shared_types::ArityMismatchKind;
 
 use elise_shared::shared_node_names::NodeName;
@@ -50,7 +50,7 @@ use crate::resolution_path::{ResolutionPath, ResolutionPathSegment};
 // ==================================================================
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum SchemaDataType {
+pub enum SchemaBinderDataType {
     // We don't carry full type information
     // for compound data types, like dict and
     // lists because:
@@ -212,22 +212,22 @@ struct Modifier {
 
 // ==================================================================
 //
-// SCHEMA RESOLVER START
+// SCHEMA BINDER START
 //
 // ==================================================================
 
 /// Data type descriptor that is a value each resolution
 /// path resolves to.
 #[derive(Debug, PartialEq, Clone)]
-pub struct SchemaTypeDescriptor {
-    pub dtype: SchemaDataType,
+pub struct SchemaBinderTypeDescriptor {
+    pub dtype: SchemaBinderDataType,
     // Either type or NULL.
     pub nullable: bool,
     // Either type or field is missing.
     pub optional: bool,
 }
-impl SchemaTypeDescriptor {
-    pub fn with_defaults(dtype: SchemaDataType) -> Self {
+impl SchemaBinderTypeDescriptor {
+    pub fn with_defaults(dtype: SchemaBinderDataType) -> Self {
         Self {
             dtype,
             // We set all modifiers to false by default
@@ -239,22 +239,22 @@ impl SchemaTypeDescriptor {
     }
 }
 
-type TResolvedSchema = HashMap<ResolutionPath, SchemaTypeDescriptor>;
+type TSchemaBindings = HashMap<ResolutionPath, SchemaBinderTypeDescriptor>;
 
 #[derive(Debug, PartialEq)]
-pub struct ResolvedSchema {
-    pub resolved_schema: TResolvedSchema,
+pub struct SchemaBindings {
+    pub bindings: TSchemaBindings,
 }
 
-pub struct SchemaResolver<'a> {
+pub struct SchemaBinder<'a> {
     // AST of the schema definition file.
     schema_ast: &'a Vec<AstNode>,
     current_path: ResolutionPath,
-    current_type: Option<SchemaDataType>,
+    current_type: Option<SchemaBinderDataType>,
     current_modifiers: Vec<Modifier>,
 }
 
-impl<'a> SchemaResolver<'a> {
+impl<'a> SchemaBinder<'a> {
     pub fn new(schema_ast: &'a Vec<AstNode>) -> Self {
         Self {
             schema_ast,
@@ -272,15 +272,15 @@ impl<'a> SchemaResolver<'a> {
         }
     }
 
-    pub fn resolve(&mut self) -> Result<ResolvedSchema, SchemaResolverErr> {
+    pub fn bind(&mut self) -> Result<SchemaBindings, SchemaBinderErr> {
         // Do not allow schema to be empty.
-        let first_node = self.schema_ast.first().ok_or(SchemaResolverErr::Empty)?;
+        let first_node = self.schema_ast.first().ok_or(SchemaBinderErr::Empty)?;
 
         // First node must always be a root function call.
         let call = match first_node {
             AstNode::Call(call) if call.lexeme == SchemaFnLexeme::ROOT => call,
             node => {
-                return Err(SchemaResolverErr::Unexp {
+                return Err(SchemaBinderErr::Unexp {
                     span: node.span().clone(),
                 });
             }
@@ -289,11 +289,11 @@ impl<'a> SchemaResolver<'a> {
         match call.children.len() {
             ArgLen::ROOT => {
                 let root_node = call.children.first().unwrap();
-                let mut resolved_schema: TResolvedSchema = HashMap::new();
-                self.resolve_from_node(root_node, &mut resolved_schema)?;
-                Ok(ResolvedSchema { resolved_schema })
+                let mut bindings: TSchemaBindings = HashMap::new();
+                self.resolve_from_node(root_node, &mut bindings)?;
+                Ok(SchemaBindings { bindings })
             }
-            args_len => Err(SchemaResolverErr::ArityMismatch {
+            args_len => Err(SchemaBinderErr::ArityMismatch {
                 fn_name: SchemaFnLexeme::ROOT,
                 kind: ArityMismatchKind::Eq(ArgLen::ROOT),
                 found: args_len,
@@ -306,54 +306,54 @@ impl<'a> SchemaResolver<'a> {
     fn resolve_from_node(
         &mut self,
         node: &AstNode,
-        resolved_schema: &mut TResolvedSchema,
-    ) -> Result<(), SchemaResolverErr> {
+        bindings: &mut TSchemaBindings,
+    ) -> Result<(), SchemaBinderErr> {
         match node {
             AstNode::Call(call) => match call.lexeme.as_str() {
                 SchemaFnLexeme::NULLABLE => {
-                    self.resolve_modifier(ModifierKind::Nullable, call, resolved_schema)
+                    self.resolve_modifier(ModifierKind::Nullable, call, bindings)
                 }
                 SchemaFnLexeme::OPTIONAL => {
-                    self.resolve_modifier(ModifierKind::Optional, call, resolved_schema)
+                    self.resolve_modifier(ModifierKind::Optional, call, bindings)
                 }
                 SchemaFnLexeme::INT => self.resolve_primitive(
                     call,
-                    SchemaDataType::Int,
+                    SchemaBinderDataType::Int,
                     SchemaFnLexeme::INT,
-                    resolved_schema,
+                    bindings,
                 ),
                 SchemaFnLexeme::FLOAT => self.resolve_primitive(
                     call,
-                    SchemaDataType::Float,
+                    SchemaBinderDataType::Float,
                     SchemaFnLexeme::FLOAT,
-                    resolved_schema,
+                    bindings,
                 ),
                 SchemaFnLexeme::STRING => self.resolve_primitive(
                     call,
-                    SchemaDataType::String,
+                    SchemaBinderDataType::String,
                     SchemaFnLexeme::STRING,
-                    resolved_schema,
+                    bindings,
                 ),
                 SchemaFnLexeme::BOOL => self.resolve_primitive(
                     call,
-                    SchemaDataType::Bool,
+                    SchemaBinderDataType::Bool,
                     SchemaFnLexeme::BOOL,
-                    resolved_schema,
+                    bindings,
                 ),
-                SchemaFnLexeme::DICT => self.resolve_dict(call, resolved_schema),
-                SchemaFnLexeme::LIST => self.resolve_list(call, resolved_schema),
-                // SchemaFnLexeme::UNION => self.resolve_union(call, resolved_schema),
-                _ => Err(SchemaResolverErr::InvalTypeDef {
+                SchemaFnLexeme::DICT => self.resolve_dict(call, bindings),
+                SchemaFnLexeme::LIST => self.resolve_list(call, bindings),
+                // SchemaFnLexeme::UNION => self.resolve_union(call, bindings),
+                _ => Err(SchemaBinderErr::InvalTypeDef {
                     span: call.span.clone(),
                 }),
             },
-            node => Err(SchemaResolverErr::InvalTypeDef {
+            node => Err(SchemaBinderErr::InvalTypeDef {
                 span: node.span().clone(),
             }),
         }
     }
 
-    fn appy_modifiers(&mut self, type_descriptor: &mut SchemaTypeDescriptor) {
+    fn appy_modifiers(&mut self, type_descriptor: &mut SchemaBinderTypeDescriptor) {
         // Iterate over mutable modifiers since we need to update
         // descriptor in case we need to.
         for modifier in self.current_modifiers.iter_mut() {
@@ -375,15 +375,15 @@ impl<'a> SchemaResolver<'a> {
     }
 
     /// Captures the current state and inserts a new record into the
-    /// resolved schema.
-    fn commit(&mut self, resolved_schema: &mut TResolvedSchema) -> Result<(), SchemaResolverErr> {
+    /// bindings.
+    fn commit(&mut self, bindings: &mut TSchemaBindings) -> Result<(), SchemaBinderErr> {
         if let Some(dtype) = &self.current_type {
-            let mut type_descriptor = SchemaTypeDescriptor::with_defaults(dtype.clone());
+            let mut type_descriptor = SchemaBinderTypeDescriptor::with_defaults(dtype.clone());
             self.appy_modifiers(&mut type_descriptor);
-            resolved_schema.insert(self.current_path.clone(), type_descriptor);
+            bindings.insert(self.current_path.clone(), type_descriptor);
             return Ok(());
         }
-        Err(SchemaResolverErr::UnresolvablePath {
+        Err(SchemaBinderErr::UnresolvablePath {
             path: self.current_path.as_str(),
         })
     }
@@ -396,11 +396,11 @@ impl<'a> SchemaResolver<'a> {
         &mut self,
         modifier_kind: ModifierKind,
         call: &AstCall,
-        resolved_schema: &mut TResolvedSchema,
-    ) -> Result<(), SchemaResolverErr> {
+        bindings: &mut TSchemaBindings,
+    ) -> Result<(), SchemaBinderErr> {
         let result = match modifier_kind {
-            ModifierKind::Nullable => self.resolve_modifier_nullable(call, resolved_schema),
-            ModifierKind::Optional => self.resolve_modifier_optional(call, resolved_schema),
+            ModifierKind::Nullable => self.resolve_modifier_nullable(call, bindings),
+            ModifierKind::Optional => self.resolve_modifier_optional(call, bindings),
         };
         self.current_modifiers.clear();
         result
@@ -412,12 +412,12 @@ impl<'a> SchemaResolver<'a> {
     fn resolve_modifier_nullable(
         &mut self,
         call: &AstCall,
-        resolved_schema: &mut TResolvedSchema,
-    ) -> Result<(), SchemaResolverErr> {
+        bindings: &mut TSchemaBindings,
+    ) -> Result<(), SchemaBinderErr> {
         let args_len = call.children.len();
 
         if args_len != ArgLen::NULLABLE {
-            return Err(SchemaResolverErr::ArityMismatch {
+            return Err(SchemaBinderErr::ArityMismatch {
                 fn_name: SchemaFnLexeme::NULLABLE,
                 kind: ArityMismatchKind::Eq(ArgLen::NULLABLE),
                 found: args_len,
@@ -436,7 +436,7 @@ impl<'a> SchemaResolver<'a> {
             descriptor,
         });
 
-        self.resolve_from_node(call.children.first().unwrap(), resolved_schema)?;
+        self.resolve_from_node(call.children.first().unwrap(), bindings)?;
 
         // We do not pop path segment after resolving nullable since it's just a modifier.
         Ok(())
@@ -445,12 +445,12 @@ impl<'a> SchemaResolver<'a> {
     fn resolve_modifier_optional(
         &mut self,
         call: &AstCall,
-        resolved_schema: &mut TResolvedSchema,
-    ) -> Result<(), SchemaResolverErr> {
+        bindings: &mut TSchemaBindings,
+    ) -> Result<(), SchemaBinderErr> {
         let args_len = call.children.len();
 
         if args_len != ArgLen::OPTIONAL {
-            return Err(SchemaResolverErr::ArityMismatch {
+            return Err(SchemaBinderErr::ArityMismatch {
                 fn_name: SchemaFnLexeme::OPTIONAL,
                 kind: ArityMismatchKind::Eq(ArgLen::OPTIONAL),
                 found: args_len,
@@ -459,9 +459,10 @@ impl<'a> SchemaResolver<'a> {
         }
 
         if let Some(ty) = &self.current_type
-            && (matches!(ty, &SchemaDataType::ListFixed(..)) || ty == &SchemaDataType::ListAbstract)
+            && (matches!(ty, &SchemaBinderDataType::ListFixed(..))
+                || ty == &SchemaBinderDataType::ListAbstract)
         {
-            return Err(SchemaResolverErr::InvalUseOfModifier {
+            return Err(SchemaBinderErr::InvalUseOfModifier {
                 span: call.span.clone(),
             });
         }
@@ -476,7 +477,7 @@ impl<'a> SchemaResolver<'a> {
             descriptor,
         });
 
-        self.resolve_from_node(call.children.first().unwrap(), resolved_schema)?;
+        self.resolve_from_node(call.children.first().unwrap(), bindings)?;
         Ok(())
     }
 
@@ -493,15 +494,15 @@ impl<'a> SchemaResolver<'a> {
     fn resolve_primitive(
         &mut self,
         call: &AstCall,
-        dtype: SchemaDataType,
+        dtype: SchemaBinderDataType,
         lexeme: &'static str,
-        resolved_schema: &mut TResolvedSchema,
-    ) -> Result<(), SchemaResolverErr> {
+        bindings: &mut TSchemaBindings,
+    ) -> Result<(), SchemaBinderErr> {
         let args_len = call.children.len();
         self.current_type = Some(dtype);
 
         if args_len > 0 {
-            return Err(SchemaResolverErr::ArityMismatch {
+            return Err(SchemaBinderErr::ArityMismatch {
                 fn_name: lexeme,
                 kind: ArityMismatchKind::Eq(ArgLen::PRIMITIVE),
                 found: args_len,
@@ -509,7 +510,7 @@ impl<'a> SchemaResolver<'a> {
             });
         }
 
-        self.commit(resolved_schema)?;
+        self.commit(bindings)?;
         // We always remove the last path segment after resolving primitives
         // regardless if they nested or not, because if they are nested,
         // then it removes nested path segment which is correct. If they are not
@@ -531,8 +532,8 @@ impl<'a> SchemaResolver<'a> {
     fn resolve_dict(
         &mut self,
         call: &AstCall,
-        resolved_schema: &mut TResolvedSchema,
-    ) -> Result<(), SchemaResolverErr> {
+        bindings: &mut TSchemaBindings,
+    ) -> Result<(), SchemaBinderErr> {
         let args_len = call.children.len();
 
         // TODO: Might not be correct to enforce these semantics
@@ -540,7 +541,7 @@ impl<'a> SchemaResolver<'a> {
         // Maybe we could run semantic analysis for schema AST
         // before type resolution?
         if !args_len.is_multiple_of(2) || args_len == 0 {
-            return Err(SchemaResolverErr::InvalDict {
+            return Err(SchemaBinderErr::InvalDict {
                 span: call.span.clone(),
             });
         }
@@ -552,8 +553,8 @@ impl<'a> SchemaResolver<'a> {
         // because resolving nested types will alter current_path
         // state, so commiting parent after resolving recursively
         // will produce invalid path segments to the parent.
-        self.current_type = Some(SchemaDataType::Dict);
-        self.commit(resolved_schema)?;
+        self.current_type = Some(SchemaBinderDataType::Dict);
+        self.commit(bindings)?;
 
         // Since we know that the number of arguments is even, then
         // odd elements are keys, and even elements are values (type
@@ -578,10 +579,10 @@ impl<'a> SchemaResolver<'a> {
                         .push(ResolutionPathSegment::Field(prim.value.clone()));
                     // Recurse into the key value type definition. This will commit
                     // new type definitions with path including the respective key.
-                    self.resolve_from_node(value, resolved_schema)?;
+                    self.resolve_from_node(value, bindings)?;
                 }
                 node => {
-                    return Err(SchemaResolverErr::InvalDict {
+                    return Err(SchemaBinderErr::InvalDict {
                         span: node.span().clone(),
                     });
                 }
@@ -602,13 +603,13 @@ impl<'a> SchemaResolver<'a> {
     // LIST START
     // ==================================================================
 
-    fn resolve_list_size(ast_node: &AstNode) -> Result<usize, SchemaResolverErr> {
+    fn resolve_list_size(ast_node: &AstNode) -> Result<usize, SchemaBinderErr> {
         match ast_node {
             AstNode::Int(prim) => {
                 let size: usize = prim.value.parse().unwrap();
                 Ok(size)
             }
-            node => Err(SchemaResolverErr::UndexpType {
+            node => Err(SchemaBinderErr::UndexpType {
                 expected: NodeName::INT.to_string(),
                 found: node.as_str().to_string(),
                 span: node.span().clone(),
@@ -623,12 +624,12 @@ impl<'a> SchemaResolver<'a> {
     fn resolve_list(
         &mut self,
         call: &AstCall,
-        resolved_schema: &mut TResolvedSchema,
-    ) -> Result<(), SchemaResolverErr> {
+        bindings: &mut TSchemaBindings,
+    ) -> Result<(), SchemaBinderErr> {
         let args_len = call.children.len();
 
         if args_len > ArgLen::LIST.1 || args_len < ArgLen::LIST.0 {
-            return Err(SchemaResolverErr::ArityMismatch {
+            return Err(SchemaBinderErr::ArityMismatch {
                 fn_name: SchemaFnLexeme::LIST,
                 kind: ArityMismatchKind::Range(ArgLen::LIST),
                 found: args_len,
@@ -648,16 +649,16 @@ impl<'a> SchemaResolver<'a> {
         // in order to prevent committing parent type with invalid
         // path segments since recursing will alter current_path.
         if let Some(size) = list_size {
-            self.current_type = Some(SchemaDataType::ListFixed(size));
+            self.current_type = Some(SchemaBinderDataType::ListFixed(size));
         } else {
-            self.current_type = Some(SchemaDataType::ListAbstract);
+            self.current_type = Some(SchemaBinderDataType::ListAbstract);
         }
-        self.commit(resolved_schema)?;
+        self.commit(bindings)?;
 
         // Pusing AbstractIndex since our list can have any number of
         // items of the same type.
         self.current_path.push(ResolutionPathSegment::AbstractIndex);
-        self.resolve_from_node(first_arg, resolved_schema)?;
+        self.resolve_from_node(first_arg, bindings)?;
 
         self.current_path.pop();
         Ok(())
@@ -748,12 +749,12 @@ impl<'a> SchemaResolver<'a> {
     // fn resolve_union(
     //     &mut self,
     //     call: &AstCall,
-    //     resolved_schema: &mut TResolvedSchema,
-    // ) -> Result<(), SchemaResolverErr> {
+    //     bindings: &mut TSchemaBindings,
+    // ) -> Result<(), SchemaBinderErr> {
     //     let args_len = call.children.len();
 
     //     if args_len < ArgLen::UNION_MIN {
-    //         return Err(SchemaResolverErr::ArityMismatch {
+    //         return Err(SchemaBinderErr::ArityMismatch {
     //             fn_name: SchemaFnLexeme::UNION,
     //             kind: ArityMismatchKind::MoreEq(ArgLen::UNION_MIN),
     //             found: args_len,
@@ -766,7 +767,7 @@ impl<'a> SchemaResolver<'a> {
     //         if let AstNode::Call(inner) = &**child
     //             && inner.lexeme == SchemaFnLexeme::UNION
     //         {
-    //             return Err(SchemaResolverErr::NoUnionOfUnion {
+    //             return Err(SchemaBinderErr::NoUnionOfUnion {
     //                 span: inner.span.clone(),
     //             });
     //         }
@@ -801,7 +802,7 @@ impl<'a> SchemaResolver<'a> {
     //     // ]
 
     //     // New resolution table for each Union branch.
-    //     let mut resolution_tables: Vec<TResolvedSchema> = Vec::with_capacity(call.children.len());
+    //     let mut resolution_tables: Vec<TSchemaBindings> = Vec::with_capacity(call.children.len());
 
     //     for child in &call.children {
     //         // TODO: Works but cloning on each iteration again is not good.
@@ -810,7 +811,7 @@ impl<'a> SchemaResolver<'a> {
     //         // if we can find another solution here.
     //         self.current_path = captured_path.clone();
     //         self.current_modifiers = captured_modifiers.clone();
-    //         let mut table: TResolvedSchema = HashMap::new();
+    //         let mut table: TSchemaBindings = HashMap::new();
     //         self.resolve_from_node(child, &mut table)?;
     //         resolution_tables.push(table);
     //     }
@@ -834,7 +835,7 @@ impl<'a> SchemaResolver<'a> {
     //     let smallest_table = &resolution_tables[smallest_table_index];
 
     //     // Key-value pairs that are present in ALL union branch tables.
-    //     let common_key_values: Vec<(ResolutionPath, SchemaTypeDescriptor)> = smallest_table
+    //     let common_key_values: Vec<(ResolutionPath, SchemaBinderTypeDescriptor)> = smallest_table
     //         .iter()
     //         .filter(|(key, value)| {
     //             resolution_tables
@@ -857,7 +858,7 @@ impl<'a> SchemaResolver<'a> {
     //         for table in resolution_tables.iter_mut() {
     //             table.remove(&key);
     //         }
-    //         resolved_schema.insert(key, value);
+    //         bindings.insert(key, value);
     //     }
 
     //     //let _without_common_prefix = Self::remove_common_path_segments(&resolution_tables);
@@ -873,6 +874,6 @@ impl<'a> SchemaResolver<'a> {
 
 // ==================================================================
 //
-// SCHEMA RESOLVER END
+// SCHEMA BINDER END
 //
 // ==================================================================

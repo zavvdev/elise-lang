@@ -4,7 +4,7 @@ use elise_shared::shared_errors::errors_csv_data_binder::CsvDataBinderErr;
 
 use crate::{
     csv::csv_data_parser::{CsvDataParserDataType, CsvDataRow},
-    data_binder::{DataBinder, DataBinderDataDescriptor, DataBinderDataType, DataBindingTable},
+    data_binder::{DataBinder, DataBinderDataDescriptor, DataBinderDataType, DataBindings},
     resolution_path::{ResolutionPath, ResolutionPathSegment},
 };
 
@@ -32,8 +32,8 @@ impl<'a> DataBinder<'a, Rows, CsvDataBinderErr> for CsvDataBinder<'a> {
         Self { rows }
     }
 
-    fn bind(&self) -> Result<DataBindingTable, CsvDataBinderErr> {
-        let mut table: HashMap<ResolutionPath, DataBinderDataDescriptor> = HashMap::new();
+    fn bind(&self) -> Result<DataBindings, CsvDataBinderErr> {
+        let mut bindings: HashMap<ResolutionPath, DataBinderDataDescriptor> = HashMap::new();
 
         for (idx, row) in self.rows.iter().enumerate() {
             for col in &row.cols {
@@ -50,15 +50,15 @@ impl<'a> DataBinder<'a, Rows, CsvDataBinderErr> for CsvDataBinder<'a> {
                         ResolutionPathSegment::Field(col.name.clone()),
                     ]),
                 };
-                table.insert(key, value);
+                bindings.insert(key, value);
             }
         }
 
-        if table.is_empty() {
+        if bindings.is_empty() {
             return Err(CsvDataBinderErr::NoData);
         }
 
-        Ok(DataBindingTable { table })
+        Ok(DataBindings { bindings })
     }
 }
 
@@ -78,7 +78,7 @@ mod tests {
     use crate::csv::csv_data_binder::CsvDataBinder;
     use crate::csv::csv_data_parser::{CsvDataCol, CsvDataParserDataType, CsvDataRow};
     use crate::data_binder::{
-        DataBinder, DataBinderDataDescriptor, DataBinderDataType, DataBindingTable,
+        DataBinder, DataBinderDataDescriptor, DataBinderDataType, DataBindings,
     };
     use crate::resolution_path::{ResolutionPath, ResolutionPathSegment::*};
 
@@ -162,11 +162,11 @@ mod tests {
             parsed_data.push(CsvDataRow { cols: final_cols });
         }
 
-        let mut table: HashMap<ResolutionPath, DataBinderDataDescriptor> = HashMap::new();
+        let mut bindings: HashMap<ResolutionPath, DataBinderDataDescriptor> = HashMap::new();
 
         for (row_idx, row) in rows.iter().enumerate() {
             for (col_idx, col) in row.iter().enumerate() {
-                table.insert(
+                bindings.insert(
                     ResolutionPath::with_segments(vec![
                         Index(row_idx),
                         Field(cols[col_idx].to_string()),
@@ -189,7 +189,7 @@ mod tests {
 
         assert_eq!(
             CsvDataBinder::new(&parsed_data).bind(),
-            Ok(DataBindingTable { table })
+            Ok(DataBindings { bindings })
         );
     }
 }

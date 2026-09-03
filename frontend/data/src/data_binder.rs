@@ -70,12 +70,12 @@ pub struct DataBinderDataDescriptor {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct DataBindingTable {
-    pub table: HashMap<ResolutionPath, DataBinderDataDescriptor>,
+pub struct DataBindings {
+    pub bindings: HashMap<ResolutionPath, DataBinderDataDescriptor>,
 }
 
 /// Must be implemented for any binder of any data type.
 pub trait DataBinder<'a, Data, Error> {
     fn new(data: &'a Data) -> Self;
-    fn bind(&self) -> Result<DataBindingTable, Error>;
+    fn bind(&self) -> Result<DataBindings, Error>;
 }

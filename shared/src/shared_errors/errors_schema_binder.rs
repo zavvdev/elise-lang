@@ -1,7 +1,7 @@
 use crate::shared_types::{ArityMismatchKind, Span};
 
 #[derive(Debug, PartialEq)]
-pub enum SchemaResolverErr {
+pub enum SchemaBinderErr {
     Empty,
     Unexp {
         span: Span,
