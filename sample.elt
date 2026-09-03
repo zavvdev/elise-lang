@@ -1,5 +1,6 @@
 .schema(
     .list(
         .dict(
-            "name" .string()
-            "age"  .int())))
+            "name"    .string()
+            "age"     .int()
+            "address" .string())))

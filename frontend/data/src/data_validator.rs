@@ -27,6 +27,10 @@ fn match_data_type(
 // If we go only through data binding table, but at the same time we have
 // some fields in schema declared as optional, we can't validate them properly
 // because we never encounter them since we don't walk through resolved schema.
+//
+// WE NEED SOME SEPARATE STEP FOR RECONCILIATION/NORMALIZATION OF THE
+// BINDING TABLE AND RESOLVED SCHEMA. SOMETHING THAT REDUCES RESOLUTION PATHS
+// TO A STABLE INDEXES THAT CAN BE REFERENCED BY BYTECODE AND VM.
 pub fn validate_data(
     binding_table: &DataBindingTable,
     resolved_schema: &ResolvedSchema,

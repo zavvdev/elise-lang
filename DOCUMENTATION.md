@@ -23,8 +23,8 @@ BUILD (SC, SCH)
 VALIDATE(SCH, Data)
     -> Parse(SCH) -> SCH_AST
     -> Parse(Data) -> ParsedData
-    -> Bind(ParsedData) -> DataBindingTable
     -> Resolve(SCH_AST) -> ResolvedSchema
+    -> Bind(ParsedData) -> DataBindingTable
     -> Validate(ResolvedSchema, DataBindingTable)
 
 EXEC(Bytecode, Data)
