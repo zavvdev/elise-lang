@@ -36,8 +36,8 @@ use std::collections::HashMap;
 
 use elise_ast::{AstCall, AstNode};
 
-use elise_shared::shared_errors::errors_schema_binder::SchemaBinderErr;
 use elise_shared::shared_types::ArityMismatchKind;
+use elise_shared::{shared_errors::errors_schema_binder::SchemaBinderErr, shared_types::Span};
 
 use elise_shared::shared_node_names::NodeName;
 
@@ -69,6 +69,20 @@ pub enum SchemaBinderDataType {
     ListFixed(usize),
     Dict,
     // Union,
+}
+
+impl SchemaBinderDataType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SchemaBinderDataType::Int => NodeName::INT,
+            SchemaBinderDataType::Float => NodeName::FLOAT,
+            SchemaBinderDataType::String => NodeName::STRING,
+            SchemaBinderDataType::Bool => NodeName::BOOL,
+            SchemaBinderDataType::ListAbstract => NodeName::LIST,
+            SchemaBinderDataType::ListFixed(_) => NodeName::LIST,
+            SchemaBinderDataType::Dict => NodeName::DICT,
+        }
+    }
 }
 
 // ==================================================================
@@ -225,6 +239,7 @@ pub struct SchemaBinderTypeDescriptor {
     pub nullable: bool,
     // Either type or field is missing.
     pub optional: bool,
+    pub span: Span,
 }
 impl SchemaBinderTypeDescriptor {
     pub fn with_defaults(dtype: SchemaBinderDataType) -> Self {
@@ -235,6 +250,7 @@ impl SchemaBinderTypeDescriptor {
             // after we create type descriptor.
             nullable: false,
             optional: false,
+            span: Span { start: 0, end: 0 },
         }
     }
 }
@@ -252,6 +268,7 @@ pub struct SchemaBinder<'a> {
     current_path: BindingPath,
     current_type: Option<SchemaBinderDataType>,
     current_modifiers: Vec<Modifier>,
+    current_span: Span,
 }
 
 impl<'a> SchemaBinder<'a> {
@@ -269,6 +286,8 @@ impl<'a> SchemaBinder<'a> {
             // Track current modifier in order to be able to provide metadata
             // for the type being resolved.
             current_modifiers: vec![],
+
+            current_span: Span { start: 0, end: 0 },
         }
     }
 
@@ -308,6 +327,7 @@ impl<'a> SchemaBinder<'a> {
         node: &AstNode,
         bindings: &mut TSchemaBindings,
     ) -> Result<(), SchemaBinderErr> {
+        self.current_span = node.span().clone();
         match node {
             AstNode::Call(call) => match call.lexeme.as_str() {
                 SchemaFnLexeme::NULLABLE => {
@@ -380,6 +400,7 @@ impl<'a> SchemaBinder<'a> {
         if let Some(dtype) = &self.current_type {
             let mut type_descriptor = SchemaBinderTypeDescriptor::with_defaults(dtype.clone());
             self.appy_modifiers(&mut type_descriptor);
+            type_descriptor.span = self.current_span.clone();
             bindings.insert(self.current_path.clone(), type_descriptor);
             return Ok(());
         }

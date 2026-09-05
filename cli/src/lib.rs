@@ -11,6 +11,7 @@ use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise_data::{
     csv::{csv_data_binder::CsvDataBinder, csv_data_parser::CsvDataParser},
     data_binder::{DataBinder, DataBindings},
+    data_validator::validate_data,
     schema_binder::{SchemaBinder, SchemaBindings},
 };
 use elise_parser::Prelude;
@@ -129,6 +130,7 @@ pub fn run<'a>(
     println!("schema bindings: {:#?}", schema_bindings);
     let data_bindings = data_bindings?;
     println!("data bindings: {:#?}", data_bindings);
+    validate_data(&data_bindings, &schema_bindings).map_err(LangErr::DataValidator)?;
 
     Ok(RunResult {
         config,

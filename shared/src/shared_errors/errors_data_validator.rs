@@ -1,13 +1,16 @@
-use crate::shared_types::Pos;
+use crate::shared_types::{Pos, Span};
 
 #[derive(Debug, PartialEq)]
 pub enum DataValidatorErr {
-    TypeMismatch {
+    DataTypeMismatch {
         pos: Pos,
         expected: &'static str,
         found: &'static str,
     },
-    UnknownDataPath {
+    DataMissingTypeDef {
         pos: Pos,
+    },
+    DataMissing {
+        span: Span,
     },
 }

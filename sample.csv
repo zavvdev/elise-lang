@@ -1,4 +1,4 @@
-name,age
-John,26
-Jane,25
-Carl,24
+name,age,address
+John,26,Private Drive
+Jane,25,21 Jump Street
+Carl,24,Washington Ave.

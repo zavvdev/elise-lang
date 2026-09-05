@@ -12,7 +12,7 @@
 
 use std::collections::HashMap;
 
-use elise_shared::shared_types::Pos;
+use elise_shared::{shared_node_names::NodeName, shared_types::Pos};
 
 use crate::binding_path::BindingPath;
 
@@ -34,6 +34,18 @@ pub enum DataBinderDataType {
     // Dict,
 }
 
+impl DataBinderDataType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            DataBinderDataType::Int => NodeName::INT,
+            DataBinderDataType::Float => NodeName::FLOAT,
+            DataBinderDataType::String => NodeName::STRING,
+            DataBinderDataType::Bool => NodeName::BOOL,
+            DataBinderDataType::Null => NodeName::NULL,
+        }
+    }
+}
+
 /// Data structure that describes the data itself as it's
 /// represented in the source file. Type information in this
 /// struct is not considered as a source of truth and must not
@@ -42,7 +54,7 @@ pub enum DataBinderDataType {
 pub struct DataBinderDataDescriptor {
     // Data type derived from parser.
     // This type is what we have inside the source file.
-    pub ty: DataBinderDataType,
+    pub dtype: DataBinderDataType,
     // Literal value from the source file.
     pub value: String,
 
@@ -63,10 +75,10 @@ pub struct DataBinderDataDescriptor {
     // so we must use Index(usize) in order to insert into table
     // and we can't use AbstractIndex here since we can have key
     // collisions. So keys of the binding table carry the path for
-    // resolving data itself, and type_resolution_path carries
+    // resolving data itself, and type_binding_path carries
     // the path for resolving type for that data from resolved
     // schema bindings in order to prove it during validation stage.
-    pub type_resolution_path: BindingPath,
+    pub type_binding_path: BindingPath,
 }
 
 #[derive(Debug, PartialEq)]

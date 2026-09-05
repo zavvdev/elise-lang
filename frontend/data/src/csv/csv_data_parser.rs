@@ -22,7 +22,7 @@ pub enum CsvDataParserDataType {
 #[derive(Debug, PartialEq)]
 pub struct CsvDataCol {
     pub name: String,
-    pub ty: CsvDataParserDataType,
+    pub dtype: CsvDataParserDataType,
     pub value: String,
     pub pos: Pos,
 }
@@ -120,7 +120,7 @@ impl<'a> CsvDataParser<'a> {
 
                 row_record.cols.push(CsvDataCol {
                     name: col_name,
-                    ty: Self::infer_type(col),
+                    dtype: Self::infer_type(col),
                     value: col.trim().to_string(),
                     pos: Pos {
                         row: row_index,
@@ -183,7 +183,7 @@ mod tests {
                 .map(|(i, n)| CsvDataCol {
                     name: build_csv_header(i),
                     value: n.to_string(),
-                    ty: CsvDataParserDataType::Int,
+                    dtype: CsvDataParserDataType::Int,
                     pos: Pos { row: 0, col: i },
                 })
                 .collect(),
@@ -220,7 +220,7 @@ mod tests {
                 .map(|(i, n)| CsvDataCol {
                     name: build_csv_header(i),
                     value: n.to_string(),
-                    ty: CsvDataParserDataType::Float,
+                    dtype: CsvDataParserDataType::Float,
                     pos: Pos { row: 0, col: i },
                 })
                 .collect(),
@@ -250,7 +250,7 @@ mod tests {
                 .map(|(i, n)| CsvDataCol {
                     name: build_csv_header(i),
                     value: n.to_string(),
-                    ty: CsvDataParserDataType::Bool,
+                    dtype: CsvDataParserDataType::Bool,
                     pos: Pos { row: 0, col: i },
                 })
                 .collect(),
@@ -280,25 +280,25 @@ mod tests {
                     CsvDataCol {
                         name: build_csv_header(0),
                         value: "john".to_string(),
-                        ty: CsvDataParserDataType::String,
+                        dtype: CsvDataParserDataType::String,
                         pos: Pos { row: 0, col: 0 },
                     },
                     CsvDataCol {
                         name: build_csv_header(1),
                         value: "".to_string(),
-                        ty: CsvDataParserDataType::String,
+                        dtype: CsvDataParserDataType::String,
                         pos: Pos { row: 0, col: 1 },
                     },
                     CsvDataCol {
                         name: build_csv_header(2),
                         value: "".to_string(),
-                        ty: CsvDataParserDataType::String,
+                        dtype: CsvDataParserDataType::String,
                         pos: Pos { row: 0, col: 2 },
                     },
                     CsvDataCol {
                         name: build_csv_header(3),
                         value: "".to_string(),
-                        ty: CsvDataParserDataType::String,
+                        dtype: CsvDataParserDataType::String,
                         pos: Pos { row: 0, col: 3 },
                     }
                 ],
@@ -327,7 +327,7 @@ mod tests {
                 .map(|(i, n)| CsvDataCol {
                     name: build_csv_header(i),
                     value: n.trim().to_string(),
-                    ty: CsvDataParserDataType::Null,
+                    dtype: CsvDataParserDataType::Null,
                     pos: Pos { row: 0, col: i },
                 })
                 .collect(),
@@ -373,7 +373,7 @@ mod tests {
                 .map(|(i, n)| CsvDataCol {
                     name: build_csv_header(i),
                     value: n.trim().to_string(),
-                    ty: types.get(i).unwrap().clone(),
+                    dtype: types.get(i).unwrap().clone(),
                     pos: Pos { row: 0, col: i },
                 })
                 .collect(),

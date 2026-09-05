@@ -16,8 +16,8 @@ pub struct CsvDataBinder<'a> {
 }
 
 impl<'a> CsvDataBinder<'a> {
-    fn map_data_type(ty: &CsvDataParserDataType) -> DataBinderDataType {
-        match ty {
+    fn map_data_type(dtype: &CsvDataParserDataType) -> DataBinderDataType {
+        match dtype {
             CsvDataParserDataType::Int => DataBinderDataType::Int,
             CsvDataParserDataType::Float => DataBinderDataType::Float,
             CsvDataParserDataType::String => DataBinderDataType::String,
@@ -42,10 +42,10 @@ impl<'a> DataBinder<'a, Rows, CsvDataBinderErr> for CsvDataBinder<'a> {
                     BindingPathSegment::Field(col.name.clone()),
                 ]);
                 let value = DataBinderDataDescriptor {
-                    ty: Self::map_data_type(&col.ty),
+                    dtype: Self::map_data_type(&col.dtype),
                     value: col.value.clone(),
                     pos: col.pos.clone(),
-                    type_resolution_path: BindingPath::with_segments(vec![
+                    type_binding_path: BindingPath::with_segments(vec![
                         BindingPathSegment::AbstractIndex,
                         BindingPathSegment::Field(col.name.clone()),
                     ]),
@@ -150,7 +150,7 @@ mod tests {
             for (col_idx, col) in row.iter().enumerate() {
                 final_cols.push(CsvDataCol {
                     name: cols[col_idx].to_string(),
-                    ty: col.1.clone(),
+                    dtype: col.1.clone(),
                     value: col.0.to_string(),
                     pos: Pos {
                         row: row_idx,
@@ -172,13 +172,13 @@ mod tests {
                         Field(cols[col_idx].to_string()),
                     ]),
                     DataBinderDataDescriptor {
-                        ty: col.2.clone(),
+                        dtype: col.2.clone(),
                         value: col.0.to_string(),
                         pos: Pos {
                             row: row_idx,
                             col: col_idx,
                         },
-                        type_resolution_path: BindingPath::with_segments(vec![
+                        type_binding_path: BindingPath::with_segments(vec![
                             AbstractIndex,
                             Field(cols[col_idx].to_string()),
                         ]),
