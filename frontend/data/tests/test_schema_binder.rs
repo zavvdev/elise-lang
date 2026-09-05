@@ -5,7 +5,8 @@ use elise_data::{
     },
 };
 use elise_shared::{
-    shared_errors::errors_schema_binder::SchemaBinderErr, shared_types::ArityMismatchKind,
+    shared_errors::errors_schema_binder::SchemaBinderErr,
+    shared_types::{ArityMismatchKind, Span},
 };
 
 use crate::common::parse;
@@ -237,10 +238,26 @@ fn should_return_error_if_optional_modifier_applied_to_list_item() {
 #[test]
 fn should_resolve_single_primitive() {
     let inputs = vec![
-        (".int()", SchemaBinderDataType::Int),
-        (".float()", SchemaBinderDataType::Float),
-        (".string()", SchemaBinderDataType::String),
-        (".bool()", SchemaBinderDataType::Bool),
+        (
+            ".int()",
+            SchemaBinderDataType::Int,
+            Span { start: 8, end: 14 },
+        ),
+        (
+            ".float()",
+            SchemaBinderDataType::Float,
+            Span { start: 8, end: 16 },
+        ),
+        (
+            ".string()",
+            SchemaBinderDataType::String,
+            Span { start: 8, end: 17 },
+        ),
+        (
+            ".bool()",
+            SchemaBinderDataType::Bool,
+            Span { start: 8, end: 15 },
+        ),
     ];
 
     for input in inputs {
@@ -253,6 +270,7 @@ fn should_resolve_single_primitive() {
                 dtype: input.1,
                 nullable: false,
                 optional: false,
+                span: input.2,
             }
         );
     }
@@ -269,9 +287,21 @@ fn should_resolve_single_primitive() {
 #[test]
 fn should_resolve_single_compound() {
     let inputs = vec![
-        (r#".dict("name" .string())"#, SchemaBinderDataType::Dict),
-        (".list(.int())", SchemaBinderDataType::ListAbstract),
-        (".list(.int(), 2)", SchemaBinderDataType::ListFixed(2)),
+        (
+            r#".dict("name" .string())"#,
+            SchemaBinderDataType::Dict,
+            Span { start: 8, end: 31 },
+        ),
+        (
+            ".list(.int())",
+            SchemaBinderDataType::ListAbstract,
+            Span { start: 8, end: 21 },
+        ),
+        (
+            ".list(.int(), 2)",
+            SchemaBinderDataType::ListFixed(2),
+            Span { start: 8, end: 24 },
+        ),
     ];
 
     for input in inputs {
@@ -284,6 +314,7 @@ fn should_resolve_single_compound() {
                 dtype: input.1,
                 nullable: false,
                 optional: false,
+                span: input.2,
             }
         );
     }
@@ -302,13 +333,41 @@ fn should_resolve_single_compound() {
 #[test]
 fn should_resolve_one_nullable_child() {
     let inputs = vec![
-        (".int()", SchemaBinderDataType::Int),
-        (".float()", SchemaBinderDataType::Float),
-        (".string()", SchemaBinderDataType::String),
-        (".bool()", SchemaBinderDataType::Bool),
-        (r#".dict("name" .string())"#, SchemaBinderDataType::Dict),
-        (".list(.int())", SchemaBinderDataType::ListAbstract),
-        (".list(.int(), 3)", SchemaBinderDataType::ListFixed(3)),
+        (
+            ".int()",
+            SchemaBinderDataType::Int,
+            Span { start: 18, end: 24 },
+        ),
+        (
+            ".float()",
+            SchemaBinderDataType::Float,
+            Span { start: 18, end: 26 },
+        ),
+        (
+            ".string()",
+            SchemaBinderDataType::String,
+            Span { start: 18, end: 27 },
+        ),
+        (
+            ".bool()",
+            SchemaBinderDataType::Bool,
+            Span { start: 18, end: 25 },
+        ),
+        (
+            r#".dict("name" .string())"#,
+            SchemaBinderDataType::Dict,
+            Span { start: 18, end: 41 },
+        ),
+        (
+            ".list(.int())",
+            SchemaBinderDataType::ListAbstract,
+            Span { start: 18, end: 31 },
+        ),
+        (
+            ".list(.int(), 3)",
+            SchemaBinderDataType::ListFixed(3),
+            Span { start: 18, end: 34 },
+        ),
     ];
 
     for input in inputs {
@@ -321,6 +380,7 @@ fn should_resolve_one_nullable_child() {
                 dtype: input.1,
                 nullable: true,
                 optional: false,
+                span: input.2,
             }
         );
     }
@@ -359,6 +419,10 @@ fn should_resolve_nested_nullables() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 30,
+                    end: 625,
+                },
             },
         ),
         (
@@ -367,6 +431,7 @@ fn should_resolve_nested_nullables() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span { start: 63, end: 72 },
             },
         ),
         (
@@ -375,6 +440,10 @@ fn should_resolve_nested_nullables() {
                 dtype: SchemaBinderDataType::String,
                 nullable: true,
                 optional: false,
+                span: Span {
+                    start: 110,
+                    end: 119,
+                },
             },
         ),
         (
@@ -383,6 +452,10 @@ fn should_resolve_nested_nullables() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: true,
                 optional: false,
+                span: Span {
+                    start: 158,
+                    end: 497,
+                },
             },
         ),
         (
@@ -394,6 +467,10 @@ fn should_resolve_nested_nullables() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 214,
+                    end: 223,
+                },
             },
         ),
         (
@@ -405,6 +482,10 @@ fn should_resolve_nested_nullables() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: true,
                 optional: false,
+                span: Span {
+                    start: 283,
+                    end: 289,
+                },
             },
         ),
         (
@@ -416,6 +497,10 @@ fn should_resolve_nested_nullables() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 340,
+                    end: 496,
+                },
             },
         ),
         (
@@ -428,6 +513,10 @@ fn should_resolve_nested_nullables() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 406,
+                    end: 415,
+                },
             },
         ),
         (
@@ -440,6 +529,10 @@ fn should_resolve_nested_nullables() {
                 dtype: SchemaBinderDataType::String,
                 nullable: true,
                 optional: false,
+                span: Span {
+                    start: 485,
+                    end: 494,
+                },
             },
         ),
         (
@@ -448,6 +541,10 @@ fn should_resolve_nested_nullables() {
                 dtype: SchemaBinderDataType::Float,
                 nullable: true,
                 optional: false,
+                span: Span {
+                    start: 552,
+                    end: 560,
+                },
             },
         ),
         (
@@ -456,6 +553,10 @@ fn should_resolve_nested_nullables() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 605,
+                    end: 611,
+                },
             },
         ),
     ];
@@ -472,13 +573,41 @@ fn should_resolve_nested_nullables() {
 #[test]
 fn should_resolve_one_optional_child() {
     let inputs = vec![
-        (".int()", SchemaBinderDataType::Int),
-        (".float()", SchemaBinderDataType::Float),
-        (".string()", SchemaBinderDataType::String),
-        (".bool()", SchemaBinderDataType::Bool),
-        (r#".dict("name" .string())"#, SchemaBinderDataType::Dict),
-        (".list(.int())", SchemaBinderDataType::ListAbstract),
-        (".list(.int(), 2)", SchemaBinderDataType::ListFixed(2)),
+        (
+            ".int()",
+            SchemaBinderDataType::Int,
+            Span { start: 18, end: 24 },
+        ),
+        (
+            ".float()",
+            SchemaBinderDataType::Float,
+            Span { start: 18, end: 26 },
+        ),
+        (
+            ".string()",
+            SchemaBinderDataType::String,
+            Span { start: 18, end: 27 },
+        ),
+        (
+            ".bool()",
+            SchemaBinderDataType::Bool,
+            Span { start: 18, end: 25 },
+        ),
+        (
+            r#".dict("name" .string())"#,
+            SchemaBinderDataType::Dict,
+            Span { start: 18, end: 41 },
+        ),
+        (
+            ".list(.int())",
+            SchemaBinderDataType::ListAbstract,
+            Span { start: 18, end: 31 },
+        ),
+        (
+            ".list(.int(), 2)",
+            SchemaBinderDataType::ListFixed(2),
+            Span { start: 18, end: 34 },
+        ),
     ];
 
     for input in inputs {
@@ -491,6 +620,7 @@ fn should_resolve_one_optional_child() {
                 dtype: input.1,
                 nullable: false,
                 optional: true,
+                span: input.2,
             }
         );
     }
@@ -529,6 +659,10 @@ fn should_resolve_nested_optionals() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 30,
+                    end: 625,
+                },
             },
         ),
         (
@@ -537,6 +671,7 @@ fn should_resolve_nested_optionals() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span { start: 63, end: 72 },
             },
         ),
         (
@@ -545,6 +680,10 @@ fn should_resolve_nested_optionals() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: true,
+                span: Span {
+                    start: 110,
+                    end: 119,
+                },
             },
         ),
         (
@@ -553,6 +692,10 @@ fn should_resolve_nested_optionals() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: true,
+                span: Span {
+                    start: 158,
+                    end: 497,
+                },
             },
         ),
         (
@@ -564,6 +707,10 @@ fn should_resolve_nested_optionals() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 214,
+                    end: 223,
+                },
             },
         ),
         (
@@ -575,6 +722,10 @@ fn should_resolve_nested_optionals() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
                 optional: true,
+                span: Span {
+                    start: 283,
+                    end: 289,
+                },
             },
         ),
         (
@@ -586,6 +737,10 @@ fn should_resolve_nested_optionals() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 340,
+                    end: 496,
+                },
             },
         ),
         (
@@ -598,6 +753,10 @@ fn should_resolve_nested_optionals() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 406,
+                    end: 415,
+                },
             },
         ),
         (
@@ -610,6 +769,10 @@ fn should_resolve_nested_optionals() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: true,
+                span: Span {
+                    start: 485,
+                    end: 494,
+                },
             },
         ),
         (
@@ -618,6 +781,10 @@ fn should_resolve_nested_optionals() {
                 dtype: SchemaBinderDataType::Float,
                 nullable: false,
                 optional: true,
+                span: Span {
+                    start: 552,
+                    end: 560,
+                },
             },
         ),
         (
@@ -626,6 +793,10 @@ fn should_resolve_nested_optionals() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 605,
+                    end: 611,
+                },
             },
         ),
     ];
@@ -656,6 +827,10 @@ fn should_resolve_optional_with_nullable() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 30,
+                    end: 165,
+                },
             },
         ),
         (
@@ -664,6 +839,7 @@ fn should_resolve_optional_with_nullable() {
                 dtype: SchemaBinderDataType::String,
                 nullable: true,
                 optional: true,
+                span: Span { start: 84, end: 93 },
             },
         ),
         (
@@ -672,6 +848,10 @@ fn should_resolve_optional_with_nullable() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: true,
                 optional: true,
+                span: Span {
+                    start: 143,
+                    end: 149,
+                },
             },
         ),
     ];
@@ -714,6 +894,10 @@ fn should_resolve_one_level_dict() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 30,
+                    end: 203,
+                },
             },
         ),
         (
@@ -722,6 +906,7 @@ fn should_resolve_one_level_dict() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span { start: 64, end: 73 },
             },
         ),
         (
@@ -730,6 +915,10 @@ fn should_resolve_one_level_dict() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: true,
                 optional: false,
+                span: Span {
+                    start: 111,
+                    end: 117,
+                },
             },
         ),
         (
@@ -738,6 +927,10 @@ fn should_resolve_one_level_dict() {
                 dtype: SchemaBinderDataType::Float,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 146,
+                    end: 154,
+                },
             },
         ),
         (
@@ -746,6 +939,10 @@ fn should_resolve_one_level_dict() {
                 dtype: SchemaBinderDataType::Bool,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 182,
+                    end: 189,
+                },
             },
         ),
     ];
@@ -766,10 +963,30 @@ fn should_resolve_one_level_dict() {
 #[test]
 fn should_resolve_one_level_abstract_list() {
     let inputs = vec![
-        (SchemaFnLexeme::INT, SchemaBinderDataType::Int),
-        (SchemaFnLexeme::FLOAT, SchemaBinderDataType::Float),
-        (SchemaFnLexeme::STRING, SchemaBinderDataType::String),
-        (SchemaFnLexeme::BOOL, SchemaBinderDataType::Bool),
+        (
+            SchemaFnLexeme::INT,
+            SchemaBinderDataType::Int,
+            Span { start: 8, end: 21 },
+            Span { start: 14, end: 20 },
+        ),
+        (
+            SchemaFnLexeme::FLOAT,
+            SchemaBinderDataType::Float,
+            Span { start: 8, end: 23 },
+            Span { start: 14, end: 22 },
+        ),
+        (
+            SchemaFnLexeme::STRING,
+            SchemaBinderDataType::String,
+            Span { start: 8, end: 24 },
+            Span { start: 14, end: 23 },
+        ),
+        (
+            SchemaFnLexeme::BOOL,
+            SchemaBinderDataType::Bool,
+            Span { start: 8, end: 22 },
+            Span { start: 14, end: 21 },
+        ),
     ];
 
     for input in inputs {
@@ -783,6 +1000,7 @@ fn should_resolve_one_level_abstract_list() {
                     dtype: SchemaBinderDataType::ListAbstract,
                     nullable: false,
                     optional: false,
+                    span: input.2,
                 },
             ),
             (
@@ -791,6 +1009,7 @@ fn should_resolve_one_level_abstract_list() {
                     dtype: input.1,
                     nullable: false,
                     optional: false,
+                    span: input.3,
                 },
             ),
         ];
@@ -804,10 +1023,30 @@ fn should_resolve_one_level_abstract_list() {
 #[test]
 fn should_resolve_one_level_fixed_list() {
     let inputs = vec![
-        (SchemaFnLexeme::INT, SchemaBinderDataType::Int),
-        (SchemaFnLexeme::FLOAT, SchemaBinderDataType::Float),
-        (SchemaFnLexeme::STRING, SchemaBinderDataType::String),
-        (SchemaFnLexeme::BOOL, SchemaBinderDataType::Bool),
+        (
+            SchemaFnLexeme::INT,
+            SchemaBinderDataType::Int,
+            Span { start: 8, end: 24 },
+            Span { start: 14, end: 20 },
+        ),
+        (
+            SchemaFnLexeme::FLOAT,
+            SchemaBinderDataType::Float,
+            Span { start: 8, end: 26 },
+            Span { start: 14, end: 22 },
+        ),
+        (
+            SchemaFnLexeme::STRING,
+            SchemaBinderDataType::String,
+            Span { start: 8, end: 27 },
+            Span { start: 14, end: 23 },
+        ),
+        (
+            SchemaFnLexeme::BOOL,
+            SchemaBinderDataType::Bool,
+            Span { start: 8, end: 25 },
+            Span { start: 14, end: 21 },
+        ),
     ];
 
     for input in inputs {
@@ -821,6 +1060,7 @@ fn should_resolve_one_level_fixed_list() {
                     dtype: SchemaBinderDataType::ListFixed(2),
                     nullable: false,
                     optional: false,
+                    span: input.2,
                 },
             ),
             (
@@ -829,6 +1069,7 @@ fn should_resolve_one_level_fixed_list() {
                     dtype: input.1,
                     nullable: false,
                     optional: false,
+                    span: input.3,
                 },
             ),
         ];
@@ -886,6 +1127,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::ListAbstract,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 30,
+                    end: 1112,
+                },
             },
         ),
         (
@@ -894,6 +1139,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 53,
+                    end: 1111,
+                },
             },
         ),
         (
@@ -902,6 +1151,7 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
                 optional: false,
+                span: Span { start: 91, end: 97 },
             },
         ),
         (
@@ -910,6 +1160,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 129,
+                    end: 138,
+                },
             },
         ),
         (
@@ -918,6 +1172,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 170,
+                    end: 176,
+                },
             },
         ),
         (
@@ -926,6 +1184,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::ListFixed(3),
                 nullable: true,
                 optional: false,
+                span: Span {
+                    start: 218,
+                    end: 237,
+                },
             },
         ),
         (
@@ -938,6 +1200,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 224,
+                    end: 233,
+                },
             },
         ),
         (
@@ -946,6 +1212,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 271,
+                    end: 506,
+                },
             },
         ),
         (
@@ -958,6 +1228,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 321,
+                    end: 330,
+                },
             },
         ),
         (
@@ -970,6 +1244,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 374,
+                    end: 383,
+                },
             },
         ),
         (
@@ -982,6 +1260,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: true,
                 optional: false,
+                span: Span {
+                    start: 437,
+                    end: 443,
+                },
             },
         ),
         (
@@ -994,6 +1276,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: true,
                 optional: false,
+                span: Span {
+                    start: 498,
+                    end: 504,
+                },
             },
         ),
         (
@@ -1002,6 +1288,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::ListAbstract,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 539,
+                    end: 564,
+                },
             },
         ),
         (
@@ -1014,6 +1304,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::ListFixed(2),
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 545,
+                    end: 563,
+                },
             },
         ),
         (
@@ -1027,6 +1321,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::Float,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 551,
+                    end: 559,
+                },
             },
         ),
         (
@@ -1035,6 +1333,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::Bool,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 596,
+                    end: 603,
+                },
             },
         ),
         (
@@ -1043,6 +1345,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: true,
                 optional: false,
+                span: Span {
+                    start: 646,
+                    end: 1109,
+                },
             },
         ),
         (
@@ -1055,6 +1361,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 711,
+                    end: 717,
+                },
             },
         ),
         (
@@ -1067,6 +1377,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 776,
+                    end: 785,
+                },
             },
         ),
         (
@@ -1079,6 +1393,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::ListAbstract,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 844,
+                    end: 871,
+                },
             },
         ),
         (
@@ -1092,6 +1410,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::String,
                 nullable: true,
                 optional: false,
+                span: Span {
+                    start: 860,
+                    end: 869,
+                },
             },
         ),
         (
@@ -1104,6 +1426,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 930,
+                    end: 1108,
+                },
             },
         ),
         (
@@ -1117,6 +1443,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 1007,
+                    end: 1016,
+                },
             },
         ),
         (
@@ -1130,6 +1460,10 @@ fn should_resolve_complex_schema_with_nullables() {
                 dtype: SchemaBinderDataType::String,
                 nullable: true,
                 optional: false,
+                span: Span {
+                    start: 1097,
+                    end: 1106,
+                },
             },
         ),
     ];
@@ -1174,6 +1508,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::ListAbstract,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 30,
+                    end: 937,
+                },
             },
         ),
         (
@@ -1182,6 +1520,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 53,
+                    end: 936,
+                },
             },
         ),
         (
@@ -1190,6 +1532,7 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
                 optional: false,
+                span: Span { start: 91, end: 97 },
             },
         ),
         (
@@ -1198,6 +1541,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::ListFixed(3),
                 nullable: false,
                 optional: true,
+                span: Span {
+                    start: 139,
+                    end: 158,
+                },
             },
         ),
         (
@@ -1210,6 +1557,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 145,
+                    end: 154,
+                },
             },
         ),
         (
@@ -1218,6 +1569,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 192,
+                    end: 374,
+                },
             },
         ),
         (
@@ -1230,6 +1585,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 242,
+                    end: 251,
+                },
             },
         ),
         (
@@ -1242,6 +1601,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
                 optional: true,
+                span: Span {
+                    start: 305,
+                    end: 311,
+                },
             },
         ),
         (
@@ -1254,6 +1617,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::Int,
                 nullable: false,
                 optional: true,
+                span: Span {
+                    start: 366,
+                    end: 372,
+                },
             },
         ),
         (
@@ -1262,6 +1629,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::ListAbstract,
                 nullable: false,
                 optional: true,
+                span: Span {
+                    start: 417,
+                    end: 442,
+                },
             },
         ),
         (
@@ -1274,6 +1645,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::ListFixed(2),
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 423,
+                    end: 441,
+                },
             },
         ),
         (
@@ -1287,6 +1662,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::Float,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 429,
+                    end: 437,
+                },
             },
         ),
         (
@@ -1295,6 +1674,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::Bool,
                 nullable: false,
                 optional: true,
+                span: Span {
+                    start: 485,
+                    end: 492,
+                },
             },
         ),
         (
@@ -1303,6 +1686,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: true,
+                span: Span {
+                    start: 536,
+                    end: 934,
+                },
             },
         ),
         (
@@ -1315,6 +1702,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 601,
+                    end: 610,
+                },
             },
         ),
         (
@@ -1327,6 +1718,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::ListAbstract,
                 nullable: false,
                 optional: true,
+                span: Span {
+                    start: 679,
+                    end: 695,
+                },
             },
         ),
         (
@@ -1340,6 +1735,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 685,
+                    end: 694,
+                },
             },
         ),
         (
@@ -1352,6 +1751,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::Dict,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 755,
+                    end: 933,
+                },
             },
         ),
         (
@@ -1365,6 +1768,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: false,
+                span: Span {
+                    start: 832,
+                    end: 841,
+                },
             },
         ),
         (
@@ -1378,6 +1785,10 @@ fn should_resolve_complex_schema_with_optionals() {
                 dtype: SchemaBinderDataType::String,
                 nullable: false,
                 optional: true,
+                span: Span {
+                    start: 922,
+                    end: 931,
+                },
             },
         ),
     ];
