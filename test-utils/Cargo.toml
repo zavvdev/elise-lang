@@ -1,0 +1,12 @@
+[package]
+name = "elise-test-utils"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+elise-ast = { path = "../frontend/ast" }
+elise-parser = { path = "../frontend/parser" }
+elise-data = { path = "../frontend/data" }

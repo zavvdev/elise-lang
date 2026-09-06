@@ -113,8 +113,8 @@ version = "0.1.0"
 dependencies = [
  "csv",
  "elise-ast",
- "elise-parser",
  "elise-shared",
+ "elise-test-utils",
 ]
 
 [[package]]
@@ -138,6 +138,15 @@ dependencies = [
 [[package]]
 name = "elise-shared"
 version = "0.1.0"
+
+[[package]]
+name = "elise-test-utils"
+version = "0.1.0"
+dependencies = [
+ "elise-ast",
+ "elise-data",
+ "elise-parser",
+]
 
 [[package]]
 name = "elise-vm"

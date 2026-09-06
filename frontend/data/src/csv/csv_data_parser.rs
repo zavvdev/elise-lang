@@ -152,19 +152,11 @@ mod tests {
     use elise_shared::{
         shared_errors::errors_csv_data_parser::CsvDataParserErr::*, shared_types::Pos,
     };
+    use elise_test_utils::test_utils;
 
     use crate::csv::csv_data_parser::{
         CsvDataCol, CsvDataParser, CsvDataParserDataType, CsvDataRow,
     };
-
-    fn build_csv_header(index: usize) -> String {
-        format!("n{}", index)
-    }
-
-    fn build_csv(row: &Vec<&str>) -> String {
-        let head: Vec<String> = (0..row.len()).map(|i| build_csv_header(i)).collect();
-        format!("{}\n{}", head.join(","), row.join(","))
-    }
 
     // ==================================================================
     // NUMBER TESTS START
@@ -173,7 +165,7 @@ mod tests {
     #[test]
     fn should_parse_int() {
         let row = vec!["42", "-42", "0", "-0", "9999999"];
-        let csv = build_csv(&row);
+        let csv = test_utils::csv::build(&row);
         let parser = CsvDataParser::new(&csv);
 
         let result = CsvDataRow {
@@ -181,7 +173,7 @@ mod tests {
                 .iter()
                 .enumerate()
                 .map(|(i, n)| CsvDataCol {
-                    name: build_csv_header(i),
+                    name: test_utils::csv::build_header(i),
                     value: n.to_string(),
                     dtype: CsvDataParserDataType::Int,
                     pos: Pos { row: 0, col: i },
@@ -210,7 +202,7 @@ mod tests {
             "-1.504E101",
         ];
 
-        let csv = build_csv(&row);
+        let csv = test_utils::csv::build(&row);
         let parser = CsvDataParser::new(&csv);
 
         let result = CsvDataRow {
@@ -218,7 +210,7 @@ mod tests {
                 .iter()
                 .enumerate()
                 .map(|(i, n)| CsvDataCol {
-                    name: build_csv_header(i),
+                    name: test_utils::csv::build_header(i),
                     value: n.to_string(),
                     dtype: CsvDataParserDataType::Float,
                     pos: Pos { row: 0, col: i },
@@ -240,7 +232,7 @@ mod tests {
     #[test]
     fn should_parse_bool() {
         let row = vec!["true", "True", "TRUE", "false", "False", "FALSE"];
-        let csv = build_csv(&row);
+        let csv = test_utils::csv::build(&row);
         let parser = CsvDataParser::new(&csv);
 
         let result = CsvDataRow {
@@ -248,7 +240,7 @@ mod tests {
                 .iter()
                 .enumerate()
                 .map(|(i, n)| CsvDataCol {
-                    name: build_csv_header(i),
+                    name: test_utils::csv::build_header(i),
                     value: n.to_string(),
                     dtype: CsvDataParserDataType::Bool,
                     pos: Pos { row: 0, col: i },
@@ -270,7 +262,7 @@ mod tests {
     #[test]
     fn should_parse_string() {
         let row = vec!["john", " ", "", "     "];
-        let csv = build_csv(&row);
+        let csv = test_utils::csv::build(&row);
         let parser = CsvDataParser::new(&csv);
 
         assert_eq!(
@@ -278,25 +270,25 @@ mod tests {
             Ok(vec![CsvDataRow {
                 cols: vec![
                     CsvDataCol {
-                        name: build_csv_header(0),
+                        name: test_utils::csv::build_header(0),
                         value: "john".to_string(),
                         dtype: CsvDataParserDataType::String,
                         pos: Pos { row: 0, col: 0 },
                     },
                     CsvDataCol {
-                        name: build_csv_header(1),
+                        name: test_utils::csv::build_header(1),
                         value: "".to_string(),
                         dtype: CsvDataParserDataType::String,
                         pos: Pos { row: 0, col: 1 },
                     },
                     CsvDataCol {
-                        name: build_csv_header(2),
+                        name: test_utils::csv::build_header(2),
                         value: "".to_string(),
                         dtype: CsvDataParserDataType::String,
                         pos: Pos { row: 0, col: 2 },
                     },
                     CsvDataCol {
-                        name: build_csv_header(3),
+                        name: test_utils::csv::build_header(3),
                         value: "".to_string(),
                         dtype: CsvDataParserDataType::String,
                         pos: Pos { row: 0, col: 3 },
@@ -317,7 +309,7 @@ mod tests {
     #[test]
     fn should_parse_null() {
         let row = vec!["null", "NULL", "Null"];
-        let csv = build_csv(&row);
+        let csv = test_utils::csv::build(&row);
         let parser = CsvDataParser::new(&csv);
 
         let result = CsvDataRow {
@@ -325,7 +317,7 @@ mod tests {
                 .iter()
                 .enumerate()
                 .map(|(i, n)| CsvDataCol {
-                    name: build_csv_header(i),
+                    name: test_utils::csv::build_header(i),
                     value: n.trim().to_string(),
                     dtype: CsvDataParserDataType::Null,
                     pos: Pos { row: 0, col: i },
@@ -363,7 +355,7 @@ mod tests {
             CsvDataParserDataType::String,
         ];
 
-        let csv = build_csv(&row);
+        let csv = test_utils::csv::build(&row);
         let parser = CsvDataParser::new(&csv);
 
         let result = CsvDataRow {
@@ -371,7 +363,7 @@ mod tests {
                 .iter()
                 .enumerate()
                 .map(|(i, n)| CsvDataCol {
-                    name: build_csv_header(i),
+                    name: test_utils::csv::build_header(i),
                     value: n.trim().to_string(),
                     dtype: types.get(i).unwrap().clone(),
                     pos: Pos { row: 0, col: i },

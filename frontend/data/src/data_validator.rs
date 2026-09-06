@@ -11,13 +11,13 @@ use crate::{
 /// We're skipping non-terminal types because matching terminals only
 /// already includes full binding path.
 fn must_skip(dtype: &SchemaBinderDataType) -> bool {
-    match dtype {
+    !matches!(
+        dtype,
         SchemaBinderDataType::Int
-        | SchemaBinderDataType::Float
-        | SchemaBinderDataType::String
-        | SchemaBinderDataType::Bool => false,
-        _ => true,
-    }
+            | SchemaBinderDataType::Float
+            | SchemaBinderDataType::String
+            | SchemaBinderDataType::Bool
+    )
 }
 
 fn match_data_type(

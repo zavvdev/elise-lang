@@ -8,8 +8,7 @@ use elise_shared::{
     shared_errors::errors_schema_binder::SchemaBinderErr,
     shared_types::{ArityMismatchKind, Span},
 };
-
-use crate::common::parse;
+use elise_test_utils::test_utils;
 
 mod common;
 
@@ -25,28 +24,28 @@ mod common;
 
 #[test]
 fn should_return_error_if_empty() {
-    let ast = parse("");
+    let ast = test_utils::parse("");
     let bindings = SchemaBinder::new(&ast).bind();
     assert_eq!(bindings, Err(SchemaBinderErr::Empty));
 }
 
 #[test]
 fn should_return_error_if_root_is_not_call() {
-    let ast = parse("test-test");
+    let ast = test_utils::parse("test-test");
     let bindings = SchemaBinder::new(&ast).bind();
     assert!(matches!(bindings, Err(SchemaBinderErr::Unexp { .. })));
 }
 
 #[test]
 fn should_return_error_if_root_not_valid_call() {
-    let ast = parse(".test(.string())");
+    let ast = test_utils::parse(".test(.string())");
     let bindings = SchemaBinder::new(&ast).bind();
     assert!(matches!(bindings, Err(SchemaBinderErr::Unexp { .. })));
 }
 
 #[test]
 fn should_return_error_if_root_arg_len_is_0() {
-    let ast = parse(".schema()");
+    let ast = test_utils::parse(".schema()");
     let bindings = SchemaBinder::new(&ast).bind();
     assert!(matches!(
         bindings,
@@ -61,7 +60,7 @@ fn should_return_error_if_root_arg_len_is_0() {
 
 #[test]
 fn should_return_error_if_root_arg_len_is_more_than_1() {
-    let ast = parse(".schema(.string(), .string())");
+    let ast = test_utils::parse(".schema(.string(), .string())");
     let bindings = SchemaBinder::new(&ast).bind();
     assert!(matches!(
         bindings,
@@ -92,7 +91,7 @@ fn should_return_error_if_primitive_has_arguments() {
     ];
 
     for input in inputs {
-        let ast = parse(&format!(".schema({})", input.0));
+        let ast = test_utils::parse(&format!(".schema({})", input.0));
         let bindings = SchemaBinder::new(&ast).bind();
         match bindings {
             Err(SchemaBinderErr::ArityMismatch {
@@ -120,14 +119,14 @@ fn should_return_error_if_primitive_has_arguments() {
 
 #[test]
 fn should_return_error_if_dict_has_not_even_args() {
-    let ast = parse(r#".schema(.dict("name" .string(), "age"))"#);
+    let ast = test_utils::parse(r#".schema(.dict("name" .string(), "age"))"#);
     let bindings = SchemaBinder::new(&ast).bind();
     assert!(matches!(bindings, Err(SchemaBinderErr::InvalDict { .. })));
 }
 
 #[test]
 fn should_return_error_if_dict_invalid_keys() {
-    let ast = parse(".schema(.dict(name .string(), age .int()))");
+    let ast = test_utils::parse(".schema(.dict(name .string(), age .int()))");
     let bindings = SchemaBinder::new(&ast).bind();
     assert!(matches!(bindings, Err(SchemaBinderErr::InvalDict { .. })));
 }
@@ -172,7 +171,7 @@ fn should_return_error_if_modifiers_have_invalid_arity() {
     ];
 
     for input in inputs {
-        let ast = parse(&format!(".schema({})", input.0));
+        let ast = test_utils::parse(&format!(".schema({})", input.0));
         let bindings = SchemaBinder::new(&ast).bind();
 
         match bindings {
@@ -203,7 +202,7 @@ fn should_return_error_if_optional_modifier_applied_to_list_item() {
     ];
 
     for input in inputs {
-        let ast = parse(&format!(".schema({})", input));
+        let ast = test_utils::parse(&format!(".schema({})", input));
         let bindings = SchemaBinder::new(&ast).bind();
 
         assert!(matches!(
@@ -261,7 +260,7 @@ fn should_resolve_single_primitive() {
     ];
 
     for input in inputs {
-        let ast = parse(&format!(".schema({})", input.0));
+        let ast = test_utils::parse(&format!(".schema({})", input.0));
         let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
         assert_eq!(
@@ -305,7 +304,7 @@ fn should_resolve_single_compound() {
     ];
 
     for input in inputs {
-        let ast = parse(&format!(".schema({})", input.0));
+        let ast = test_utils::parse(&format!(".schema({})", input.0));
         let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
         assert_eq!(
@@ -371,7 +370,7 @@ fn should_resolve_one_nullable_child() {
     ];
 
     for input in inputs {
-        let ast = parse(&format!(".schema(.nullable({}))", input.0));
+        let ast = test_utils::parse(&format!(".schema(.nullable({}))", input.0));
         let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
         assert_eq!(
@@ -409,7 +408,7 @@ fn should_resolve_nested_nullables() {
         )
     "##;
 
-    let ast = parse(s);
+    let ast = test_utils::parse(s);
     let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
     let cases = vec![
@@ -611,7 +610,7 @@ fn should_resolve_one_optional_child() {
     ];
 
     for input in inputs {
-        let ast = parse(&format!(".schema(.optional({}))", input.0));
+        let ast = test_utils::parse(&format!(".schema(.optional({}))", input.0));
         let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
         assert_eq!(
@@ -649,7 +648,7 @@ fn should_resolve_nested_optionals() {
         )
     "##;
 
-    let ast = parse(s);
+    let ast = test_utils::parse(s);
     let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
     let cases = vec![
@@ -817,7 +816,7 @@ fn should_resolve_optional_with_nullable() {
         )
     "##;
 
-    let ast = parse(s);
+    let ast = test_utils::parse(s);
     let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
     let cases = vec![
@@ -884,7 +883,7 @@ fn should_resolve_one_level_dict() {
         )
     "##;
 
-    let ast = parse(s);
+    let ast = test_utils::parse(s);
     let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
     let cases = vec![
@@ -990,7 +989,7 @@ fn should_resolve_one_level_abstract_list() {
     ];
 
     for input in inputs {
-        let ast = parse(&format!(".schema(.list(.{}()))", input.0));
+        let ast = test_utils::parse(&format!(".schema(.list(.{}()))", input.0));
         let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
         let cases = vec![
@@ -1050,7 +1049,7 @@ fn should_resolve_one_level_fixed_list() {
     ];
 
     for input in inputs {
-        let ast = parse(&format!(".schema(.list(.{}(), 2))", input.0));
+        let ast = test_utils::parse(&format!(".schema(.list(.{}(), 2))", input.0));
         let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
         let cases = vec![
@@ -1117,7 +1116,7 @@ fn should_resolve_complex_schema_with_nullables() {
                                                              "street" .nullable(.string())))))))
     "##;
 
-    let ast = parse(s);
+    let ast = test_utils::parse(s);
     let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
     let cases = vec![
@@ -1498,7 +1497,7 @@ fn should_resolve_complex_schema_with_optionals() {
                                                              "street" .optional(.string())))))))
     "##;
 
-    let ast = parse(s);
+    let ast = test_utils::parse(s);
     let bindings = SchemaBinder::new(&ast).bind().unwrap();
 
     let cases = vec![
