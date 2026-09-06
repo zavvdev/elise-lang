@@ -26,10 +26,6 @@
 
         - [ ] Tests
 
-    - [ ] Add semantics for .mul
-
-        - [ ] Tests
-
     - [ ] Add semantics for .add
 
         - [ ] Tests

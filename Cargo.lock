@@ -130,7 +130,6 @@ name = "elise-semanalyzer"
 version = "0.1.0"
 dependencies = [
  "elise-ast",
- "elise-data",
  "elise-parser",
  "elise-shared",
 ]

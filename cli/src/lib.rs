@@ -15,6 +15,7 @@ use elise_data::{
     schema_binder::{SchemaBinder, SchemaBindings},
 };
 use elise_parser::Prelude;
+use elise_semanalyzer::{HIR, Harmony};
 use elise_shared::shared_errors::{LangErr, errors_preexec::PreExecErr};
 use rayon::scope;
 use std::time::Instant;
@@ -67,7 +68,7 @@ pub fn run<'a>(
 ) -> Result<RunResult<'a>, LangErr> {
     let start = Instant::now();
 
-    //let mut hir = ...;
+    let mut hir: Result<HIR, LangErr> = Err(LangErr::PreExec(PreExecErr::NoHIR));
 
     let mut schema_bindings: Result<SchemaBindings, LangErr> =
         Err(LangErr::PreExec(PreExecErr::NoResolvedSchema));
@@ -84,15 +85,13 @@ pub fn run<'a>(
             // Map ParserErr to LangErr::ParserSource in order to differentiate
             // between data being parsed since we can use Prelude for parsing
             // source code or schema source code.
-            if let Ok(_ast) = Prelude::new(source_code)
+            if let Ok(ast) = Prelude::new(source_code)
                 .parse()
                 .map_err(LangErr::ParserSource)
             {
-                // hir = Some(
-                //     Harmony::new(&source_code_ast)
-                //         .analyze()
-                //         .map_err(LangErr::SemanticAnalyzer),
-                // );
+                hir = Harmony::new(&ast)
+                    .analyze()
+                    .map_err(LangErr::SemanticAnalyzer);
             }
         });
         // ===================================================================
@@ -125,12 +124,11 @@ pub fn run<'a>(
         }
     });
 
-    //let _hir = hir.unwrap()?;
+    let hir = hir?;
     let schema_bindings = schema_bindings?;
-    println!("schema bindings: {:#?}", schema_bindings);
     let data_bindings = data_bindings?;
-    println!("data bindings: {:#?}", data_bindings);
     validate_data(&data_bindings, &schema_bindings).map_err(LangErr::DataValidator)?;
+    println!("HIR: {:#?}", hir);
 
     Ok(RunResult {
         config,

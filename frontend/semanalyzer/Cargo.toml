@@ -9,5 +9,4 @@ path = "src/lib.rs"
 [dependencies]
 elise-shared = { path = "../../shared" }
 elise-ast = { path = "../ast" }
-elise-data = { path = "../data" }
 elise-parser = { path = "../parser" }

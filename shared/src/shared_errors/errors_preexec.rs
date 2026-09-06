@@ -2,4 +2,5 @@
 pub enum PreExecErr {
     NoResolvedSchema,
     NoDataBinding,
+    NoHIR,
 }

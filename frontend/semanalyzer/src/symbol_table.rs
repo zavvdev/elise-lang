@@ -89,8 +89,8 @@ impl SymbolTable {
 #[cfg(test)]
 mod tests {
     use crate::{
-        semanalyzer_data_types::{LangPrimitiveType, LangType},
-        semanalyzer_symbol_table::{SymbolId, SymbolTable},
+        data_types::{LangPrimitiveType, LangType},
+        symbol_table::{SymbolId, SymbolTable},
     };
 
     #[test]
