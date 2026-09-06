@@ -8,6 +8,18 @@ use crate::{
     schema_binder::{SchemaBinderDataType, SchemaBindings},
 };
 
+/// We're skipping non-terminal types because matching terminals only
+/// already includes full binding path.
+fn must_skip(dtype: &SchemaBinderDataType) -> bool {
+    match dtype {
+        SchemaBinderDataType::Int
+        | SchemaBinderDataType::Float
+        | SchemaBinderDataType::String
+        | SchemaBinderDataType::Bool => false,
+        _ => true,
+    }
+}
+
 fn match_data_type(
     data_binding_data_type: &DataBinderDataType,
     schema_binding_data_type: &SchemaBinderDataType,
@@ -60,9 +72,10 @@ pub fn validate_data(
         }
     }
 
-    // TODO: Skip any type definition binding paths that do not resolve to literal value?
-    //       Or update csv_data_binder to include full paths like schema_binder has?
     for (schema_binding_path, type_def) in &schema_bindings.bindings {
+        if must_skip(&type_def.dtype) {
+            continue;
+        }
         if !type_def.optional && !witnessed.contains(&schema_binding_path) {
             return Err(DataValidatorErr::DataMissing {
                 span: type_def.span.clone(),
