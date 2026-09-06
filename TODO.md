@@ -2,7 +2,7 @@
 
 ## Things to implement
 
-- [ ] Validation of data binding against resolved schema
+- [x] Data validation against schema
 
 - [ ] Semantic analyzer (preserve as much types as you can)
 

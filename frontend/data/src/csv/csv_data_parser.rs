@@ -165,7 +165,7 @@ mod tests {
     #[test]
     fn should_parse_int() {
         let row = vec!["42", "-42", "0", "-0", "9999999"];
-        let csv = test_utils::csv::build(&row);
+        let csv = test_utils::csv::build(&vec![&row]);
         let parser = CsvDataParser::new(&csv);
 
         let result = CsvDataRow {
@@ -202,7 +202,7 @@ mod tests {
             "-1.504E101",
         ];
 
-        let csv = test_utils::csv::build(&row);
+        let csv = test_utils::csv::build(&vec![&row]);
         let parser = CsvDataParser::new(&csv);
 
         let result = CsvDataRow {
@@ -232,7 +232,7 @@ mod tests {
     #[test]
     fn should_parse_bool() {
         let row = vec!["true", "True", "TRUE", "false", "False", "FALSE"];
-        let csv = test_utils::csv::build(&row);
+        let csv = test_utils::csv::build(&vec![&row]);
         let parser = CsvDataParser::new(&csv);
 
         let result = CsvDataRow {
@@ -262,7 +262,7 @@ mod tests {
     #[test]
     fn should_parse_string() {
         let row = vec!["john", " ", "", "     "];
-        let csv = test_utils::csv::build(&row);
+        let csv = test_utils::csv::build(&vec![&row]);
         let parser = CsvDataParser::new(&csv);
 
         assert_eq!(
@@ -309,7 +309,7 @@ mod tests {
     #[test]
     fn should_parse_null() {
         let row = vec!["null", "NULL", "Null"];
-        let csv = test_utils::csv::build(&row);
+        let csv = test_utils::csv::build(&vec![&row]);
         let parser = CsvDataParser::new(&csv);
 
         let result = CsvDataRow {
@@ -355,7 +355,7 @@ mod tests {
             CsvDataParserDataType::String,
         ];
 
-        let csv = test_utils::csv::build(&row);
+        let csv = test_utils::csv::build(&vec![&row]);
         let parser = CsvDataParser::new(&csv);
 
         let result = CsvDataRow {
