@@ -1,31 +1,29 @@
 use elise_semanalyzer::{
     Harmony,
-    semanalyzer_aast::AAstNode,
-    semanalyzer_config::FnDefine,
-    semanalyzer_data_types::{LangPrimitiveType, LangType},
-    semanalyzer_symbol_table::{SymbolDescriptor, SymbolId},
+    aast::AAstNode,
+    config::FnDefine,
+    data_types::{LangPrimitiveType, LangType},
+    symbol_table::{SymbolDescriptor, SymbolId},
 };
 use elise_shared::{
-    shared_errors::errors_semanalyzer::{ArityMismatchKind, SemanalyzerErr},
+    shared_errors::errors_semanalyzer::SemanalyzerErr,
     shared_node_names::NodeName,
-    shared_types::Span,
+    shared_types::{ArityMismatchKind, Span},
 };
-
-use crate::common::{empty_data_bindings, parse};
+use elise_test_utils::test_utils;
 
 mod common;
 
 // ==================================================================
 //
-//  SUCCESS CASES START
+// SUCCESS CASES START
 //
 // ==================================================================
 
 #[test]
 fn test_defines_int() {
-    let ast = parse(".define(AD 3)");
-    let data_bindings = empty_data_bindings();
-    let hir = Harmony::new(&ast, &data_bindings).analyze().unwrap();
+    let ast = test_utils::parse(".define(AD 3)");
+    let hir = Harmony::new(&ast).analyze().unwrap();
 
     assert_eq!(
         *hir.symbol_table.symbols.get(&SymbolId(0)).unwrap(),
@@ -51,9 +49,8 @@ fn test_defines_int() {
 
 #[test]
 fn test_defines_float() {
-    let ast = parse(".define(PI 3.1415)");
-    let data_bindings = empty_data_bindings();
-    let hir = Harmony::new(&ast, &data_bindings).analyze().unwrap();
+    let ast = test_utils::parse(".define(PI 3.1415)");
+    let hir = Harmony::new(&ast).analyze().unwrap();
 
     assert_eq!(
         *hir.symbol_table.symbols.get(&SymbolId(0)).unwrap(),
@@ -79,9 +76,8 @@ fn test_defines_float() {
 
 #[test]
 fn test_defines_string() {
-    let ast = parse(r#".define(NAME "Carl")"#);
-    let data_bindings = empty_data_bindings();
-    let hir = Harmony::new(&ast, &data_bindings).analyze().unwrap();
+    let ast = test_utils::parse(r#".define(NAME "Carl")"#);
+    let hir = Harmony::new(&ast).analyze().unwrap();
 
     assert_eq!(
         *hir.symbol_table.symbols.get(&SymbolId(0)).unwrap(),
@@ -107,9 +103,8 @@ fn test_defines_string() {
 
 #[test]
 fn test_defines_bool_true() {
-    let ast = parse(".define(OPEN true)");
-    let data_bindings = empty_data_bindings();
-    let hir = Harmony::new(&ast, &data_bindings).analyze().unwrap();
+    let ast = test_utils::parse(".define(OPEN true)");
+    let hir = Harmony::new(&ast).analyze().unwrap();
 
     assert_eq!(
         *hir.symbol_table.symbols.get(&SymbolId(0)).unwrap(),
@@ -136,9 +131,8 @@ fn test_defines_bool_true() {
 
 #[test]
 fn test_defines_bool_false() {
-    let ast = parse(".define(OPEN false)");
-    let data_bindings = empty_data_bindings();
-    let hir = Harmony::new(&ast, &data_bindings).analyze().unwrap();
+    let ast = test_utils::parse(".define(OPEN false)");
+    let hir = Harmony::new(&ast).analyze().unwrap();
 
     assert_eq!(
         *hir.symbol_table.symbols.get(&SymbolId(0)).unwrap(),
@@ -165,29 +159,27 @@ fn test_defines_bool_false() {
 
 // ==================================================================
 //
-//  SUCCESS CASES END
+// SUCCESS CASES END
 //
 // ==================================================================
 
 // ==================================================================
 //
-//  ERROR CASES START
+// ERROR CASES START
 //
 // ==================================================================
 
 #[test]
 fn test_returns_arity_mismatch_if_no_args() {
-    let ast = parse(".define()");
-    let data_bindings = empty_data_bindings();
-    let result = Harmony::new(&ast, &data_bindings).analyze();
+    let ast = test_utils::parse(".define()");
+    let result = Harmony::new(&ast).analyze();
 
     assert!(matches!(
         result,
         Err(SemanalyzerErr::ArityMismatch {
             fn_name: FnDefine::LEXEME,
-            expected: FnDefine::ARGS_LEN,
             found: 0,
-            kind: ArityMismatchKind::Eq,
+            kind: ArityMismatchKind::Eq(FnDefine::ARGS_LEN),
             ..
         })
     ));
@@ -195,17 +187,15 @@ fn test_returns_arity_mismatch_if_no_args() {
 
 #[test]
 fn test_returns_arity_mismatch_if_more_than_2_args() {
-    let ast = parse(".define(PI, 2, 3)");
-    let data_bindings = empty_data_bindings();
-    let result = Harmony::new(&ast, &data_bindings).analyze();
+    let ast = test_utils::parse(".define(PI, 2, 3)");
+    let result = Harmony::new(&ast).analyze();
 
     assert!(matches!(
         result,
         Err(SemanalyzerErr::ArityMismatch {
             fn_name: FnDefine::LEXEME,
-            expected: FnDefine::ARGS_LEN,
             found: 3,
-            kind: ArityMismatchKind::Eq,
+            kind: ArityMismatchKind::Eq(FnDefine::ARGS_LEN),
             ..
         })
     ));
@@ -213,9 +203,8 @@ fn test_returns_arity_mismatch_if_more_than_2_args() {
 
 #[test]
 fn test_returns_arg_type_mismatch_if_defines_non_primitive() {
-    let ast = parse(".define(PI [1, 2])");
-    let data_bindings = empty_data_bindings();
-    let result = Harmony::new(&ast, &data_bindings).analyze();
+    let ast = test_utils::parse(".define(PI [1, 2])");
+    let result = Harmony::new(&ast).analyze();
 
     assert!(matches!(
         result,
@@ -231,9 +220,8 @@ fn test_returns_arg_type_mismatch_if_defines_non_primitive() {
 
 #[test]
 fn test_returns_arg_kind_mismatch_if_first_arg_is_not_identifier() {
-    let ast = parse(".define(false 2)");
-    let data_bindings = empty_data_bindings();
-    let result = Harmony::new(&ast, &data_bindings).analyze();
+    let ast = test_utils::parse(".define(false 2)");
+    let result = Harmony::new(&ast).analyze();
     assert!(matches!(
         result,
         Err(SemanalyzerErr::ArgKindMismatch {
@@ -248,9 +236,8 @@ fn test_returns_arg_kind_mismatch_if_first_arg_is_not_identifier() {
 
 #[test]
 fn test_returns_symbol_duplicate_if_already_defined() {
-    let ast = parse(".define(PI 3.14) .define(PI 3.1415)");
-    let data_bindings = empty_data_bindings();
-    let result = Harmony::new(&ast, &data_bindings).analyze();
+    let ast = test_utils::parse(".define(PI 3.14) .define(PI 3.1415)");
+    let result = Harmony::new(&ast).analyze();
     assert!(matches!(
         result,
         Err(SemanalyzerErr::SymbolDuplicate { .. })
@@ -259,6 +246,6 @@ fn test_returns_symbol_duplicate_if_already_defined() {
 
 // ==================================================================
 //
-//  ERROR CASES END
+// ERROR CASES END
 //
 // ==================================================================

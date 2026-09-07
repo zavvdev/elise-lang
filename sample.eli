@@ -1,2 +1,2 @@
-.fn (my-fn #[x 12]
-            .add(x 2))
+.let ([x 2]
+    .add (x 100))

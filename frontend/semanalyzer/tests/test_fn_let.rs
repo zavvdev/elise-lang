@@ -1,7 +1,8 @@
-use elise_semanalyzer::{Harmony, semanalyzer_config::FnLet};
-use elise_shared::shared_errors::errors_semanalyzer::{ArityMismatchKind, SemanalyzerErr};
-
-use crate::common::{empty_data_bindings, parse};
+use elise_semanalyzer::{Harmony, config::FnLet};
+use elise_shared::{
+    shared_errors::errors_semanalyzer::SemanalyzerErr, shared_types::ArityMismatchKind,
+};
+use elise_test_utils::test_utils;
 
 mod common;
 
@@ -27,17 +28,15 @@ mod common;
 
 #[test]
 fn test_returns_arity_mismatch_if_no_args() {
-    let ast = parse(".let()");
-    let data_bindings = empty_data_bindings();
-    let result = Harmony::new(&ast, &data_bindings).analyze();
+    let ast = test_utils::parse(".let()");
+    let result = Harmony::new(&ast).analyze();
 
     assert!(matches!(
         result,
         Err(SemanalyzerErr::ArityMismatch {
             fn_name: FnLet::LEXEME,
-            expected: FnLet::MIN_ARGS_LEN,
             found: 0,
-            kind: ArityMismatchKind::MoreEq,
+            kind: ArityMismatchKind::MoreEq(FnLet::MIN_ARGS_LEN),
             ..
         })
     ));
@@ -45,17 +44,15 @@ fn test_returns_arity_mismatch_if_no_args() {
 
 #[test]
 fn test_returns_arity_mismatch_if_1_arg() {
-    let ast = parse(".let([])");
-    let data_bindings = empty_data_bindings();
-    let result = Harmony::new(&ast, &data_bindings).analyze();
+    let ast = test_utils::parse(".let([])");
+    let result = Harmony::new(&ast).analyze();
 
     assert!(matches!(
         result,
         Err(SemanalyzerErr::ArityMismatch {
             fn_name: FnLet::LEXEME,
-            expected: FnLet::MIN_ARGS_LEN,
             found: 1,
-            kind: ArityMismatchKind::MoreEq,
+            kind: ArityMismatchKind::MoreEq(FnLet::MIN_ARGS_LEN),
             ..
         })
     ));
