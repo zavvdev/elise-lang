@@ -5,7 +5,6 @@
 //!
 //! ## Input
 //!   - AST produced by the parser
-//!   - DataBindingTable produced by the Binder (validated data + schema)
 //!
 //! ## Output
 //!   - HIR { SymbolTable, AAST }
@@ -15,7 +14,6 @@
 //!   - Validates language rules (arity, type constraints, redefinition etc.)
 //!   - Annotates AST nodes with type information derived from schema and literals
 //!   - Folds constants where all operands are known at compile time
-//!   - Resolves data references against DataBindingTable to derive types
 //!
 //! ## What Harmony does NOT do
 //!   - Store runtime values in the SymbolTable (type only, value lives in AAST)
