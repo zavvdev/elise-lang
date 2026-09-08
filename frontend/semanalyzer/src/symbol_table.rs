@@ -71,10 +71,10 @@ impl SymbolTable {
         }
     }
 
-    pub fn fresh(&mut self, name: String, ty: LangType) -> SymbolId {
+    pub fn fresh(&mut self, name: &str, ty: LangType) -> SymbolId {
         let symbol_id = SymbolId(self.next_id);
         let symbol_descriptor = SymbolDescriptor {
-            name,
+            name: name.to_string(),
             ty,
             is_captured: false,
         };

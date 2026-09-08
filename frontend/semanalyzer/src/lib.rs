@@ -25,7 +25,7 @@
 //! and the emitter can trust the AAST without re-validation.
 
 pub mod aast;
-pub mod config;
+pub mod builtins;
 pub mod data_types;
 pub mod scope_stack;
 pub mod symbol_table;
@@ -39,7 +39,7 @@ use elise_shared::{
 
 use crate::{
     aast::AAstNode,
-    config::{FnDefine, FnLet},
+    builtins::{FnDefine, FnLet},
     data_types::{LangPrimitiveType, LangType},
     scope_stack::ScopeStack,
     symbol_table::SymbolTable,
@@ -64,14 +64,21 @@ pub struct Harmony<'a> {
 
 impl<'a> Harmony<'a> {
     pub fn new(ast: &'a Vec<AstNode>) -> Self {
+        let mut scope_stack = ScopeStack::new();
+
         // In order to have a global scope we push a new one
         // before analyzing AST, so the first stack frame is
-        // our genesis scope.
-        let mut scope_stack = ScopeStack::new();
+        // our genesis scope. We need to do this because things
+        // like .define function does not create its own stack
+        // frame, so if it defines an identifier in the global
+        // scope, the stack frame must be already there.
         scope_stack.push();
         Self { ast, scope_stack }
     }
 
+    /// Analyzer entry point. Creates symbol table and aast vector
+    /// that are both mutable and passed down to every other function
+    /// that needs them.
     pub fn analyze(&mut self) -> Result<HIR, SemanalyzerErr> {
         let mut symbol_table = SymbolTable::new();
         let mut aast: Vec<AAstNode> = vec![];
@@ -90,12 +97,12 @@ impl<'a> Harmony<'a> {
         symbol_table: &mut SymbolTable,
     ) -> Result<AAstNode, SemanalyzerErr> {
         match ast_node {
+            AstNode::Identifier(primitive) => self.annotate_identifier_reference(primitive),
             AstNode::Int(primitive) => Self::annotate_int(primitive),
             AstNode::Float(primitive) => Self::annotate_float(primitive),
             AstNode::String(primitive) => Self::annotate_string(primitive),
             AstNode::Bool(primitive) => Self::annotate_bool(primitive),
             AstNode::Null(primitive) => Self::annotate_null(primitive),
-            AstNode::Identifier(primitive) => self.annotate_identifier_reference(primitive),
             AstNode::Call(call) => self.annotate_call(call, symbol_table),
             _ => Err(SemanalyzerErr::UnsupportedNode {
                 span: ast_node.span().clone(),
@@ -104,154 +111,11 @@ impl<'a> Harmony<'a> {
     }
 
     // ==================================================================
-    // ANNOTATE DEFINE CALL START
-    //
-    // .define (Identifier LangPrimitiveType)
-    //
-    // 1. Has only 2 arguments;
-    // 2. First argument is always an identifier;
-    // 3. Second argument is always primitive type;
-    // 4. Never creates a new scope stack record;
-    // 5. Defines symbols in the current scope stack;
-    // 6. Does not remove any scope stack entries;
-    // ==================================================================
-
-    fn annotate_define_call(
-        &mut self,
-        call: &AstCall,
-        symbol_table: &mut SymbolTable,
-    ) -> Result<AAstNode, SemanalyzerErr> {
-        if call.children.len() != FnDefine::ARGS_LEN {
-            return Err(SemanalyzerErr::ArityMismatch {
-                fn_name: FnDefine::LEXEME,
-                found: call.children.len(),
-                span: call.span.clone(),
-                kind: ArityMismatchKind::Eq(FnDefine::ARGS_LEN),
-            });
-        }
-
-        let first_arg = &**call.children.first().unwrap();
-        let second_arg = &**call.children.last().unwrap();
-
-        let (ident_type, aast_node) = match second_arg {
-            AstNode::Int(prim) => (LangPrimitiveType::Int, Self::annotate_int(prim)?),
-            AstNode::Float(prim) => (LangPrimitiveType::Float, Self::annotate_float(prim)?),
-            AstNode::String(prim) => (LangPrimitiveType::String, Self::annotate_string(prim)?),
-            AstNode::Bool(prim) => (LangPrimitiveType::Bool, Self::annotate_bool(prim)?),
-            AstNode::Null(prim) => (LangPrimitiveType::Null, Self::annotate_null(prim)?),
-            _ => {
-                return Err(SemanalyzerErr::ArgTypeMismatch {
-                    fn_name: FnDefine::LEXEME,
-                    position: 1,
-                    expected: NodeName::PRIMITIVE,
-                    found: second_arg.as_str(),
-                    span: second_arg.span().clone(),
-                });
-            }
-        };
-
-        let AstNode::Identifier(primitive) = first_arg else {
-            return Err(SemanalyzerErr::ArgKindMismatch {
-                fn_name: FnDefine::LEXEME,
-                position: 0,
-                expected: NodeName::IDENTIFIER,
-                found: first_arg.as_str(),
-                span: first_arg.span().clone(),
-            });
-        };
-
-        if self.scope_stack.resolve(&primitive.value).is_some() {
-            return Err(SemanalyzerErr::SymbolDuplicate {
-                span: call.span.clone(),
-            });
-        }
-
-        let symbol_id =
-            symbol_table.fresh(primitive.value.clone(), LangType::Primitive(ident_type));
-
-        self.scope_stack.define(primitive.value.clone(), symbol_id);
-
-        Ok(AAstNode::CallDefine {
-            symbol_id,
-            value: Box::new(aast_node),
-            span: call.span.clone(),
-        })
-    }
-
-    // ==================================================================
-    // ANNOTATE DEFINE CALL END
-    // ==================================================================
-
-    // ==================================================================
-    // ANNOTATE LET CALL START
-    //
-    // .let ([(Identifier Expression)+] Expression+)
-    //
-    // 1. Min 2 arguments;
-    // 2. First argument is always a list;
-    // 3. Odd items in the list are always identifiers;
-    // 4. Even items in the list are always expressions
-    //    that must be evaluated first;
-    // 5. The result of evaluation is always a result of
-    //    the last evaluated expression;
-    // 6. Creates its own scope stack when enters;
-    // 7. Removes its own scope stack when evaluation finishes;
-    // 8. Does not allow symbol re-bindings;
-    // 9. Can access outer scope;
-    // ==================================================================
-
-    fn annotate_let_call(
-        &mut self,
-        call: &AstCall,
-        _symbol_table: &mut SymbolTable,
-    ) -> Result<AAstNode, SemanalyzerErr> {
-        if call.children.len() < FnLet::MIN_ARGS_LEN {
-            return Err(SemanalyzerErr::ArityMismatch {
-                fn_name: FnLet::LEXEME,
-                found: call.children.len(),
-                span: call.span.clone(),
-                kind: ArityMismatchKind::MoreEq(FnLet::MIN_ARGS_LEN),
-            });
-        }
-
-        // TODO
-
-        Err(SemanalyzerErr::UnknownFunction {
-            span: Span { start: 0, end: 0 },
-        })
-    }
-
-    // ==================================================================
-    // ANNOTATE LET CALL END
-    // ==================================================================
-
-    // ==================================================================
-    // ANNOTATE CALL START
-    // ==================================================================
-
-    fn annotate_call(
-        &mut self,
-        call: &AstCall,
-        symbol_table: &mut SymbolTable,
-    ) -> Result<AAstNode, SemanalyzerErr> {
-        match call.lexeme.as_str() {
-            FnDefine::LEXEME => self.annotate_define_call(call, symbol_table),
-            FnLet::LEXEME => self.annotate_let_call(call, symbol_table),
-            _ => Err(SemanalyzerErr::UnknownFunction {
-                span: call.span.clone(),
-            }),
-        }
-    }
-
-    // ==================================================================
-    // ANNOTATE CALL END
-    // ==================================================================
-
-    // ==================================================================
     // PRIMITIVE ANNOTATIONS START
     //
-    // Annotations for primitive values Number, String, Bool, Null,
-    // Identifier which we can map almost 1:1 from AstNode to AAstNode.
+    // Annotations for primitive values such as Number, String, Bool,
+    // Null, Identifier which we can map almost 1:1 from AstNode
+    // to AAstNode.
     // ==================================================================
 
     // ==================================================================
@@ -368,6 +232,149 @@ impl<'a> Harmony<'a> {
 
     // ==================================================================
     // PRIMITIVE ANNOTATIONS END
+    // ==================================================================
+
+    // ==================================================================
+    // ANNOTATE CALL START
+    // ==================================================================
+
+    fn annotate_call(
+        &mut self,
+        call: &AstCall,
+        symbol_table: &mut SymbolTable,
+    ) -> Result<AAstNode, SemanalyzerErr> {
+        match call.lexeme.as_str() {
+            FnDefine::LEXEME => self.annotate_define_call(call, symbol_table),
+            FnLet::LEXEME => self.annotate_let_call(call, symbol_table),
+            _ => Err(SemanalyzerErr::UnknownFunction {
+                span: call.span.clone(),
+            }),
+        }
+    }
+
+    // ==================================================================
+    // ANNOTATE CALL END
+    // ==================================================================
+
+    // ==================================================================
+    // ANNOTATE DEFINE CALL START
+    //
+    // .define (Identifier LangPrimitiveType)
+    //
+    // 1. Has only 2 arguments;
+    // 2. First argument is always an identifier;
+    // 3. Second argument is always primitive type;
+    // 4. Never creates a new scope stack record;
+    // 5. Defines symbols in the current scope stack;
+    // 6. Does not remove any scope stack entries;
+    // ==================================================================
+
+    fn annotate_define_call(
+        &mut self,
+        call: &AstCall,
+        symbol_table: &mut SymbolTable,
+    ) -> Result<AAstNode, SemanalyzerErr> {
+        if call.children.len() != FnDefine::ARGS_LEN {
+            return Err(SemanalyzerErr::ArityMismatch {
+                fn_name: FnDefine::LEXEME,
+                found: call.children.len(),
+                span: call.span.clone(),
+                kind: ArityMismatchKind::Eq(FnDefine::ARGS_LEN),
+            });
+        }
+
+        let first_arg = &**call.children.first().unwrap();
+        let second_arg = &**call.children.last().unwrap();
+
+        let (ident_type, aast_node) = match second_arg {
+            AstNode::Int(prim) => (LangPrimitiveType::Int, Self::annotate_int(prim)?),
+            AstNode::Float(prim) => (LangPrimitiveType::Float, Self::annotate_float(prim)?),
+            AstNode::String(prim) => (LangPrimitiveType::String, Self::annotate_string(prim)?),
+            AstNode::Bool(prim) => (LangPrimitiveType::Bool, Self::annotate_bool(prim)?),
+            AstNode::Null(prim) => (LangPrimitiveType::Null, Self::annotate_null(prim)?),
+            _ => {
+                return Err(SemanalyzerErr::ArgTypeMismatch {
+                    fn_name: FnDefine::LEXEME,
+                    position: 1,
+                    expected: NodeName::PRIMITIVE,
+                    found: second_arg.as_str(),
+                    span: second_arg.span().clone(),
+                });
+            }
+        };
+
+        let AstNode::Identifier(primitive) = first_arg else {
+            return Err(SemanalyzerErr::ArgKindMismatch {
+                fn_name: FnDefine::LEXEME,
+                position: 0,
+                expected: NodeName::IDENTIFIER,
+                found: first_arg.as_str(),
+                span: first_arg.span().clone(),
+            });
+        };
+
+        if self.scope_stack.resolve(&primitive.value).is_some() {
+            return Err(SemanalyzerErr::SymbolDuplicate {
+                span: call.span.clone(),
+            });
+        }
+
+        let symbol_id = symbol_table.fresh(&primitive.value, LangType::Primitive(ident_type));
+
+        self.scope_stack.define(&primitive.value, symbol_id);
+
+        Ok(AAstNode::CallDefine {
+            symbol_id,
+            value: Box::new(aast_node),
+            span: call.span.clone(),
+        })
+    }
+
+    // ==================================================================
+    // ANNOTATE DEFINE CALL END
+    // ==================================================================
+
+    // ==================================================================
+    // ANNOTATE LET CALL START
+    //
+    // .let ([(Identifier Expression)+] Expression+)
+    //
+    // 1. Min 2 arguments;
+    // 2. First argument is always a list;
+    // 3. Odd items in the list are always identifiers;
+    // 4. Even items in the list are always expressions
+    //    that must be evaluated first;
+    // 5. The result of evaluation is always a result of
+    //    the last evaluated expression;
+    // 6. Creates its own scope stack when enters;
+    // 7. Removes its own scope stack when evaluation finishes;
+    // 8. Does not allow symbol re-bindings;
+    // 9. Can access outer scope;
+    // ==================================================================
+
+    fn annotate_let_call(
+        &mut self,
+        call: &AstCall,
+        _symbol_table: &mut SymbolTable,
+    ) -> Result<AAstNode, SemanalyzerErr> {
+        if call.children.len() < FnLet::MIN_ARGS_LEN {
+            return Err(SemanalyzerErr::ArityMismatch {
+                fn_name: FnLet::LEXEME,
+                found: call.children.len(),
+                span: call.span.clone(),
+                kind: ArityMismatchKind::MoreEq(FnLet::MIN_ARGS_LEN),
+            });
+        }
+
+        // TODO
+
+        Err(SemanalyzerErr::UnknownFunction {
+            span: Span { start: 0, end: 0 },
+        })
+    }
+
+    // ==================================================================
+    // ANNOTATE LET CALL END
     // ==================================================================
 }
 

@@ -46,9 +46,11 @@ impl ScopeStack {
     /// Registers a new identifier in the current (innermost) scope.
     /// Called when semantic analysis encounters .let or any other declarations
     /// that semantically must create a scope.
-    pub fn define(&mut self, identifier_name: String, symbol_id: SymbolId) {
+    pub fn define(&mut self, identifier_name: &str, symbol_id: SymbolId) {
         if let Some(last_scope) = self.scopes.last_mut() {
-            last_scope.bindings.insert(identifier_name, symbol_id);
+            last_scope
+                .bindings
+                .insert(identifier_name.to_string(), symbol_id);
         }
     }
 
@@ -97,7 +99,7 @@ mod tests {
     #[test]
     fn should_not_define_if_stack_is_empty() {
         let mut stack = ScopeStack::new();
-        stack.define("name".to_string(), SymbolId(1));
+        stack.define("name", SymbolId(1));
         assert_eq!(stack.scopes.len(), 0);
     }
 
@@ -105,7 +107,7 @@ mod tests {
     fn should_define_in_last_scope() {
         let mut stack = ScopeStack::new();
         stack.push();
-        stack.define("name".to_string(), SymbolId(1));
+        stack.define("name", SymbolId(1));
         assert_eq!(
             stack.scopes.first().unwrap().bindings.get("name"),
             Some(&SymbolId(1))
@@ -122,7 +124,7 @@ mod tests {
     fn should_resolve_with_depth_0() {
         let mut stack = ScopeStack::new();
         stack.push();
-        stack.define("name".to_string(), SymbolId(1));
+        stack.define("name", SymbolId(1));
         assert_eq!(stack.resolve("name"), Some((SymbolId(1), 0)));
     }
 
@@ -130,7 +132,7 @@ mod tests {
     fn should_resolve_with_depth_gt_0() {
         let mut stack = ScopeStack::new();
         stack.push();
-        stack.define("name".to_string(), SymbolId(1));
+        stack.define("name", SymbolId(1));
         stack.push();
         assert_eq!(stack.resolve("name"), Some((SymbolId(1), 1)));
     }
