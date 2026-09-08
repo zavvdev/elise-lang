@@ -26,6 +26,8 @@
 
         - [ ] Tests
 
+    - [ ] Add semantics for function definition (named and anon)
+
     - [ ] Add semantics for .add
 
         - [ ] Tests
