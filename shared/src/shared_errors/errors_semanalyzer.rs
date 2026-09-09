@@ -34,4 +34,10 @@ pub enum SemanalyzerErr {
     UnsupportedNode {
         span: Span,
     },
+    IdentSelfBinding {
+        span: Span,
+    },
+    LetInvalidBindingList {
+        span: Span,
+    },
 }

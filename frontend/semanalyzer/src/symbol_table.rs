@@ -104,10 +104,7 @@ mod tests {
     fn should_create_new_entry() {
         let mut table = SymbolTable::new();
         assert_eq!(table.symbols.capacity(), 0);
-        let id = table.fresh(
-            "name".to_string(),
-            LangType::Primitive(LangPrimitiveType::Int),
-        );
+        let id = table.fresh("name", LangType::Primitive(LangPrimitiveType::Int));
         assert_eq!(id, SymbolId(0));
         assert_eq!(table.next_id, 1);
         let descriptor = table.symbols.get(&id).unwrap();

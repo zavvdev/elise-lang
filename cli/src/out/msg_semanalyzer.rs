@@ -1,3 +1,4 @@
+use elise_semanalyzer::builtins::FnLet;
 use elise_shared::shared_errors::errors_semanalyzer::SemanalyzerErr;
 
 use crate::out::utils::{
@@ -57,6 +58,17 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
         UnknownFunction { span } => ("Unknown function".to_string(), span),
 
         UnsupportedNode { span } => ("Unsupported expression".to_string(), span),
+
+        LetInvalidBindingList { span } => (
+            format!(
+                "Invalid binding list for \"{}\" function. It must contain
+        even number of arguments where even elements are identifiers and odd elements are
+        expressions",
+                FnLet::LEXEME
+            ),
+            span,
+        ),
+        IdentSelfBinding { span } => ("Cannot bind an identifier to itself".to_string(), span),
     };
 
     utils::print_err(&info, Some("Semantic error"));

@@ -1,3 +1,8 @@
+// TODO: Every time we annotate a node, I think we should return
+// AAstNode + its return type if it's a function call. We need this
+// for cases when we assign a result of the function call to an
+// identifier.
+
 //! # Harmony — Semantic Analyzer
 //!
 //! Transforms an AST into a HIR (High-level Intermediate Representation)
@@ -352,6 +357,46 @@ impl<'a> Harmony<'a> {
     // 9. Can access outer scope;
     // ==================================================================
 
+    // TODO: We probably need to do bindings here as well.
+    fn check_let_call_bindings(first_arg: &AstNode) -> Result<(), SemanalyzerErr> {
+        let AstNode::List(compound) = first_arg else {
+            return Err(SemanalyzerErr::ArgKindMismatch {
+                fn_name: FnLet::LEXEME,
+                position: 0,
+                expected: NodeName::LIST,
+                found: first_arg.as_str(),
+                span: first_arg.span().clone(),
+            });
+        };
+
+        if compound.children.len() % 2 != 0 {
+            return Err(SemanalyzerErr::LetInvalidBindingList {
+                span: first_arg.span().clone(),
+            });
+        }
+
+        for (index, child) in compound.children.iter().enumerate().step_by(2) {
+            let ident = &**child;
+            let expr = &**compound.children.get(index + 1).unwrap();
+
+            let AstNode::Identifier(ident_prim) = ident else {
+                return Err(SemanalyzerErr::LetInvalidBindingList {
+                    span: ident.span().clone(),
+                });
+            };
+
+            if let AstNode::Identifier(expr_prim) = expr
+                && expr_prim.value == ident_prim.value
+            {
+                return Err(SemanalyzerErr::IdentSelfBinding {
+                    span: expr.span().clone(),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
     fn annotate_let_call(
         &mut self,
         call: &AstCall,
@@ -365,6 +410,8 @@ impl<'a> Harmony<'a> {
                 kind: ArityMismatchKind::MoreEq(FnLet::MIN_ARGS_LEN),
             });
         }
+
+        Self::check_let_call_bindings(call.children.first().unwrap())?;
 
         // TODO
 

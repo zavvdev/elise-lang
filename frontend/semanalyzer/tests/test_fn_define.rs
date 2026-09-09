@@ -1,7 +1,7 @@
 use elise_semanalyzer::{
     Harmony,
     aast::AAstNode,
-    config::FnDefine,
+    builtins::FnDefine,
     data_types::{LangPrimitiveType, LangType},
     symbol_table::{SymbolDescriptor, SymbolId},
 };
