@@ -1,1 +1,19 @@
-.let ([] 2 3)
+.type (User {
+    "name" String
+    "id": Int
+})
+
+.define (PI:Float 3.1415)
+
+.define (USER: User {
+    "id"   1
+    "name" "John"
+})
+
+.let ([width:Float, height:Float]
+    .mul(2 .add(width, height)))
+
+.fn (compare [name:String, surname:String, age:Int]
+    .if (.eq(.len(name), .len(surname))
+        "Equal"
+        "Not Equal"))

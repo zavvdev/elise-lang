@@ -2,6 +2,10 @@
 
 ## Things to implement
 
+- [ ] Add static types
+
+- [ ] Disallow multiple types in List
+
 - [x] Data validation against schema
 
 - [ ] Semantic analyzer (preserve as much types as you can)
