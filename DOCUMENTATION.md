@@ -7,30 +7,30 @@ RUN (SC, SCH, Data)
     -> Parse(SCH) -> SCH_AST +
     -> Parse(Data) -> ParsedData +
     -> Sema(SC_AST) -> SC_AAST 
-    -> Resolve(SCH_AST) -> ResolvedSchema +
-    -> Bind(ParsedData) -> DataBindingTable +
-    -> Validate(ResolvedSchema, DataBindingTable) +
-    -> Compile(ResolvedSchema, SC_AAST) -> Bytecode
-    -> VM(Bytecode, DataBindingTable)
+    -> BindSchema(SCH_AST) -> SchemaBinding +
+    -> BindData(ParsedData) -> DataBinding +
+    -> Validate(SchemaBinding, DataBinding) +
+    -> Compile(SchemaBinding, SC_AAST) -> Bytecode
+    -> VM(Bytecode, DataBinding)
 
 BUILD (SC, SCH)
     -> Parse(SC) -> SC_AST
     -> Parse(SCH) -> SCH_AST
     -> Sema(SC_AST) -> SC_AAST 
-    -> Resolve(SCH_AST) -> ResolvedSchema
-    -> Compile(ResolvedSchema, SC_AAST) -> Bytecode
+    -> BindSchema(SCH_AST) -> SchemaBinding 
+    -> Compile(SchemaBinding, SC_AAST) -> Bytecode
 
 VALIDATE(SCH, Data)
     -> Parse(SCH) -> SCH_AST
     -> Parse(Data) -> ParsedData
-    -> Resolve(SCH_AST) -> ResolvedSchema
-    -> Bind(ParsedData) -> DataBindingTable
-    -> Validate(ResolvedSchema, DataBindingTable)
+    -> Resolve(SCH_AST) -> SchemaBinding 
+    -> BindData(ParsedData) -> DataBinding
+    -> Validate(SchemaBinding, DataBinding)
 
 EXEC(Bytecode, Data)
     -> Parse(Data) -> ParsedData
-    -> Bind(ParsedData) -> DataBindingTable
-    -> VM(Bytecode, DataBindingTable)
+    -> BindData(ParsedData) -> DataBinding
+    -> VM(Bytecode, DataBinding)
 ```
 
 ```
