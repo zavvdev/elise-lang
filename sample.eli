@@ -1,3 +1,15 @@
-.let ([width .calc(), height 3]
-    .mul(2 .add(width, height)))
+.define (SALARY_INCREASE :Int, 1000)
 
+.fn (only-active [user :User] -> :Bool
+        .eq(.get(user, "active"), true))
+
+.fn (increase-salary [user: User] -> :User
+        .merge-dict(user, {
+            "salary" .add(
+                        .get(user, "salary"),
+                        SALARY_INCREASE)}))
+
+.pipe(
+    @data
+    .filter(only-active)
+    .map(increase-salary))

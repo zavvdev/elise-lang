@@ -4,7 +4,16 @@
 
 - [ ] Add static types
 
+    - [ ] New data type called TypeDef
+          (:Int, :String?, :Float|Null, :List<String>, Dict{"a" :Int})
+
+    - [ ] Update schema binding
+
+    - [ ] Remove support for .let (all we need for now is .define, .fn and builtin functions)
+
 - [ ] Disallow multiple types in List
+
+- [ ] Add support for comments
 
 - [x] Data validation against schema
 
