@@ -11,11 +11,9 @@ use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise_data::{
     csv::{csv_data_binder::CsvDataBinder, csv_data_parser::CsvDataParser},
     data_binder::{DataBinder, DataBindings},
-    data_validator::validate_data,
     schema_binder::{SchemaBinder, SchemaBindings},
 };
 use elise_parser::Prelude;
-use elise_semanalyzer::{HIR, Harmony};
 use elise_shared::shared_errors::{LangErr, errors_preexec::PreExecErr};
 use rayon::scope;
 use std::time::Instant;
@@ -68,13 +66,19 @@ pub fn run<'a>(
 ) -> Result<RunResult<'a>, LangErr> {
     let start = Instant::now();
 
-    let mut hir: Result<HIR, LangErr> = Err(LangErr::PreExec(PreExecErr::NoHIR));
+    //let mut _hir: Result<HIR, LangErr> = Err(LangErr::PreExec(PreExecErr::NoHIR));
 
     let mut schema_bindings: Result<SchemaBindings, LangErr> =
         Err(LangErr::PreExec(PreExecErr::NoResolvedSchema));
 
     let mut data_bindings: Result<DataBindings, LangErr> =
         Err(LangErr::PreExec(PreExecErr::NoDataBinding));
+
+    let ast = Prelude::new(source_code)
+        .parse()
+        .map_err(LangErr::ParserSource)?;
+
+    println!("Ast: {:#?}", ast);
 
     // Run in parallel since these processes don't depend on one another.
     scope(|s| {
@@ -85,13 +89,16 @@ pub fn run<'a>(
             // Map ParserErr to LangErr::ParserSource in order to differentiate
             // between data being parsed since we can use Prelude for parsing
             // source code or schema source code.
+
+            // TODO: This skips Prelude error reports.
             if let Ok(ast) = Prelude::new(source_code)
                 .parse()
                 .map_err(LangErr::ParserSource)
             {
-                hir = Harmony::new(&ast)
-                    .analyze()
-                    .map_err(LangErr::SemanticAnalyzer);
+                println!("SC: {:#?}", ast);
+                //hir = Harmony::new(&ast)
+                //    .analyze()
+                //    .map_err(LangErr::SemanticAnalyzer);
             }
         });
         // ===================================================================
@@ -124,11 +131,11 @@ pub fn run<'a>(
         }
     });
 
-    let hir = hir?;
-    let schema_bindings = schema_bindings?;
-    let data_bindings = data_bindings?;
-    validate_data(&data_bindings, &schema_bindings).map_err(LangErr::DataValidator)?;
-    println!("HIR: {:#?}", hir);
+    //let hir = _hir?;
+    //let _schema_bindings = schema_bindings?;
+    //let _data_bindings = data_bindings?;
+    //validate_data(&data_bindings, &schema_bindings).map_err(LangErr::DataValidator)?;
+    //println!("HIR: {:#?}", hir);
 
     Ok(RunResult {
         config,

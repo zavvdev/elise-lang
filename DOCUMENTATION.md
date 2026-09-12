@@ -1,29 +1,26 @@
 ```
-SC - Source Code
-SCH -> Schema
-
-RUN (SC, SCH, Data)
-    -> Parse(SC) -> SC_AST +
-    -> Parse(SCH) -> SCH_AST +
-    -> Parse(Data) -> ParsedData +
-    -> Sema(SC_AST) -> SC_AAST 
-    -> BindSchema(SCH_AST) -> SchemaBinding +
-    -> BindData(ParsedData) -> DataBinding +
-    -> Validate(SchemaBinding, DataBinding) +
-    -> Compile(SchemaBinding, SC_AAST) -> Bytecode
+RUN (SourceCode, SchemaCode, Data)
+    -> Parse(SourceCode) -> SourceCodeAst
+    -> Parse(ShemaCode) -> SchemaCodeAst
+    -> Parse(Data) -> ParsedData
+    -> BindSchema(SchemaCodeAst) -> SchemaBinding
+    -> BindData(ParsedData) -> DataBinding
+    -> Sema(SourceCodeAst, SchemaBinding) -> SourceCodeAAst
+    -> Validate(SchemaBinding, DataBinding)
+    -> Compile(SchemaBinding, SourceCodeAAst) -> Bytecode
     -> VM(Bytecode, DataBinding)
 
-BUILD (SC, SCH)
-    -> Parse(SC) -> SC_AST
-    -> Parse(SCH) -> SCH_AST
-    -> Sema(SC_AST) -> SC_AAST 
-    -> BindSchema(SCH_AST) -> SchemaBinding 
-    -> Compile(SchemaBinding, SC_AAST) -> Bytecode
+BUILD (SourceCode, SchemaCode)
+    -> Parse(SourceCode) -> SourceCodeAst
+    -> Parse(ShemaCode) -> SchemaCodeAst
+    -> BindSchema(SchemaCodeAst) -> SchemaBinding
+    -> Sema(SourceCodeAst, SchemaBinding) -> SourceCodeAAst
+    -> Compile(SchemaBinding, SourceCodeAAst) -> Bytecode
 
-VALIDATE(SCH, Data)
-    -> Parse(SCH) -> SCH_AST
+VALIDATE(SchemaCode, Data)
+    -> Parse(ShemaCode) -> SchemaCodeAst
     -> Parse(Data) -> ParsedData
-    -> Resolve(SCH_AST) -> SchemaBinding 
+    -> BindSchema(SchemaCodeAst) -> SchemaBinding
     -> BindData(ParsedData) -> DataBinding
     -> Validate(SchemaBinding, DataBinding)
 

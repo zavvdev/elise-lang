@@ -1,13 +1,13 @@
-.typedef (Address :Dict{
-                       "country" :String
-                       "city"    :String
-                       "street"  :String? })
+.typedef (Address :Dict<{
+                       "country" :Str
+                       "city"    :Str
+                       "street"  :Str? }>)
 
-.typedef (User :Dict{
+.typedef (User :Dict<{
                     "id"      :Int
-                    "name"    :String
-                    "emails"  :List<String>?
-                    "address" :Address|Null })
+                    "name"    :Str
+                    "emails"  :List<Str>?
+                    "address" :Nullable<Address> }>)
 
 .typedef (Data :List<User>)
 

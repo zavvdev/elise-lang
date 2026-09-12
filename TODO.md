@@ -7,9 +7,9 @@
     - [ ] New data type called TypeDef
           (:Int, :String?, :Float|Null, :List<String>, Dict{"a" :Int})
 
-    - [ ] Update schema binding
-
     - [ ] Remove support for .let (all we need for now is .define, .fn and builtin functions)
+
+- [ ] Remove lexemes from AstNode and carry Span only
 
 - [ ] Disallow multiple types in List
 
