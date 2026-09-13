@@ -1,9 +1,9 @@
 .define (SALARY_INCREASE :Int, 1000)
 
-.fn (only-active [user :User] -> :Bool
+.fn (only-active [user :User] :Bool
         .eq(.get(user, "active"), true))
 
-.fn (increase-salary [user: User] -> :User
+.fn (increase-salary [user: User] :User
         .merge-dict(user, {
             "salary" .add(
                         .get(user, "salary"),

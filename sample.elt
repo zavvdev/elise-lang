@@ -1,17 +1,19 @@
-.typedef (Address :Dict<{
+.typedef (Address :Record<{
                        "country" :Str
                        "city"    :Str
-                       "street"  :Str? }>)
+                       "street"  :Optional<:Str> }>)
 
-.typedef (User :Dict<{
+.typedef (User :Record<{
                     "id"      :Int
                     "name"    :Str
-                    "emails"  :List<Str>?
-                    "address" :Nullable<Address> }>)
+                    "emails"  :List<:Str>
+                    "address" :Nullable<:Address> }>)
 
-.typedef (Data :List<User>)
+.typedef (Data :List<:User>)
 
 // .elt file must contain Data type definition.
 // Only type definitions are allowed here.
 // Each defined type with .typedef function will be 
 // injected into .eli source code global scope.
+
+// You can define type only in the global scope.

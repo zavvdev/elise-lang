@@ -7,6 +7,11 @@
 - [ ] New data type called TypeDef
       (:Int, :Str?, :Nullable<Float>, :List<String>, :Dict<{"a" :Int}>)
 
+      - [ ] Add bindings for each typedef AstNode and List/Dict nodes.
+            Use TypeBinder and DataBinder inside Parser for it. (move them into separate crate).
+            The same TypeBinder is used for schema file, and the same DataBinder is used for
+            language lists/dicts and well as for csv data.
+
 - [ ] Remove support for .let (all we need for now is .define, .fn and builtin functions)
 
 - [ ] Disallow multiple types in List
