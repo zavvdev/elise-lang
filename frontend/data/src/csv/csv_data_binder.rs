@@ -73,7 +73,7 @@ mod tests {
     use std::collections::HashMap;
 
     use elise_shared::shared_errors::errors_csv_data_binder::CsvDataBinderErr;
-    use elise_shared::shared_types::{Keyword, Pos};
+    use elise_shared::shared_types::{Literal, Pos};
 
     use crate::binding_path::{BindingPath, BindingPathSegment::*};
     use crate::csv::csv_data_binder::CsvDataBinder;
@@ -108,12 +108,12 @@ mod tests {
                     DataBinderDataType::Float,
                 ),
                 (
-                    Keyword::TRUE,
+                    Literal::TRUE,
                     CsvDataParserDataType::Bool,
                     DataBinderDataType::Bool,
                 ),
                 (
-                    Keyword::NULL,
+                    Literal::NULL,
                     CsvDataParserDataType::Null,
                     DataBinderDataType::Null,
                 ),
@@ -131,12 +131,12 @@ mod tests {
                     DataBinderDataType::Float,
                 ),
                 (
-                    Keyword::FALSE,
+                    Literal::FALSE,
                     CsvDataParserDataType::Bool,
                     DataBinderDataType::Bool,
                 ),
                 (
-                    Keyword::NULL,
+                    Literal::NULL,
                     CsvDataParserDataType::Null,
                     DataBinderDataType::Null,
                 ),

@@ -1,6 +1,6 @@
 pub mod config;
 
-use elise_shared::shared_types::{Keyword, Span};
+use elise_shared::shared_types::{Literal, Span};
 use std::str::from_utf8;
 
 use crate::config::CharCode;
@@ -357,8 +357,8 @@ impl<'a> Prelude<'a> {
 
         match primitive.value.as_str() {
             // Identify known keywords.
-            Keyword::TRUE | Keyword::FALSE => Ok(Some(AstNode::Bool(primitive))),
-            Keyword::NULL => Ok(Some(AstNode::Null(primitive))),
+            Literal::TRUE | Literal::FALSE => Ok(Some(AstNode::Bool(primitive))),
+            Literal::NULL => Ok(Some(AstNode::Null(primitive))),
             _ => {
                 if Self::identifier_is_valid(&primitive.value) {
                     Ok(Some(AstNode::Identifier(primitive)))

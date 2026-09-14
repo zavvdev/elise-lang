@@ -2,8 +2,8 @@
 /// Half-open interval: [start, end)
 #[derive(Debug, PartialEq, Clone)]
 pub struct Span {
-    pub start: u32,
-    pub end: u32,
+    pub start: usize,
+    pub end: usize,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -12,8 +12,8 @@ pub struct Pos {
     pub col: usize,
 }
 
-pub struct Keyword;
-impl Keyword {
+pub struct Literal;
+impl Literal {
     pub const TRUE: &str = "true";
     pub const FALSE: &str = "false";
     pub const NULL: &str = "null";

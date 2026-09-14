@@ -1,7 +1,7 @@
 use csv::{ErrorKind, ReaderBuilder};
 use elise_shared::{
     shared_errors::errors_csv_data_parser::CsvDataParserErr,
-    shared_types::{Keyword, Pos},
+    shared_types::{Literal, Pos},
 };
 
 // ==================================================================
@@ -73,12 +73,12 @@ impl<'a> CsvDataParser<'a> {
     }
 
     fn is_null(value: &str) -> bool {
-        value.trim().to_lowercase() == Keyword::NULL
+        value.trim().to_lowercase() == Literal::NULL
     }
 
     fn is_bool(value: &str) -> bool {
         let value = value.trim().to_lowercase();
-        value == Keyword::TRUE || value == Keyword::FALSE
+        value == Literal::TRUE || value == Literal::FALSE
     }
 
     fn infer_type(value: &str) -> CsvDataParserDataType {

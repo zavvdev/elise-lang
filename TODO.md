@@ -5,12 +5,7 @@
 - [ ] Remove lexemes from AstNode and carry Span only
 
 - [ ] New data type called TypeDef
-      (:Int, :Str?, :Nullable<Float>, :List<String>, :Dict<{"a" :Int}>)
-
-      - [ ] Add bindings for each typedef AstNode and List/Dict nodes.
-            Use TypeBinder and DataBinder inside Parser for it. (move them into separate crate).
-            The same TypeBinder is used for schema file, and the same DataBinder is used for
-            language lists/dicts and well as for csv data.
+      (:Int, :Optional<:Str>, :Nullable<:Float>, :List<:Str>, :Record<{"a" :Int}>)
 
 - [ ] Remove support for .let (all we need for now is .define, .fn and builtin functions)
 

@@ -39,7 +39,7 @@ use elise_ast::{AstCall, AstNode, AstPrimitive};
 use elise_shared::{
     shared_errors::errors_semanalyzer::SemanalyzerErr,
     shared_node_names::NodeName,
-    shared_types::{ArityMismatchKind, Keyword, Span},
+    shared_types::{ArityMismatchKind, Literal, Span},
 };
 
 use crate::{
@@ -212,7 +212,7 @@ impl<'a> Harmony<'a> {
 
     fn annotate_bool(primitive: &AstPrimitive) -> Result<AAstNode, SemanalyzerErr> {
         Ok(AAstNode::Bool {
-            value: primitive.value == Keyword::TRUE,
+            value: primitive.value == Literal::TRUE,
             span: primitive.span.clone(),
         })
     }
