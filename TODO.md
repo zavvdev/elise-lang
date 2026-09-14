@@ -2,7 +2,7 @@
 
 ## Things to implement
 
-- [ ] Remove lexemes from AstNode and carry Span only
+- [ ] Remove lexemes from AstNode and carry Span only. Read source code as string instead of &[u8]?
 
 - [ ] New data type called TypeDef
       (:Int, :Optional<:Str>, :Nullable<:Float>, :List<:Str>, :Record<{"a" :Int}>)
