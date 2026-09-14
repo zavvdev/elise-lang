@@ -11,7 +11,7 @@ fn test_string() {
     assert_eq!(hir.symbol_table.symbols.is_empty(), true);
     assert_eq!(
         hir.aast,
-        vec![AAstNode::String {
+        vec![AAstNode::Str {
             value: "Hello, World!".to_string(),
             span: Span { start: 0, end: 15 }
         },]

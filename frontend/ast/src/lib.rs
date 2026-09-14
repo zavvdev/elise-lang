@@ -52,7 +52,7 @@ pub enum AstNode {
     Call(AstCall),
     Int(AstPrimitive),
     Float(AstPrimitive),
-    String(AstPrimitive),
+    Str(AstPrimitive),
     Bool(AstPrimitive),
     Null(AstPrimitive),
     List(AstCompound),
@@ -70,7 +70,7 @@ impl AstNode {
             AstNode::Call(f) => &f.span,
             AstNode::Int(p)
             | AstNode::Float(p)
-            | AstNode::String(p)
+            | AstNode::Str(p)
             | AstNode::Bool(p)
             | AstNode::Null(p)
             | AstNode::Identifier(p)
@@ -85,7 +85,7 @@ impl AstNode {
             AstNode::Call(_) => NodeName::CALL,
             AstNode::Int(_) => NodeName::INT,
             AstNode::Float(_) => NodeName::FLOAT,
-            AstNode::String(_) => NodeName::STRING,
+            AstNode::Str(_) => NodeName::STR,
             AstNode::Bool(_) => NodeName::BOOL,
             AstNode::Null(_) => NodeName::NULL,
             AstNode::Dict(_) => NodeName::DICT,

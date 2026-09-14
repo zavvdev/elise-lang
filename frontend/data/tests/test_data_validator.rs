@@ -51,7 +51,7 @@ fn should_return_err_if_data_has_diff_type() {
     assert!(matches!(
         result,
         Err(DataValidatorErr::DataTypeMismatch {
-            expected: NodeName::STRING,
+            expected: NodeName::STR,
             found: NodeName::INT,
             ..
         })
@@ -76,7 +76,7 @@ fn should_return_err_if_data_is_not_nullable_but_got_null() {
     assert!(matches!(
         result,
         Err(DataValidatorErr::DataTypeMismatch {
-            expected: NodeName::STRING,
+            expected: NodeName::STR,
             found: NodeName::NULL,
             ..
         })

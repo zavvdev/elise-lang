@@ -15,7 +15,7 @@ fn must_skip(dtype: &SchemaBinderDataType) -> bool {
         dtype,
         SchemaBinderDataType::Int
             | SchemaBinderDataType::Float
-            | SchemaBinderDataType::String
+            | SchemaBinderDataType::Str
             | SchemaBinderDataType::Bool
     )
 }
@@ -29,7 +29,7 @@ fn match_data_type(
     match data_binding_data_type {
         Int => *schema_binding_data_type == SchemaBinderDataType::Int,
         Float => *schema_binding_data_type == SchemaBinderDataType::Float,
-        String => *schema_binding_data_type == SchemaBinderDataType::String,
+        Str => *schema_binding_data_type == SchemaBinderDataType::Str,
         Bool => *schema_binding_data_type == SchemaBinderDataType::Bool,
         _ => false,
     }

@@ -86,7 +86,7 @@ fn should_return_error_if_primitive_has_arguments() {
     let inputs = vec![
         (".int(.int())", SchemaFnLexeme::INT),
         (".float(.float())", SchemaFnLexeme::FLOAT),
-        (".string(.string())", SchemaFnLexeme::STRING),
+        (".string(.string())", SchemaFnLexeme::STR),
         (".bool(.bool())", SchemaFnLexeme::BOOL),
     ];
 
@@ -249,7 +249,7 @@ fn should_resolve_single_primitive() {
         ),
         (
             ".string()",
-            SchemaBinderDataType::String,
+            SchemaBinderDataType::Str,
             Span { start: 8, end: 17 },
         ),
         (
@@ -344,7 +344,7 @@ fn should_resolve_one_nullable_child() {
         ),
         (
             ".string()",
-            SchemaBinderDataType::String,
+            SchemaBinderDataType::Str,
             Span { start: 18, end: 27 },
         ),
         (
@@ -427,7 +427,7 @@ fn should_resolve_nested_nullables() {
         (
             BindingPath::with_segments(vec![Field("name".to_string())]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span { start: 63, end: 72 },
@@ -436,7 +436,7 @@ fn should_resolve_nested_nullables() {
         (
             BindingPath::with_segments(vec![Field("email".to_string())]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: true,
                 optional: false,
                 span: Span {
@@ -463,7 +463,7 @@ fn should_resolve_nested_nullables() {
                 Field("street".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -509,7 +509,7 @@ fn should_resolve_nested_nullables() {
                 Field("name".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -525,7 +525,7 @@ fn should_resolve_nested_nullables() {
                 Field("code".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: true,
                 optional: false,
                 span: Span {
@@ -584,7 +584,7 @@ fn should_resolve_one_optional_child() {
         ),
         (
             ".string()",
-            SchemaBinderDataType::String,
+            SchemaBinderDataType::Str,
             Span { start: 18, end: 27 },
         ),
         (
@@ -667,7 +667,7 @@ fn should_resolve_nested_optionals() {
         (
             BindingPath::with_segments(vec![Field("name".to_string())]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span { start: 63, end: 72 },
@@ -676,7 +676,7 @@ fn should_resolve_nested_optionals() {
         (
             BindingPath::with_segments(vec![Field("email".to_string())]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: true,
                 span: Span {
@@ -703,7 +703,7 @@ fn should_resolve_nested_optionals() {
                 Field("street".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -749,7 +749,7 @@ fn should_resolve_nested_optionals() {
                 Field("name".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -765,7 +765,7 @@ fn should_resolve_nested_optionals() {
                 Field("code".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: true,
                 span: Span {
@@ -835,7 +835,7 @@ fn should_resolve_optional_with_nullable() {
         (
             BindingPath::with_segments(vec![Field("name".to_string())]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: true,
                 optional: true,
                 span: Span { start: 84, end: 93 },
@@ -902,7 +902,7 @@ fn should_resolve_one_level_dict() {
         (
             BindingPath::with_segments(vec![Field("name".to_string())]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span { start: 64, end: 73 },
@@ -975,8 +975,8 @@ fn should_resolve_one_level_abstract_list() {
             Span { start: 14, end: 22 },
         ),
         (
-            SchemaFnLexeme::STRING,
-            SchemaBinderDataType::String,
+            SchemaFnLexeme::STR,
+            SchemaBinderDataType::Str,
             Span { start: 8, end: 24 },
             Span { start: 14, end: 23 },
         ),
@@ -1035,8 +1035,8 @@ fn should_resolve_one_level_fixed_list() {
             Span { start: 14, end: 22 },
         ),
         (
-            SchemaFnLexeme::STRING,
-            SchemaBinderDataType::String,
+            SchemaFnLexeme::STR,
+            SchemaBinderDataType::Str,
             Span { start: 8, end: 27 },
             Span { start: 14, end: 23 },
         ),
@@ -1156,7 +1156,7 @@ fn should_resolve_complex_schema_with_nullables() {
         (
             BindingPath::with_segments(vec![AbstractIndex, Field("name".to_string())]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -1196,7 +1196,7 @@ fn should_resolve_complex_schema_with_nullables() {
                 AbstractIndex,
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -1224,7 +1224,7 @@ fn should_resolve_complex_schema_with_nullables() {
                 Field("city".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -1240,7 +1240,7 @@ fn should_resolve_complex_schema_with_nullables() {
                 Field("street".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -1373,7 +1373,7 @@ fn should_resolve_complex_schema_with_nullables() {
                 Field("email".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -1406,7 +1406,7 @@ fn should_resolve_complex_schema_with_nullables() {
                 AbstractIndex,
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: true,
                 optional: false,
                 span: Span {
@@ -1439,7 +1439,7 @@ fn should_resolve_complex_schema_with_nullables() {
                 Field("city".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -1456,7 +1456,7 @@ fn should_resolve_complex_schema_with_nullables() {
                 Field("street".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: true,
                 optional: false,
                 span: Span {
@@ -1553,7 +1553,7 @@ fn should_resolve_complex_schema_with_optionals() {
                 AbstractIndex,
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -1581,7 +1581,7 @@ fn should_resolve_complex_schema_with_optionals() {
                 Field("street".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -1698,7 +1698,7 @@ fn should_resolve_complex_schema_with_optionals() {
                 Field("email".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -1731,7 +1731,7 @@ fn should_resolve_complex_schema_with_optionals() {
                 AbstractIndex,
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -1764,7 +1764,7 @@ fn should_resolve_complex_schema_with_optionals() {
                 Field("city".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: false,
                 span: Span {
@@ -1781,7 +1781,7 @@ fn should_resolve_complex_schema_with_optionals() {
                 Field("street".to_string()),
             ]),
             SchemaBinderTypeDescriptor {
-                dtype: SchemaBinderDataType::String,
+                dtype: SchemaBinderDataType::Str,
                 nullable: false,
                 optional: true,
                 span: Span {

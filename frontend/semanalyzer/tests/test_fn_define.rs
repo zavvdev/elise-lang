@@ -83,7 +83,7 @@ fn test_defines_string() {
         *hir.symbol_table.symbols.get(&SymbolId(0)).unwrap(),
         SymbolDescriptor {
             name: "NAME".to_string(),
-            ty: LangType::Primitive(LangPrimitiveType::String),
+            ty: LangType::Primitive(LangPrimitiveType::Str),
             is_captured: false,
         }
     );
@@ -92,7 +92,7 @@ fn test_defines_string() {
         hir.aast,
         vec![AAstNode::CallDefine {
             symbol_id: SymbolId(0),
-            value: Box::new(AAstNode::String {
+            value: Box::new(AAstNode::Str {
                 value: "Carl".to_string(),
                 span: Span { start: 13, end: 19 }
             }),

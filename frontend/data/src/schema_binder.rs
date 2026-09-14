@@ -63,7 +63,7 @@ pub enum SchemaBinderDataType {
     //    underlying type descriptor.
     Int,
     Float,
-    String,
+    Str,
     Bool,
     ListAbstract,
     ListFixed(usize),
@@ -76,7 +76,7 @@ impl SchemaBinderDataType {
         match self {
             SchemaBinderDataType::Int => NodeName::INT,
             SchemaBinderDataType::Float => NodeName::FLOAT,
-            SchemaBinderDataType::String => NodeName::STRING,
+            SchemaBinderDataType::Str => NodeName::STR,
             SchemaBinderDataType::Bool => NodeName::BOOL,
             SchemaBinderDataType::ListAbstract => NodeName::LIST,
             SchemaBinderDataType::ListFixed(_) => NodeName::LIST,
@@ -114,7 +114,7 @@ impl SchemaFnLexeme {
     // Type resolution functions.
     pub const INT: &'static str = "int";
     pub const FLOAT: &'static str = "float";
-    pub const STRING: &'static str = "string";
+    pub const STR: &'static str = "string";
     pub const BOOL: &'static str = "bool";
     pub const DICT: &'static str = "dict";
     pub const LIST: &'static str = "list";
@@ -348,10 +348,10 @@ impl<'a> SchemaBinder<'a> {
                     SchemaFnLexeme::FLOAT,
                     bindings,
                 ),
-                SchemaFnLexeme::STRING => self.resolve_primitive(
+                SchemaFnLexeme::STR => self.resolve_primitive(
                     call,
-                    SchemaBinderDataType::String,
-                    SchemaFnLexeme::STRING,
+                    SchemaBinderDataType::Str,
+                    SchemaFnLexeme::STR,
                     bindings,
                 ),
                 SchemaFnLexeme::BOOL => self.resolve_primitive(
@@ -593,7 +593,7 @@ impl<'a> SchemaBinder<'a> {
                 // TODO: Same here..
                 // Probably needs to be enforced during some premature
                 // semantic analysis.
-                AstNode::String(prim) => {
+                AstNode::Str(prim) => {
                     // Push new segment into the current_path since we enter a new
                     // scope with dict key.
                     self.current_path

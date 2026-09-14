@@ -14,7 +14,7 @@ use elise_shared::{
 pub enum CsvDataParserDataType {
     Int,
     Float,
-    String,
+    Str,
     Bool,
     Null,
 }
@@ -87,7 +87,7 @@ impl<'a> CsvDataParser<'a> {
             v if Self::is_bool(v) => CsvDataParserDataType::Bool,
             v if Self::is_int(v) => CsvDataParserDataType::Int,
             v if Self::is_float(v) => CsvDataParserDataType::Float,
-            _ => CsvDataParserDataType::String,
+            _ => CsvDataParserDataType::Str,
         }
     }
 
@@ -272,25 +272,25 @@ mod tests {
                     CsvDataCol {
                         name: test_utils::csv::build_header(0),
                         value: "john".to_string(),
-                        dtype: CsvDataParserDataType::String,
+                        dtype: CsvDataParserDataType::Str,
                         pos: Pos { row: 0, col: 0 },
                     },
                     CsvDataCol {
                         name: test_utils::csv::build_header(1),
                         value: "".to_string(),
-                        dtype: CsvDataParserDataType::String,
+                        dtype: CsvDataParserDataType::Str,
                         pos: Pos { row: 0, col: 1 },
                     },
                     CsvDataCol {
                         name: test_utils::csv::build_header(2),
                         value: "".to_string(),
-                        dtype: CsvDataParserDataType::String,
+                        dtype: CsvDataParserDataType::Str,
                         pos: Pos { row: 0, col: 2 },
                     },
                     CsvDataCol {
                         name: test_utils::csv::build_header(3),
                         value: "".to_string(),
-                        dtype: CsvDataParserDataType::String,
+                        dtype: CsvDataParserDataType::Str,
                         pos: Pos { row: 0, col: 3 },
                     }
                 ],
@@ -350,9 +350,9 @@ mod tests {
         let types = vec![
             CsvDataParserDataType::Float,
             CsvDataParserDataType::Int,
-            CsvDataParserDataType::String,
+            CsvDataParserDataType::Str,
             CsvDataParserDataType::Null,
-            CsvDataParserDataType::String,
+            CsvDataParserDataType::Str,
         ];
 
         let csv = test_utils::csv::build(&vec![&row]);

@@ -105,7 +105,7 @@ impl<'a> Harmony<'a> {
             AstNode::Identifier(primitive) => self.annotate_identifier_reference(primitive),
             AstNode::Int(primitive) => Self::annotate_int(primitive),
             AstNode::Float(primitive) => Self::annotate_float(primitive),
-            AstNode::String(primitive) => Self::annotate_string(primitive),
+            AstNode::Str(primitive) => Self::annotate_string(primitive),
             AstNode::Bool(primitive) => Self::annotate_bool(primitive),
             AstNode::Null(primitive) => Self::annotate_null(primitive),
             AstNode::Call(call) => self.annotate_call(call, symbol_table),
@@ -196,7 +196,7 @@ impl<'a> Harmony<'a> {
     // ==================================================================
 
     fn annotate_string(primitive: &AstPrimitive) -> Result<AAstNode, SemanalyzerErr> {
-        Ok(AAstNode::String {
+        Ok(AAstNode::Str {
             value: primitive.value.clone(),
             span: primitive.span.clone(),
         })
@@ -294,7 +294,7 @@ impl<'a> Harmony<'a> {
         let (ident_type, aast_node) = match second_arg {
             AstNode::Int(prim) => (LangPrimitiveType::Int, Self::annotate_int(prim)?),
             AstNode::Float(prim) => (LangPrimitiveType::Float, Self::annotate_float(prim)?),
-            AstNode::String(prim) => (LangPrimitiveType::String, Self::annotate_string(prim)?),
+            AstNode::Str(prim) => (LangPrimitiveType::Str, Self::annotate_string(prim)?),
             AstNode::Bool(prim) => (LangPrimitiveType::Bool, Self::annotate_bool(prim)?),
             AstNode::Null(prim) => (LangPrimitiveType::Null, Self::annotate_null(prim)?),
             _ => {

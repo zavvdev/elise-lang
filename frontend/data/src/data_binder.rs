@@ -22,7 +22,7 @@ use crate::binding_path::BindingPath;
 pub enum DataBinderDataType {
     Int,
     Float,
-    String,
+    Str,
     Bool,
     Null,
     // Since we support only CSV for now, we skip these,
@@ -39,7 +39,7 @@ impl DataBinderDataType {
         match self {
             DataBinderDataType::Int => NodeName::INT,
             DataBinderDataType::Float => NodeName::FLOAT,
-            DataBinderDataType::String => NodeName::STRING,
+            DataBinderDataType::Str => NodeName::STR,
             DataBinderDataType::Bool => NodeName::BOOL,
             DataBinderDataType::Null => NodeName::NULL,
         }

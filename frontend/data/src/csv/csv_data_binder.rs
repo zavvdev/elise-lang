@@ -20,7 +20,7 @@ impl<'a> CsvDataBinder<'a> {
         match dtype {
             CsvDataParserDataType::Int => DataBinderDataType::Int,
             CsvDataParserDataType::Float => DataBinderDataType::Float,
-            CsvDataParserDataType::String => DataBinderDataType::String,
+            CsvDataParserDataType::Str => DataBinderDataType::Str,
             CsvDataParserDataType::Bool => DataBinderDataType::Bool,
             CsvDataParserDataType::Null => DataBinderDataType::Null,
         }
@@ -96,11 +96,7 @@ mod tests {
 
         let rows = vec![
             vec![
-                (
-                    "John",
-                    CsvDataParserDataType::String,
-                    DataBinderDataType::String,
-                ),
+                ("John", CsvDataParserDataType::Str, DataBinderDataType::Str),
                 ("23", CsvDataParserDataType::Int, DataBinderDataType::Int),
                 (
                     "2.3",
@@ -119,11 +115,7 @@ mod tests {
                 ),
             ],
             vec![
-                (
-                    "Jane",
-                    CsvDataParserDataType::String,
-                    DataBinderDataType::String,
-                ),
+                ("Jane", CsvDataParserDataType::Str, DataBinderDataType::Str),
                 ("24", CsvDataParserDataType::Int, DataBinderDataType::Int),
                 (
                     "4.3",

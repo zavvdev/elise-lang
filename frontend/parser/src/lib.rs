@@ -298,7 +298,7 @@ impl<'a> Prelude<'a> {
         // Preserve UTF-8 encoding for string.
         let value = std::str::from_utf8(&slice).map_err(|_| self.fail(ParserErr::InvalStr))?;
 
-        Ok(Some(AstNode::String(AstPrimitive {
+        Ok(Some(AstNode::Str(AstPrimitive {
             value: value.to_owned(),
             span: Span { start, end },
         })))
@@ -476,7 +476,7 @@ impl<'a> Prelude<'a> {
             if let Some(node) = self.get_node_from_char(&c)? {
                 if key.is_none() {
                     match node {
-                        AstNode::String(primitive) => {
+                        AstNode::Str(primitive) => {
                             key_start = primitive.span.start;
                             key_end = primitive.span.end;
                             key = Some(primitive.value);
@@ -924,7 +924,7 @@ mod tests {
             let ast = Prelude::new(string.as_bytes()).parse();
             assert_eq!(
                 ast,
-                Ok(vec![AstNode::String(AstPrimitive {
+                Ok(vec![AstNode::Str(AstPrimitive {
                     value: string
                         .split("\"")
                         .into_iter()
@@ -953,7 +953,7 @@ mod tests {
             let ast = Prelude::new(string.as_bytes()).parse();
             assert_eq!(
                 ast,
-                Ok(vec![AstNode::String(AstPrimitive {
+                Ok(vec![AstNode::Str(AstPrimitive {
                     value: expected.to_string(),
                     span: Span { start: 0, end },
                 })])
@@ -1122,7 +1122,7 @@ mod tests {
                         value: "1".to_string(),
                         span: Span { start: 1, end: 2 },
                     })),
-                    Box::new(AstNode::String(AstPrimitive {
+                    Box::new(AstNode::Str(AstPrimitive {
                         value: "hello".to_string(),
                         span: Span { start: 4, end: 11 },
                     })),
@@ -1187,7 +1187,7 @@ mod tests {
 
         let pair_2 = Box::new(AstNode::DictPair(AstKeyValuePair {
             key: "b".to_string(),
-            value: Box::new(AstNode::String(AstPrimitive {
+            value: Box::new(AstNode::Str(AstPrimitive {
                 value: "2".to_string(),
                 span: Span { start: 13, end: 16 },
             })),

@@ -40,7 +40,7 @@ pub enum AAstNode {
         value: String,
         span: Span,
     },
-    String {
+    Str {
         value: String,
         span: Span,
     },
@@ -63,7 +63,7 @@ impl AAstNode {
             | AAstNode::SymbolRef { span, .. }
             | AAstNode::Int { span, .. }
             | AAstNode::Float { span, .. }
-            | AAstNode::String { span, .. }
+            | AAstNode::Str { span, .. }
             | AAstNode::Bool { span, .. }
             | AAstNode::Null { span, .. } => span,
         }
@@ -76,7 +76,7 @@ impl AAstNode {
             AAstNode::SymbolRef { .. } => NodeName::SYMBOL,
             AAstNode::Int { .. } => NodeName::INT,
             AAstNode::Float { .. } => NodeName::FLOAT,
-            AAstNode::String { .. } => NodeName::STRING,
+            AAstNode::Str { .. } => NodeName::STR,
             AAstNode::Bool { .. } => NodeName::BOOL,
             AAstNode::Null { .. } => NodeName::NULL,
         }

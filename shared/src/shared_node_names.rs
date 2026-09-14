@@ -3,7 +3,7 @@ pub struct NodeName;
 impl NodeName {
     pub const INT: &'static str = "Int";
     pub const FLOAT: &'static str = "Float";
-    pub const STRING: &'static str = "String";
+    pub const STR: &'static str = "String";
     pub const BOOL: &'static str = "Bool";
     pub const NULL: &'static str = "Null";
     pub const LIST: &'static str = "List";
@@ -16,5 +16,4 @@ impl NodeName {
     pub const PRIMITIVE: &'static str = "Primitive";
     pub const CALL_DEFINE: &'static str = "CallDefine";
     pub const CALL_LET: &'static str = "CallLet";
-    // pub const UNION: &'static str = "Union";
 }
