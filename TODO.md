@@ -2,7 +2,10 @@
 
 ## Things to implement
 
-- [ ] Support only these for now: Int, List, Dict, TInt, TList, TRecord, .define, .fn, .add, .pipe
+- [ ] Support only these for now:
+      String, Int, List, Dict, Identifier, Slot, Call
+      TInt, TList, TRecord,
+      .define, .add, .get
 
 - [ ] New data type called TypeDef
       (:Int, :Optional<:Str>, :Nullable<:Float>, :List<:Str>, :Record<{"a" :Int}>)
