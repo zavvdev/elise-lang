@@ -48,6 +48,24 @@ pub struct AstKeyValuePair {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct AstTypeDesc {
+    pub span: Span,
+    pub nullable: bool,
+    pub optional: bool,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct AstTypePrim {
+    pub desc: AstTypeDesc,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct AstTypeComp {
+    pub desc: AstTypeDesc,
+    pub children: Vec<Box<AstNode>>,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum AstNode {
     Call(AstCall),
     Int(AstPrimitive),
@@ -62,6 +80,12 @@ pub enum AstNode {
     DictPair(AstKeyValuePair),
     Identifier(AstPrimitive),
     Slot(AstPrimitive),
+    TInt(AstTypePrim),
+    TFloat(AstTypePrim),
+    TStr(AstTypePrim),
+    TBool(AstTypePrim),
+    TList(AstTypeComp),
+    TRecord(AstTypeComp),
 }
 
 impl AstNode {
@@ -77,6 +101,10 @@ impl AstNode {
             | AstNode::Slot(p) => &p.span,
             AstNode::List(c) | AstNode::Dict(c) => &c.span,
             AstNode::DictPair(p) => &p.span,
+            AstNode::TInt(tp) | AstNode::TFloat(tp) | AstNode::TStr(tp) | AstNode::TBool(tp) => {
+                &tp.desc.span
+            }
+            AstNode::TList(tc) | AstNode::TRecord(tc) => &tc.desc.span,
         }
     }
 
@@ -93,6 +121,12 @@ impl AstNode {
             AstNode::DictPair(_) => NodeName::DICT_PAIR,
             AstNode::Identifier(_) => NodeName::IDENTIFIER,
             AstNode::Slot(_) => NodeName::SLOT,
+            AstNode::TInt(_) => NodeName::TYPE_INT,
+            AstNode::TFloat(_) => NodeName::TYPE_FLOAT,
+            AstNode::TStr(_) => NodeName::TYPE_STR,
+            AstNode::TBool(_) => NodeName::TYPE_BOOL,
+            AstNode::TList(_) => NodeName::TYPE_LIST,
+            AstNode::TRecord(_) => NodeName::TYPE_RECORD,
         }
     }
 }

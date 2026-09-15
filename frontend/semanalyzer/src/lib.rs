@@ -39,12 +39,12 @@ use elise_ast::{AstCall, AstNode, AstPrimitive};
 use elise_shared::{
     shared_errors::errors_semanalyzer::SemanalyzerErr,
     shared_node_names::NodeName,
-    shared_types::{ArityMismatchKind, Literal, Span},
+    shared_types::{ArityMismatchKind, Literal},
 };
 
 use crate::{
     aast::AAstNode,
-    builtins::{FnDefine, FnLet},
+    builtins::FnDefine,
     data_types::{LangPrimitiveType, LangType},
     scope_stack::ScopeStack,
     symbol_table::SymbolTable,
@@ -250,7 +250,6 @@ impl<'a> Harmony<'a> {
     ) -> Result<AAstNode, SemanalyzerErr> {
         match call.lexeme.as_str() {
             FnDefine::LEXEME => self.annotate_define_call(call, symbol_table),
-            FnLet::LEXEME => self.annotate_let_call(call, symbol_table),
             _ => Err(SemanalyzerErr::UnknownFunction {
                 span: call.span.clone(),
             }),
@@ -337,91 +336,6 @@ impl<'a> Harmony<'a> {
 
     // ==================================================================
     // ANNOTATE DEFINE CALL END
-    // ==================================================================
-
-    // ==================================================================
-    // ANNOTATE LET CALL START
-    //
-    // .let ([(Identifier Expression)+] Expression+)
-    //
-    // 1. Min 2 arguments;
-    // 2. First argument is always a list;
-    // 3. Odd items in the list are always identifiers;
-    // 4. Even items in the list are always expressions
-    //    that must be evaluated first;
-    // 5. The result of evaluation is always a result of
-    //    the last evaluated expression;
-    // 6. Creates its own scope stack when enters;
-    // 7. Removes its own scope stack when evaluation finishes;
-    // 8. Does not allow symbol re-bindings;
-    // 9. Can access outer scope;
-    // ==================================================================
-
-    // TODO: We probably need to do bindings here as well.
-    fn check_let_call_bindings(first_arg: &AstNode) -> Result<(), SemanalyzerErr> {
-        let AstNode::List(compound) = first_arg else {
-            return Err(SemanalyzerErr::ArgKindMismatch {
-                fn_name: FnLet::LEXEME,
-                position: 0,
-                expected: NodeName::LIST,
-                found: first_arg.as_str(),
-                span: first_arg.span().clone(),
-            });
-        };
-
-        if compound.children.len() % 2 != 0 {
-            return Err(SemanalyzerErr::LetInvalidBindingList {
-                span: first_arg.span().clone(),
-            });
-        }
-
-        for (index, child) in compound.children.iter().enumerate().step_by(2) {
-            let ident = &**child;
-            let expr = &**compound.children.get(index + 1).unwrap();
-
-            let AstNode::Identifier(ident_prim) = ident else {
-                return Err(SemanalyzerErr::LetInvalidBindingList {
-                    span: ident.span().clone(),
-                });
-            };
-
-            if let AstNode::Identifier(expr_prim) = expr
-                && expr_prim.value == ident_prim.value
-            {
-                return Err(SemanalyzerErr::IdentSelfBinding {
-                    span: expr.span().clone(),
-                });
-            }
-        }
-
-        Ok(())
-    }
-
-    fn annotate_let_call(
-        &mut self,
-        call: &AstCall,
-        _symbol_table: &mut SymbolTable,
-    ) -> Result<AAstNode, SemanalyzerErr> {
-        if call.children.len() < FnLet::MIN_ARGS_LEN {
-            return Err(SemanalyzerErr::ArityMismatch {
-                fn_name: FnLet::LEXEME,
-                found: call.children.len(),
-                span: call.span.clone(),
-                kind: ArityMismatchKind::MoreEq(FnLet::MIN_ARGS_LEN),
-            });
-        }
-
-        Self::check_let_call_bindings(call.children.first().unwrap())?;
-
-        // TODO
-
-        Err(SemanalyzerErr::UnknownFunction {
-            span: Span { start: 0, end: 0 },
-        })
-    }
-
-    // ==================================================================
-    // ANNOTATE LET CALL END
     // ==================================================================
 }
 

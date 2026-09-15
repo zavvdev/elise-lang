@@ -15,5 +15,10 @@ impl NodeName {
     pub const SYMBOL: &'static str = "Symbol";
     pub const PRIMITIVE: &'static str = "Primitive";
     pub const CALL_DEFINE: &'static str = "CallDefine";
-    pub const CALL_LET: &'static str = "CallLet";
+    pub const TYPE_INT: &'static str = "TypeInt";
+    pub const TYPE_FLOAT: &'static str = "TypeFloat";
+    pub const TYPE_STR: &'static str = "TypeStr";
+    pub const TYPE_BOOL: &'static str = "TypeBool";
+    pub const TYPE_LIST: &'static str = "TypeList";
+    pub const TYPE_RECORD: &'static str = "TypeRecord";
 }

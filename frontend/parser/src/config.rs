@@ -11,4 +11,7 @@ impl CharCode {
     pub const MINUS: u8 = b'-';
     pub const COMMA: u8 = b',';
     pub const DOUBLE_QT: u8 = b'"';
+    pub const COLON: u8 = b':';
+    pub const LESS_EQ: u8 = b'<';
+    pub const MORE_EQ: u8 = b'>';
 }

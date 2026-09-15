@@ -22,11 +22,6 @@ pub enum AAstNode {
         value: Box<AAstNode>,
         span: Span,
     },
-    CallLet {
-        bindings: Vec<(SymbolId, Box<AAstNode>)>,
-        body: Vec<Box<AAstNode>>,
-        span: Span,
-    },
     SymbolRef {
         symbol_id: SymbolId,
         span: Span,
@@ -59,7 +54,6 @@ impl AAstNode {
     pub fn span(&self) -> &Span {
         match self {
             AAstNode::CallDefine { span, .. }
-            | AAstNode::CallLet { span, .. }
             | AAstNode::SymbolRef { span, .. }
             | AAstNode::Int { span, .. }
             | AAstNode::Float { span, .. }
@@ -72,7 +66,6 @@ impl AAstNode {
     pub fn as_str(&self) -> &'static str {
         match self {
             AAstNode::CallDefine { .. } => NodeName::CALL_DEFINE,
-            AAstNode::CallLet { .. } => NodeName::CALL_LET,
             AAstNode::SymbolRef { .. } => NodeName::SYMBOL,
             AAstNode::Int { .. } => NodeName::INT,
             AAstNode::Float { .. } => NodeName::FLOAT,

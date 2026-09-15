@@ -37,7 +37,4 @@ pub enum SemanalyzerErr {
     IdentSelfBinding {
         span: Span,
     },
-    LetInvalidBindingList {
-        span: Span,
-    },
 }
