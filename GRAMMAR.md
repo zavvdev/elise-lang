@@ -17,7 +17,7 @@ _/* ... */_ - semantic description (not a part of EBNF)
 
 <expression> ::= <call> | <primitive> | <compound> | <identifier> | <slot>
 
-<call> ::= '.' <identifier>? '(' <expression>* ')'
+<call> ::= '.' <identifier> '(' <expression>* ')'
 
 <primitive> ::= <number> | <string> | <boolean> | "null"
 <compound> ::= <list> | <dictionary>
