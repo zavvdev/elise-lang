@@ -9,7 +9,7 @@ pub struct AstNodeExprCall {
 
 #[derive(Debug, PartialEq)]
 pub struct AstNodeExprPrim {
-    pub value: String,
+    pub lexeme: String,
     pub span: Span,
 }
 
