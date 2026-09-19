@@ -15,3 +15,17 @@ impl CharCode {
     pub const LESS_EQ: u8 = b'<';
     pub const MORE_EQ: u8 = b'>';
 }
+
+/// Deterministic Finite Automata states for parsing numbers.
+#[derive(Debug)]
+pub enum DfaNumState {
+    Start,
+    Sign,
+    Zero,
+    Int,
+    Frac,
+    Dot,
+    Scient,
+    ScientMinus,
+    Expon,
+}

@@ -12,6 +12,7 @@ pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
         UnexpEoDict(err_info) => ("Unexpected end of dictionary", err_info),
         UnexpEoFn(err_info) => ("Unexpected end of function", err_info),
         UnexpDictKey(err_info) => ("Unexpected dictionary key", err_info),
+        UnexpListItem(err_info) => ("Unexpected list item", err_info),
         InvalNum(err_info) => ("Invalid number", err_info),
         InvalStr(err_info) => ("Invalid string", err_info),
         UntermStr(err_info) => ("Unterminated string", err_info),

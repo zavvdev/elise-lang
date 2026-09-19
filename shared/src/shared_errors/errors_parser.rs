@@ -11,6 +11,7 @@ pub enum ParserErr {
     UnexpEoDict(ParserErrInfo),
     UnexpEoFn(ParserErrInfo),
     UnexpDictKey(ParserErrInfo),
+    UnexpListItem(ParserErrInfo),
     InvalNum(ParserErrInfo),
     InvalStr(ParserErrInfo),
     UntermStr(ParserErrInfo),

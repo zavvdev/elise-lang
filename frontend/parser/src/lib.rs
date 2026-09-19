@@ -1,11 +1,14 @@
-pub mod config;
+pub mod parser_config;
 
+use elise_ast::{
+    AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprDict, AstNodeExprDictKey, AstNodeExprList,
+    AstNodeExprPrim,
+};
 use elise_shared::shared_types::{Literal, Span};
 use std::str::from_utf8;
 
-use crate::config::CharCode;
+use crate::parser_config::{CharCode, DfaNumState};
 
-use elise_ast::{AstCall, AstCompound, AstKeyValuePair, AstNode, AstPrimitive};
 use elise_shared::shared_errors::errors_parser::{ParserErr, ParserErrInfo};
 
 // ==================================================================
@@ -13,20 +16,6 @@ use elise_shared::shared_errors::errors_parser::{ParserErr, ParserErrInfo};
 //  PARSER START
 //
 // ==================================================================
-
-/// Deterministic Finite Automata states for parsing numbers.
-#[derive(Debug)]
-enum DfaNumState {
-    Start,
-    Sign,
-    Zero,
-    Int,
-    Frac,
-    Dot,
-    Scient,
-    ScientMinus,
-    Expon,
-}
 
 pub struct Prelude<'a> {
     // We expect to have a single char per byte (ASCII) for the
@@ -202,8 +191,8 @@ impl<'a> Prelude<'a> {
             return Err(self.fail(ParserErr::InvalNum));
         }
 
-        let primitive = AstPrimitive {
-            value: value.unwrap().to_string(),
+        let primitive = AstNodeExprPrim {
+            lexeme: value.unwrap().to_string(),
             span: Span {
                 start: tok_start,
                 end: tok_end,
@@ -211,8 +200,12 @@ impl<'a> Prelude<'a> {
         };
 
         match state {
-            DfaNumState::Zero | DfaNumState::Int => Ok(Some(AstNode::Int(primitive))),
-            DfaNumState::Frac | DfaNumState::Scient => Ok(Some(AstNode::Float(primitive))),
+            DfaNumState::Zero | DfaNumState::Int => {
+                Ok(Some(AstNode::Expr(AstNodeExpr::Int(primitive))))
+            }
+            DfaNumState::Frac | DfaNumState::Scient => {
+                Ok(Some(AstNode::Expr(AstNodeExpr::Float(primitive))))
+            }
             _ => Err(self.fail(ParserErr::InvalNum)),
         }
     }
@@ -298,10 +291,10 @@ impl<'a> Prelude<'a> {
         // Preserve UTF-8 encoding for string.
         let value = std::str::from_utf8(&slice).map_err(|_| self.fail(ParserErr::InvalStr))?;
 
-        Ok(Some(AstNode::Str(AstPrimitive {
-            value: value.to_owned(),
+        Ok(Some(AstNode::Expr(AstNodeExpr::Str(AstNodeExprPrim {
+            lexeme: value.to_owned(),
             span: Span { start, end },
-        })))
+        }))))
     }
 
     // ==================================================================
@@ -343,25 +336,25 @@ impl<'a> Prelude<'a> {
             }
         }
 
-        let value = from_utf8(&self.source_code[start..self.tok_pos])
+        let lexeme = from_utf8(&self.source_code[start..self.tok_pos])
             .unwrap()
             .to_string();
 
-        let primitive = AstPrimitive {
-            value,
+        let primitive = AstNodeExprPrim {
+            lexeme,
             span: Span {
                 start,
                 end: self.tok_pos,
             },
         };
 
-        match primitive.value.as_str() {
+        match primitive.lexeme.as_str() {
             // Identify known keywords.
-            Literal::TRUE | Literal::FALSE => Ok(Some(AstNode::Bool(primitive))),
-            Literal::NULL => Ok(Some(AstNode::Null(primitive))),
+            Literal::TRUE | Literal::FALSE => Ok(Some(AstNode::Expr(AstNodeExpr::Bool(primitive)))),
+            Literal::NULL => Ok(Some(AstNode::Expr(AstNodeExpr::Null(primitive)))),
             _ => {
-                if Self::identifier_is_valid(&primitive.value) {
-                    Ok(Some(AstNode::Identifier(primitive)))
+                if Self::identifier_is_valid(&primitive.lexeme) {
+                    Ok(Some(AstNode::Expr(AstNodeExpr::Ident(primitive))))
                 } else {
                     Err(self.fail(ParserErr::UnexpTok))
                 }
@@ -399,29 +392,32 @@ impl<'a> Prelude<'a> {
     fn list_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let start = self.tok_pos;
         self.advance();
-        let mut children: Vec<Box<AstNode>> = vec![];
+        let mut items: Vec<Box<AstNodeExpr>> = vec![];
 
         while let Some(c) = self.peek() {
-            if let Ok(eo_list) = self.list_check_end(&c) {
-                if eo_list {
-                    self.advance();
-                    break;
-                }
-                if let Some(node) = self.get_node_from_char(&c)? {
-                    children.push(Box::new(node));
-                }
-            } else {
+            let Ok(is_end) = self.list_check_end(&c) else {
                 return Err(self.fail(ParserErr::UnexpEoList));
+            };
+            if is_end {
+                self.advance();
+                break;
+            }
+            if let Some(node) = self.get_node_from_char(&c)? {
+                match node {
+                    // List items must contain only expression nodes.
+                    AstNode::Expr(expr) => items.push(Box::new(expr)),
+                    _ => return Err(self.fail(ParserErr::UnexpListItem)),
+                }
             }
         }
 
-        Ok(Some(AstNode::List(AstCompound {
+        Ok(Some(AstNode::Expr(AstNodeExpr::List(AstNodeExprList {
             span: Span {
                 start,
                 end: self.tok_pos,
             },
-            children,
-        })))
+            items,
+        }))))
     }
 
     // ==================================================================
@@ -455,64 +451,59 @@ impl<'a> Prelude<'a> {
         let start = self.tok_pos;
         self.advance();
 
-        let mut children: Vec<Box<AstNode>> = vec![];
-        let mut key: Option<String> = None;
-        let mut key_start = 0;
-        let mut key_end = 0;
+        let mut entries: Vec<(AstNodeExprDictKey, Box<AstNodeExpr>)> = vec![];
+        let mut key: Option<AstNodeExprDictKey> = None;
 
         while let Some(c) = self.peek() {
-            if let Ok(eo_dict) = self.dict_check_end(&c) {
-                if eo_dict {
-                    if key.is_some() {
-                        return Err(self.fail(ParserErr::InvalDictPair));
-                    }
-                    self.advance();
-                    break;
+            let is_end = self
+                .dict_check_end(&c)
+                .map_err(|_| self.fail(ParserErr::UnexpEoDict))?;
+
+            if is_end {
+                // If we ended up in the end of the dict but we still
+                // have a dangling key to match, return error since
+                // dict must have an even number of children expressions.
+                if key.is_some() {
+                    return Err(self.fail(ParserErr::InvalDictPair));
                 }
-            } else {
-                return Err(self.fail(ParserErr::UnexpEoDict));
+                self.advance();
+                break;
             }
 
-            if let Some(node) = self.get_node_from_char(&c)? {
-                if key.is_none() {
-                    match node {
-                        AstNode::Str(primitive) => {
-                            key_start = primitive.span.start;
-                            key_end = primitive.span.end;
-                            key = Some(primitive.value);
-                        }
-                        _ => {
-                            return Err(self.fail(ParserErr::UnexpDictKey));
-                        }
-                    }
-                } else {
-                    let pair_end = node.span().end;
-                    children.push(Box::new(AstNode::DictPair(AstKeyValuePair {
-                        key: key.clone().unwrap(),
-                        key_span: Span {
-                            start: key_start,
-                            end: key_end,
-                        },
-                        value: Box::new(node),
+            let Some(node) = self.get_node_from_char(&c)? else {
+                continue;
+            };
+
+            // Dictionaries must contain only expression nodes.
+            let AstNode::Expr(expr) = node else {
+                return Err(self.fail(ParserErr::UnexpDictKey));
+            };
+
+            match key.take() {
+                None => {
+                    // Key must always be a string expression.
+                    let AstNodeExpr::Str(prim) = expr else {
+                        return Err(self.fail(ParserErr::UnexpDictKey));
+                    };
+                    key = Some(AstNodeExprDictKey {
+                        lexeme: prim.lexeme,
                         span: Span {
-                            start: key_start,
-                            end: pair_end,
+                            start: prim.span.start,
+                            end: prim.span.end,
                         },
-                    })));
-                    key = None;
-                    key_start = 0;
-                    key_end = 0;
+                    });
                 }
+                Some(k) => entries.push((k, Box::new(expr))),
             }
         }
 
-        Ok(Some(AstNode::Dict(AstCompound {
+        Ok(Some(AstNode::Expr(AstNodeExpr::Dict(AstNodeExprDict {
             span: Span {
                 start,
                 end: self.tok_pos,
             },
-            children,
-        })))
+            entries,
+        }))))
     }
 
     // ==================================================================
@@ -566,7 +557,7 @@ impl<'a> Prelude<'a> {
         // Go to the next char after the function name.
         self.advance();
 
-        let mut children = vec![];
+        let mut body: Vec<Box<AstNode>> = vec![];
 
         // Consume function arguments.
         while let Some(c) = self.peek() {
@@ -580,20 +571,20 @@ impl<'a> Prelude<'a> {
             }
 
             if let Some(node) = self.get_node_from_char(&c)? {
-                children.push(Box::new(node));
+                body.push(Box::new(node));
             }
         }
 
         let call_end = self.tok_pos;
 
-        Ok(Some(AstNode::Call(AstCall {
+        Ok(Some(AstNode::Expr(AstNodeExpr::Call(AstNodeExprCall {
             lexeme: call_name,
             span: Span {
                 start: call_start,
                 end: call_end,
             },
-            children,
-        })))
+            body,
+        }))))
     }
 
     // ==================================================================
@@ -631,18 +622,18 @@ impl<'a> Prelude<'a> {
             }
         }
 
-        let value = from_utf8(&self.source_code[slot_name_start..self.tok_pos])
+        let lexeme = from_utf8(&self.source_code[slot_name_start..self.tok_pos])
             .unwrap()
             .to_string();
 
-        if Self::identifier_is_valid(&value) {
-            Ok(Some(AstNode::Slot(AstPrimitive {
-                value,
+        if Self::identifier_is_valid(&lexeme) {
+            Ok(Some(AstNode::Expr(AstNodeExpr::Slot(AstNodeExprPrim {
+                lexeme,
                 span: Span {
                     start,
                     end: self.tok_pos,
                 },
-            })))
+            }))))
         } else {
             Err(self.fail(ParserErr::UnexpTok))
         }
