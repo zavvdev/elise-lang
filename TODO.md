@@ -2,6 +2,10 @@
 
 ## Things to implement
 
+- [ ] Parse typedef
+
+- [ ] Tests for Prelude
+
 - [ ] Support only these for now:
       String, Int, List, Dict, Identifier, Slot, Call
       TInt, TList, TRecord,

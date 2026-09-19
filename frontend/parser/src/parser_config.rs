@@ -12,8 +12,8 @@ impl CharCode {
     pub const COMMA: u8 = b',';
     pub const DOUBLE_QT: u8 = b'"';
     pub const COLON: u8 = b':';
-    pub const LESS_EQ: u8 = b'<';
-    pub const MORE_EQ: u8 = b'>';
+    pub const LESS: u8 = b'<';
+    pub const MORE: u8 = b'>';
 }
 
 /// Deterministic Finite Automata states for parsing numbers.

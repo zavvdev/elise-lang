@@ -2,7 +2,7 @@ pub mod parser_config;
 
 use elise_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprDict, AstNodeExprDictKey, AstNodeExprList,
-    AstNodeExprPrim,
+    AstNodeExprPrim, AstNodeTypedef, AstNodeTypedefGeneric,
 };
 use elise_shared::shared_types::{Literal, Span};
 use std::str::from_utf8;
@@ -78,6 +78,8 @@ impl<'a> Prelude<'a> {
             self.list_consume()
         } else if self.dict_is_start(c) {
             self.dict_consume()
+        } else if Self::typedef_is_start(c) {
+            self.typedef_consume()
 
         // Matching identifier should be at the very end
         // since it matches any character.
@@ -641,6 +643,80 @@ impl<'a> Prelude<'a> {
 
     // ==================================================================
     // SLOT END
+    // ==================================================================
+
+    // ==================================================================
+    // TYPEDEF START
+    // ==================================================================
+
+    fn typedef_is_start(char: &u8) -> bool {
+        *char == CharCode::COLON
+    }
+
+    fn typedef_lexeme_is_end(c: &u8) -> bool {
+        Self::is_separator(c) || *c == CharCode::LESS
+    }
+
+    fn typedef_generic_is_end(c: &u8) -> bool {
+        Self::is_separator(c) || *c == CharCode::MORE
+    }
+
+    fn typedef_consume_lexeme(&mut self) -> Result<String, ParserErr> {
+        let start = self.tok_pos;
+        while let Some(c) = self.peek()
+            && !Self::typedef_lexeme_is_end(&c)
+        {
+            self.advance();
+        }
+
+        let lexeme = from_utf8(&self.source_code[start..self.tok_pos])
+            .unwrap()
+            .to_string();
+
+        if !Self::identifier_is_valid(&lexeme) {
+            return Err(self.fail(ParserErr::UnexpTok));
+        }
+
+        Ok(lexeme)
+    }
+
+    fn typedef_consume_generic(&mut self) -> Result<Option<AstNodeTypedefGeneric>, ParserErr> {
+        if let Some(c) = self.peek()
+            && c == CharCode::LESS
+        {
+            self.advance();
+            // TODO
+            Ok(None)
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn typedef_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
+        let start = self.tok_pos;
+        self.advance();
+
+        if let Some(c) = self.peek()
+            && Self::identifier_is_start(&c)
+        {
+            let lexeme = self.typedef_consume_lexeme()?;
+            let generic = self.typedef_consume_generic()?;
+
+            Ok(Some(AstNode::Typedef(AstNodeTypedef {
+                span: Span {
+                    start,
+                    end: self.tok_pos,
+                },
+                lexeme,
+                generic,
+            })))
+        } else {
+            return Err(self.fail(ParserErr::UnexpTok));
+        }
+    }
+
+    // ==================================================================
+    // TYPEDEF END
     // ==================================================================
 }
 
