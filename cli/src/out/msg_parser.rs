@@ -21,6 +21,8 @@ pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
         InvalFnName(err_info) => ("Invalid function name", err_info),
         InvalGenericTypedef(err_info) => ("Invalid generic type definition", err_info),
         EmptyTypedefGeneric(err_info) => ("Generic cannot be empty", err_info),
+        UnexpRecordKey(err_info) => ("Unexpected record key", err_info),
+        UnexpRecordValue(err_info) => ("Unexpected record value. Values must be type definitions", err_info),
     };
 
     utils::print_err(info.0, Some("Parser error"));

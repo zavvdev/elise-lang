@@ -2,7 +2,7 @@ pub mod parser_config;
 
 use elise_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprDict, AstNodeExprDictKey, AstNodeExprList,
-    AstNodeExprPrim, AstNodeTypedef, AstNodeTypedefGeneric,
+    AstNodeExprPrim, AstNodeTypedef, AstNodeTypedefGeneric, AstNodeTypedefRecordKey,
 };
 use elise_shared::shared_types::{Literal, Span};
 use std::str::from_utf8;
@@ -678,6 +678,60 @@ impl<'a> Prelude<'a> {
         Ok(false)
     }
 
+    fn typedef_record_consume(
+        &mut self,
+    ) -> Result<Vec<(AstNodeTypedefRecordKey, Box<AstNodeTypedef>)>, ParserErr> {
+        self.advance();
+
+        let mut entries: Vec<(AstNodeTypedefRecordKey, Box<AstNodeTypedef>)> = vec![];
+        let mut key: Option<AstNodeTypedefRecordKey> = None;
+
+        while let Some(c) = self.peek() {
+            let is_end = self
+                .dict_check_end(&c)
+                .map_err(|_| self.fail(ParserErr::UnexpEoDict))?;
+
+            if is_end {
+                // If we ended up in the end of the record but we still
+                // have a dangling key to match, return error since
+                // record must have an even number of children expressions.
+                if key.is_some() {
+                    return Err(self.fail(ParserErr::InvalDictPair));
+                }
+                self.advance();
+                break;
+            }
+
+            let Some(node) = self.get_node_from_char(&c)? else {
+                continue;
+            };
+
+            match key.take() {
+                None => {
+                    // Key must always be a string expression.
+                    let AstNode::Expr(AstNodeExpr::Str(prim)) = node else {
+                        return Err(self.fail(ParserErr::UnexpDictKey));
+                    };
+                    key = Some(AstNodeTypedefRecordKey {
+                        lexeme: prim.lexeme,
+                        span: Span {
+                            start: prim.span.start,
+                            end: prim.span.end,
+                        },
+                    });
+                }
+                Some(k) => {
+                    let AstNode::Typedef(typedef) = node else {
+                        return Err(self.fail(ParserErr::UnexpDictKey));
+                    };
+                    entries.push((k, Box::new(typedef)));
+                }
+            }
+        }
+
+        Ok(entries)
+    }
+
     fn typedef_consume_lexeme(&mut self) -> Result<String, ParserErr> {
         let ident_node = self.identifier_consume()?;
         match ident_node {
@@ -706,9 +760,12 @@ impl<'a> Prelude<'a> {
                 self.advance();
                 break;
             }
-            // TODO: Check if we have {. If we do, consume Record type
-            // the same way we do for DICT. Do not use dict consume function
-            // since its return type is different.
+
+            if self.dict_is_start(&c) {
+                let record = self.typedef_record_consume()?;
+                generic = Some(AstNodeTypedefGeneric::Record(record));
+            }
+
             if let Some(node) = self.get_node_from_char(&c)? {
                 match node {
                     AstNode::Typedef(typedef) => {
