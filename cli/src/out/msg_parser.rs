@@ -9,6 +9,7 @@ pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
         UnexpTok(err_info) => ("Unexpected token", err_info),
         UnexpEoFile(err_info) => ("Unexpected end of file", err_info),
         UnexpEoList(err_info) => ("Unexpected end of list", err_info),
+        UnexpEoTypedefGeneric(err_info) => ("Unexpected end of generic", err_info),
         UnexpEoDict(err_info) => ("Unexpected end of dictionary", err_info),
         UnexpEoFn(err_info) => ("Unexpected end of function", err_info),
         UnexpDictKey(err_info) => ("Unexpected dictionary key", err_info),
@@ -18,6 +19,8 @@ pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
         UntermStr(err_info) => ("Unterminated string", err_info),
         InvalDictPair(err_info) => ("Invalid dictionary key value pair", err_info),
         InvalFnName(err_info) => ("Invalid function name", err_info),
+        InvalGenericTypedef(err_info) => ("Invalid generic type definition", err_info),
+        EmptyTypedefGeneric(err_info) => ("Generic cannot be empty", err_info),
     };
 
     utils::print_err(info.0, Some("Parser error"));

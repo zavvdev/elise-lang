@@ -312,7 +312,11 @@ impl<'a> Prelude<'a> {
     }
 
     fn identifier_is_end(c: &u8) -> bool {
-        Self::is_separator(c) || *c == CharCode::RIGHT_PAREN || *c == CharCode::RIGHT_SQR_BRACKET
+        Self::is_separator(c)
+            || *c == CharCode::RIGHT_PAREN
+            || *c == CharCode::RIGHT_SQR_BRACKET
+            || *c == CharCode::LESS
+            || *c == CharCode::MORE
     }
 
     fn identifier_is_valid(s: &str) -> bool {
@@ -653,43 +657,69 @@ impl<'a> Prelude<'a> {
         *char == CharCode::COLON
     }
 
-    fn typedef_lexeme_is_end(c: &u8) -> bool {
-        Self::is_separator(c) || *c == CharCode::LESS
+    fn typedef_generic_is_start(&mut self) -> bool {
+        if let Some(ch) = self.peek()
+            && ch == CharCode::LESS
+        {
+            self.depth_stack.push(CharCode::LESS);
+            return true;
+        }
+        false
     }
 
-    fn typedef_generic_is_end(c: &u8) -> bool {
-        Self::is_separator(c) || *c == CharCode::MORE
+    fn typedef_generic_check_end(&mut self, c: &u8) -> Result<bool, ()> {
+        if *c == CharCode::MORE {
+            let last_entry = self.depth_stack.pop();
+            if last_entry.is_none() || last_entry.unwrap() != CharCode::LESS {
+                return Err(());
+            }
+            return Ok(true);
+        }
+        Ok(false)
     }
 
     fn typedef_consume_lexeme(&mut self) -> Result<String, ParserErr> {
-        let start = self.tok_pos;
-        while let Some(c) = self.peek()
-            && !Self::typedef_lexeme_is_end(&c)
-        {
-            self.advance();
+        let ident_node = self.identifier_consume()?;
+        match ident_node {
+            Some(AstNode::Expr(AstNodeExpr::Ident(prim))) => Ok(prim.lexeme),
+            _ => Err(self.fail(ParserErr::UnexpTok)),
         }
-
-        let lexeme = from_utf8(&self.source_code[start..self.tok_pos])
-            .unwrap()
-            .to_string();
-
-        if !Self::identifier_is_valid(&lexeme) {
-            return Err(self.fail(ParserErr::UnexpTok));
-        }
-
-        Ok(lexeme)
     }
 
     fn typedef_consume_generic(&mut self) -> Result<Option<AstNodeTypedefGeneric>, ParserErr> {
-        if let Some(c) = self.peek()
-            && c == CharCode::LESS
-        {
-            self.advance();
-            // TODO
-            Ok(None)
-        } else {
-            Ok(None)
+        let mut generic: Option<AstNodeTypedefGeneric> = None;
+
+        if !self.typedef_generic_is_start() {
+            return Ok(generic);
         }
+
+        self.advance();
+
+        while let Some(c) = self.peek() {
+            let Ok(is_end) = self.typedef_generic_check_end(&c) else {
+                return Err(self.fail(ParserErr::UnexpEoTypedefGeneric));
+            };
+            if is_end {
+                if generic.is_none() {
+                    return Err(self.fail(ParserErr::EmptyTypedefGeneric));
+                }
+                self.advance();
+                break;
+            }
+            // TODO: Check if we have {. If we do, consume Record type
+            // the same way we do for DICT. Do not use dict consume function
+            // since its return type is different.
+            if let Some(node) = self.get_node_from_char(&c)? {
+                match node {
+                    AstNode::Typedef(typedef) => {
+                        generic = Some(AstNodeTypedefGeneric::Single(Box::new(typedef)));
+                    }
+                    _ => return Err(self.fail(ParserErr::UnexpListItem)),
+                }
+            }
+        }
+
+        Ok(generic)
     }
 
     fn typedef_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {

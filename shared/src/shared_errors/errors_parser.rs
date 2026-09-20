@@ -8,6 +8,7 @@ pub enum ParserErr {
     UnexpTok(ParserErrInfo),
     UnexpEoFile(ParserErrInfo),
     UnexpEoList(ParserErrInfo),
+    UnexpEoTypedefGeneric(ParserErrInfo),
     UnexpEoDict(ParserErrInfo),
     UnexpEoFn(ParserErrInfo),
     UnexpDictKey(ParserErrInfo),
@@ -17,4 +18,6 @@ pub enum ParserErr {
     UntermStr(ParserErrInfo),
     InvalDictPair(ParserErrInfo),
     InvalFnName(ParserErrInfo),
+    InvalGenericTypedef(ParserErrInfo),
+    EmptyTypedefGeneric(ParserErrInfo),
 }
