@@ -10,11 +10,16 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
       We also need to have a DataBinder that takes ast of data expressions and produces
       HashMap<BindingPath, DataDesc>
 
-- [ ] Schema parser (check schema.elt)
+- [x] Schema parser
 
 - [ ] TypeBinder
 
 - [ ] DataBinder
+
+    - [ ] For each data (.csv, .json etc) create an adapter first, that translates them
+          into Elise data types. And then use the same DataBinder for it as well as for
+          source code data. Alternative: write it's own Binder for each data type +
+          have a separate binder for Elise data types.
 
 - [ ] Data validation against schema
 

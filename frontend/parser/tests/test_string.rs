@@ -1,6 +1,9 @@
 use elise_ast::{AstNode, AstNodeExpr, AstNodeExprPrim};
 use elise_parser::Prelude;
-use elise_shared::{shared_errors::errors_parser::{ParserErr, ParserErrInfo}, shared_types::Span};
+use elise_shared::{
+    shared_errors::errors_parser::{ParserErr, ParserErrInfo},
+    shared_types::Span,
+};
 
 mod common;
 

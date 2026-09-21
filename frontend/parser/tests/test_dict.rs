@@ -1,5 +1,6 @@
-use elise_ast::{AstNode, AstNodeExpr, AstNodeExprDict, AstNodeExprPrim, AstNodeExprDictKey,
-AstNodeExprList};
+use elise_ast::{
+    AstNode, AstNodeExpr, AstNodeExprDict, AstNodeExprDictKey, AstNodeExprList, AstNodeExprPrim,
+};
 use elise_parser::Prelude;
 use elise_shared::{
     shared_errors::errors_parser::{ParserErr, ParserErrInfo},

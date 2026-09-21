@@ -10,12 +10,3 @@
                     "address" :Nullable<:Address> }>)
 
 .typedef (Data :List<:User>)
-
-// .elt file must contain Data type definition.
-// Only type definitions are allowed here.
-// Each defined type with .typedef function will be 
-// injected into .eli source code global scope.
-
-// You can define type only in the global scope.
-
-// We also need to add a semantic analyzer stage for schema file

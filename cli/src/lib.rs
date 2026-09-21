@@ -8,13 +8,13 @@ pub mod conf;
 pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
-use elise_data::{
-    csv::{csv_data_binder::CsvDataBinder, csv_data_parser::CsvDataParser},
-    data_binder::{DataBinder, DataBindings},
-    schema_binder::{SchemaBinder, SchemaBindings},
-};
+//use elise_data::{
+//    csv::{csv_data_binder::CsvDataBinder, csv_data_parser::CsvDataParser},
+//    data_binder::{DataBinder, DataBindings},
+//    schema_binder::{SchemaBinder, SchemaBindings},
+//};
 use elise_parser::Prelude;
-use elise_shared::shared_errors::{LangErr, errors_preexec::PreExecErr};
+use elise_shared::shared_errors::LangErr;
 use rayon::scope;
 use std::time::Instant;
 
@@ -59,25 +59,19 @@ pub struct ValidateResult<'a> {
 /// Entry point for running the program in 'RUN' mode.
 pub fn run<'a>(
     source_code: &'a [u8],
-    data: &'a str,
+    _data: &'a str,
     data_schema: &'a [u8],
     config: &'a ModeRunConf,
 ) -> Result<RunResult<'a>, LangErr> {
     let start = Instant::now();
-
+        
     //let mut _hir: Result<HIR, LangErr> = Err(LangErr::PreExec(PreExecErr::NoHIR));
 
-    let mut schema_bindings: Result<SchemaBindings, LangErr> =
-        Err(LangErr::PreExec(PreExecErr::NoResolvedSchema));
+    //let mut schema_bindings: Result<SchemaBindings, LangErr> =
+    //    Err(LangErr::PreExec(PreExecErr::NoResolvedSchema));
 
-    let mut data_bindings: Result<DataBindings, LangErr> =
-        Err(LangErr::PreExec(PreExecErr::NoDataBinding));
-
-    let ast = Prelude::new(source_code)
-        .parse()
-        .map_err(LangErr::ParserSource)?;
-
-    println!("Ast: {:#?}", ast);
+    //let mut data_bindings: Result<DataBindings, LangErr> =
+    //    Err(LangErr::PreExec(PreExecErr::NoDataBinding));
 
     // Run in parallel since these processes don't depend on one another.
     scope(|s| {
@@ -89,16 +83,17 @@ pub fn run<'a>(
             // between data being parsed since we can use Prelude for parsing
             // source code or schema source code.
 
-            // TODO: This skips Prelude error reports.
-            if let Ok(ast) = Prelude::new(source_code)
+            // TODO: We can't use '?' notation here in order to return Prelude
+            // errors.
+            let ast = Prelude::new(source_code)
                 .parse()
-                .map_err(LangErr::ParserSource)
-            {
-                println!("SC: {:#?}", ast);
-                //hir = Harmony::new(&ast)
-                //    .analyze()
-                //    .map_err(LangErr::SemanticAnalyzer);
-            }
+                .map_err(LangErr::ParserSource);
+
+            println!("SC: {:#?}", ast);
+
+            //hir = Harmony::new(&ast)
+            //    .analyze()
+            //    .map_err(LangErr::SemanticAnalyzer);
         });
         // ===================================================================
         // Schema parsing/bindings thread.
@@ -106,14 +101,15 @@ pub fn run<'a>(
         s.spawn(|_| {
             // Map ParserErr to LangErr::ParserSchema since data schema syntax
             // is the same as a source code syntax.
-            if let Ok(ast) = Prelude::new(data_schema)
+            let ast = Prelude::new(data_schema)
                 .parse()
-                .map_err(LangErr::ParserSchema)
-            {
-                schema_bindings = SchemaBinder::new(&ast)
-                    .bind()
-                    .map_err(LangErr::SchemaBinder);
-            }
+                .map_err(LangErr::ParserSchema);
+
+            println!("SCHEMA SC: {:#?}", ast);
+
+            // schema_bindings = SchemaBinder::new(&ast)
+            //     .bind()
+            //     .map_err(LangErr::SchemaBinder);
         });
 
         // ===================================================================
@@ -121,11 +117,10 @@ pub fn run<'a>(
         // ===================================================================
         if config.data_path.to_lowercase().ends_with(FileExt::CSV) {
             s.spawn(|_| {
-                if let Ok(parsed) = CsvDataParser::new(data).parse() {
-                    data_bindings = CsvDataBinder::new(&parsed)
-                        .bind()
-                        .map_err(LangErr::CsvDataBinder);
-                }
+                //let parsed = CsvDataParser::new(data).parse()?;
+                //data_bindings = CsvDataBinder::new(&parsed)
+                //    .bind()
+                //    .map_err(LangErr::CsvDataBinder);
             });
         }
     });

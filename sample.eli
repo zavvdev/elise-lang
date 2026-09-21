@@ -1,1 +1,5 @@
-.define (SALARY_INCREASE :Int, 1000)
+.let (SALARY_INCREASE :Int, 1000)
+
+.add(
+    .get(@data "salary")
+    SALARY_INCREASE)
