@@ -22,7 +22,11 @@ pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
         InvalGenericTypedef(err_info) => ("Invalid generic type definition", err_info),
         EmptyTypedefGeneric(err_info) => ("Generic cannot be empty", err_info),
         UnexpRecordKey(err_info) => ("Unexpected record key", err_info),
-        UnexpRecordValue(err_info) => ("Unexpected record value. Values must be type definitions", err_info),
+        UnexpRecordValue(err_info) => (
+            "Unexpected record value. Values must be type definitions",
+            err_info,
+        ),
+        EmptyTypedefRecord(err_info) => ("Empty Record type definition", err_info),
     };
 
     utils::print_err(info.0, Some("Parser error"));

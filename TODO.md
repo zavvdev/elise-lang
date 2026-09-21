@@ -12,7 +12,7 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
 - [x] Parse typedef
 
-- [ ] Tests for Prelude
+- [x] Tests for Prelude
 
 - [ ] TypeBinder
 
