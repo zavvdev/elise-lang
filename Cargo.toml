@@ -9,6 +9,7 @@ members = [
     "cli",
     "compiler",
     "frontend/ast",
+    "frontend/binder",
     "frontend/data",
     "frontend/parser",
     "frontend/semanalyzer",

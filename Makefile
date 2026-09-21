@@ -47,6 +47,9 @@ test\:cli:
 test\:compiler:
 	cargo test -p elise-compiler
 
+test\:frontend\:binder:
+	cargo test -p elise-binder
+
 test\:frontend\:data:
 	cargo test -p elise-data
 
