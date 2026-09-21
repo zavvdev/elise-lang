@@ -17,3 +17,5 @@
 // injected into .eli source code global scope.
 
 // You can define type only in the global scope.
+
+// We also need to add a semantic analyzer stage for schema file

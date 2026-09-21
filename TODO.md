@@ -10,13 +10,15 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
       We also need to have a DataBinder that takes ast of data expressions and produces
       HashMap<BindingPath, DataDesc>
 
+- [ ] Schema parser (check schema.elt)
+
 - [ ] TypeBinder
 
 - [ ] DataBinder
 
 - [ ] Data validation against schema
 
-- [ ] Semantic analyzer (preserve as much types as you can)
+- [ ] Semantic analyzer (preserve as much types as you can. Used for source code and schema code)
 
     - [ ] Add lang data types
 
@@ -29,6 +31,8 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
     - [ ] Add tests for SymbolTable
 
     - [ ] Add tests for ScopeStack
+    
+    - [ ] Add semantics for .typedef
 
     - [ ] Add semantics for .let (former .define)
 
