@@ -9,24 +9,22 @@ pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
         UnexpTok(err_info) => ("Unexpected token", err_info),
         UnexpEoFile(err_info) => ("Unexpected end of file", err_info),
         UnexpEoList(err_info) => ("Unexpected end of list", err_info),
-        UnexpEoTypedefGeneric(err_info) => ("Unexpected end of generic", err_info),
+        UnexpEoGeneric(err_info) => ("Unexpected end of generic", err_info),
         UnexpEoDict(err_info) => ("Unexpected end of dictionary", err_info),
         UnexpEoFn(err_info) => ("Unexpected end of function", err_info),
         UnexpDictKey(err_info) => ("Unexpected dictionary key", err_info),
         UnexpListItem(err_info) => ("Unexpected list item", err_info),
+
         InvalNum(err_info) => ("Invalid number", err_info),
         InvalStr(err_info) => ("Invalid string", err_info),
-        UntermStr(err_info) => ("Unterminated string", err_info),
         InvalDictPair(err_info) => ("Invalid dictionary key value pair", err_info),
         InvalFnName(err_info) => ("Invalid function name", err_info),
         InvalGenericTypedef(err_info) => ("Invalid generic type definition", err_info),
-        EmptyTypedefGeneric(err_info) => ("Generic cannot be empty", err_info),
-        UnexpRecordKey(err_info) => ("Unexpected record key", err_info),
-        UnexpRecordValue(err_info) => (
-            "Unexpected record value. Values must be type definitions",
-            err_info,
-        ),
-        EmptyTypedefRecord(err_info) => ("Empty Record type definition", err_info),
+
+        EmptyGeneric(err_info) => ("Empty generic", err_info),
+        EmptyRecord(err_info) => ("Empty Record type definition", err_info),
+
+        UntermStr(err_info) => ("Unterminated string", err_info),
     };
 
     utils::print_err(info.0, Some("Parser error"));

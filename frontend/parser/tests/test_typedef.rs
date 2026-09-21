@@ -110,7 +110,7 @@ fn should_reject_non_typedef_in_generic() {
 fn should_reject_empty_generic() {
     let input = ":List<>".as_bytes();
     let result = Prelude::new(input).parse();
-    let expected_result = Err(ParserErr::EmptyTypedefGeneric(ParserErrInfo { pos: 6 }));
+    let expected_result = Err(ParserErr::EmptyGeneric(ParserErrInfo { pos: 6 }));
     assert_eq!(result, expected_result);
 }
 
@@ -213,7 +213,7 @@ fn should_reject_unopened_record() {
 fn should_reject_empty_record_generic() {
     let input = ":List<{}>".as_bytes();
     let result = Prelude::new(input).parse();
-    let expected_result = Err(ParserErr::EmptyTypedefRecord(ParserErrInfo { pos: 8 }));
+    let expected_result = Err(ParserErr::EmptyRecord(ParserErrInfo { pos: 8 }));
     assert_eq!(result, expected_result);
 }
 

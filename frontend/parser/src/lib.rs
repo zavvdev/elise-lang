@@ -728,7 +728,7 @@ impl<'a> Prelude<'a> {
         }
 
         if entries.is_empty() {
-            return Err(self.fail(ParserErr::EmptyTypedefRecord));
+            return Err(self.fail(ParserErr::EmptyRecord));
         }
 
         Ok(entries)
@@ -753,11 +753,11 @@ impl<'a> Prelude<'a> {
 
         while let Some(c) = self.peek() {
             let Ok(is_end) = self.typedef_generic_check_end(&c) else {
-                return Err(self.fail(ParserErr::UnexpEoTypedefGeneric));
+                return Err(self.fail(ParserErr::UnexpEoGeneric));
             };
             if is_end {
                 if generic.is_none() {
-                    return Err(self.fail(ParserErr::EmptyTypedefGeneric));
+                    return Err(self.fail(ParserErr::EmptyGeneric));
                 }
                 self.advance();
                 break;

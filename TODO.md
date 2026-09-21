@@ -10,37 +10,31 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
       We also need to have a DataBinder that takes ast of data expressions and produces
       HashMap<BindingPath, DataDesc>
 
-- [x] Parse typedef
-
-- [x] Tests for Prelude
-
 - [ ] TypeBinder
 
 - [ ] DataBinder
 
-- [ ] Add support for comments
-
-- [x] Data validation against schema
+- [ ] Data validation against schema
 
 - [ ] Semantic analyzer (preserve as much types as you can)
 
-    - [x] Add lang data types
+    - [ ] Add lang data types
 
-        - [x] Int, Float, String, Bool, Null
+        - [ ] Int
 
-        - [x] Tests
+        - [ ] Tests
 
-    - [x] Add ScopeStack for Harmony
+    - [ ] Add ScopeStack for Harmony
 
-    - [x] Add tests for SymbolTable
+    - [ ] Add tests for SymbolTable
 
-    - [x] Add tests for ScopeStack
+    - [ ] Add tests for ScopeStack
 
-    - [x] Add semantics for .define
+    - [ ] Add semantics for .let (former .define)
 
-        - [x] Tests
+        - [ ] Tests
 
-    - [ ] Add semantics for function definition (named and anon)
+    - [ ] Add semantics for function definition
 
     - [ ] Add semantics for .add
 
@@ -52,11 +46,9 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
 - [ ] VM
 
-    - [ ] Add support for IEEE-754 numbers format
-
     - [ ] ...
 
-- [ ] Try to add .union for schema resolver
+- [ ] Add support for comments
 
 - [ ] Optimizations
     
