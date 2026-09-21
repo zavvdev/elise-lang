@@ -16,7 +16,7 @@ use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise_parser::Prelude;
 use elise_shared::shared_errors::LangErr;
 use rayon::scope;
-use std::time::Instant;
+use std::{sync::Mutex, time::Instant};
 
 use crate::conf::config::FileExt;
 
@@ -64,7 +64,9 @@ pub fn run<'a>(
     config: &'a ModeRunConf,
 ) -> Result<RunResult<'a>, LangErr> {
     let start = Instant::now();
-        
+
+    let err: Mutex<Option<LangErr>> = Mutex::new(None);
+
     //let mut _hir: Result<HIR, LangErr> = Err(LangErr::PreExec(PreExecErr::NoHIR));
 
     //let mut schema_bindings: Result<SchemaBindings, LangErr> =
@@ -79,37 +81,45 @@ pub fn run<'a>(
         // Source code parsing/semanalizing thread.
         // ===================================================================
         s.spawn(|_| {
-            // Map ParserErr to LangErr::ParserSource in order to differentiate
-            // between data being parsed since we can use Prelude for parsing
-            // source code or schema source code.
-
-            // TODO: We can't use '?' notation here in order to return Prelude
-            // errors.
-            let ast = Prelude::new(source_code)
+            match Prelude::new(source_code)
                 .parse()
-                .map_err(LangErr::ParserSource);
-
-            println!("SC: {:#?}", ast);
-
-            //hir = Harmony::new(&ast)
-            //    .analyze()
-            //    .map_err(LangErr::SemanticAnalyzer);
+                .map_err(LangErr::ParserSource)
+            {
+                Ok(ast) => {
+                    println!("SC: {:#?}", ast);
+                    // TODO: Probably needs a diff approach since we need to
+                    //       handle errors for Harmony as well. So maybe collect
+                    //       results into a Vec and assign the first one into err?
+                    //hir = Harmony::new(&ast)
+                    //    .analyze()
+                    //    .map_err(LangErr::SemanticAnalyzer);
+                }
+                Err(ast_err) => {
+                    let mut err_guard = err.lock().unwrap();
+                    *err_guard = Some(ast_err);
+                }
+            };
         });
         // ===================================================================
         // Schema parsing/bindings thread.
         // ===================================================================
         s.spawn(|_| {
-            // Map ParserErr to LangErr::ParserSchema since data schema syntax
-            // is the same as a source code syntax.
-            let ast = Prelude::new(data_schema)
+            match Prelude::new(data_schema)
                 .parse()
-                .map_err(LangErr::ParserSchema);
+                .map_err(LangErr::ParserSchema)
+            {
+                Ok(ast) => {
+                    println!("SCHEMA SC: {:#?}", ast);
 
-            println!("SCHEMA SC: {:#?}", ast);
-
-            // schema_bindings = SchemaBinder::new(&ast)
-            //     .bind()
-            //     .map_err(LangErr::SchemaBinder);
+                    // schema_bindings = SchemaBinder::new(&ast)
+                    //     .bind()
+                    //     .map_err(LangErr::SchemaBinder);
+                }
+                Err(ast_err) => {
+                    let mut err_guard = err.lock().unwrap();
+                    *err_guard = Some(ast_err);
+                }
+            }
         });
 
         // ===================================================================
@@ -124,6 +134,10 @@ pub fn run<'a>(
             });
         }
     });
+
+    if let Some(final_err) = err.into_inner().unwrap() {
+        return Err(final_err);
+    }
 
     //let hir = _hir?;
     //let _schema_bindings = schema_bindings?;
