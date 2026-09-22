@@ -2,8 +2,11 @@ use std::ops::Deref;
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub enum BindingPathSegment {
-    // The beginning of the path.
-    Root,
+    // The beginning of the path represented as a string
+    // associated with the entity being bind. For example,
+    // it can be type definition name, or variable name
+    // if we bind data.
+    Alias(String),
 
     // Represents any index. For example, when we want to
     // build a schema binding path, we don't need to describe
@@ -22,7 +25,7 @@ impl BindingPathSegment {
     // For anything that requires string representation, like error reports.
     pub fn as_str(&self) -> String {
         match self {
-            BindingPathSegment::Root => "Root".to_string(),
+            BindingPathSegment::Alias(alias) => format!("Alias(\"{}\")", alias),
             BindingPathSegment::AbstractIndex => "AbstractIndex".to_string(),
             BindingPathSegment::Field(name) => format!("Field(\"{}\")", name),
             BindingPathSegment::Index(idx) => format!("Index(\"{}\")", idx),
@@ -35,13 +38,13 @@ impl BindingPathSegment {
 /// describe a path to type descriptors or data itself.
 ///
 /// Internal representation uses a Vector of path segments
-/// where the first segment must always be Root segment
+/// where the first segment must always be Alias segment
 /// which cannot be removed.
 ///
 /// This data structure was created specifically for cases
 /// when we use expressions that extract some data, for example:
 /// .get(@data, "name")
-/// In this case we can say that path is [Root, Field("name")].
+/// In this case we can say that path is [Alias("Data"), Field("name")].
 ///
 /// This data structure is intended to be used for schema binding
 /// and data binding, where former is used at compilation stage,
@@ -62,31 +65,25 @@ impl Deref for BindingPath {
     }
 }
 
-impl Default for BindingPath {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl BindingPath {
-    // Root must always be the first segment.
-    pub fn new() -> Self {
-        Self(vec![BindingPathSegment::Root])
+    // Alias must always be the first segment.
+    pub fn new(alias: String) -> Self {
+        Self(vec![BindingPathSegment::Alias(alias)])
     }
 
     // It's better to map over segments and push them in order
     // to use logic inside push function.
-    pub fn with_segments(segments: Vec<BindingPathSegment>) -> Self {
-        let mut new = Self::new();
+    pub fn with_segments(alias: String, segments: Vec<BindingPathSegment>) -> Self {
+        let mut new = Self::new(alias);
         for segment in segments {
             new.push(segment);
         }
         new
     }
 
-    // Do not allow to push Root segment since it's there by default.
+    // Do not allow to push Alias segment since it's there by default.
     pub fn push(&mut self, segment: BindingPathSegment) {
-        if segment != BindingPathSegment::Root {
+        if !matches!(segment, BindingPathSegment::Alias(..)) {
             self.0.push(segment);
         }
     }

@@ -1,5 +1,9 @@
 .let (SALARY_INCREASE :Int, 1000)
 
+.fn (some [x :Int] :Int
+        .add(x 2))
+
 .add(
     .get(@data "salary")
-    SALARY_INCREASE)
+    SALARY_INCREASE
+    .some(.get(@data, "age")))
