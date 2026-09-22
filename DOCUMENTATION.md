@@ -3,17 +3,18 @@ RUN (SourceCode, SchemaCode, Data)
     -> Parse(SourceCode) -> SourceCodeAst
     -> Parse(ShemaCode) -> SchemaCodeAst
     -> Parse(Data) -> ParsedData
-    -> BindSchema(SchemaCodeAst) -> SchemaBinding           -- This step uses TypeBinder
-    -> BindData(ParsedData) -> DataBinding                  -- this step uses DataBinder designed for the data
-                                                               being bind.
-    -> Sema(SourceCodeAst, Option<SchemaBinding>) -> SourceCodeAAst -- This step uses TypeBinder in order to
-                                                               bind types in source code and default
-                                                               DataBinder for binding language compound data.
-                                                               Schema binding is injected into the
-                                                               global scope (:Data type and other
-                                                               custom types) and any source code
-                                                               data is being bind as we construct
-                                                               AAst.
+    -> Sema(SchemaCodeAst) -> SchemaCodeAAst
+    -> BindSchema(SchemaCodeAAst) -> SchemaBinding           -- This step uses TypeBinder
+    -> BindData(ParsedData) -> DataBinding                   -- this step uses DataBinder designed for the data
+                                                                being bind.
+    -> Sema(SourceCodeAst, SchemaBinding) -> SourceCodeAAst  -- This step uses TypeBinder in order to
+                                                                bind types in source code and default
+                                                                DataBinder for binding language compound data.
+                                                                Schema binding is injected into the
+                                                                global scope (:Data type and other
+                                                                custom types) and any source code
+                                                                data is being bind as we construct
+                                                                AAst.
     -> Validate(SchemaBinding, DataBinding)
     -> Compile(SchemaBinding, SourceCodeAAst) -> Bytecode
     -> VM(Bytecode, DataBinding)
@@ -21,14 +22,16 @@ RUN (SourceCode, SchemaCode, Data)
 BUILD (SourceCode, SchemaCode)
     -> Parse(SourceCode) -> SourceCodeAst
     -> Parse(ShemaCode) -> SchemaCodeAst
-    -> BindSchema(SchemaCodeAst) -> SchemaBinding
+    -> Sema(SchemaCodeAst) -> SchemaCodeAAst
+    -> BindSchema(SchemaCodeAAst) -> SchemaBinding
     -> Sema(SourceCodeAst, SchemaBinding) -> SourceCodeAAst
     -> Compile(SchemaBinding, SourceCodeAAst) -> Bytecode
 
 VALIDATE(SchemaCode, Data)
     -> Parse(ShemaCode) -> SchemaCodeAst
     -> Parse(Data) -> ParsedData
-    -> BindSchema(SchemaCodeAst) -> SchemaBinding
+    -> Sema(SchemaCodeAst) -> SchemaCodeAAst
+    -> BindSchema(SchemaCodeAAst) -> SchemaBinding
     -> BindData(ParsedData) -> DataBinding
     -> Validate(SchemaBinding, DataBinding)
 
