@@ -6,7 +6,7 @@ RUN (SourceCode, SchemaCode, Data)
     -> BindSchema(SchemaCodeAst) -> SchemaBinding           -- This step uses TypeBinder
     -> BindData(ParsedData) -> DataBinding                  -- this step uses DataBinder designed for the data
                                                                being bind.
-    -> Sema(SourceCodeAst, SchemaBinding) -> SourceCodeAAst -- This step uses TypeBinder in order to
+    -> Sema(SourceCodeAst, Option<SchemaBinding>) -> SourceCodeAAst -- This step uses TypeBinder in order to
                                                                bind types in source code and default
                                                                DataBinder for binding language compound data.
                                                                Schema binding is injected into the

@@ -1,20 +1,9 @@
-// TODO: Migrate back to Root approach.
-// Each binding table must be associated with data/type it was bind for.
-// For .elt file we'll return a HashMap where each key is a name of the defined
-// type inside this file, and values are binding tables. Each table is a result
-// of a TypeBinder. By doing so, we eliminate the need to attach type name directly.
-// So we can bind type/data inside the source code and attach it to an arbitrary
-// metadata like symbol or data descriptor.
-
 use std::ops::Deref;
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub enum BindingPathSegment {
-    // The beginning of the path represented as a string
-    // associated with the entity being bind. For example,
-    // it can be type definition name, or variable name
-    // if we bind data.
-    Alias(String),
+    // The beginning of the path.
+    Root,
 
     // Represents any index. For example, when we want to
     // build a schema binding path, we don't need to describe
@@ -33,7 +22,7 @@ impl BindingPathSegment {
     // For anything that requires string representation, like error reports.
     pub fn as_str(&self) -> String {
         match self {
-            BindingPathSegment::Alias(alias) => format!("Alias(\"{}\")", alias),
+            BindingPathSegment::Root => "Root".to_string(),
             BindingPathSegment::AbstractIndex => "AbstractIndex".to_string(),
             BindingPathSegment::Field(name) => format!("Field(\"{}\")", name),
             BindingPathSegment::Index(idx) => format!("Index(\"{}\")", idx),
@@ -46,13 +35,13 @@ impl BindingPathSegment {
 /// describe a path to type descriptors or data itself.
 ///
 /// Internal representation uses a Vector of path segments
-/// where the first segment must always be Alias segment
+/// where the first segment must always be Root segment
 /// which cannot be removed.
 ///
 /// This data structure was created specifically for cases
 /// when we use expressions that extract some data, for example:
 /// .get(@data, "name")
-/// In this case we can say that path is [Alias("Data"), Field("name")].
+/// In this case we can say that path is [Root, Field("name")].
 ///
 /// This data structure is intended to be used for schema binding
 /// and data binding, where former is used at compilation stage,
@@ -73,25 +62,31 @@ impl Deref for BindingPath {
     }
 }
 
+impl Default for BindingPath {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BindingPath {
-    // Alias must always be the first segment.
-    pub fn new(alias: String) -> Self {
-        Self(vec![BindingPathSegment::Alias(alias)])
+    // Root must always be the first segment.
+    pub fn new() -> Self {
+        Self(vec![BindingPathSegment::Root])
     }
 
     // It's better to map over segments and push them in order
     // to use logic inside push function.
-    pub fn with_segments(alias: String, segments: Vec<BindingPathSegment>) -> Self {
-        let mut new = Self::new(alias);
+    pub fn with_segments(segments: Vec<BindingPathSegment>) -> Self {
+        let mut new = Self::new();
         for segment in segments {
             new.push(segment);
         }
         new
     }
 
-    // Do not allow to push Alias segment since it's there by default.
+    // Do not allow to push Root segment since it's there by default.
     pub fn push(&mut self, segment: BindingPathSegment) {
-        if !matches!(segment, BindingPathSegment::Alias(..)) {
+        if segment != BindingPathSegment::Root {
             self.0.push(segment);
         }
     }
