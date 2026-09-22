@@ -1,3 +1,11 @@
+// TODO: Migrate back to Root approach.
+// Each binding table must be associated with data/type it was bind for.
+// For .elt file we'll return a HashMap where each key is a name of the defined
+// type inside this file, and values are binding tables. Each table is a result
+// of a TypeBinder. By doing so, we eliminate the need to attach type name directly.
+// So we can bind type/data inside the source code and attach it to an arbitrary
+// metadata like symbol or data descriptor.
+
 use std::ops::Deref;
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
