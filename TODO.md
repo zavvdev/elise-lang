@@ -19,6 +19,8 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
 - [x] Schema parser
 
+- [ ] Create ir crate and move bytecode, ast and aast into it.
+
 - [ ] Semantic analyzer. It must accept a valid source code Ast + optional HashMap where key is a
       type name (alias) and value is a result of TypeBinder (hashmap where key is a binding path and
       value is a type descriptor). It's optional because we use the same semanalyzer for schema file
