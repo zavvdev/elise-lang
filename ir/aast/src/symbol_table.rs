@@ -36,7 +36,7 @@
 
 use std::collections::HashMap;
 
-use crate::data_types::LangType;
+use crate::data_types::AAstDataType;
 
 type TSymbolId = u32;
 
@@ -46,7 +46,7 @@ pub struct SymbolId(pub TSymbolId);
 #[derive(Debug, PartialEq)]
 pub struct SymbolDescriptor {
     pub name: String,
-    pub ty: LangType,
+    pub ty: AAstDataType,
     // True if any closure captures it.
     pub is_captured: bool,
 }
@@ -71,7 +71,7 @@ impl SymbolTable {
         }
     }
 
-    pub fn fresh(&mut self, name: &str, ty: LangType) -> SymbolId {
+    pub fn fresh(&mut self, name: &str, ty: AAstDataType) -> SymbolId {
         let symbol_id = SymbolId(self.next_id);
         let symbol_descriptor = SymbolDescriptor {
             name: name.to_string(),
@@ -89,7 +89,7 @@ impl SymbolTable {
 #[cfg(test)]
 mod tests {
     use crate::{
-        data_types::{LangPrimitiveType, LangType},
+        data_types::{AAstDataType, AAstPrimDataType},
         symbol_table::{SymbolId, SymbolTable},
     };
 
@@ -104,12 +104,12 @@ mod tests {
     fn should_create_new_entry() {
         let mut table = SymbolTable::new();
         assert_eq!(table.symbols.capacity(), 0);
-        let id = table.fresh("name", LangType::Primitive(LangPrimitiveType::Int));
+        let id = table.fresh("name", AAstDataType::Prim(AAstPrimDataType::Int));
         assert_eq!(id, SymbolId(0));
         assert_eq!(table.next_id, 1);
         let descriptor = table.symbols.get(&id).unwrap();
         assert_eq!(descriptor.name, "name".to_string());
-        assert_eq!(descriptor.ty, LangType::Primitive(LangPrimitiveType::Int));
+        assert_eq!(descriptor.ty, AAstDataType::Prim(AAstPrimDataType::Int));
         assert_eq!(descriptor.is_captured, false);
     }
 }

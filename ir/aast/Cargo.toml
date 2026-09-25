@@ -1,5 +1,5 @@
 [package]
-name = "elise-parser"
+name = "elise-aast"
 version = "0.1.0"
 edition = "2024"
 
@@ -8,4 +8,3 @@ path = "src/lib.rs"
 
 [dependencies]
 elise-shared = { path = "../../shared" }
-elise-ast = { path = "../../ir/ast" }

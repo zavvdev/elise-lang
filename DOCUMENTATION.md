@@ -1,8 +1,8 @@
 ```
 RUN (SourceCode, SchemaCode, Data)
-    -> Parse(SourceCode) -> SourceCodeAst
-    -> Parse(ShemaCode) -> SchemaCodeAst
-    -> Parse(Data) -> ParsedData
+    -> Parse(SourceCode) -> SourceCodeAst +
+    -> Parse(ShemaCode) -> SchemaCodeAst +
+    -> Parse(Data) -> ParsedData +
     -> Sema(SchemaCodeAst) -> SchemaCodeAAst
     -> BindSchema(SchemaCodeAAst) -> SchemaBinding           -- This step uses TypeBinder
     -> BindData(ParsedData) -> DataBinding                   -- this step uses DataBinder designed for the data

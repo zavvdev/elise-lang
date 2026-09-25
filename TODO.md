@@ -17,9 +17,16 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
      So we can bind type/data inside the source code and attach it to an arbitrary
      metadata like symbol or data descriptor.
 
-- [x] Schema parser
+     For now, our parser handles all grammar that was designed. It also emits ast nodes
+     that represent all possible data types such as Int, Float, List, Dict etc.
+     Semantic analyzer narrows them down only to things that are currently supported.
+     In our case we only support: Int, .add function, @data slot, .let function,
+     .typedef function, get function. Every other module after semanalyzer must only
+     support these for now. Do not add anything that is not yet supported.
 
-- [ ] Create ir crate and move bytecode, ast and aast into it.
+- [x] Parser
+
+- [x] Data Parser (CSV)
 
 - [ ] Semantic analyzer. It must accept a valid source code Ast + optional HashMap where key is a
       type name (alias) and value is a result of TypeBinder (hashmap where key is a binding path and
@@ -27,29 +34,21 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
       and source code file, but when we analyze source code file, we inject type bindings into it
       so we can reference types defined in .elt file.
 
-    - [ ] Add lang data types
+      NOTE: Continue from AastNode .get call
 
-        - [ ] Int
-
-        - [ ] Tests
-
-    - [ ] Add ScopeStack for Harmony
-
-    - [ ] Add tests for SymbolTable
-
-    - [ ] Add tests for ScopeStack
+    - [ ] ScopeStack
     
-    - [ ] Add semantics for .typedef
+    - [ ] Int
 
-    - [ ] Add semantics for .let (former .define)
+    - [ ] .typedef
 
-        - [ ] Tests
+    - [ ] .let
 
-    - [ ] Add semantics for function definition
+    - [ ] .add
 
-    - [ ] Add semantics for .add
+    - [ ] .get
 
-        - [ ] Tests
+    - [ ] @data slot
 
 - [ ] TypeBinder
 

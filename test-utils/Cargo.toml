@@ -7,6 +7,6 @@ edition = "2024"
 path = "src/lib.rs"
 
 [dependencies]
-elise-ast = { path = "../frontend/ast" }
+elise-ast = { path = "../ir/ast" }
 elise-parser = { path = "../frontend/parser" }
 elise-data = { path = "../frontend/data" }

@@ -5,7 +5,3 @@ edition = "2024"
 
 [lib]
 path = "src/lib.rs"
-
-[dependencies]
-elise-data = { path = "../frontend/data" }
-elise-semanalyzer = { path = "../frontend/semanalyzer" }

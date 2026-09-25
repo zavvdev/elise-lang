@@ -89,6 +89,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "elise-aast"
+version = "0.1.0"
+dependencies = [
+ "elise-shared",
+]
+
+[[package]]
 name = "elise-ast"
 version = "0.1.0"
 dependencies = [
@@ -110,10 +117,6 @@ version = "0.1.0"
 [[package]]
 name = "elise-compiler"
 version = "0.1.0"
-dependencies = [
- "elise-data",
- "elise-semanalyzer",
-]
 
 [[package]]
 name = "elise-data"

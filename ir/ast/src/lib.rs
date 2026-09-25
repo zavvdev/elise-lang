@@ -1,4 +1,4 @@
-use elise_shared::shared_types::Span;
+use elise_shared::{shared_node_names::NodeName, shared_types::Span};
 
 #[derive(Debug, PartialEq)]
 pub enum AstNode {
@@ -91,32 +91,18 @@ impl AstNodeExpr {
 
     pub fn as_str(&self) -> &'static str {
         match self {
-            AstNodeExpr::Int(_) => AstNodeExprName::INT,
-            AstNodeExpr::Float(_) => AstNodeExprName::FLOAT,
-            AstNodeExpr::Str(_) => AstNodeExprName::STR,
-            AstNodeExpr::Bool(_) => AstNodeExprName::BOOL,
-            AstNodeExpr::Ident(_) => AstNodeExprName::IDENT,
-            AstNodeExpr::Null(_) => AstNodeExprName::NULL,
-            AstNodeExpr::Slot(_) => AstNodeExprName::SLOT,
-            AstNodeExpr::Dict(_) => AstNodeExprName::DICT,
-            AstNodeExpr::List(_) => AstNodeExprName::LIST,
-            AstNodeExpr::Call(_) => AstNodeExprName::CALL,
+            AstNodeExpr::Int(_) => NodeName::INT,
+            AstNodeExpr::Float(_) => NodeName::FLOAT,
+            AstNodeExpr::Str(_) => NodeName::STR,
+            AstNodeExpr::Bool(_) => NodeName::BOOL,
+            AstNodeExpr::Ident(_) => NodeName::IDENT,
+            AstNodeExpr::Null(_) => NodeName::NULL,
+            AstNodeExpr::Slot(_) => NodeName::SLOT,
+            AstNodeExpr::Dict(_) => NodeName::DICT,
+            AstNodeExpr::List(_) => NodeName::LIST,
+            AstNodeExpr::Call(_) => NodeName::CALL,
         }
     }
-}
-
-pub struct AstNodeExprName;
-impl AstNodeExprName {
-    pub const INT: &'static str = "Int";
-    pub const FLOAT: &'static str = "Float";
-    pub const STR: &'static str = "String";
-    pub const BOOL: &'static str = "Bool";
-    pub const IDENT: &'static str = "Identifier";
-    pub const NULL: &'static str = "Null";
-    pub const SLOT: &'static str = "Slot";
-    pub const LIST: &'static str = "List";
-    pub const DICT: &'static str = "Dict";
-    pub const CALL: &'static str = "Call";
 }
 
 // ==================================================================
@@ -155,7 +141,7 @@ impl AstNodeTypedef {
         &self.span
     }
     pub fn as_str(&self) -> &'static str {
-        "TypeDef"
+        NodeName::TYPEDEF
     }
 }
 

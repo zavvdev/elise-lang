@@ -5,14 +5,15 @@
 resolver = "2"
 
 members = [
-    "bytecode",
     "cli",
     "compiler",
-    "frontend/ast",
     "frontend/binder",
     "frontend/data",
     "frontend/parser",
     "frontend/semanalyzer",
+    "ir/aast",
+    "ir/ast",
+    "ir/bytecode",
     "runtime/vm",
     "shared",
     "test-utils",

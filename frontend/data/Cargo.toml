@@ -9,7 +9,7 @@ path = "src/lib.rs"
 [dependencies]
 csv.workspace = true
 elise-shared = { path = "../../shared" }
-elise-ast = { path = "../ast" }
+elise-ast = { path = "../../ir/ast" }
 
 [dev-dependencies]
 elise-test-utils= { path = "../../test-utils" }

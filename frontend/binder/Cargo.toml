@@ -8,4 +8,4 @@ path = "src/lib.rs"
 
 [dependencies]
 elise-shared = { path = "../../shared" }
-elise-ast = { path = "../ast" }
+elise-ast = { path = "../../ir/ast" }
