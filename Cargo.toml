@@ -13,6 +13,7 @@ members = [
     "frontend/semanalyzer",
     "ir/aast",
     "ir/ast",
+    "ir/bindings",
     "ir/bytecode",
     "runtime/vm",
     "shared",

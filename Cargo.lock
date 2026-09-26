@@ -111,6 +111,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "elise-bindings"
+version = "0.1.0"
+dependencies = [
+ "elise-shared",
+]
+
+[[package]]
 name = "elise-bytecode"
 version = "0.1.0"
 

@@ -32,15 +32,16 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
       type name (alias) and value is a result of TypeBinder (hashmap where key is a binding path and
       value is a type descriptor). It's optional because we use the same semanalyzer for schema file
       and source code file, but when we analyze source code file, we inject type bindings into it
-      so we can reference types defined in .elt file.
-
-      NOTE: Continue from AastNode .get call
+      so we can reference types defined in .elt file. I think we need to create a separate data
+      structure in ir/bindings that stores Alias => TypeBindings. That data structure is going to be
+      passed into semanalyzer as optional and also is going to be built by semanalyzer during
+      resolving type definitions in source code. .typedef function must not produce any AAast nodes.
 
     - [ ] ScopeStack
     
     - [ ] Int
 
-    - [ ] .typedef
+    - [ ] .typedef (does not emit AAstNodes. Just creates a record in the local alias table)
 
     - [ ] .let
 
