@@ -194,6 +194,45 @@ fn should_parse_with_record_generic() {
 }
 
 #[test]
+fn should_parse_with_record_generic_compact() {
+    let input = r##":Dict<{"id":Int,"name":Str}>"##.as_bytes();
+    let result = Prelude::new(input).parse();
+
+    let record = vec![
+        (
+            AstNodeTypedefRecordKey {
+                lexeme: "id".to_string(),
+                span: Span { start: 7, end: 11 },
+            },
+            Box::new(AstNodeTypedef {
+                span: Span { start: 11, end: 15 },
+                lexeme: "Int".to_string(),
+                generic: None,
+            }),
+        ),
+        (
+            AstNodeTypedefRecordKey {
+                lexeme: "name".to_string(),
+                span: Span { start: 16, end: 22 },
+            },
+            Box::new(AstNodeTypedef {
+                span: Span { start: 22, end: 26 },
+                lexeme: "Str".to_string(),
+                generic: None,
+            }),
+        ),
+    ];
+
+    let expected_result = Ok(vec![AstNode::Typedef(AstNodeTypedef {
+        span: Span { start: 0, end: 28 },
+        lexeme: "Dict".to_string(),
+        generic: Some(AstNodeTypedefGeneric::Record(record)),
+    })]);
+
+    assert_eq!(result, expected_result);
+}
+
+#[test]
 fn should_reject_unclosed_record() {
     let input = r##":Dict<{{ "a" :Int }>"##.as_bytes();
     let result = Prelude::new(input).parse();

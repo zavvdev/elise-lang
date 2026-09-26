@@ -111,6 +111,7 @@ impl<'a> Prelude<'a> {
             || *c == CharCode::RIGHT_SQR_BRACKET
             || *c == CharCode::LESS
             || *c == CharCode::MORE
+            || *c == CharCode::RIGHT_CUR_BRACKET
     }
 
     // ==================================================================

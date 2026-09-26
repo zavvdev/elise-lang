@@ -31,6 +31,7 @@ fn should_parse_non_empty() {
                     "d" null,
                     "e" [1],
                     "f" { "a2"  some-value }
+                    "g" {"a" 2}
                 }"##
         .as_bytes(),
     )
@@ -141,11 +142,43 @@ fn should_parse_non_empty() {
         })),
     );
 
+    let pair_7 = (
+        AstNodeExprDictKey {
+            span: Span {
+                start: 213,
+                end: 216,
+            },
+            lexeme: "g".to_string(),
+        },
+        Box::new(AstNodeExpr::Dict(AstNodeExprDict {
+            span: Span {
+                start: 217,
+                end: 224,
+            },
+            entries: vec![(
+                AstNodeExprDictKey {
+                    span: Span {
+                        start: 218,
+                        end: 221,
+                    },
+                    lexeme: "a".to_string(),
+                },
+                Box::new(AstNodeExpr::Int(AstNodeExprPrim {
+                    span: Span {
+                        start: 222,
+                        end: 223,
+                    },
+                    lexeme: "2".to_string(),
+                })),
+            )],
+        })),
+    );
+
     assert_eq!(
         ast,
         Ok(vec![AstNode::Expr(AstNodeExpr::Dict(AstNodeExprDict {
-            span: Span { start: 0, end: 210 },
-            entries: vec![pair_1, pair_2, pair_3, pair_4, pair_5, pair_6],
+            span: Span { start: 0, end: 242 },
+            entries: vec![pair_1, pair_2, pair_3, pair_4, pair_5, pair_6, pair_7],
         }))])
     );
 }
