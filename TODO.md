@@ -37,7 +37,7 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
       passed into semanalyzer as optional and also is going to be built by semanalyzer during
       resolving type definitions in source code. .typedef function must not produce any AAast nodes.
 
-    - [ ] ScopeStack
+    - [x] ScopeStack
     
     - [ ] Int
 

@@ -9,9 +9,8 @@
 //! This structure is a compile-time artifact only. It is discarded after
 //! semantic analysis produces the HIR.
 
+use elise_aast::symbol_table::SymbolId;
 use std::collections::HashMap;
-
-use crate::symbol_table::SymbolId;
 
 pub struct Scope {
     pub bindings: HashMap<String, SymbolId>,
@@ -69,7 +68,9 @@ impl ScopeStack {
 
 #[cfg(test)]
 mod tests {
-    use crate::{scope_stack::ScopeStack, symbol_table::SymbolId};
+    use elise_aast::symbol_table::SymbolId;
+
+    use crate::scope_stack::ScopeStack;
 
     #[test]
     fn should_create_with_empty_scopes() {
