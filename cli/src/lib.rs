@@ -17,7 +17,6 @@ use elise_parser::Prelude;
 use elise_shared::shared_errors::LangErr;
 use std::time::Instant;
 
-
 /// Representation of the successful execution of the
 /// program in 'RUN' mode.
 #[derive(Debug)]

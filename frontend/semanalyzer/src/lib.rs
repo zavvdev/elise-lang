@@ -27,14 +27,21 @@
 pub mod builtins;
 pub mod scope_stack;
 
-use elise_aast::{AAstNode, AAstNodeData, symbol_table::SymbolTable};
+use elise_aast::{
+    AAstNode, AAstNodeData,
+    data_types::{AAstDataType, AAstPrimDataType},
+    symbol_table::SymbolTable,
+};
 use elise_ast::{AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprPrim};
 use elise_shared::{
     shared_errors::errors_semanalyzer::SemanalyzerErr, shared_node_names::NodeName,
     shared_types::ArityMismatchKind,
 };
 
-use crate::{builtins::FnLet, scope_stack::ScopeStack};
+use crate::{
+    builtins::{FnLet, TypedefLexeme},
+    scope_stack::ScopeStack,
+};
 
 // ==================================================================
 //
@@ -100,6 +107,39 @@ impl<'a> Harmony<'a> {
                 span: ast_node.span().clone(),
             }),
         }
+    }
+
+    fn expect_typedef(ast_node: &AstNode) -> Result<AAstDataType, SemanalyzerErr> {
+        let AstNode::Typedef(typedef) = ast_node else {
+            return Err(SemanalyzerErr::ExpectedTypedef {
+                span: ast_node.span().clone(),
+            });
+        };
+
+        match typedef.lexeme.as_ref() {
+            TypedefLexeme::INT => Ok(AAstDataType::Prim(AAstPrimDataType::Int)),
+            _ => Err(SemanalyzerErr::UnknownTypedef {
+                span: ast_node.span().clone(),
+            }),
+        }
+    }
+
+    fn expect_expr(ast_node: &AstNode) -> Result<&AstNodeExpr, SemanalyzerErr> {
+        let AstNode::Expr(expr) = ast_node else {
+            return Err(SemanalyzerErr::ExpectedExpr {
+                span: ast_node.span().clone(),
+            });
+        };
+        Ok(expr)
+    }
+
+    fn expect_identifier(ast_node: &AstNode) -> Result<&AstNodeExprPrim, SemanalyzerErr> {
+        let AstNode::Expr(AstNodeExpr::Ident(identifier)) = ast_node else {
+            return Err(SemanalyzerErr::ExpectedIdentifier {
+                span: ast_node.span().clone(),
+            });
+        };
+        Ok(identifier)
     }
 
     // ==================================================================
@@ -212,37 +252,20 @@ impl<'a> Harmony<'a> {
         let second_arg = &**call.body.get(1).unwrap();
         let third_arg = &**call.body.get(2).unwrap();
 
-        let AstNode::Expr(AstNodeExpr::Ident(primitive)) = first_arg else {
-            return Err(SemanalyzerErr::ArgKindMismatch {
-                fn_name: FnLet::LEXEME,
-                position: 0,
-                expected: NodeName::IDENT,
-                found: first_arg.as_str(),
-                span: first_arg.span().clone(),
-            });
-        };
+        let identifier = Self::expect_identifier(first_arg)?;
+        let typedef = Self::expect_typedef(second_arg)?;
+        let expr = Self::expect_expr(third_arg)?;
 
-        let AstNode::Typedef(AstNodeExpr::Ident(primitive)) = first_arg else {
-            return Err(SemanalyzerErr::ArgKindMismatch {
-                fn_name: FnLet::LEXEME,
-                position: 0,
-                expected: NodeName::IDENT,
-                found: first_arg.as_str(),
-                span: first_arg.span().clone(),
-            });
-        };
-
-        let (ident_type, aast_node) = match second_arg {
-            AstNode::Int(prim) => (LangPrimitiveType::Int, Self::annotate_int(prim)?),
-            AstNode::Float(prim) => (LangPrimitiveType::Float, Self::annotate_float(prim)?),
-            AstNode::Str(prim) => (LangPrimitiveType::Str, Self::annotate_string(prim)?),
-            AstNode::Bool(prim) => (LangPrimitiveType::Bool, Self::annotate_bool(prim)?),
-            AstNode::Null(prim) => (LangPrimitiveType::Null, Self::annotate_null(prim)?),
+        let (ident_type, aast_node) = match third_arg {
+            AstNode::Expr(AstNodeExpr::Int(prim)) => (
+                AAstDataType::Prim(AAstPrimDataType::Int),
+                Self::annotate_int(prim)?,
+            ),
             _ => {
                 return Err(SemanalyzerErr::ArgTypeMismatch {
-                    fn_name: FnDefine::LEXEME,
-                    position: 1,
-                    expected: NodeName::PRIMITIVE,
+                    fn_name: FnLet::LEXEME,
+                    position: 2,
+                    expected: NodeName::EXPRESSION,
                     found: second_arg.as_str(),
                     span: second_arg.span().clone(),
                 });

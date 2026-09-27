@@ -20,4 +20,6 @@ impl NodeName {
     pub const FN_TYPEDEF: &'static str = ".typedef";
     pub const FN_GET: &'static str = ".get";
     pub const FN_ADD: &'static str = ".add";
+
+    pub const EXPRESSION: &'static str = "Expression";
 }

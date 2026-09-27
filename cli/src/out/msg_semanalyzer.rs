@@ -59,6 +59,14 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
         UnsupportedNode { span } => ("Unsupported expression".to_string(), span),
 
         IdentSelfBinding { span } => ("Cannot bind an identifier to itself".to_string(), span),
+
+        ExpectedTypedef { span } => ("Expected type definition".to_string(), span),
+
+        UnknownTypedef { span } => ("Unknown type definition".to_string(), span),
+
+        ExpectedIdentifier { span } => ("Expected identifier".to_string(), span),
+
+        ExpectedExpr { span } => ("Expected expression".to_string(), span),
     };
 
     utils::print_err(&info, Some("Semantic error"));

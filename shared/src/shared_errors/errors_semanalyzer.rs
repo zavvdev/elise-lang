@@ -37,4 +37,16 @@ pub enum SemanalyzerErr {
     IdentSelfBinding {
         span: Span,
     },
+    ExpectedTypedef {
+        span: Span,
+    },
+    UnknownTypedef {
+        span: Span,
+    },
+    ExpectedIdentifier {
+        span: Span,
+    },
+    ExpectedExpr {
+        span: Span,
+    },
 }

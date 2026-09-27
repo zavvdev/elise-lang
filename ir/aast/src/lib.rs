@@ -7,7 +7,7 @@
 //!
 //! The AAST is a compile-time only structure, discarded after bytecode emission.
 
-mod data_types;
+pub mod data_types;
 pub mod symbol_table;
 
 use elise_shared::{shared_node_names::NodeName, shared_types::Span};
