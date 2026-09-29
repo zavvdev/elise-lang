@@ -1,6 +1,5 @@
-.typedef (User :Record<{
-                    "name"    :Str
-                    "age"     :Int
-                    "address" :Str}>)
+.typedef (Product :Record<{
+                    "id"    :Int
+                    "price" :Int }>)
 
-.typedef (Data :List<:User>)
+.typedef (Data :List<:Product>)

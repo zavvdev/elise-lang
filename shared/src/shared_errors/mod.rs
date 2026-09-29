@@ -20,7 +20,7 @@ pub enum LangErr {
     ParserSource(ParserErr),
     ParserSchema(ParserErr),
     SchemaBinder(SchemaBinderErr),
-    SemanticAnalyzer(SemanalyzerErr),
+    Semanalyzer(SemanalyzerErr),
     DataValidator(DataValidatorErr),
     CsvDataParser(CsvDataParserErr),
     CsvDataBinder(CsvDataBinderErr),

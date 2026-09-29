@@ -92,6 +92,7 @@ dependencies = [
 name = "elise-aast"
 version = "0.1.0"
 dependencies = [
+ "elise-ast",
  "elise-shared",
 ]
 

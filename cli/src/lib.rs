@@ -14,6 +14,7 @@ use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 //    schema_binder::{SchemaBinder, SchemaBindings},
 //};
 use elise_parser::Prelude;
+use elise_semanalyzer::Harmony;
 use elise_shared::shared_errors::LangErr;
 use std::time::Instant;
 
@@ -72,6 +73,12 @@ pub fn run<'a>(
 
     println!("Source Code Ast: {:#?}", source_code_ast);
     println!("Schema Code Ast: {:#?}", schema_code_ast);
+
+    let schema_code_aast = Harmony::new(&schema_code_ast)
+        .analyze()
+        .map_err(LangErr::Semanalyzer)?;
+
+    println!("Schema Code AAst: {:#?}", schema_code_aast);
 
     Ok(RunResult {
         config,

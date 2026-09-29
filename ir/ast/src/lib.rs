@@ -117,19 +117,19 @@ impl AstNodeExpr {
 //
 // ==================================================================
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct AstNodeTypedefRecordKey {
     pub lexeme: String,
     pub span: Span,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum AstNodeTypedefGeneric {
     Single(Box<AstNodeTypedef>),
     Record(Vec<(AstNodeTypedefRecordKey, Box<AstNodeTypedef>)>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct AstNodeTypedef {
     pub span: Span,
     pub lexeme: String,
