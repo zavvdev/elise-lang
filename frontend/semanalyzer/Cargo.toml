@@ -11,6 +11,7 @@ elise-shared = { path = "../../shared" }
 elise-aast = { path = "../../ir/aast" }
 elise-ast = { path = "../../ir/ast" }
 elise-bindings = { path = "../../ir/bindings" }
+elise-binder = { path = "../binder" }
 elise-parser = { path = "../parser" }
 
 [dev-dependencies]

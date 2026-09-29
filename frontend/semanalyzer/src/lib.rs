@@ -44,12 +44,6 @@ use crate::{
     scope_stack::ScopeStack,
 };
 
-// ==================================================================
-//
-// SEMANALYZER START
-//
-// ==================================================================
-
 #[derive(Debug)]
 pub struct HIR {
     pub symbol_table: SymbolTable,
@@ -59,11 +53,12 @@ pub struct HIR {
 pub struct Harmony<'a> {
     pub ast: &'a Vec<AstNode>,
     pub scope_stack: ScopeStack,
-    pub type_alias_table: Option<TypeAliasTable>,
+    pub local_type_alias_table: TypeAliasTable,
+    pub global_type_alias_table: Option<TypeAliasTable>,
 }
 
 impl<'a> Harmony<'a> {
-    pub fn new(ast: &'a Vec<AstNode>, type_alias_table: Option<TypeAliasTable>) -> Self {
+    pub fn new(ast: &'a Vec<AstNode>, global_type_alias_table: Option<TypeAliasTable>) -> Self {
         let mut scope_stack = ScopeStack::new();
 
         // In order to have a global scope we push a new one
@@ -73,7 +68,7 @@ impl<'a> Harmony<'a> {
         // frame, so if it defines an identifier in the global
         // scope, the stack frame must be already there.
         scope_stack.push();
-        Self { ast, scope_stack, type_alias_table }
+        Self { ast, scope_stack, global_type_alias_table }
     }
 
     /// Analyzer entry point. Creates symbol table and aast vector
@@ -295,9 +290,3 @@ impl<'a> Harmony<'a> {
     // ANNOTATE LET CALL END
     // ==================================================================
 }
-
-// ==================================================================
-//
-// SEMANALYZER END
-//
-// ==================================================================
