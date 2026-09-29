@@ -12,7 +12,7 @@ pub mod symbol_table;
 
 use elise_shared::{shared_node_names::NodeName, shared_types::Span};
 
-use crate::{data_types::AAstDataType, symbol_table::SymbolId};
+use crate::symbol_table::SymbolId;
 
 #[derive(Debug, PartialEq)]
 pub enum AAstNodeCall {
@@ -21,17 +21,12 @@ pub enum AAstNodeCall {
         value: AAstNodeData,
         span: Span,
     },
-    Typedef {
-        // TODO: Do we need to store it in symbol table or maybe
-        // some other record for type definitions only?
-        span: Span,
-        alias: String,
-        dtype: AAstDataType,
-    },
     Get {
+        // TODO
         span: Span,
     },
     Add {
+        // TODO
         span: Span,
     },
 }
@@ -64,7 +59,6 @@ impl AAstNode {
             AAstNode::SymbolRef { span, .. } => span,
             AAstNode::Call(call_type) => match call_type {
                 AAstNodeCall::Let { span, .. } => span,
-                AAstNodeCall::Typedef { span, .. } => span,
                 AAstNodeCall::Add { span, .. } => span,
                 AAstNodeCall::Get { span, .. } => span,
             },
@@ -79,7 +73,6 @@ impl AAstNode {
             AAstNode::SymbolRef { .. } => NodeName::SYMBOL,
             AAstNode::Call(call_type) => match call_type {
                 AAstNodeCall::Let { .. } => NodeName::FN_LET,
-                AAstNodeCall::Typedef { .. } => NodeName::FN_TYPEDEF,
                 AAstNodeCall::Add { .. } => NodeName::FN_ADD,
                 AAstNodeCall::Get { .. } => NodeName::FN_GET,
             },

@@ -33,6 +33,7 @@ use elise_aast::{
     symbol_table::SymbolTable,
 };
 use elise_ast::{AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprPrim};
+use elise_bindings::type_bindings::TypeAliasTable;
 use elise_shared::{
     shared_errors::errors_semanalyzer::SemanalyzerErr, shared_node_names::NodeName,
     shared_types::ArityMismatchKind,
@@ -58,10 +59,11 @@ pub struct HIR {
 pub struct Harmony<'a> {
     pub ast: &'a Vec<AstNode>,
     pub scope_stack: ScopeStack,
+    pub type_alias_table: Option<TypeAliasTable>,
 }
 
 impl<'a> Harmony<'a> {
-    pub fn new(ast: &'a Vec<AstNode>) -> Self {
+    pub fn new(ast: &'a Vec<AstNode>, type_alias_table: Option<TypeAliasTable>) -> Self {
         let mut scope_stack = ScopeStack::new();
 
         // In order to have a global scope we push a new one
@@ -71,7 +73,7 @@ impl<'a> Harmony<'a> {
         // frame, so if it defines an identifier in the global
         // scope, the stack frame must be already there.
         scope_stack.push();
-        Self { ast, scope_stack }
+        Self { ast, scope_stack, type_alias_table }
     }
 
     /// Analyzer entry point. Creates symbol table and aast vector
