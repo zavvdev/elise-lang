@@ -27,16 +27,17 @@
 pub mod builtins;
 pub mod scope_stack;
 
+use std::collections::HashMap;
+
 use elise_aast::{
     AAstNode, AAstNodeData,
     data_types::{AAstDataType, AAstPrimDataType},
     symbol_table::SymbolTable,
 };
 use elise_ast::{AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprPrim};
-use elise_bindings::type_bindings::TypeAliasTable;
+use elise_bindings::type_bindings::TypeAliases;
 use elise_shared::{
-    shared_errors::errors_semanalyzer::SemanalyzerErr, shared_node_names::NodeName,
-    shared_types::ArityMismatchKind,
+    shared_errors::errors_semanalyzer::SemanalyzerErr, shared_node_names::NodeName, shared_types::{ArityMismatchKind, Span},
 };
 
 use crate::{
@@ -53,12 +54,12 @@ pub struct HIR {
 pub struct Harmony<'a> {
     pub ast: &'a Vec<AstNode>,
     pub scope_stack: ScopeStack,
-    pub local_type_alias_table: TypeAliasTable,
-    pub global_type_alias_table: Option<TypeAliasTable>,
+    pub local_type_aliases: TypeAliases,
+    pub global_type_aliases: Option<TypeAliases>,
 }
 
 impl<'a> Harmony<'a> {
-    pub fn new(ast: &'a Vec<AstNode>, global_type_alias_table: Option<TypeAliasTable>) -> Self {
+    pub fn new(ast: &'a Vec<AstNode>, global_type_aliases: Option<TypeAliases>) -> Self {
         let mut scope_stack = ScopeStack::new();
 
         // In order to have a global scope we push a new one
@@ -68,7 +69,13 @@ impl<'a> Harmony<'a> {
         // frame, so if it defines an identifier in the global
         // scope, the stack frame must be already there.
         scope_stack.push();
-        Self { ast, scope_stack, global_type_alias_table }
+
+        Self {
+            ast,
+            scope_stack,
+            global_type_aliases,
+            local_type_aliases: HashMap::new(),
+        }
     }
 
     /// Analyzer entry point. Creates symbol table and aast vector
@@ -269,21 +276,25 @@ impl<'a> Harmony<'a> {
             }
         };
 
-        if self.scope_stack.resolve(&primitive.value).is_some() {
-            return Err(SemanalyzerErr::SymbolDuplicate {
-                span: call.span.clone(),
-            });
-        }
-
-        let symbol_id = symbol_table.fresh(&primitive.value, LangType::Primitive(ident_type));
-
-        self.scope_stack.define(&primitive.value, symbol_id);
-
-        Ok(AAstNode::CallDefine {
-            symbol_id,
-            value: Box::new(aast_node),
-            span: call.span.clone(),
+        Err(SemanalyzerErr::SymbolDuplicate {
+            span: Span { start: 0, end: 0 },
         })
+
+        //if self.scope_stack.resolve(&primitive.value).is_some() {
+        //    return Err(SemanalyzerErr::SymbolDuplicate {
+        //        span: call.span.clone(),
+        //    });
+        //}
+
+        //let symbol_id = symbol_table.fresh(&primitive.value, LangType::Primitive(ident_type));
+
+        //self.scope_stack.define(&primitive.value, symbol_id);
+
+        //Ok(AAstNode::CallDefine {
+        //    symbol_id,
+        //    value: Box::new(aast_node),
+        //    span: call.span.clone(),
+        //})
     }
 
     // ==================================================================

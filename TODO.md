@@ -20,8 +20,8 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
      For now, our parser handles all grammar that was designed. It also emits ast nodes
      that represent all possible data types such as Int, Float, List, Dict etc.
      Semantic analyzer narrows them down only to things that are currently supported.
-     In our case we only support: Int, .add function, @data slot, .let function,
-     .typedef function, get function. Every other module after semanalyzer must only
+     In our case we only support: Int, .add function, @data slot, .typedef function,
+     .get function. Every other module after semanalyzer must only
      support these for now. Do not add anything that is not yet supported.
 
 - [x] Parser
@@ -42,8 +42,6 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
     - [ ] Int
 
     - [ ] .typedef (does not emit AAstNodes. Just creates a record in the local alias table)
-
-    - [ ] .let
 
     - [ ] .add
 

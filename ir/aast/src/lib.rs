@@ -33,7 +33,14 @@ pub enum AAstNodeCall {
 
 #[derive(Debug, PartialEq)]
 pub enum AAstNodeData {
-    Int { value: String, span: Span },
+    Int {
+        value: String,
+        span: Span,
+    },
+    List {
+        items: Vec<Box<AAstNodeData>>,
+        span: Span,
+    },
 }
 
 /// AAstNode must store primitive values as String type instead of

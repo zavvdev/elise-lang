@@ -5,7 +5,8 @@ RUN (SourceCode, SchemaCode, Data)
     -> Parse(Data) -> ParsedData +
     -> Sema(SchemaCodeAst) -> SchemaCodeAAst
     -> BindSchema(SchemaCodeAAst) -> SchemaBinding           -- This step uses TypeBinder
-    -> BindData(ParsedData) -> DataBinding                   -- this step uses DataBinder designed for the data
+    -> AdaptData(ParsedData) -> EliseSourceCode
+    -> BindData(EliseSourceCode) -> DataBinding              -- this step uses DataBinder designed for the data
                                                                 being bind.
     -> Sema(SourceCodeAst, SchemaBinding) -> SourceCodeAAst  -- This step uses TypeBinder in order to
                                                                 bind types in source code and default
@@ -32,12 +33,14 @@ VALIDATE(SchemaCode, Data)
     -> Parse(Data) -> ParsedData
     -> Sema(SchemaCodeAst) -> SchemaCodeAAst
     -> BindSchema(SchemaCodeAAst) -> SchemaBinding
-    -> BindData(ParsedData) -> DataBinding
+    -> AdaptData(ParsedData) -> EliseSourceCode
+    -> BindData(EliseSourceCode) -> DataBinding
     -> Validate(SchemaBinding, DataBinding)
 
 EXEC(Bytecode, Data)
     -> Parse(Data) -> ParsedData
-    -> BindData(ParsedData) -> DataBinding
+    -> AdaptData(ParsedData) -> EliseSourceCode
+    -> BindData(EliseSourceCode) -> DataBinding
     -> VM(Bytecode, DataBinding)
 ```
 
