@@ -37,11 +37,15 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
       passed into semanalyzer as optional and also is going to be built by semanalyzer during
       resolving type definitions in source code. .typedef function must not produce any AAast nodes.
 
-    - [x] ScopeStack
+    - [ ] .typedef
+
+        - [ ] Add local_type_aliases
+        
+        - [ ] Add global_type_aliases
+
+        - [ ] Tests
     
     - [ ] Int
-
-    - [ ] .typedef (does not emit AAstNodes. Just creates a record in the local alias table)
 
     - [ ] .add
 

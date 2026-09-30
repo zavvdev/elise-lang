@@ -67,6 +67,12 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
         ExpectedIdentifier { span } => ("Expected identifier".to_string(), span),
 
         ExpectedExpr { span } => ("Expected expression".to_string(), span),
+
+        UnexpectedGeneric { span } => ("Unexpected generic".to_string(), span),
+
+        ExpectedGeneric { span } => ("Expected generic".to_string(), span),
+
+        InvalidGeneric { span } => ("Invalid generic".to_string(), span),
     };
 
     utils::print_err(&info, Some("Semantic error"));

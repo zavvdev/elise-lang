@@ -1,12 +1,14 @@
 pub mod builtins;
 
-use elise_aast::{AAstNode, AAstNodeCall};
-use elise_ast::{AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprPrim, AstNodeTypedef};
+use elise_aast::{AAstNode, AAstNodeCall, AAstNodeTypedef, AAstNodeTypedefRecordEntries};
+use elise_ast::{
+    AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprPrim, AstNodeTypedef, AstNodeTypedefGeneric,
+};
 use elise_shared::{
     shared_errors::errors_semanalyzer::SemanalyzerErr, shared_types::ArityMismatchKind,
 };
 
-use crate::builtins::FnTypedef;
+use crate::builtins::{FnTypedef, TypedefLexeme};
 
 #[derive(Debug)]
 pub struct SemanticModel {
@@ -18,6 +20,10 @@ pub struct Harmony<'a> {
 }
 
 impl<'a> Harmony<'a> {
+    // TODO: Accept global_type_aliases and check those aliases
+    // during typedef analysis for custom literals.
+    // Also add local_type_aliases and record custom type
+    // definitions into it.
     pub fn new(ast: &'a Vec<AstNode>) -> Self {
         Self { ast }
     }
@@ -42,6 +48,10 @@ impl<'a> Harmony<'a> {
         }
     }
 
+    // ==================================================================
+    // NODE MATCHERS START
+    // ==================================================================
+
     fn expect_typedef(ast_node: &AstNode) -> Result<&AstNodeTypedef, SemanalyzerErr> {
         let AstNode::Typedef(typedef) = ast_node else {
             return Err(SemanalyzerErr::ExpectedTypedef {
@@ -59,6 +69,104 @@ impl<'a> Harmony<'a> {
         };
         Ok(identifier)
     }
+
+    // ==================================================================
+    // NODE MATCHERS END
+    // ==================================================================
+
+    // ==================================================================
+    // TYPEDEF START
+    // ==================================================================
+
+    fn analyze_typedef_custom(typedef: &AstNodeTypedef) -> Result<AAstNodeTypedef, SemanalyzerErr> {
+        if typedef.generic.is_some() {
+            return Err(SemanalyzerErr::UnexpectedGeneric {
+                span: typedef.span.clone(),
+            });
+        }
+        // TODO: Check if exists in global_type_aliases
+        // and local_type_aliases.
+        Ok(AAstNodeTypedef::Custom {
+            alias: typedef.lexeme.clone(),
+            span: typedef.span.clone(),
+        })
+    }
+
+    fn analyze_typedef_int(typedef: &AstNodeTypedef) -> Result<AAstNodeTypedef, SemanalyzerErr> {
+        if typedef.generic.is_some() {
+            return Err(SemanalyzerErr::UnexpectedGeneric {
+                span: typedef.span.clone(),
+            });
+        }
+        Ok(AAstNodeTypedef::Int {
+            span: typedef.span.clone(),
+        })
+    }
+
+    fn analyze_typedef_list(typedef: &AstNodeTypedef) -> Result<AAstNodeTypedef, SemanalyzerErr> {
+        let Some(generic) = typedef.generic.as_ref() else {
+            return Err(SemanalyzerErr::ExpectedGeneric {
+                span: typedef.span.clone(),
+            });
+        };
+
+        let AstNodeTypedefGeneric::Single(single_generic) = generic else {
+            return Err(SemanalyzerErr::InvalidGeneric {
+                span: typedef.span.clone(),
+            });
+        };
+
+        Ok(AAstNodeTypedef::List {
+            span: typedef.span.clone(),
+            item_type: Box::new(Self::analyze_typedef(single_generic)?),
+        })
+    }
+
+    fn analyze_typedef_record(typedef: &AstNodeTypedef) -> Result<AAstNodeTypedef, SemanalyzerErr> {
+        let Some(generic) = typedef.generic.as_ref() else {
+            return Err(SemanalyzerErr::ExpectedGeneric {
+                span: typedef.span.clone(),
+            });
+        };
+
+        let AstNodeTypedefGeneric::Record(ast_entries) = generic else {
+            return Err(SemanalyzerErr::InvalidGeneric {
+                span: typedef.span.clone(),
+            });
+        };
+
+        let entries = ast_entries
+            .iter()
+            .map(|(key, typedef)| {
+                Ok((
+                    key.lexeme.clone(),
+                    Box::new(Self::analyze_typedef(typedef)?),
+                ))
+            })
+            .collect::<Result<AAstNodeTypedefRecordEntries, SemanalyzerErr>>()?;
+
+        Ok(AAstNodeTypedef::Record {
+            span: typedef.span.clone(),
+            entries,
+        })
+    }
+
+    fn analyze_typedef(typedef: &AstNodeTypedef) -> Result<AAstNodeTypedef, SemanalyzerErr> {
+        match typedef.lexeme.as_str() {
+            TypedefLexeme::INT => Self::analyze_typedef_int(typedef),
+            TypedefLexeme::LIST => Self::analyze_typedef_list(typedef),
+            TypedefLexeme::RECORD => Self::analyze_typedef_record(typedef),
+            _ => Self::analyze_typedef_custom(typedef),
+        }
+    }
+
+    // ==================================================================
+    // TYPEDEF END
+    // ==================================================================
+
+    // ==================================================================
+    // CALL START
+    // ==================================================================
 
     fn analyze_call(&mut self, call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
         match call.lexeme.as_str() {
@@ -85,11 +193,13 @@ impl<'a> Harmony<'a> {
         let identifier = Self::expect_identifier(first_arg)?;
         let typedef = Self::expect_typedef(second_arg)?;
 
-        // TODO: analyze known type definitions and other type alias references.
-
         Ok(AAstNode::Call(AAstNodeCall::Typedef {
             alias: identifier.lexeme.clone(),
-            ast_node: typedef.clone(),
+            typedef: Self::analyze_typedef(typedef)?,
         }))
     }
+
+    // ==================================================================
+    // CALL END
+    // ==================================================================
 }

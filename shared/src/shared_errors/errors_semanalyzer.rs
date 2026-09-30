@@ -49,4 +49,13 @@ pub enum SemanalyzerErr {
     ExpectedExpr {
         span: Span,
     },
+    UnexpectedGeneric {
+        span: Span,
+    },
+    ExpectedGeneric {
+        span: Span,
+    },
+    InvalidGeneric {
+        span: Span,
+    },
 }
