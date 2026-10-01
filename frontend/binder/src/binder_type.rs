@@ -59,6 +59,23 @@ pub struct TypeBinder<'a> {
     current_span: Span,
 }
 
+// TODO:
+// 1. Semantic analyzer must carry three things:
+//    - local_type_bindings which is a HashMap<String, TypeBindings>
+//    - local_type_aliases which is a HashMap<String, AAstNodeTypedef>
+//    - global_type_bindings which is a HashMap<String, TypeBindings>
+//
+// 2. Internally, semanalyzer walks AST, when it encounters .typedef
+//    it creates AAst node for typedef, adds it into local_type_aliases,
+//    then calls TypeBinder in order to bind this type and stores the
+//    result into local_type_bindings. When building AAst and encounter
+//    custom types, check local_type_bindings and global_type_bindings,
+//    if alias is not there - emit error. During building bindings from
+//    AAst node (calling this binder) pass a local_type_bindings + 
+//    global_type_bindings into this binder, so it can build a binding
+//    if there is a custom type. So this binder must accept a second arg
+//    which is a type of its return type.
+
 impl<'a> TypeBinder<'a> {
     pub fn new(aast_typedef: &'a AAstNodeTypedef) -> Self {
         Self {
