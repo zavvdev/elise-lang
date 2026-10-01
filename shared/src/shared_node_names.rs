@@ -11,4 +11,5 @@ impl NodeName {
     pub const DICT: &'static str = "Dict";
     pub const CALL: &'static str = "Call";
     pub const TYPEDEF: &'static str = "Typedef";
+    pub const RECORD: &'static str = "Record";
 }

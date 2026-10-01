@@ -1,22 +1,223 @@
-// TODO: Accept Vec<AstNode::Typedef> and build a HashMap:
+// ==================================================================
+//
+// DATA TYPES START
+//
+// ==================================================================
 
-// .typedef (User :Record<{
-//                     "name"    :Str
-//                     "age"     :Int
-//                     "address" :Str}>)
+use std::collections::HashMap;
+
+use elise_aast::{AAstNodeTypedef, AAstNodeTypedefRecordEntries};
+use elise_bindings::binding_path::{BindingPath, BindingPathSegment};
+use elise_shared::{
+    shared_errors::errors_type_binder::TypeBinderErr, shared_node_names::NodeName,
+    shared_types::Span,
+};
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum TypeBinderDataType {
+    Int,
+    List,
+    Record,
+}
+
+impl TypeBinderDataType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            TypeBinderDataType::Int => NodeName::INT,
+            TypeBinderDataType::List => NodeName::LIST,
+            TypeBinderDataType::Record => NodeName::RECORD,
+        }
+    }
+}
+
+// ==================================================================
 //
-// .typedef (Data :List<:User>)
+// DATA TYPES END
 //
+// ==================================================================
+
+// ==================================================================
 //
-// HashMap {
-//     [Alias("User")]            => Record,
-//     [Alias("User"), "name"]    => Str,
-//     [Alias("User"), "age"]     => Int,
-//     [Alias("User"), "address"] => Str,
+// BINDER START
 //
-//     [Alias("Data")]                           => List<Alias("User")>,
-//     [Alias("Data"), AbstractIndex]            => Alias("User"),
-//     [Alias("Data"), AbstractIndex, "name"]    => Str,
-//     [Alias("Data"), AbstractIndex, "age"]     => Int,
-//     [Alias("Data"), AbstractIndex, "address"] => Str,
-// }
+// ==================================================================
+
+/// Data type descriptor that is a value each resolution
+/// path resolves to.
+#[derive(Debug, PartialEq, Clone)]
+pub struct TypeBinderTypeDescriptor {
+    pub dtype: TypeBinderDataType,
+    pub span: Span,
+}
+
+type TypeBindings = HashMap<BindingPath, TypeBinderTypeDescriptor>;
+
+pub struct TypeBinder<'a> {
+    aast_typedef: &'a AAstNodeTypedef,
+    current_path: BindingPath,
+    current_type: Option<TypeBinderDataType>,
+    current_span: Span,
+}
+
+impl<'a> TypeBinder<'a> {
+    pub fn new(aast_typedef: &'a AAstNodeTypedef) -> Self {
+        Self {
+            aast_typedef,
+            // Current path that changes according to nesting.
+            // We push here every time we recurse into nested fields
+            // like list items or record keys in order to resolve them.
+            current_path: BindingPath::new(),
+            // Data type that we're currently in and want to resolve.
+            // Whenever we encounter a type definition that we distinguish,
+            // we capture it into this field.
+            current_type: None,
+
+            current_span: Span { start: 0, end: 0 },
+        }
+    }
+
+    // TODO: We might not need to return Result since our AAst is always valid.
+    pub fn bind(&mut self) -> Result<TypeBindings, TypeBinderErr> {
+        let mut bindings: TypeBindings = HashMap::new();
+        self.bind_node(self.aast_typedef, &mut bindings)?;
+        Ok(bindings)
+    }
+
+    fn bind_node(
+        &mut self,
+        node: &AAstNodeTypedef,
+        bindings: &mut TypeBindings,
+    ) -> Result<(), TypeBinderErr> {
+        self.current_span = node.span().clone();
+        match node {
+            AAstNodeTypedef::Custom { .. } => {
+                // TODO
+                self.bind_primitive(TypeBinderDataType::Int, bindings)
+            }
+            AAstNodeTypedef::Record { entries, .. } => self.bind_record(entries, bindings),
+            AAstNodeTypedef::List { item_type, .. } => self.bind_list(item_type, bindings),
+            AAstNodeTypedef::Int { .. } => self.bind_primitive(TypeBinderDataType::Int, bindings),
+        }
+    }
+
+    /// Captures the current state and inserts a new record
+    /// into the bindings.
+    fn commit(&mut self, bindings: &mut TypeBindings) -> Result<(), TypeBinderErr> {
+        if let Some(dtype) = &self.current_type {
+            bindings.insert(
+                self.current_path.clone(),
+                TypeBinderTypeDescriptor {
+                    dtype: dtype.clone(),
+                    span: self.current_span.clone(),
+                },
+            );
+            return Ok(());
+        }
+        Err(TypeBinderErr::UnresolvablePath {
+            path: self.current_path.as_str(),
+        })
+    }
+
+    // ==================================================================
+    // PRIMITIVES START
+    // ==================================================================
+
+    /// We use the same function for all primitives since they all
+    /// adhere to the same semantics.
+    fn bind_primitive(
+        &mut self,
+        dtype: TypeBinderDataType,
+        bindings: &mut TypeBindings,
+    ) -> Result<(), TypeBinderErr> {
+        self.current_type = Some(dtype);
+        self.commit(bindings)?;
+
+        // We always remove the last path segment after resolving primitives
+        // regardless if they nested or not, because if they are nested,
+        // then it removes nested path segment which is correct. If they are not
+        // nested, which means they are top level type definition, then this will
+        // be noop because we can't remove Root segment from Path.
+        self.current_path.pop();
+
+        Ok(())
+    }
+
+    // ==================================================================
+    // PRIMITIVES END
+    // ==================================================================
+
+    // ==================================================================
+    // RECORD START
+    // ==================================================================
+
+    fn bind_record(
+        &mut self,
+        entries: &AAstNodeTypedefRecordEntries,
+        bindings: &mut TypeBindings,
+    ) -> Result<(), TypeBinderErr> {
+        // Capture current type as Record and resolve it right away
+        // in order to create a parent entry like:
+        // [Root, Field("some")] => TRecord
+        // We do this before recursing into tested definitions
+        // because resolving nested types will alter current_path
+        // state, so commiting parent after resolving recursively
+        // will produce invalid path segments to the parent.
+        self.current_type = Some(TypeBinderDataType::Record);
+        self.commit(bindings)?;
+
+        for (key, value) in entries {
+            // Push new segment into the current_path since we enter a new
+            // scope with dict key.
+            self.current_path
+                .push(BindingPathSegment::Field(key.clone()));
+            // Recurse into the key value type definition. This will commit
+            // new type definitions with path including the respective key.
+            self.bind_node(value, bindings)?;
+        }
+
+        self.current_path.pop();
+        Ok(())
+    }
+
+    // ==================================================================
+    // RECORD END
+    // ==================================================================
+
+    // ==================================================================
+    // LIST START
+    // ==================================================================
+
+    /// Lists are monomorphic because schema resolution is a single
+    /// deterministic AST walk producing one path -> type entry —
+    /// there is no representation for a path resolving
+    /// to more than one type.
+    fn bind_list(
+        &mut self,
+        item_type: &AAstNodeTypedef,
+        bindings: &mut TypeBindings,
+    ) -> Result<(), TypeBinderErr> {
+        // Capture current type and commit it before recursing
+        // in order to prevent committing parent type with invalid
+        // path segments since recursing will alter current_path.
+        self.current_type = Some(TypeBinderDataType::List);
+        self.commit(bindings)?;
+
+        // Pushing AbstractIndex since our list can have any number of
+        // items of the same type.
+        self.current_path.push(BindingPathSegment::AbstractIndex);
+        self.bind_node(item_type, bindings)?;
+
+        self.current_path.pop();
+        Ok(())
+    }
+
+    // ==================================================================
+    // LIST END
+    // ==================================================================
+}
+
+// ==================================================================
+//
+// BINDER END
+//
+// ==================================================================

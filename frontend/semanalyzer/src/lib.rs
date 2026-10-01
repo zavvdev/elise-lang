@@ -13,6 +13,7 @@ use crate::builtins::{FnTypedef, TypedefLexeme};
 #[derive(Debug)]
 pub struct SemanticModel {
     pub aast: Vec<AAstNode>,
+    // TODO: Return back local_type_aliases.
 }
 
 pub struct Harmony<'a> {
@@ -195,6 +196,8 @@ impl<'a> Harmony<'a> {
 
         Ok(AAstNode::Call(AAstNodeCall::Typedef {
             alias: identifier.lexeme.clone(),
+            // TODO: Take this typedef and create a TypeBinding from it.
+            // After that, add it into the local_type_aliases.
             typedef: Self::analyze_typedef(typedef)?,
         }))
     }

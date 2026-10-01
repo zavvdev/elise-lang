@@ -21,6 +21,17 @@ pub enum AAstNodeTypedef {
     },
 }
 
+impl AAstNodeTypedef {
+    pub fn span(&self) -> &Span {
+        match self {
+            AAstNodeTypedef::Custom { span, .. } => span,
+            AAstNodeTypedef::Record { span, .. } => span,
+            AAstNodeTypedef::List { span, .. } => span,
+            AAstNodeTypedef::Int { span, .. } => span,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum AAstNodeCall {
     Typedef {

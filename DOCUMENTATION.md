@@ -4,18 +4,10 @@ RUN (SourceCode, SchemaCode, Data)
     -> Parse(ShemaCode) -> SchemaCodeAst +
     -> Parse(Data) -> ParsedData +
     -> Sema(SchemaCodeAst) -> SchemaCodeAAst
-    -> BindSchema(SchemaCodeAAst) -> SchemaBinding           -- This step uses TypeBinder
+    -> BindSchema(SchemaCodeAAst) -> SchemaBinding
     -> AdaptData(ParsedData) -> EliseSourceCode
-    -> BindData(EliseSourceCode) -> DataBinding              -- this step uses DataBinder designed for the data
-                                                                being bind.
-    -> Sema(SourceCodeAst, SchemaBinding) -> SourceCodeAAst  -- This step uses TypeBinder in order to
-                                                                bind types in source code and default
-                                                                DataBinder for binding language compound data.
-                                                                Schema binding is injected into the
-                                                                global scope (:Data type and other
-                                                                custom types) and any source code
-                                                                data is being bind as we construct
-                                                                AAst.
+    -> BindData(EliseSourceCode) -> DataBinding
+    -> Sema(SourceCodeAst, SchemaBinding) -> SourceCodeAAst
     -> Validate(SchemaBinding, DataBinding)
     -> Compile(SchemaBinding, SourceCodeAAst) -> Bytecode
     -> VM(Bytecode, DataBinding)

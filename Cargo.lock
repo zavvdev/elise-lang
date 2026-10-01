@@ -106,7 +106,8 @@ dependencies = [
 name = "elise-binder"
 version = "0.1.0"
 dependencies = [
- "elise-ast",
+ "elise-aast",
+ "elise-bindings",
  "elise-shared",
 ]
 
