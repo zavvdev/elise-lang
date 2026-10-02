@@ -28,25 +28,12 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
 - [x] Data Parser (CSV)
 
-- [ ] Semantic analyzer. It must accept a valid source code Ast + optional HashMap where key is a
-      type name (alias) and value is a result of TypeBinder (hashmap where key is a binding path and
-      value is a type descriptor). It's optional because we use the same semanalyzer for schema file
-      and source code file, but when we analyze source code file, we inject type bindings into it
-      so we can reference types defined in .elt file. I think we need to create a separate data
-      structure in ir/bindings that stores Alias => TypeBindings. That data structure is going to be
-      passed into semanalyzer as optional and also is going to be built by semanalyzer during
-      resolving type definitions in source code. .typedef function must not produce any AAast nodes.
+- [ ] Semantic analyzer
 
     - [ ] .typedef
 
-        - [ ] Add local_type_aliases
-        
-        - [ ] Add global_type_aliases
-
         - [ ] Tests
     
-    - [ ] Int
-
     - [ ] .add
 
     - [ ] .get
@@ -54,6 +41,8 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
     - [ ] @data slot
 
 - [ ] TypeBinder
+
+    - [ ] Tests
 
 - [ ] DataBinder
 

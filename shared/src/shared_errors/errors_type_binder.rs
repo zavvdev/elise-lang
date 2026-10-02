@@ -1,4 +1,4 @@
-use crate::shared_types::{ArityMismatchKind, Span};
+use crate::shared_types::Span;
 
 #[derive(Debug, PartialEq)]
 pub enum TypeBinderErr {
@@ -12,12 +12,8 @@ pub enum TypeBinderErr {
     //    found: usize,
     //    span: Span,
     //},
-    UnresolvablePath {
-        path: String,
-    },
-    UnknownTypedef {
-        span: Span,
-    },
+    UnresolvablePath { path: String },
+    UnknownTypedef { span: Span },
     //InvalTypeDef {
     //    span: Span,
     //},

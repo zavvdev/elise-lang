@@ -6,7 +6,7 @@ use elise_aast::{AAstNode, AAstNodeCall, AAstNodeTypedef, AAstNodeTypedefRecordE
 use elise_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprPrim, AstNodeTypedef, AstNodeTypedefGeneric,
 };
-use elise_binder::binder_type::{TypeBinder, TypeBindings};
+use elise_bindings::TypeBindings;
 use elise_shared::{
     shared_errors::errors_semanalyzer::SemanalyzerErr, shared_types::ArityMismatchKind,
 };
@@ -16,33 +16,46 @@ use crate::builtins::{FnTypedef, TypedefLexeme};
 #[derive(Debug)]
 pub struct SemanticModel {
     pub aast: Vec<AAstNode>,
+
+    // Collection of all custom type bindings
+    // resolved during analysis.
     pub type_bindings: HashMap<String, TypeBindings>,
-    // TODO: Return back local_type_bindings.
 }
 
 pub struct Harmony<'a> {
     pub ast: &'a Vec<AstNode>,
-    pub local_type_aliases: HashMap<String, AAstNodeTypedef>,
-    pub local_type_bindings: HashMap<String, TypeBindings>,
+
+    // Local resolved type aliases. These are not bindings.
+    // We use them for creating bindings by passing to
+    // TypeBinder. Every time we resolve a new AAst typedef
+    // node (when user calls .typedef function), we insert
+    // this new AAst node here, so we can then access it
+    // for creating type binding.
+    pub type_aliases: HashMap<String, AAstNodeTypedef>,
+
+    // Local resolved type bindings. Flattened AAst type
+    // definition nodes for access simplification.
+    // Returned back from Harmony so it can accept it back
+    // as globals from a different context. For example,
+    // we receive type bindings from schema semantic
+    // analysis and then pass it as globals into source
+    // code semantic analysis stage, so we can access
+    // type definitions from schema file inside our source
+    // code file.
+    pub type_bindings: HashMap<String, TypeBindings>,
 }
 
 impl<'a> Harmony<'a> {
-    // TODO: Accept global_type_aliases and check those aliases
-    // during typedef analysis for custom literals.
-    // Also add local_type_aliases and record custom type
-    // definitions into it.
     pub fn new(
         ast: &'a Vec<AstNode>,
         global_type_bindings: Option<HashMap<String, TypeBindings>>,
     ) -> Self {
         Self {
             ast,
-            local_type_aliases: HashMap::new(),
-            local_type_bindings: if let Some(globals) = global_type_bindings {
-                globals
-            } else {
-                HashMap::new()
-            },
+            type_aliases: HashMap::new(),
+            // Inject as globals if available. Passing global type
+            // bindings into semanalyzer is not required.
+            type_bindings: global_type_bindings.unwrap_or_default(),
         }
     }
 
@@ -57,7 +70,7 @@ impl<'a> Harmony<'a> {
         Ok(SemanticModel {
             aast,
             // TODO: Maybe we can do smth without cloning?
-            type_bindings: self.local_type_bindings.clone(),
+            type_bindings: self.type_bindings.clone(),
         })
     }
 
@@ -106,8 +119,7 @@ impl<'a> Harmony<'a> {
                 span: typedef.span.clone(),
             });
         }
-        // TODO: Check if exists in global_type_aliases
-        // and local_type_aliases.
+        // TODO: Check if exists in type_aliases.
         Ok(AAstNodeTypedef::Custom {
             alias: typedef.lexeme.clone(),
             span: typedef.span.clone(),
@@ -180,31 +192,12 @@ impl<'a> Harmony<'a> {
         &mut self,
         typedef: &AstNodeTypedef,
     ) -> Result<AAstNodeTypedef, SemanalyzerErr> {
-        let lexeme = typedef.lexeme.as_str();
-
-        let aast_typedef = match lexeme {
+        match typedef.lexeme.as_str() {
             TypedefLexeme::INT => Self::analyze_typedef_int(typedef),
             TypedefLexeme::LIST => self.analyze_typedef_list(typedef),
             TypedefLexeme::RECORD => self.analyze_typedef_record(typedef),
             _ => Self::analyze_typedef_custom(typedef),
-        }?;
-
-        let bindings = TypeBinder::new(&aast_typedef, &self.local_type_bindings)
-            .bind()
-            .unwrap(); // TODO: Get rid of unwrap. Maybe move
-        // type binder into semanalyzer crate.
-
-        println!("bindings: {:#?}", bindings);
-
-        // TODO: Do all these inside analyze_call_typedef!
-
-        self.local_type_bindings
-            .insert(lexeme.to_string(), bindings);
-
-        self.local_type_aliases
-            .insert(lexeme.to_string(), aast_typedef.clone());
-
-        Ok(aast_typedef)
+        }
     }
 
     // ==================================================================
@@ -238,13 +231,28 @@ impl<'a> Harmony<'a> {
         let second_arg = &**call.body.get(1).unwrap();
 
         let identifier = Self::expect_identifier(first_arg)?;
-        let typedef = Self::expect_typedef(second_arg)?;
+        let ast_typedef = Self::expect_typedef(second_arg)?;
+        let aast_typedef = self.analyze_typedef(ast_typedef)?;
+
+        // TODO: Insert typedef into aliases, bind types and insert
+        // into type_bindings. But we need to do it ONLY for custom
+        // type definitions.
+
+        //let bindings = TypeBinder::new(&aast_typedef, &self.local_type_bindings)
+        //    .bind()
+        //    .unwrap();
+
+        //println!("bindings: {:#?}", bindings);
+
+        //self.local_type_bindings
+        //    .insert(lexeme.to_string(), bindings);
+
+        //self.local_type_aliases
+        //    .insert(lexeme.to_string(), aast_typedef.clone());
 
         Ok(AAstNode::Call(AAstNodeCall::Typedef {
             alias: identifier.lexeme.clone(),
-            // TODO: Take this typedef and create a TypeBinding from it.
-            // After that, add it into the local_type_aliases.
-            typedef: self.analyze_typedef(typedef)?,
+            typedef: aast_typedef,
         }))
     }
 

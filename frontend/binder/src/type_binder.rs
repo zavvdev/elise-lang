@@ -1,61 +1,16 @@
-// ==================================================================
-//
-// DATA TYPES START
-//
-// ==================================================================
-
 use std::collections::HashMap;
 
 use elise_aast::{AAstNodeTypedef, AAstNodeTypedefRecordEntries};
-use elise_bindings::binding_path::{BindingPath, BindingPathSegment};
-use elise_shared::{
-    shared_errors::errors_type_binder::TypeBinderErr, shared_node_names::NodeName,
-    shared_types::Span,
+use elise_bindings::{
+    BindingType, TypeBinding, TypeBindings,
+    binding_path::{BindingPath, BindingPathSegment},
 };
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum TypeBinderDataType {
-    Int,
-    List,
-    Record,
-}
-
-impl TypeBinderDataType {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            TypeBinderDataType::Int => NodeName::INT,
-            TypeBinderDataType::List => NodeName::LIST,
-            TypeBinderDataType::Record => NodeName::RECORD,
-        }
-    }
-}
-
-// ==================================================================
-//
-// DATA TYPES END
-//
-// ==================================================================
-
-// ==================================================================
-//
-// BINDER START
-//
-// ==================================================================
-
-/// Data type descriptor that is a value each resolution
-/// path resolves to.
-#[derive(Debug, PartialEq, Clone)]
-pub struct TypeBinderTypeDescriptor {
-    pub dtype: TypeBinderDataType,
-    pub span: Span,
-}
-
-pub type TypeBindings = HashMap<BindingPath, TypeBinderTypeDescriptor>;
+use elise_shared::{shared_errors::errors_type_binder::TypeBinderErr, shared_types::Span};
 
 pub struct TypeBinder<'a> {
     aast_typedef: &'a AAstNodeTypedef,
     current_path: BindingPath,
-    current_type: Option<TypeBinderDataType>,
+    current_type: Option<BindingType>,
     current_span: Span,
     globals: &'a HashMap<String, TypeBindings>,
 }
@@ -96,6 +51,7 @@ impl<'a> TypeBinder<'a> {
 
             current_span: Span { start: 0, end: 0 },
 
+            // Global type bindings injected from outside.
             globals,
         }
     }
@@ -116,7 +72,7 @@ impl<'a> TypeBinder<'a> {
             AAstNodeTypedef::Custom { alias, .. } => self.bind_custom(alias, bindings),
             AAstNodeTypedef::Record { entries, .. } => self.bind_record(entries, bindings),
             AAstNodeTypedef::List { item_type, .. } => self.bind_list(item_type, bindings),
-            AAstNodeTypedef::Int { .. } => self.bind_primitive(TypeBinderDataType::Int, bindings),
+            AAstNodeTypedef::Int { .. } => self.bind_primitive(BindingType::Int, bindings),
         }
     }
 
@@ -126,7 +82,7 @@ impl<'a> TypeBinder<'a> {
         if let Some(dtype) = &self.current_type {
             bindings.insert(
                 self.current_path.clone(),
-                TypeBinderTypeDescriptor {
+                TypeBinding {
                     dtype: dtype.clone(),
                     span: self.current_span.clone(),
                 },
@@ -146,7 +102,7 @@ impl<'a> TypeBinder<'a> {
     /// adhere to the same semantics.
     fn bind_primitive(
         &mut self,
-        dtype: TypeBinderDataType,
+        dtype: BindingType,
         bindings: &mut TypeBindings,
     ) -> Result<(), TypeBinderErr> {
         self.current_type = Some(dtype);
@@ -182,7 +138,7 @@ impl<'a> TypeBinder<'a> {
         // because resolving nested types will alter current_path
         // state, so commiting parent after resolving recursively
         // will produce invalid path segments to the parent.
-        self.current_type = Some(TypeBinderDataType::Record);
+        self.current_type = Some(BindingType::Record);
         self.commit(bindings)?;
 
         for (key, value) in entries {
@@ -219,7 +175,7 @@ impl<'a> TypeBinder<'a> {
         // Capture current type and commit it before recursing
         // in order to prevent committing parent type with invalid
         // path segments since recursing will alter current_path.
-        self.current_type = Some(TypeBinderDataType::List);
+        self.current_type = Some(BindingType::List);
         self.commit(bindings)?;
 
         // Pushing AbstractIndex since our list can have any number of
@@ -242,13 +198,15 @@ impl<'a> TypeBinder<'a> {
     fn bind_custom(
         &mut self,
         alias: &str,
-        bindings: &mut TypeBindings,
+        _bindings: &mut TypeBindings,
     ) -> Result<(), TypeBinderErr> {
-        let Some(global_bindings) = self.globals.get(alias) else {
+        let Some(_global_bindings) = self.globals.get(alias) else {
             return Err(TypeBinderErr::UnknownTypedef {
                 span: self.current_span.clone(),
             });
         };
+
+        // TODO
 
         Ok(())
     }
