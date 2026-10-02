@@ -74,7 +74,7 @@ pub fn run<'a>(
     println!("Source Code Ast: {:#?}", source_code_ast);
     println!("Schema Code Ast: {:#?}", schema_code_ast);
 
-    let schema_code_aast = Harmony::new(&schema_code_ast)
+    let schema_code_aast = Harmony::new(&schema_code_ast, None)
         .analyze()
         .map_err(LangErr::Semanalyzer)?;
 

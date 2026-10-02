@@ -2,7 +2,7 @@ use elise_shared::shared_types::Span;
 
 pub type AAstNodeTypedefRecordEntries = Vec<(String, Box<AAstNodeTypedef>)>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum AAstNodeTypedef {
     Custom {
         span: Span,

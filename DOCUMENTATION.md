@@ -3,31 +3,28 @@ RUN (SourceCode, SchemaCode, Data)
     -> Parse(SourceCode) -> SourceCodeAst +
     -> Parse(ShemaCode) -> SchemaCodeAst +
     -> Parse(Data) -> ParsedData +
-    -> Sema(SchemaCodeAst) -> SchemaCodeAAst
-    -> BindSchema(SchemaCodeAAst) -> SchemaBinding
+    -> Sema(SchemaCodeAst) -> (_SchemaCodeAAst, SchemaTypeBindings)
     -> AdaptData(ParsedData) -> EliseSourceCode
     -> BindData(EliseSourceCode) -> DataBinding
-    -> Sema(SourceCodeAst, SchemaBinding) -> SourceCodeAAst
-    -> Validate(SchemaBinding, DataBinding)
-    -> Compile(SchemaBinding, SourceCodeAAst) -> Bytecode
+    -> Sema(SourceCodeAst, SchemaTypeBindings) -> (SourceCodeAAst, _SourceCodeTypeBindings)
+    -> Validate(SchemaTypeBindings, DataBinding)
+    -> Compile(SchemaTypeBindings, SourceCodeAAst) -> Bytecode
     -> VM(Bytecode, DataBinding)
 
 BUILD (SourceCode, SchemaCode)
     -> Parse(SourceCode) -> SourceCodeAst
     -> Parse(ShemaCode) -> SchemaCodeAst
-    -> Sema(SchemaCodeAst) -> SchemaCodeAAst
-    -> BindSchema(SchemaCodeAAst) -> SchemaBinding
-    -> Sema(SourceCodeAst, SchemaBinding) -> SourceCodeAAst
-    -> Compile(SchemaBinding, SourceCodeAAst) -> Bytecode
+    -> Sema(SchemaCodeAst) -> (_SchemaCodeAAst, SchemaTypeBindings)
+    -> Sema(SourceCodeAst, SchemaTypeBindings) -> (SourceCodeAAst, _SourceCodeTypeBindings)
+    -> Compile(SchemaTypeBindings, SourceCodeAAst) -> Bytecode
 
 VALIDATE(SchemaCode, Data)
     -> Parse(ShemaCode) -> SchemaCodeAst
     -> Parse(Data) -> ParsedData
-    -> Sema(SchemaCodeAst) -> SchemaCodeAAst
-    -> BindSchema(SchemaCodeAAst) -> SchemaBinding
+    -> Sema(SchemaCodeAst) -> (_SchemaCodeAAst, SchemaTypeBindings)
     -> AdaptData(ParsedData) -> EliseSourceCode
     -> BindData(EliseSourceCode) -> DataBinding
-    -> Validate(SchemaBinding, DataBinding)
+    -> Validate(SchemaTypeBindings, DataBinding)
 
 EXEC(Bytecode, Data)
     -> Parse(Data) -> ParsedData

@@ -1,9 +1,12 @@
 pub mod builtins;
 
+use std::collections::HashMap;
+
 use elise_aast::{AAstNode, AAstNodeCall, AAstNodeTypedef, AAstNodeTypedefRecordEntries};
 use elise_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprPrim, AstNodeTypedef, AstNodeTypedefGeneric,
 };
+use elise_binder::binder_type::{TypeBinder, TypeBindings};
 use elise_shared::{
     shared_errors::errors_semanalyzer::SemanalyzerErr, shared_types::ArityMismatchKind,
 };
@@ -13,11 +16,14 @@ use crate::builtins::{FnTypedef, TypedefLexeme};
 #[derive(Debug)]
 pub struct SemanticModel {
     pub aast: Vec<AAstNode>,
-    // TODO: Return back local_type_aliases.
+    pub type_bindings: HashMap<String, TypeBindings>,
+    // TODO: Return back local_type_bindings.
 }
 
 pub struct Harmony<'a> {
     pub ast: &'a Vec<AstNode>,
+    pub local_type_aliases: HashMap<String, AAstNodeTypedef>,
+    pub local_type_bindings: HashMap<String, TypeBindings>,
 }
 
 impl<'a> Harmony<'a> {
@@ -25,8 +31,19 @@ impl<'a> Harmony<'a> {
     // during typedef analysis for custom literals.
     // Also add local_type_aliases and record custom type
     // definitions into it.
-    pub fn new(ast: &'a Vec<AstNode>) -> Self {
-        Self { ast }
+    pub fn new(
+        ast: &'a Vec<AstNode>,
+        global_type_bindings: Option<HashMap<String, TypeBindings>>,
+    ) -> Self {
+        Self {
+            ast,
+            local_type_aliases: HashMap::new(),
+            local_type_bindings: if let Some(globals) = global_type_bindings {
+                globals
+            } else {
+                HashMap::new()
+            },
+        }
     }
 
     pub fn analyze(&mut self) -> Result<SemanticModel, SemanalyzerErr> {
@@ -37,7 +54,11 @@ impl<'a> Harmony<'a> {
             aast.push(aast_node);
         }
 
-        Ok(SemanticModel { aast })
+        Ok(SemanticModel {
+            aast,
+            // TODO: Maybe we can do smth without cloning?
+            type_bindings: self.local_type_bindings.clone(),
+        })
     }
 
     fn analyze_node(&mut self, ast_node: &AstNode) -> Result<AAstNode, SemanalyzerErr> {
@@ -104,7 +125,10 @@ impl<'a> Harmony<'a> {
         })
     }
 
-    fn analyze_typedef_list(typedef: &AstNodeTypedef) -> Result<AAstNodeTypedef, SemanalyzerErr> {
+    fn analyze_typedef_list(
+        &mut self,
+        typedef: &AstNodeTypedef,
+    ) -> Result<AAstNodeTypedef, SemanalyzerErr> {
         let Some(generic) = typedef.generic.as_ref() else {
             return Err(SemanalyzerErr::ExpectedGeneric {
                 span: typedef.span.clone(),
@@ -119,11 +143,14 @@ impl<'a> Harmony<'a> {
 
         Ok(AAstNodeTypedef::List {
             span: typedef.span.clone(),
-            item_type: Box::new(Self::analyze_typedef(single_generic)?),
+            item_type: Box::new(self.analyze_typedef(single_generic)?),
         })
     }
 
-    fn analyze_typedef_record(typedef: &AstNodeTypedef) -> Result<AAstNodeTypedef, SemanalyzerErr> {
+    fn analyze_typedef_record(
+        &mut self,
+        typedef: &AstNodeTypedef,
+    ) -> Result<AAstNodeTypedef, SemanalyzerErr> {
         let Some(generic) = typedef.generic.as_ref() else {
             return Err(SemanalyzerErr::ExpectedGeneric {
                 span: typedef.span.clone(),
@@ -139,10 +166,7 @@ impl<'a> Harmony<'a> {
         let entries = ast_entries
             .iter()
             .map(|(key, typedef)| {
-                Ok((
-                    key.lexeme.clone(),
-                    Box::new(Self::analyze_typedef(typedef)?),
-                ))
+                Ok((key.lexeme.clone(), Box::new(self.analyze_typedef(typedef)?)))
             })
             .collect::<Result<AAstNodeTypedefRecordEntries, SemanalyzerErr>>()?;
 
@@ -152,13 +176,35 @@ impl<'a> Harmony<'a> {
         })
     }
 
-    fn analyze_typedef(typedef: &AstNodeTypedef) -> Result<AAstNodeTypedef, SemanalyzerErr> {
-        match typedef.lexeme.as_str() {
+    fn analyze_typedef(
+        &mut self,
+        typedef: &AstNodeTypedef,
+    ) -> Result<AAstNodeTypedef, SemanalyzerErr> {
+        let lexeme = typedef.lexeme.as_str();
+
+        let aast_typedef = match lexeme {
             TypedefLexeme::INT => Self::analyze_typedef_int(typedef),
-            TypedefLexeme::LIST => Self::analyze_typedef_list(typedef),
-            TypedefLexeme::RECORD => Self::analyze_typedef_record(typedef),
+            TypedefLexeme::LIST => self.analyze_typedef_list(typedef),
+            TypedefLexeme::RECORD => self.analyze_typedef_record(typedef),
             _ => Self::analyze_typedef_custom(typedef),
-        }
+        }?;
+
+        let bindings = TypeBinder::new(&aast_typedef, &self.local_type_bindings)
+            .bind()
+            .unwrap(); // TODO: Get rid of unwrap. Maybe move
+        // type binder into semanalyzer crate.
+
+        println!("bindings: {:#?}", bindings);
+
+        // TODO: Do all these inside analyze_call_typedef!
+
+        self.local_type_bindings
+            .insert(lexeme.to_string(), bindings);
+
+        self.local_type_aliases
+            .insert(lexeme.to_string(), aast_typedef.clone());
+
+        Ok(aast_typedef)
     }
 
     // ==================================================================
@@ -198,7 +244,7 @@ impl<'a> Harmony<'a> {
             alias: identifier.lexeme.clone(),
             // TODO: Take this typedef and create a TypeBinding from it.
             // After that, add it into the local_type_aliases.
-            typedef: Self::analyze_typedef(typedef)?,
+            typedef: self.analyze_typedef(typedef)?,
         }))
     }
 

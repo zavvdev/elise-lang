@@ -50,13 +50,14 @@ pub struct TypeBinderTypeDescriptor {
     pub span: Span,
 }
 
-type TypeBindings = HashMap<BindingPath, TypeBinderTypeDescriptor>;
+pub type TypeBindings = HashMap<BindingPath, TypeBinderTypeDescriptor>;
 
 pub struct TypeBinder<'a> {
     aast_typedef: &'a AAstNodeTypedef,
     current_path: BindingPath,
     current_type: Option<TypeBinderDataType>,
     current_span: Span,
+    globals: &'a HashMap<String, TypeBindings>,
 }
 
 // TODO:
@@ -71,13 +72,17 @@ pub struct TypeBinder<'a> {
 //    result into local_type_bindings. When building AAst and encounter
 //    custom types, check local_type_bindings and global_type_bindings,
 //    if alias is not there - emit error. During building bindings from
-//    AAst node (calling this binder) pass a local_type_bindings + 
+//    AAst node (calling this binder) pass a local_type_bindings +
 //    global_type_bindings into this binder, so it can build a binding
 //    if there is a custom type. So this binder must accept a second arg
 //    which is a type of its return type.
 
 impl<'a> TypeBinder<'a> {
-    pub fn new(aast_typedef: &'a AAstNodeTypedef) -> Self {
+    pub fn new(
+        aast_typedef: &'a AAstNodeTypedef,
+        globals: &'a HashMap<String, TypeBindings>,
+    ) -> Self {
+        println!("------------globals: {:#?}", globals);
         Self {
             aast_typedef,
             // Current path that changes according to nesting.
@@ -90,10 +95,11 @@ impl<'a> TypeBinder<'a> {
             current_type: None,
 
             current_span: Span { start: 0, end: 0 },
+
+            globals,
         }
     }
 
-    // TODO: We might not need to return Result since our AAst is always valid.
     pub fn bind(&mut self) -> Result<TypeBindings, TypeBinderErr> {
         let mut bindings: TypeBindings = HashMap::new();
         self.bind_node(self.aast_typedef, &mut bindings)?;
@@ -107,10 +113,7 @@ impl<'a> TypeBinder<'a> {
     ) -> Result<(), TypeBinderErr> {
         self.current_span = node.span().clone();
         match node {
-            AAstNodeTypedef::Custom { .. } => {
-                // TODO
-                self.bind_primitive(TypeBinderDataType::Int, bindings)
-            }
+            AAstNodeTypedef::Custom { alias, .. } => self.bind_custom(alias, bindings),
             AAstNodeTypedef::Record { entries, .. } => self.bind_record(entries, bindings),
             AAstNodeTypedef::List { item_type, .. } => self.bind_list(item_type, bindings),
             AAstNodeTypedef::Int { .. } => self.bind_primitive(TypeBinderDataType::Int, bindings),
@@ -225,6 +228,28 @@ impl<'a> TypeBinder<'a> {
         self.bind_node(item_type, bindings)?;
 
         self.current_path.pop();
+        Ok(())
+    }
+
+    // ==================================================================
+    // LIST END
+    // ==================================================================
+
+    // ==================================================================
+    // CUSTOM START
+    // ==================================================================
+
+    fn bind_custom(
+        &mut self,
+        alias: &str,
+        bindings: &mut TypeBindings,
+    ) -> Result<(), TypeBinderErr> {
+        let Some(global_bindings) = self.globals.get(alias) else {
+            return Err(TypeBinderErr::UnknownTypedef {
+                span: self.current_span.clone(),
+            });
+        };
+
         Ok(())
     }
 

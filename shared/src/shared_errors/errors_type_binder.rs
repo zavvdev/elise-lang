@@ -15,6 +15,9 @@ pub enum TypeBinderErr {
     UnresolvablePath {
         path: String,
     },
+    UnknownTypedef {
+        span: Span,
+    },
     //InvalTypeDef {
     //    span: Span,
     //},
