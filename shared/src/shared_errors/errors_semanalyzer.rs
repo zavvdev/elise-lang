@@ -2,39 +2,16 @@ use crate::shared_types::{ArityMismatchKind, Span};
 
 #[derive(Debug, PartialEq)]
 pub enum SemanalyzerErr {
-    SymbolUndefined {
-        span: Span,
-    },
-    SymbolDuplicate {
-        span: Span,
-    },
     ArityMismatch {
         fn_name: &'static str,
         kind: ArityMismatchKind,
         found: usize,
         span: Span,
     },
-    ArgTypeMismatch {
-        fn_name: &'static str,
-        position: usize,
-        expected: &'static str,
-        found: &'static str,
-        span: Span,
-    },
-    ArgKindMismatch {
-        fn_name: &'static str,
-        position: usize,
-        expected: &'static str,
-        found: &'static str,
-        span: Span,
-    },
     UnknownFunction {
         span: Span,
     },
     UnsupportedNode {
-        span: Span,
-    },
-    IdentSelfBinding {
         span: Span,
     },
     ExpectedTypedef {
@@ -46,9 +23,6 @@ pub enum SemanalyzerErr {
     ExpectedIdentifier {
         span: Span,
     },
-    ExpectedExpr {
-        span: Span,
-    },
     UnexpectedGeneric {
         span: Span,
     },
@@ -56,6 +30,12 @@ pub enum SemanalyzerErr {
         span: Span,
     },
     InvalidGeneric {
+        span: Span,
+    },
+    UnresolvableTypedef {
+        span: Span,
+    },
+    TypedefNoReferenceItself {
         span: Span,
     },
 }

@@ -6,60 +6,50 @@ use elise_aast::{AAstNode, AAstNodeCall, AAstNodeTypedef, AAstNodeTypedefRecordE
 use elise_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprPrim, AstNodeTypedef, AstNodeTypedefGeneric,
 };
+use elise_binder::type_binder::TypeBinder;
 use elise_bindings::TypeBindings;
 use elise_shared::{
-    shared_errors::errors_semanalyzer::SemanalyzerErr, shared_types::ArityMismatchKind,
+    shared_errors::{errors_semanalyzer::SemanalyzerErr, errors_type_binder::TypeBinderErr},
+    shared_types::ArityMismatchKind,
 };
 
 use crate::builtins::{FnTypedef, TypedefLexeme};
 
-#[derive(Debug)]
-pub struct SemanticModel {
-    pub aast: Vec<AAstNode>,
-
-    // Collection of all custom type bindings
-    // resolved during analysis.
-    pub type_bindings: HashMap<String, TypeBindings>,
-}
-
 pub struct Harmony<'a> {
     pub ast: &'a Vec<AstNode>,
 
-    // Local resolved type aliases. These are not bindings.
-    // We use them for creating bindings by passing to
-    // TypeBinder. Every time we resolve a new AAst typedef
-    // node (when user calls .typedef function), we insert
-    // this new AAst node here, so we can then access it
-    // for creating type binding.
-    pub type_aliases: HashMap<String, AAstNodeTypedef>,
-
     // Local resolved type bindings. Flattened AAst type
     // definition nodes for access simplification.
-    // Returned back from Harmony so it can accept it back
+    // Also returned from Harmony so it can accept it back
     // as globals from a different context. For example,
     // we receive type bindings from schema semantic
-    // analysis and then pass it as globals into source
+    // analysis and then pass it as globals into a source
     // code semantic analysis stage, so we can access
     // type definitions from schema file inside our source
     // code file.
-    pub type_bindings: HashMap<String, TypeBindings>,
+    pub type_bindings: &'a mut HashMap<String, TypeBindings>,
+
+    // Alias to the current custom type definition being
+    // analyzed. We need this to prevent a new type
+    // definition referencing itself.
+    pub current_typedef_alias: Option<String>,
 }
 
 impl<'a> Harmony<'a> {
     pub fn new(
         ast: &'a Vec<AstNode>,
-        global_type_bindings: Option<HashMap<String, TypeBindings>>,
+        global_type_bindings: &'a mut HashMap<String, TypeBindings>,
     ) -> Self {
         Self {
             ast,
-            type_aliases: HashMap::new(),
             // Inject as globals if available. Passing global type
             // bindings into semanalyzer is not required.
-            type_bindings: global_type_bindings.unwrap_or_default(),
+            type_bindings: global_type_bindings,
+            current_typedef_alias: None,
         }
     }
 
-    pub fn analyze(&mut self) -> Result<SemanticModel, SemanalyzerErr> {
+    pub fn analyze(&mut self) -> Result<Vec<AAstNode>, SemanalyzerErr> {
         let mut aast: Vec<AAstNode> = vec![];
 
         for ast_node in self.ast {
@@ -67,11 +57,7 @@ impl<'a> Harmony<'a> {
             aast.push(aast_node);
         }
 
-        Ok(SemanticModel {
-            aast,
-            // TODO: Maybe we can do smth without cloning?
-            type_bindings: self.type_bindings.clone(),
-        })
+        Ok(aast)
     }
 
     fn analyze_node(&mut self, ast_node: &AstNode) -> Result<AAstNode, SemanalyzerErr> {
@@ -110,16 +96,57 @@ impl<'a> Harmony<'a> {
     // ==================================================================
 
     // ==================================================================
-    // TYPEDEF START
+    // CALL START
     // ==================================================================
 
-    fn analyze_typedef_custom(typedef: &AstNodeTypedef) -> Result<AAstNodeTypedef, SemanalyzerErr> {
+    fn analyze_call(&mut self, call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
+        match call.lexeme.as_str() {
+            FnTypedef::LEXEME => self.analyze_call_typedef(call),
+            _ => Err(SemanalyzerErr::UnknownFunction {
+                span: call.span.clone(),
+            }),
+        }
+    }
+
+    // ==================================================================
+    // CALL END
+    // ==================================================================
+
+    // ==================================================================
+    // TYPEDEF CALL START
+    // ==================================================================
+
+    fn analyze_typedef_custom(
+        &self,
+        typedef: &AstNodeTypedef,
+    ) -> Result<AAstNodeTypedef, SemanalyzerErr> {
         if typedef.generic.is_some() {
             return Err(SemanalyzerErr::UnexpectedGeneric {
                 span: typedef.span.clone(),
             });
         }
-        // TODO: Check if exists in type_aliases.
+
+        // If we encounter a type definition with an unknown
+        // type alias, return an error.
+        if !self.type_bindings.contains_key(&typedef.lexeme) {
+            return Err(SemanalyzerErr::UnknownTypedef {
+                span: typedef.span.clone(),
+            });
+        }
+
+        let Some(current_alias) = &self.current_typedef_alias else {
+            return Err(SemanalyzerErr::UnresolvableTypedef {
+                span: typedef.span.clone(),
+            });
+        };
+
+        // Disallow referencing itself.
+        if *current_alias == typedef.lexeme {
+            return Err(SemanalyzerErr::TypedefNoReferenceItself {
+                span: typedef.span.clone(),
+            });
+        }
+
         Ok(AAstNodeTypedef::Custom {
             alias: typedef.lexeme.clone(),
             span: typedef.span.clone(),
@@ -196,27 +223,33 @@ impl<'a> Harmony<'a> {
             TypedefLexeme::INT => Self::analyze_typedef_int(typedef),
             TypedefLexeme::LIST => self.analyze_typedef_list(typedef),
             TypedefLexeme::RECORD => self.analyze_typedef_record(typedef),
-            _ => Self::analyze_typedef_custom(typedef),
+            _ => self.analyze_typedef_custom(typedef),
         }
     }
 
-    // ==================================================================
-    // TYPEDEF END
-    // ==================================================================
-
-    // ==================================================================
-    // CALL START
-    // ==================================================================
-
-    fn analyze_call(&mut self, call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
-        match call.lexeme.as_str() {
-            FnTypedef::LEXEME => self.analyze_call_typedef(call),
-            _ => Err(SemanalyzerErr::UnknownFunction {
-                span: call.span.clone(),
-            }),
-        }
+    fn record_typedef(&mut self, aast_typedef: &AAstNodeTypedef) -> Result<(), SemanalyzerErr> {
+        let Some(alias) = &self.current_typedef_alias else {
+            return Err(SemanalyzerErr::UnresolvableTypedef {
+                span: aast_typedef.span().clone(),
+            });
+        };
+        match TypeBinder::new(aast_typedef, self.type_bindings).bind() {
+            Ok(bindings) => self.type_bindings.insert(alias.clone(), bindings),
+            Err(bind_err) => match bind_err {
+                TypeBinderErr::UnknownTypedef { span } => {
+                    return Err(SemanalyzerErr::UnknownTypedef { span });
+                }
+                _ => {
+                    return Err(SemanalyzerErr::UnresolvableTypedef {
+                        span: aast_typedef.span().clone(),
+                    });
+                }
+            },
+        };
+        Ok(())
     }
 
+    /// Entry point for .typedef function analysis.
     fn analyze_call_typedef(&mut self, call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
         if call.body.len() != FnTypedef::ARGS_LEN {
             return Err(SemanalyzerErr::ArityMismatch {
@@ -228,28 +261,29 @@ impl<'a> Harmony<'a> {
         }
 
         let first_arg = &**call.body.first().unwrap();
-        let second_arg = &**call.body.get(1).unwrap();
+        let second_arg = &**call.body.last().unwrap();
 
         let identifier = Self::expect_identifier(first_arg)?;
+
+        // Capture current new type definition alias before
+        // recursing into a type resolution, so we can reference
+        // it inside deep type analysis.
+        self.current_typedef_alias = Some(identifier.lexeme.clone());
+
+        // Ensure that the second argument is a type definition
+        // and extract it.
         let ast_typedef = Self::expect_typedef(second_arg)?;
+
+        // Analyze the whole type definition.
         let aast_typedef = self.analyze_typedef(ast_typedef)?;
 
-        // TODO: Insert typedef into aliases, bind types and insert
-        // into type_bindings. But we need to do it ONLY for custom
-        // type definitions.
+        // Save newly resolved type into a global scope.
+        self.record_typedef(&aast_typedef)?;
 
-        //let bindings = TypeBinder::new(&aast_typedef, &self.local_type_bindings)
-        //    .bind()
-        //    .unwrap();
+        self.current_typedef_alias = None;
 
-        //println!("bindings: {:#?}", bindings);
-
-        //self.local_type_bindings
-        //    .insert(lexeme.to_string(), bindings);
-
-        //self.local_type_aliases
-        //    .insert(lexeme.to_string(), aast_typedef.clone());
-
+        // TODO: Maybe we don't need to emit AAst nodes
+        // for type definitions since we build type bindings?
         Ok(AAstNode::Call(AAstNodeCall::Typedef {
             alias: identifier.lexeme.clone(),
             typedef: aast_typedef,
@@ -257,6 +291,6 @@ impl<'a> Harmony<'a> {
     }
 
     // ==================================================================
-    // CALL END
+    // TYPEDEF CALL END
     // ==================================================================
 }

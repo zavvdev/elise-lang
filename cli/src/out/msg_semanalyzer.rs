@@ -8,9 +8,6 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
     use SemanalyzerErr::*;
 
     let (info, span) = match sema_err {
-        SymbolUndefined { span } => ("Undefined symbol".to_string(), span),
-        SymbolDuplicate { span } => ("Symbol already defined in this scope".to_string(), span),
-
         ArityMismatch {
             fn_name,
             found,
@@ -26,39 +23,9 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             span,
         ),
 
-        ArgKindMismatch {
-            fn_name,
-            position,
-            expected,
-            found,
-            span,
-        } => (
-            format!(
-                "Expected \"{expected}\" to be an argument {} of the \"{fn_name}\" function, found \"{found}\"",
-                position + 1,
-            ),
-            span,
-        ),
-        ArgTypeMismatch {
-            fn_name,
-            position,
-            expected,
-            found,
-            span,
-        } => (
-            format!(
-                "Expected \"{expected}\" type to be an argument {} of the \"{fn_name}\" function,
-                found \"{found}\"",
-                position + 1
-            ),
-            span,
-        ),
-
         UnknownFunction { span } => ("Unknown function".to_string(), span),
 
         UnsupportedNode { span } => ("Unsupported expression".to_string(), span),
-
-        IdentSelfBinding { span } => ("Cannot bind an identifier to itself".to_string(), span),
 
         ExpectedTypedef { span } => ("Expected type definition".to_string(), span),
 
@@ -66,13 +33,18 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
 
         ExpectedIdentifier { span } => ("Expected identifier".to_string(), span),
 
-        ExpectedExpr { span } => ("Expected expression".to_string(), span),
-
         UnexpectedGeneric { span } => ("Unexpected generic".to_string(), span),
 
         ExpectedGeneric { span } => ("Expected generic".to_string(), span),
 
         InvalidGeneric { span } => ("Invalid generic".to_string(), span),
+
+        UnresolvableTypedef { span } => ("Unresolvable type definition".to_string(), span),
+
+        TypedefNoReferenceItself { span } => (
+            "Referencing itself in type definition is not supported".to_string(),
+            span,
+        ),
     };
 
     utils::print_err(&info, Some("Semantic error"));

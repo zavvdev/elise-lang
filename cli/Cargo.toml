@@ -15,6 +15,7 @@ path = "src/lib.rs"
 [dependencies]
 elise-data = { path = "../frontend/data" }
 elise-parser = { path = "../frontend/parser" }
+elise-bindings = { path = "../ir/bindings" }
 elise-semanalyzer = { path = "../frontend/semanalyzer" }
 elise-shared = { path = "../shared" }
 colored.workspace = true

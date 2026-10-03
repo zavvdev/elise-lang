@@ -37,7 +37,6 @@ impl<'a> TypeBinder<'a> {
         aast_typedef: &'a AAstNodeTypedef,
         globals: &'a HashMap<String, TypeBindings>,
     ) -> Self {
-        println!("------------globals: {:#?}", globals);
         Self {
             aast_typedef,
             // Current path that changes according to nesting.

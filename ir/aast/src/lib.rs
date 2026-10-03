@@ -22,6 +22,7 @@ pub enum AAstNodeTypedef {
 }
 
 impl AAstNodeTypedef {
+    // TODO: Return an owned Span?
     pub fn span(&self) -> &Span {
         match self {
             AAstNodeTypedef::Custom { span, .. } => span,

@@ -8,6 +8,7 @@ pub mod conf;
 pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
+use elise_bindings::TypeBindings;
 //use elise_data::{
 //    csv::{csv_data_binder::CsvDataBinder, csv_data_parser::CsvDataParser},
 //    data_binder::{DataBinder, DataBindings},
@@ -16,7 +17,7 @@ use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise_parser::Prelude;
 use elise_semanalyzer::Harmony;
 use elise_shared::shared_errors::LangErr;
-use std::time::Instant;
+use std::{collections::HashMap, time::Instant};
 
 /// Representation of the successful execution of the
 /// program in 'RUN' mode.
@@ -63,7 +64,7 @@ pub fn run<'a>(
 ) -> Result<RunResult<'a>, LangErr> {
     let start = Instant::now();
 
-    let source_code_ast = Prelude::new(source_code)
+    let _source_code_ast = Prelude::new(source_code)
         .parse()
         .map_err(LangErr::ParserSource)?;
 
@@ -71,14 +72,14 @@ pub fn run<'a>(
         .parse()
         .map_err(LangErr::ParserSchema)?;
 
-    println!("Source Code Ast: {:#?}", source_code_ast);
-    println!("Schema Code Ast: {:#?}", schema_code_ast);
+    let mut schema_type_bindings: HashMap<String, TypeBindings> = HashMap::new();
 
-    let schema_code_aast = Harmony::new(&schema_code_ast, None)
+    let schema_aast = Harmony::new(&schema_code_ast, &mut schema_type_bindings)
         .analyze()
         .map_err(LangErr::Semanalyzer)?;
 
-    println!("Schema Code AAst: {:#?}", schema_code_aast);
+    println!("Schema AAst: {:#?}", schema_aast);
+    println!("Schema type bindings: {:#?}", schema_type_bindings);
 
     Ok(RunResult {
         config,
