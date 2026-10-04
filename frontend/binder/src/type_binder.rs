@@ -15,23 +15,6 @@ pub struct TypeBinder<'a> {
     globals: &'a HashMap<String, TypeBindings>,
 }
 
-// TODO:
-// 1. Semantic analyzer must carry three things:
-//    - local_type_bindings which is a HashMap<String, TypeBindings>
-//    - local_type_aliases which is a HashMap<String, AAstNodeTypedef>
-//    - global_type_bindings which is a HashMap<String, TypeBindings>
-//
-// 2. Internally, semanalyzer walks AST, when it encounters .typedef
-//    it creates AAst node for typedef, adds it into local_type_aliases,
-//    then calls TypeBinder in order to bind this type and stores the
-//    result into local_type_bindings. When building AAst and encounter
-//    custom types, check local_type_bindings and global_type_bindings,
-//    if alias is not there - emit error. During building bindings from
-//    AAst node (calling this binder) pass a local_type_bindings +
-//    global_type_bindings into this binder, so it can build a binding
-//    if there is a custom type. So this binder must accept a second arg
-//    which is a type of its return type.
-
 impl<'a> TypeBinder<'a> {
     pub fn new(
         aast_typedef: &'a AAstNodeTypedef,
@@ -194,18 +177,45 @@ impl<'a> TypeBinder<'a> {
     // CUSTOM START
     // ==================================================================
 
+    // .typedef (Product :Record<{
+    //                "id"    :Int
+    //                "price" :Int }>)
+    //
+    // HashMap {
+    //    [Root] => Record
+    //    [Root, "id"] => Int
+    //    [Root, "price"] => Int
+    // }
+
+    // .typedef (Data :List<:Product>)
+    //
+    // HashMap {
+    //   [Root] => List
+    //   [Root, AbstractIndex] => Record
+    //   [Root, AbstractIndex, "id"] => Int
+    //   [Root, AbstractIndex, "price"] => Int
+    // }
+
     fn bind_custom(
         &mut self,
         alias: &str,
-        _bindings: &mut TypeBindings,
+        bindings: &mut TypeBindings,
     ) -> Result<(), TypeBinderErr> {
-        let Some(_global_bindings) = self.globals.get(alias) else {
+        let Some(global_bindings) = self.globals.get(alias) else {
             return Err(TypeBinderErr::UnknownTypedef {
                 span: self.current_span.clone(),
             });
         };
 
-        // TODO
+        for (global_binding_path, global_binding) in global_bindings.iter() {
+            let Ok(next_path) = BindingPath::prepend(&self.current_path, global_binding_path)
+            else {
+                return Err(TypeBinderErr::UnableToMerge {
+                    span: global_binding.span.clone(),
+                });
+            };
+            bindings.insert(next_path, global_binding.clone());
+        }
 
         Ok(())
     }

@@ -4,4 +4,5 @@ use crate::shared_types::Span;
 pub enum TypeBinderErr {
     UnresolvablePath { path: String },
     UnknownTypedef { span: Span },
+    UnableToMerge { span: Span },
 }

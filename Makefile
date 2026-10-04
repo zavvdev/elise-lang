@@ -62,6 +62,9 @@ test\:frontend\:semanalyzer:
 test\:runtime\:vm:
 	cargo test -p elise-vm
 
+test\:ir\:bindings:
+	cargo test -p elise-bindings
+
 check:
 	cargo check
 

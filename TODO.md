@@ -30,7 +30,7 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
 - [ ] Semantic analyzer
 
-    - [ ] .typedef
+    - [x] .typedef
 
         - [ ] Tests
     
@@ -41,6 +41,8 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
     - [ ] @data slot
 
 - [ ] TypeBinder
+
+    - [x] Merge custom type references 
 
     - [ ] Tests
 

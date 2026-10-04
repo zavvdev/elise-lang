@@ -7,6 +7,7 @@ pub enum AstNode {
 }
 
 impl AstNode {
+    // TODO: Return owned Span
     pub fn span(&self) -> &Span {
         match self {
             AstNode::Expr(expr) => expr.span(),
@@ -14,6 +15,7 @@ impl AstNode {
         }
     }
 
+    // TODO: Do we need this?
     pub fn as_str(&self) -> &'static str {
         match self {
             AstNode::Expr(expr) => expr.as_str(),
@@ -74,6 +76,7 @@ pub enum AstNodeExpr {
 }
 
 impl AstNodeExpr {
+    // TODO: Return owned span. Do we need this?
     pub fn span(&self) -> &Span {
         match self {
             AstNodeExpr::Int(p)
@@ -89,6 +92,7 @@ impl AstNodeExpr {
         }
     }
 
+    // TODO: Do we need this?
     pub fn as_str(&self) -> &'static str {
         match self {
             AstNodeExpr::Int(_) => NodeName::INT,
@@ -137,9 +141,11 @@ pub struct AstNodeTypedef {
 }
 
 impl AstNodeTypedef {
+    // TODO: Do we need this? Return owned Span.
     pub fn span(&self) -> &Span {
         &self.span
     }
+    // TODO: Do we need this?
     pub fn as_str(&self) -> &'static str {
         NodeName::TYPEDEF
     }

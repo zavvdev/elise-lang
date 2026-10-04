@@ -20,6 +20,7 @@ pub enum BindingPathSegment {
 }
 impl BindingPathSegment {
     // For anything that requires string representation, like error reports.
+    // TODO: Do we need this?
     pub fn as_str(&self) -> String {
         match self {
             BindingPathSegment::Root => "Root".to_string(),
@@ -74,13 +75,29 @@ impl BindingPath {
         Self(vec![BindingPathSegment::Root])
     }
 
-    // It's better to map over segments and push them in order
-    // to use logic inside push function.
+    fn new_sized(size: usize) -> Self {
+        let mut new = Vec::with_capacity(size);
+        new.insert(0, BindingPathSegment::Root);
+        Self(new)
+    }
+
     pub fn with_segments(segments: Vec<BindingPathSegment>) -> Self {
-        let mut new = Self::new();
+        let Some(len) = segments.len().checked_add(1) else {
+            let mut new = Self::new();
+            for segment in segments {
+                new.push(segment);
+            }
+            return new;
+        };
+
+        let mut new = Self::new_sized(len);
+
+        // It's better to map over segments and push them in order
+        // to use logic inside our push function.
         for segment in segments {
             new.push(segment);
         }
+
         new
     }
 
@@ -99,6 +116,50 @@ impl BindingPath {
         None
     }
 
+    /// Path is considered valid if it's not empty,
+    /// and has only one Root segment at the beginning.
+    pub fn is_valid(binding_path: &BindingPath) -> bool {
+        let root_indexes: Vec<_> = binding_path
+            .iter()
+            .enumerate()
+            .filter(|(_, k)| **k == BindingPathSegment::Root)
+            .map(|(i, _)| i)
+            .collect();
+
+        matches!(root_indexes.as_slice(), [0])
+    }
+
+    // TODO: Use a custom error instead of unit?
+    /// Merges two paths into a new one. All segments from prepend_path go
+    /// to the very beginning, and the rest of the to_path except the Root
+    /// segment goes after.
+    pub fn prepend(prepend_path: &BindingPath, to_path: &BindingPath) -> Result<BindingPath, ()> {
+        if !Self::is_valid(to_path) || !Self::is_valid(prepend_path) {
+            return Err(());
+        }
+
+        // The new length is a prepend_path length + to_path length - 1
+        // because the Root path segment of the to_path is dropped.
+        // We can safely subtract 1 because zero length path is considered
+        // as invalid and it's already checked previously.
+        let Some(new_path_len) = prepend_path.len().checked_add(to_path.len() - 1) else {
+            return Err(());
+        };
+
+        let mut new_path = Vec::with_capacity(new_path_len);
+
+        // Clones each element from prepend_path into new_path.
+        // So our new Root segment is a Root from prepend_path.
+        new_path.extend_from_slice(prepend_path);
+
+        // Clones each element from to_path except the first into
+        // the new_path.
+        new_path.extend_from_slice(to_path.get(1..).unwrap_or_default());
+
+        Ok(BindingPath(new_path))
+    }
+
+    // TODO: Do we need this?
     pub fn as_str(&self) -> String {
         format!(
             "[{}]",

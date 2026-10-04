@@ -23,6 +23,7 @@ pub enum BindingType {
 }
 
 impl BindingType {
+    // TODO: Do we need this?
     pub fn as_str(&self) -> &'static str {
         match self {
             BindingType::Int => NodeName::INT,
