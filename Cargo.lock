@@ -172,6 +172,7 @@ dependencies = [
  "elise-bindings",
  "elise-parser",
  "elise-semanalyzer",
+ "elise-shared",
 ]
 
 [[package]]

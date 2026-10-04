@@ -12,3 +12,4 @@ elise-aast = { path = "../ir/aast" }
 elise-bindings = { path = "../ir/bindings" }
 elise-parser = { path = "../frontend/parser" }
 elise-semanalyzer = { path = "../frontend/semanalyzer" }
+elise-shared = { path = "../shared" }
