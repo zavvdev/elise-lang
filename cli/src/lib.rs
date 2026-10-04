@@ -8,7 +8,7 @@ pub mod conf;
 pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
-use elise_bindings::TypeBindings;
+use elise_bindings::TypeBindingsMap;
 //use elise_data::{
 //    csv::{csv_data_binder::CsvDataBinder, csv_data_parser::CsvDataParser},
 //    data_binder::{DataBinder, DataBindings},
@@ -72,7 +72,7 @@ pub fn run<'a>(
         .parse()
         .map_err(LangErr::ParserSchema)?;
 
-    let mut schema_type_bindings: HashMap<String, TypeBindings> = HashMap::new();
+    let mut schema_type_bindings: TypeBindingsMap = HashMap::new();
 
     let schema_aast = Harmony::new(&schema_code_ast, &mut schema_type_bindings)
         .analyze()

@@ -1,13 +1,11 @@
 pub mod builtins;
 
-use std::collections::HashMap;
-
 use elise_aast::{AAstNode, AAstNodeCall, AAstNodeTypedef, AAstNodeTypedefRecordEntries};
 use elise_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprPrim, AstNodeTypedef, AstNodeTypedefGeneric,
 };
 use elise_binder::type_binder::TypeBinder;
-use elise_bindings::TypeBindings;
+use elise_bindings::TypeBindingsMap;
 use elise_shared::{
     shared_errors::{errors_semanalyzer::SemanalyzerErr, errors_type_binder::TypeBinderErr},
     shared_types::ArityMismatchKind,
@@ -27,7 +25,7 @@ pub struct Harmony<'a> {
     // code semantic analysis stage, so we can access
     // type definitions from schema file inside our source
     // code file.
-    pub type_bindings: &'a mut HashMap<String, TypeBindings>,
+    pub type_bindings: &'a mut TypeBindingsMap,
 
     // Alias to the current custom type definition being
     // analyzed. We need this to prevent a new type
@@ -36,10 +34,7 @@ pub struct Harmony<'a> {
 }
 
 impl<'a> Harmony<'a> {
-    pub fn new(
-        ast: &'a Vec<AstNode>,
-        global_type_bindings: &'a mut HashMap<String, TypeBindings>,
-    ) -> Self {
+    pub fn new(ast: &'a Vec<AstNode>, global_type_bindings: &'a mut TypeBindingsMap) -> Self {
         Self {
             ast,
             // Inject as globals if available. Passing global type

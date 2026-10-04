@@ -8,5 +8,7 @@ path = "src/lib.rs"
 
 [dependencies]
 elise-ast = { path = "../ir/ast" }
+elise-aast = { path = "../ir/aast" }
+elise-bindings = { path = "../ir/bindings" }
 elise-parser = { path = "../frontend/parser" }
-elise-data = { path = "../frontend/data" }
+elise-semanalyzer = { path = "../frontend/semanalyzer" }

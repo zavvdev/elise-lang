@@ -45,10 +45,11 @@ impl BindingType {
 //
 // ==================================================================
 
-pub type TypeBindings = HashMap<BindingPath, TypeBinding>;
+pub type TypeBinding = HashMap<BindingPath, TypeBindingDesc>;
+pub type TypeBindingsMap = HashMap<String, TypeBinding>;
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct TypeBinding {
+pub struct TypeBindingDesc {
     pub dtype: BindingType,
     pub span: Span,
 }
@@ -65,11 +66,11 @@ pub struct TypeBinding {
 //
 // ==================================================================
 
-pub struct DataBindings<L: Locatable> {
-    pub bindings: HashMap<BindingPath, DataBinding<L>>,
+pub struct DataBinding<L: Locatable> {
+    pub binding: HashMap<BindingPath, DataBindingDesc<L>>,
 }
 
-pub struct DataBinding<L: Locatable> {
+pub struct DataBindingDesc<L: Locatable> {
     pub dtype: BindingType,
     pub value: String,
     pub location: L,

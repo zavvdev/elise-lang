@@ -110,6 +110,7 @@ dependencies = [
  "elise-aast",
  "elise-bindings",
  "elise-shared",
+ "elise-test-utils",
 ]
 
 [[package]]
@@ -166,9 +167,11 @@ version = "0.1.0"
 name = "elise-test-utils"
 version = "0.1.0"
 dependencies = [
+ "elise-aast",
  "elise-ast",
- "elise-data",
+ "elise-bindings",
  "elise-parser",
+ "elise-semanalyzer",
 ]
 
 [[package]]

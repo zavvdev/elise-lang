@@ -7,5 +7,4 @@ pub mod msg_modes;
 pub mod msg_parser;
 pub mod msg_preexec;
 pub mod msg_semanalyzer;
-pub mod msg_type_binder;
 pub mod utils;

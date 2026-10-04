@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use elise_aast::{AAstNodeTypedef, AAstNodeTypedefRecordEntries};
 use elise_bindings::{
-    BindingType, TypeBinding, TypeBindings,
+    BindingType, TypeBinding, TypeBindingDesc, TypeBindingsMap,
     binding_path::{BindingPath, BindingPathSegment},
 };
 use elise_shared::{shared_errors::errors_type_binder::TypeBinderErr, shared_types::Span};
@@ -12,14 +12,11 @@ pub struct TypeBinder<'a> {
     current_path: BindingPath,
     current_type: Option<BindingType>,
     current_span: Span,
-    globals: &'a HashMap<String, TypeBindings>,
+    globals: &'a TypeBindingsMap,
 }
 
 impl<'a> TypeBinder<'a> {
-    pub fn new(
-        aast_typedef: &'a AAstNodeTypedef,
-        globals: &'a HashMap<String, TypeBindings>,
-    ) -> Self {
+    pub fn new(aast_typedef: &'a AAstNodeTypedef, globals: &'a TypeBindingsMap) -> Self {
         Self {
             aast_typedef,
             // Current path that changes according to nesting.
@@ -38,33 +35,33 @@ impl<'a> TypeBinder<'a> {
         }
     }
 
-    pub fn bind(&mut self) -> Result<TypeBindings, TypeBinderErr> {
-        let mut bindings: TypeBindings = HashMap::new();
-        self.bind_node(self.aast_typedef, &mut bindings)?;
-        Ok(bindings)
+    pub fn bind(&mut self) -> Result<TypeBinding, TypeBinderErr> {
+        let mut binding: TypeBinding = HashMap::new();
+        self.bind_node(self.aast_typedef, &mut binding)?;
+        Ok(binding)
     }
 
     fn bind_node(
         &mut self,
         node: &AAstNodeTypedef,
-        bindings: &mut TypeBindings,
+        binding: &mut TypeBinding,
     ) -> Result<(), TypeBinderErr> {
         self.current_span = node.span().clone();
         match node {
-            AAstNodeTypedef::Custom { alias, .. } => self.bind_custom(alias, bindings),
-            AAstNodeTypedef::Record { entries, .. } => self.bind_record(entries, bindings),
-            AAstNodeTypedef::List { item_type, .. } => self.bind_list(item_type, bindings),
-            AAstNodeTypedef::Int { .. } => self.bind_primitive(BindingType::Int, bindings),
+            AAstNodeTypedef::Custom { alias, .. } => self.bind_custom(alias, binding),
+            AAstNodeTypedef::Record { entries, .. } => self.bind_record(entries, binding),
+            AAstNodeTypedef::List { item_type, .. } => self.bind_list(item_type, binding),
+            AAstNodeTypedef::Int { .. } => self.bind_primitive(BindingType::Int, binding),
         }
     }
 
     /// Captures the current state and inserts a new record
     /// into the bindings.
-    fn commit(&mut self, bindings: &mut TypeBindings) -> Result<(), TypeBinderErr> {
+    fn commit(&mut self, binding: &mut TypeBinding) -> Result<(), TypeBinderErr> {
         if let Some(dtype) = &self.current_type {
-            bindings.insert(
+            binding.insert(
                 self.current_path.clone(),
-                TypeBinding {
+                TypeBindingDesc {
                     dtype: dtype.clone(),
                     span: self.current_span.clone(),
                 },
@@ -85,10 +82,10 @@ impl<'a> TypeBinder<'a> {
     fn bind_primitive(
         &mut self,
         dtype: BindingType,
-        bindings: &mut TypeBindings,
+        binding: &mut TypeBinding,
     ) -> Result<(), TypeBinderErr> {
         self.current_type = Some(dtype);
-        self.commit(bindings)?;
+        self.commit(binding)?;
 
         // We always remove the last path segment after resolving primitives
         // regardless if they nested or not, because if they are nested,
@@ -111,7 +108,7 @@ impl<'a> TypeBinder<'a> {
     fn bind_record(
         &mut self,
         entries: &AAstNodeTypedefRecordEntries,
-        bindings: &mut TypeBindings,
+        binding: &mut TypeBinding,
     ) -> Result<(), TypeBinderErr> {
         // Capture current type as Record and resolve it right away
         // in order to create a parent entry like:
@@ -121,7 +118,7 @@ impl<'a> TypeBinder<'a> {
         // state, so commiting parent after resolving recursively
         // will produce invalid path segments to the parent.
         self.current_type = Some(BindingType::Record);
-        self.commit(bindings)?;
+        self.commit(binding)?;
 
         for (key, value) in entries {
             // Push new segment into the current_path since we enter a new
@@ -130,7 +127,7 @@ impl<'a> TypeBinder<'a> {
                 .push(BindingPathSegment::Field(key.clone()));
             // Recurse into the key value type definition. This will commit
             // new type definitions with path including the respective key.
-            self.bind_node(value, bindings)?;
+            self.bind_node(value, binding)?;
         }
 
         self.current_path.pop();
@@ -152,18 +149,18 @@ impl<'a> TypeBinder<'a> {
     fn bind_list(
         &mut self,
         item_type: &AAstNodeTypedef,
-        bindings: &mut TypeBindings,
+        binding: &mut TypeBinding,
     ) -> Result<(), TypeBinderErr> {
         // Capture current type and commit it before recursing
         // in order to prevent committing parent type with invalid
         // path segments since recursing will alter current_path.
         self.current_type = Some(BindingType::List);
-        self.commit(bindings)?;
+        self.commit(binding)?;
 
         // Pushing AbstractIndex since our list can have any number of
         // items of the same type.
         self.current_path.push(BindingPathSegment::AbstractIndex);
-        self.bind_node(item_type, bindings)?;
+        self.bind_node(item_type, binding)?;
 
         self.current_path.pop();
         Ok(())
@@ -177,30 +174,7 @@ impl<'a> TypeBinder<'a> {
     // CUSTOM START
     // ==================================================================
 
-    // .typedef (Product :Record<{
-    //                "id"    :Int
-    //                "price" :Int }>)
-    //
-    // HashMap {
-    //    [Root] => Record
-    //    [Root, "id"] => Int
-    //    [Root, "price"] => Int
-    // }
-
-    // .typedef (Data :List<:Product>)
-    //
-    // HashMap {
-    //   [Root] => List
-    //   [Root, AbstractIndex] => Record
-    //   [Root, AbstractIndex, "id"] => Int
-    //   [Root, AbstractIndex, "price"] => Int
-    // }
-
-    fn bind_custom(
-        &mut self,
-        alias: &str,
-        bindings: &mut TypeBindings,
-    ) -> Result<(), TypeBinderErr> {
+    fn bind_custom(&mut self, alias: &str, binding: &mut TypeBinding) -> Result<(), TypeBinderErr> {
         let Some(global_bindings) = self.globals.get(alias) else {
             return Err(TypeBinderErr::UnknownTypedef {
                 span: self.current_span.clone(),
@@ -214,7 +188,7 @@ impl<'a> TypeBinder<'a> {
                     span: global_binding.span.clone(),
                 });
             };
-            bindings.insert(next_path, global_binding.clone());
+            binding.insert(next_path, global_binding.clone());
         }
 
         Ok(())
