@@ -133,18 +133,16 @@ impl BindingPath {
     /// Merges two paths into a new one. All segments from prepend_path go
     /// to the very beginning, and the rest of the to_path except the Root
     /// segment goes after.
-    pub fn prepend(prepend_path: &BindingPath, to_path: &BindingPath) -> Result<BindingPath, ()> {
+    pub fn prepend(prepend_path: &BindingPath, to_path: &BindingPath) -> Option<BindingPath> {
         if !Self::is_valid(to_path) || !Self::is_valid(prepend_path) {
-            return Err(());
+            return None;
         }
 
         // The new length is a prepend_path length + to_path length - 1
         // because the Root path segment of the to_path is dropped.
         // We can safely subtract 1 because zero length path is considered
         // as invalid and it's already checked previously.
-        let Some(new_path_len) = prepend_path.len().checked_add(to_path.len() - 1) else {
-            return Err(());
-        };
+        let new_path_len = prepend_path.len().checked_add(to_path.len() - 1)?;
 
         let mut new_path = Vec::with_capacity(new_path_len);
 
@@ -156,7 +154,7 @@ impl BindingPath {
         // the new_path.
         new_path.extend_from_slice(to_path.get(1..).unwrap_or_default());
 
-        Ok(BindingPath(new_path))
+        Some(BindingPath(new_path))
     }
 
     // TODO: Do we need this?

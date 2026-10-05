@@ -182,7 +182,7 @@ impl<'a> TypeBinder<'a> {
         };
 
         for (global_binding_path, global_binding) in global_bindings.iter() {
-            let Ok(next_path) = BindingPath::prepend(&self.current_path, global_binding_path)
+            let Some(next_path) = BindingPath::prepend(&self.current_path, global_binding_path)
             else {
                 return Err(TypeBinderErr::UnableToMerge {
                     span: global_binding.span.clone(),

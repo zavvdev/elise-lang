@@ -28,6 +28,12 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
 - [x] Data Parser (CSV)
 
+- [x] TypeBinder
+
+    - [x] Merge custom type references 
+
+    - [x] Tests
+
 - [ ] Semantic analyzer
 
     - [x] .typedef
@@ -40,12 +46,6 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
     - [ ] @data slot
 
-- [ ] TypeBinder
-
-    - [x] Merge custom type references 
-
-    - [ ] Tests
-
 - [ ] DataBinder
 
     - [ ] For each data (.csv, .json etc) create an adapter first, that translates them
@@ -53,17 +53,11 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
           source code data. Alternative: write it's own Binder for each data type +
           have a separate binder for Elise data types.
 
-- [ ] Data validation against schema
+- [ ] Data validation
 
 - [ ] Compiler
 
-    - [ ] ...
-
 - [ ] VM
-
-    - [ ] ...
-
-- [ ] Add support for comments
 
 - [ ] Optimizations
     

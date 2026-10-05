@@ -184,21 +184,21 @@ fn should_not_prepend_if_both_invalid() {
         BindingPathSegment::AbstractIndex,
         BindingPathSegment::Root,
     ]);
-    assert_eq!(BindingPath::prepend(&prepend_path, &to_path), Err(()));
+    assert_eq!(BindingPath::prepend(&prepend_path, &to_path), None);
 }
 
 #[test]
 fn should_not_prepend_if_prepend_path_invalid() {
     let prepend_path = BindingPath(vec![]);
     let to_path = BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]);
-    assert_eq!(BindingPath::prepend(&prepend_path, &to_path), Err(()));
+    assert_eq!(BindingPath::prepend(&prepend_path, &to_path), None);
 }
 
 #[test]
 fn should_not_prepend_if_to_path_invalid() {
     let prepend_path = BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]);
     let to_path = BindingPath(vec![]);
-    assert_eq!(BindingPath::prepend(&prepend_path, &to_path), Err(()));
+    assert_eq!(BindingPath::prepend(&prepend_path, &to_path), None);
 }
 
 #[test]
@@ -216,7 +216,10 @@ fn should_prepend_valid_paths() {
         BindingPathSegment::AbstractIndex,
     ]);
 
-    assert_eq!(BindingPath::prepend(&prepend_path, &to_path), Ok(new_path));
+    assert_eq!(
+        BindingPath::prepend(&prepend_path, &to_path),
+        Some(new_path)
+    );
 }
 
 // ==================================================================
