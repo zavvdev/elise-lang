@@ -4,18 +4,6 @@
 
 NOTE: .elt schema file must contain :Data type definition. It can also define other types.
       All of them are injected into the global scope of the semanalyzer.
-      Add TypeBinder that takes TypeDef ast nodes and creates HashMap<BindingPath, TypeDesc>.
-      We can use it for binding custom type definitions in the source code during semanalyzing
-      and also bind type definitions in .elt file which is also the same Ast.
-      We also need to have a DataBinder that takes ast of data expressions and produces
-      HashMap<BindingPath, DataDesc>
-
-     Each binding table must be associated with data/type it was bind to.
-     For .elt file we'll return a HashMap where each key is a name of the defined
-     type inside this file, and values are binding tables. Each table is a result
-     of a TypeBinder. By doing so, we eliminate the need to attach type name directly.
-     So we can bind type/data inside the source code and attach it to an arbitrary
-     metadata like symbol or data descriptor.
 
      For now, our parser handles all grammar that was designed. It also emits ast nodes
      that represent all possible data types such as Int, Float, List, Dict etc.
@@ -38,13 +26,25 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
     - [x] .typedef
 
+        - [ ] Remove typedef AAst node emission
+
+        - [ ] Add a validation for schema file semanalyzer result
+              that we don't have any AAst nodes emitted and only
+              type bindings are provided with "Data" type required.
+
         - [ ] Tests
     
     - [ ] .add
 
+        - [ ] Tests
+    
     - [ ] .get
 
+        - [ ] Tests
+    
     - [ ] @data slot
+
+        - [ ] Tests
 
 - [ ] DataBinder
 
