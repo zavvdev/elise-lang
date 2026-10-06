@@ -36,9 +36,10 @@ pub mod test_utils {
     pub fn semanalyze(
         source_code: &str,
         global_type_bindings: &mut TypeBindingsMap,
+        typedef_mode: bool,
     ) -> Vec<AAstNode> {
         let ast = Prelude::new(source_code.as_bytes()).parse().unwrap();
-        Harmony::new(&ast, global_type_bindings, false)
+        Harmony::new(&ast, global_type_bindings, typedef_mode)
             .analyze()
             .unwrap()
     }
