@@ -41,7 +41,23 @@ pub enum AAstNodeCall {
     },
 }
 
+impl AAstNodeCall {
+    pub fn span(&self) -> &Span {
+        match self {
+            AAstNodeCall::Typedef { typedef, .. } => typedef.span(),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum AAstNode {
     Call(AAstNodeCall),
+}
+
+impl AAstNode {
+    pub fn span(&self) -> &Span {
+        match self {
+            AAstNode::Call(call) => call.span(),
+        }
+    }
 }

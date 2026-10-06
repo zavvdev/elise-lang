@@ -31,16 +31,40 @@ pub struct Harmony<'a> {
     // analyzed. We need this to prevent a new type
     // definition referencing itself.
     pub current_typedef_alias: Option<String>,
+
+    // Instruct semanalyzer to limit analysis to
+    // type definitions only. Set to `true` for
+    // the case of .elt files analysis.
+    pub typedef_mode: bool,
 }
 
 impl<'a> Harmony<'a> {
-    pub fn new(ast: &'a Vec<AstNode>, global_type_bindings: &'a mut TypeBindingsMap) -> Self {
+    pub fn new(
+        ast: &'a Vec<AstNode>,
+        global_type_bindings: &'a mut TypeBindingsMap,
+        typedef_mode: bool,
+    ) -> Self {
         Self {
             ast,
             // Inject as globals if available. Passing global type
             // bindings into semanalyzer is not required.
             type_bindings: global_type_bindings,
             current_typedef_alias: None,
+            typedef_mode,
+        }
+    }
+
+    fn verify_node(&self, aast_node: &AAstNode) -> Result<(), SemanalyzerErr> {
+        match aast_node {
+            AAstNode::Call(AAstNodeCall::Typedef { .. }) => Ok(()),
+            node => {
+                if self.typedef_mode {
+                    return Err(SemanalyzerErr::TypedefMode {
+                        span: node.span().clone(),
+                    });
+                }
+                Ok(())
+            }
         }
     }
 
@@ -49,6 +73,7 @@ impl<'a> Harmony<'a> {
 
         for ast_node in self.ast {
             let aast_node = self.analyze_node(ast_node)?;
+            self.verify_node(&aast_node)?;
             aast.push(aast_node);
         }
 

@@ -38,7 +38,9 @@ pub mod test_utils {
         global_type_bindings: &mut TypeBindingsMap,
     ) -> Vec<AAstNode> {
         let ast = Prelude::new(source_code.as_bytes()).parse().unwrap();
-        Harmony::new(&ast, global_type_bindings).analyze().unwrap()
+        Harmony::new(&ast, global_type_bindings, false)
+            .analyze()
+            .unwrap()
     }
 
     // ==================================================================

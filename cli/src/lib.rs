@@ -74,7 +74,7 @@ pub fn run<'a>(
 
     let mut schema_type_bindings: TypeBindingsMap = HashMap::new();
 
-    let schema_aast = Harmony::new(&schema_code_ast, &mut schema_type_bindings)
+    let schema_aast = Harmony::new(&schema_code_ast, &mut schema_type_bindings, true)
         .analyze()
         .map_err(LangErr::Semanalyzer)?;
 

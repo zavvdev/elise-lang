@@ -38,4 +38,7 @@ pub enum SemanalyzerErr {
     TypedefNoReferenceItself {
         span: Span,
     },
+    TypedefMode {
+        span: Span,
+    },
 }

@@ -26,9 +26,7 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
     - [x] .typedef
 
-        - [ ] Remove typedef AAst node emission
-
-        - [ ] Add a validation for schema file semanalyzer result
+        - [x] Add a validation for schema file semanalyzer result
               that we don't have any AAst nodes emitted and only
               type bindings are provided with "Data" type required.
 
