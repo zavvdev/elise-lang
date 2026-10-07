@@ -35,9 +35,6 @@ pub enum SemanalyzerErr {
     UnresolvableTypedef {
         span: Span,
     },
-    TypedefNoReferenceItself {
-        span: Span,
-    },
     TypedefMode {
         span: Span,
     },

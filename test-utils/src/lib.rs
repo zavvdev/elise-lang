@@ -9,7 +9,7 @@ pub mod test_utils {
     };
     use elise_parser::Prelude;
     use elise_semanalyzer::Harmony;
-    use elise_shared::shared_types::Span;
+    use elise_shared::{shared_errors::errors_semanalyzer::SemanalyzerErr, shared_types::Span};
 
     // ==================================================================
     //
@@ -37,11 +37,9 @@ pub mod test_utils {
         source_code: &str,
         global_type_bindings: &mut TypeBindingsMap,
         typedef_mode: bool,
-    ) -> Vec<AAstNode> {
+    ) -> Result<Vec<AAstNode>, SemanalyzerErr> {
         let ast = Prelude::new(source_code.as_bytes()).parse().unwrap();
-        Harmony::new(&ast, global_type_bindings, typedef_mode)
-            .analyze()
-            .unwrap()
+        Harmony::new(&ast, global_type_bindings, typedef_mode).analyze()
     }
 
     // ==================================================================

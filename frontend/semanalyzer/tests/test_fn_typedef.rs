@@ -5,25 +5,62 @@ use elise_bindings::{
     BindingType, TypeBinding, TypeBindingDesc, TypeBindingsMap,
     binding_path::{BindingPath, BindingPathSegment},
 };
-use elise_shared::shared_types::Span;
+use elise_shared::{shared_errors::errors_semanalyzer::SemanalyzerErr, shared_types::Span};
 use elise_test_utils::test_utils::semanalyze;
 
 mod common;
 
 // ==================================================================
 //
-// SUCCESS CASES START
+// COMMON START
+//
+// ==================================================================
+
+// TODO: Add test cases for emitting TypedefMode error.
+
+#[test]
+fn should_fail_for_invalid_number_of_arguments() {
+    let mut type_bindings_map = HashMap::new();
+    let result = semanalyze(".typedef(Age :Int :Int)", &mut type_bindings_map, false);
+    assert!(matches!(result, Err(SemanalyzerErr::ArityMismatch { .. })));
+}
+
+#[test]
+fn should_fail_if_first_arg_is_not_ident() {
+    let mut type_bindings_map = HashMap::new();
+    let result = semanalyze(".typedef(:Int :Int)", &mut type_bindings_map, false);
+    assert!(matches!(
+        result,
+        Err(SemanalyzerErr::ExpectedIdentifier { .. })
+    ));
+}
+
+#[test]
+fn should_fail_if_second_arg_is_not_typedef() {
+    let mut type_bindings_map = HashMap::new();
+    let result = semanalyze(".typedef(Age Age)", &mut type_bindings_map, false);
+    assert!(matches!(
+        result,
+        Err(SemanalyzerErr::ExpectedTypedef { .. })
+    ));
+}
+
+// ==================================================================
+//
+// COMMON END
 //
 // ==================================================================
 
 // ==================================================================
-// PRIMITIVE ALIASING START
+//
+// INT START
+//
 // ==================================================================
 
 #[test]
 fn should_analyze_int_aliasing() {
     let mut type_bindings_map = HashMap::new();
-    let aast = semanalyze(".typedef(Age :Int)", &mut type_bindings_map, false);
+    let aast = semanalyze(".typedef(Age :Int)", &mut type_bindings_map, false).unwrap();
 
     let mut expected_type_binding: TypeBinding = HashMap::new();
     let mut expected_type_bindings_map: TypeBindingsMap = HashMap::new();
@@ -49,18 +86,32 @@ fn should_analyze_int_aliasing() {
     assert_eq!(aast, expected_aast);
 }
 
+#[test]
+fn should_fail_if_int_has_generic() {
+    let mut type_bindings_map = HashMap::new();
+    let result = semanalyze(".typedef(Age :Int<:Int>)", &mut type_bindings_map, false);
+    assert!(matches!(
+        result,
+        Err(SemanalyzerErr::UnexpectedGeneric { .. })
+    ));
+}
+
 // ==================================================================
-// PRIMITIVE ALIASING END
+//
+// INT END
+//
 // ==================================================================
 
 // ==================================================================
-// COMPOUND ALIASING START
+//
+// LIST START
+//
 // ==================================================================
 
 #[test]
 fn should_analyze_list_aliasing() {
     let mut type_bindings_map = HashMap::new();
-    let aast = semanalyze(".typedef(Data :List<:Int>)", &mut type_bindings_map, false);
+    let aast = semanalyze(".typedef(Data :List<:Int>)", &mut type_bindings_map, false).unwrap();
 
     let mut expected_type_binding: TypeBinding = HashMap::new();
     let mut expected_type_bindings_map: TypeBindingsMap = HashMap::new();
@@ -98,13 +149,47 @@ fn should_analyze_list_aliasing() {
 }
 
 #[test]
+fn should_fail_if_list_has_no_generic() {
+    let mut type_bindings_map = HashMap::new();
+    let result = semanalyze(".typedef(Age :List)", &mut type_bindings_map, false);
+    assert!(matches!(
+        result,
+        Err(SemanalyzerErr::ExpectedGeneric { .. })
+    ));
+}
+
+#[test]
+fn should_fail_if_list_has_invalid_generic() {
+    let mut type_bindings_map = HashMap::new();
+    let result = semanalyze(
+        r##".typedef(Age :List<{ "id" :Int }>)"##,
+        &mut type_bindings_map,
+        false,
+    );
+    assert!(matches!(result, Err(SemanalyzerErr::InvalidGeneric { .. })));
+}
+
+// ==================================================================
+//
+// LIST END
+//
+// ==================================================================
+
+// ==================================================================
+//
+// RECORD START
+//
+// ==================================================================
+
+#[test]
 fn should_analyze_record_aliasing() {
     let mut type_bindings_map = HashMap::new();
     let aast = semanalyze(
         r##".typedef (User :Record<{ "id" :Int }>)"##,
         &mut type_bindings_map,
         false,
-    );
+    )
+    .unwrap();
 
     let mut expected_type_binding: TypeBinding = HashMap::new();
     let mut expected_type_bindings_map: TypeBindingsMap = HashMap::new();
@@ -144,28 +229,72 @@ fn should_analyze_record_aliasing() {
     assert_eq!(aast, expected_aast);
 }
 
+#[test]
+fn should_fail_if_record_has_no_generic() {
+    let mut type_bindings_map = HashMap::new();
+    let result = semanalyze(".typedef(User :Record)", &mut type_bindings_map, false);
+    assert!(matches!(
+        result,
+        Err(SemanalyzerErr::ExpectedGeneric { .. })
+    ));
+}
+
+#[test]
+fn should_fail_if_record_has_invalid_generic() {
+    let mut type_bindings_map = HashMap::new();
+    let result = semanalyze(".typedef(Age :Record<:Int>)", &mut type_bindings_map, false);
+    assert!(matches!(result, Err(SemanalyzerErr::InvalidGeneric { .. })));
+}
+
 // ==================================================================
-// COMPOUND ALIASING END
+//
+// RECORD END
+//
 // ==================================================================
 
 // ==================================================================
 //
-// SUCCESS CASES END
+// CUSTOM START
 //
 // ==================================================================
 
+#[test]
+fn should_fail_if_custom_alias_has_generic() {
+    let mut type_bindings_map = HashMap::new();
+    let result = semanalyze(".typedef(Age :Some<:Int>)", &mut type_bindings_map, false);
+    assert!(matches!(
+        result,
+        Err(SemanalyzerErr::UnexpectedGeneric { .. })
+    ));
+}
+
+#[test]
+fn should_fail_if_custom_is_aliasing_undefined() {
+    let mut type_bindings_map = HashMap::new();
+    let result = semanalyze(".typedef(Age :Some)", &mut type_bindings_map, false);
+    assert!(matches!(result, Err(SemanalyzerErr::UnknownTypedef { .. })));
+}
+
+#[test]
+fn should_fail_if_custom_aliasing_itself() {
+    let mut type_bindings_map = HashMap::new();
+    let result = semanalyze(".typedef(Age :Age)", &mut type_bindings_map, false);
+    assert!(matches!(result, Err(SemanalyzerErr::UnknownTypedef { .. })));
+}
+
+#[test]
+fn should_fail_if_custom_aliasing_itself_deep() {
+    let mut type_bindings_map = HashMap::new();
+    let result = semanalyze(
+        r##".typedef(Age :Record<{ "some" :Age }>)"##,
+        &mut type_bindings_map,
+        false,
+    );
+    assert!(matches!(result, Err(SemanalyzerErr::UnknownTypedef { .. })));
+}
+
 // ==================================================================
 //
-// ERROR CASES START
-//
-// ==================================================================
-
-// TODO
-
-// TODO: Add test cases for emitting TypedefMode error.
-
-// ==================================================================
-//
-// ERROR CASES END
+// CUSTOM END
 //
 // ==================================================================

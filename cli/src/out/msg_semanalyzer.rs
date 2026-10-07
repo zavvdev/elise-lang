@@ -41,11 +41,6 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
 
         UnresolvableTypedef { span } => ("Unresolvable type definition".to_string(), span),
 
-        TypedefNoReferenceItself { span } => (
-            "Referencing itself in type definition is not supported".to_string(),
-            span,
-        ),
-
         TypedefMode { span } => (
             "Only type definitions are supported in this context".to_string(),
             span,

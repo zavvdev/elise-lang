@@ -30,7 +30,7 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
               that we don't have any AAst nodes emitted and only
               type bindings are provided with "Data" type required.
 
-        - [ ] Tests
+        - [x] Tests
     
     - [ ] .add
 

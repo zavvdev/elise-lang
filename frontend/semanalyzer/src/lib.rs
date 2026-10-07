@@ -27,11 +27,6 @@ pub struct Harmony<'a> {
     // code file.
     pub type_bindings: &'a mut TypeBindingsMap,
 
-    // Alias to the current custom type definition being
-    // analyzed. We need this to prevent a new type
-    // definition referencing itself.
-    pub current_typedef_alias: Option<String>,
-
     // Instruct semanalyzer to limit analysis to
     // type definitions only. Set to `true` for
     // the case of .elt files analysis.
@@ -49,7 +44,6 @@ impl<'a> Harmony<'a> {
             // Inject as globals if available. Passing global type
             // bindings into semanalyzer is not required.
             type_bindings: global_type_bindings,
-            current_typedef_alias: None,
             typedef_mode,
         }
     }
@@ -147,22 +141,13 @@ impl<'a> Harmony<'a> {
         }
 
         // If we encounter a type definition with an unknown
-        // type alias, return an error.
+        // type alias, return an error. It covers the case
+        // with referencing itself, because at this point
+        // we don't have a record of a type definition
+        // being resolved, so resolving alias to itself will
+        // fail here.
         if !self.type_bindings.contains_key(&typedef.lexeme) {
             return Err(SemanalyzerErr::UnknownTypedef {
-                span: typedef.span.clone(),
-            });
-        }
-
-        let Some(current_alias) = &self.current_typedef_alias else {
-            return Err(SemanalyzerErr::UnresolvableTypedef {
-                span: typedef.span.clone(),
-            });
-        };
-
-        // Disallow referencing itself.
-        if *current_alias == typedef.lexeme {
-            return Err(SemanalyzerErr::TypedefNoReferenceItself {
                 span: typedef.span.clone(),
             });
         }
@@ -247,14 +232,13 @@ impl<'a> Harmony<'a> {
         }
     }
 
-    fn record_typedef(&mut self, aast_typedef: &AAstNodeTypedef) -> Result<(), SemanalyzerErr> {
-        let Some(alias) = &self.current_typedef_alias else {
-            return Err(SemanalyzerErr::UnresolvableTypedef {
-                span: aast_typedef.span().clone(),
-            });
-        };
+    fn record_typedef(
+        &mut self,
+        alias: &str,
+        aast_typedef: &AAstNodeTypedef,
+    ) -> Result<(), SemanalyzerErr> {
         match TypeBinder::new(aast_typedef, self.type_bindings).bind() {
-            Ok(bindings) => self.type_bindings.insert(alias.clone(), bindings),
+            Ok(bindings) => self.type_bindings.insert(alias.to_string(), bindings),
             Err(bind_err) => match bind_err {
                 TypeBinderErr::UnknownTypedef { span } => {
                     return Err(SemanalyzerErr::UnknownTypedef { span });
@@ -285,11 +269,6 @@ impl<'a> Harmony<'a> {
 
         let identifier = Self::expect_identifier(first_arg)?;
 
-        // Capture current new type definition alias before
-        // recursing into a type resolution, so we can reference
-        // it inside deep type analysis.
-        self.current_typedef_alias = Some(identifier.lexeme.clone());
-
         // Ensure that the second argument is a type definition
         // and extract it.
         let ast_typedef = Self::expect_typedef(second_arg)?;
@@ -298,9 +277,7 @@ impl<'a> Harmony<'a> {
         let aast_typedef = self.analyze_typedef(ast_typedef)?;
 
         // Save newly resolved type into a global scope.
-        self.record_typedef(&aast_typedef)?;
-
-        self.current_typedef_alias = None;
+        self.record_typedef(&identifier.lexeme, &aast_typedef)?;
 
         // TODO: Maybe we don't need to emit AAst nodes
         // for type definitions since we build type bindings?
