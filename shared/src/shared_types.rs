@@ -15,6 +15,7 @@ pub struct Pos {
 
 /// Used for implementing a mechanism of locating
 /// nodes for error reporting purposes.
+// TODO: Relevant?
 pub trait Locatable {
     fn locate() -> String;
 }

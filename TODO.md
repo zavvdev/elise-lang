@@ -14,15 +14,11 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
 - [x] Parser
 
-- [ ] Data Parser (CSV)
-
-    - [ ] Remove null parsing
+- [x] CSV Data Parser
 
 - [x] TypeBinder
 
-    - [x] Merge custom type references 
-
-    - [x] Tests
+- [ ] Review TODOS (return own spans for span fns)
 
 - [ ] Semantic analyzer
 
