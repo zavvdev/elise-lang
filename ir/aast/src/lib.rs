@@ -22,13 +22,12 @@ pub enum AAstNodeTypedef {
 }
 
 impl AAstNodeTypedef {
-    // TODO: Return an owned Span?
-    pub fn span(&self) -> &Span {
+    pub fn span(&self) -> Span {
         match self {
-            AAstNodeTypedef::Custom { span, .. } => span,
-            AAstNodeTypedef::Record { span, .. } => span,
-            AAstNodeTypedef::List { span, .. } => span,
-            AAstNodeTypedef::Int { span, .. } => span,
+            AAstNodeTypedef::Custom { span, .. } => span.clone(),
+            AAstNodeTypedef::Record { span, .. } => span.clone(),
+            AAstNodeTypedef::List { span, .. } => span.clone(),
+            AAstNodeTypedef::Int { span, .. } => span.clone(),
         }
     }
 }
@@ -42,7 +41,7 @@ pub enum AAstNodeCall {
 }
 
 impl AAstNodeCall {
-    pub fn span(&self) -> &Span {
+    pub fn span(&self) -> Span {
         match self {
             AAstNodeCall::Typedef { typedef, .. } => typedef.span(),
         }
@@ -56,10 +55,10 @@ pub enum AAstNode {
 }
 
 impl AAstNode {
-    pub fn span(&self) -> &Span {
+    pub fn span(&self) -> Span {
         match self {
             AAstNode::Call(call) => call.span(),
-            AAstNode::SlotData { span } => span,
+            AAstNode::SlotData { span } => span.clone(),
         }
     }
 }

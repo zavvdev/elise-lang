@@ -53,9 +53,7 @@ impl<'a> Harmony<'a> {
             AAstNode::Call(AAstNodeCall::Typedef { .. }) => Ok(()),
             node => {
                 if self.typedef_mode {
-                    return Err(SemanalyzerErr::TypedefMode {
-                        span: node.span().clone(),
-                    });
+                    return Err(SemanalyzerErr::TypedefMode { span: node.span() });
                 }
                 Ok(())
             }
@@ -79,7 +77,7 @@ impl<'a> Harmony<'a> {
             AstNode::Expr(AstNodeExpr::Call(call)) => self.analyze_call(call),
             AstNode::Expr(AstNodeExpr::Slot(prim)) => self.analyze_slot(prim),
             _ => Err(SemanalyzerErr::UnsupportedNode {
-                span: ast_node.span().clone(),
+                span: ast_node.span(),
             }),
         }
     }
@@ -91,7 +89,7 @@ impl<'a> Harmony<'a> {
     fn expect_typedef(ast_node: &AstNode) -> Result<&AstNodeTypedef, SemanalyzerErr> {
         let AstNode::Typedef(typedef) = ast_node else {
             return Err(SemanalyzerErr::ExpectedTypedef {
-                span: ast_node.span().clone(),
+                span: ast_node.span(),
             });
         };
         Ok(typedef)
@@ -100,7 +98,7 @@ impl<'a> Harmony<'a> {
     fn expect_identifier(ast_node: &AstNode) -> Result<&AstNodeExprPrim, SemanalyzerErr> {
         let AstNode::Expr(AstNodeExpr::Ident(identifier)) = ast_node else {
             return Err(SemanalyzerErr::ExpectedIdentifier {
-                span: ast_node.span().clone(),
+                span: ast_node.span(),
             });
         };
         Ok(identifier)
@@ -246,7 +244,7 @@ impl<'a> Harmony<'a> {
                 }
                 _ => {
                     return Err(SemanalyzerErr::UnresolvableTypedef {
-                        span: aast_typedef.span().clone(),
+                        span: aast_typedef.span(),
                     });
                 }
             },
@@ -280,8 +278,6 @@ impl<'a> Harmony<'a> {
         // Save newly resolved type into a global scope.
         self.record_typedef(&identifier.lexeme, &aast_typedef)?;
 
-        // TODO: Maybe we don't need to emit AAst nodes
-        // for type definitions since we build type bindings?
         Ok(AAstNode::Call(AAstNodeCall::Typedef {
             alias: identifier.lexeme.clone(),
             typedef: aast_typedef,

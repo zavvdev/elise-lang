@@ -7,11 +7,10 @@ pub enum AstNode {
 }
 
 impl AstNode {
-    // TODO: Return owned Span
-    pub fn span(&self) -> &Span {
+    pub fn span(&self) -> Span {
         match self {
-            AstNode::Expr(expr) => expr.span(),
-            AstNode::Typedef(typedef) => typedef.span(),
+            AstNode::Expr(expr) => expr.span().clone(),
+            AstNode::Typedef(typedef) => typedef.span().clone(),
         }
     }
 
@@ -76,8 +75,8 @@ pub enum AstNodeExpr {
 }
 
 impl AstNodeExpr {
-    // TODO: Return owned span. Do we need this?
-    pub fn span(&self) -> &Span {
+    // TODO: Do we need this?
+    pub fn span(&self) -> Span {
         match self {
             AstNodeExpr::Int(p)
             | AstNodeExpr::Float(p)
@@ -85,10 +84,10 @@ impl AstNodeExpr {
             | AstNodeExpr::Bool(p)
             | AstNodeExpr::Ident(p)
             | AstNodeExpr::Null(p)
-            | AstNodeExpr::Slot(p) => &p.span,
-            AstNodeExpr::List(l) => &l.span,
-            AstNodeExpr::Dict(d) => &d.span,
-            AstNodeExpr::Call(c) => &c.span,
+            | AstNodeExpr::Slot(p) => p.span.clone(),
+            AstNodeExpr::List(l) => l.span.clone(),
+            AstNodeExpr::Dict(d) => d.span.clone(),
+            AstNodeExpr::Call(c) => c.span.clone(),
         }
     }
 
@@ -141,9 +140,9 @@ pub struct AstNodeTypedef {
 }
 
 impl AstNodeTypedef {
-    // TODO: Do we need this? Return owned Span.
-    pub fn span(&self) -> &Span {
-        &self.span
+    // TODO: Return owned Span.
+    pub fn span(&self) -> Span {
+        self.span.clone()
     }
     // TODO: Do we need this?
     pub fn as_str(&self) -> &'static str {

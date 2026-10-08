@@ -46,7 +46,7 @@ impl<'a> TypeBinder<'a> {
         node: &AAstNodeTypedef,
         binding: &mut TypeBinding,
     ) -> Result<(), TypeBinderErr> {
-        self.current_span = node.span().clone();
+        self.current_span = node.span();
         match node {
             AAstNodeTypedef::Custom { alias, .. } => self.bind_custom(alias, binding),
             AAstNodeTypedef::Record { entries, .. } => self.bind_record(entries, binding),
