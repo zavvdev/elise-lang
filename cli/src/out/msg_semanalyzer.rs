@@ -25,6 +25,8 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
 
         UnknownFunction { span } => ("Unknown function".to_string(), span),
 
+        UnknownSlot { span } => ("Unknown slot".to_string(), span),
+
         UnsupportedNode { span } => ("Unsupported expression".to_string(), span),
 
         ExpectedTypedef { span } => ("Expected type definition".to_string(), span),

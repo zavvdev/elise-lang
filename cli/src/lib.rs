@@ -64,7 +64,7 @@ pub fn run<'a>(
 ) -> Result<RunResult<'a>, LangErr> {
     let start = Instant::now();
 
-    let _source_code_ast = Prelude::new(source_code)
+    let source_code_ast = Prelude::new(source_code)
         .parse()
         .map_err(LangErr::ParserSource)?;
 
@@ -73,13 +73,15 @@ pub fn run<'a>(
         .map_err(LangErr::ParserSchema)?;
 
     let mut schema_type_bindings: TypeBindingsMap = HashMap::new();
-
-    let schema_aast = Harmony::new(&schema_code_ast, &mut schema_type_bindings, true)
+    let _schema_aast = Harmony::new(&schema_code_ast, &mut schema_type_bindings, true)
         .analyze()
         .map_err(LangErr::Semanalyzer)?;
 
-    println!("Schema AAst: {:#?}", schema_aast);
-    println!("Schema type bindings: {:#?}", schema_type_bindings);
+    let source_code_aast = Harmony::new(&source_code_ast, &mut schema_type_bindings, false)
+        .analyze()
+        .map_err(LangErr::Semanalyzer)?;
+
+    println!("aast: {:#?}", source_code_aast);
 
     Ok(RunResult {
         config,

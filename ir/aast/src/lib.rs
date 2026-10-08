@@ -52,12 +52,14 @@ impl AAstNodeCall {
 #[derive(Debug, PartialEq)]
 pub enum AAstNode {
     Call(AAstNodeCall),
+    SlotData { span: Span },
 }
 
 impl AAstNode {
     pub fn span(&self) -> &Span {
         match self {
             AAstNode::Call(call) => call.span(),
+            AAstNode::SlotData { span } => span,
         }
     }
 }

@@ -170,6 +170,7 @@ dependencies = [
  "elise-aast",
  "elise-ast",
  "elise-bindings",
+ "elise-data",
  "elise-parser",
  "elise-semanalyzer",
  "elise-shared",

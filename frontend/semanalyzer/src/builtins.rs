@@ -10,3 +10,8 @@ impl TypedefLexeme {
     pub const LIST: &'static str = "List";
     pub const RECORD: &'static str = "Record";
 }
+
+pub struct SlotLexeme;
+impl SlotLexeme {
+    pub const DATA: &'static str = "data";
+}

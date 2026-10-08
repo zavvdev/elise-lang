@@ -11,7 +11,7 @@ use elise_shared::{
     shared_types::ArityMismatchKind,
 };
 
-use crate::builtins::{FnTypedef, TypedefLexeme};
+use crate::builtins::{FnTypedef, SlotLexeme, TypedefLexeme};
 
 pub struct Harmony<'a> {
     pub ast: &'a Vec<AstNode>,
@@ -77,6 +77,7 @@ impl<'a> Harmony<'a> {
     fn analyze_node(&mut self, ast_node: &AstNode) -> Result<AAstNode, SemanalyzerErr> {
         match ast_node {
             AstNode::Expr(AstNodeExpr::Call(call)) => self.analyze_call(call),
+            AstNode::Expr(AstNodeExpr::Slot(prim)) => self.analyze_slot(prim),
             _ => Err(SemanalyzerErr::UnsupportedNode {
                 span: ast_node.span().clone(),
             }),
@@ -289,5 +290,24 @@ impl<'a> Harmony<'a> {
 
     // ==================================================================
     // TYPEDEF CALL END
+    // ==================================================================
+
+    // ==================================================================
+    // SLOT START
+    // ==================================================================
+
+    fn analyze_slot(&mut self, prim: &AstNodeExprPrim) -> Result<AAstNode, SemanalyzerErr> {
+        match prim.lexeme.as_str() {
+            SlotLexeme::DATA => Ok(AAstNode::SlotData {
+                span: prim.span.clone(),
+            }),
+            _ => Err(SemanalyzerErr::UnknownSlot {
+                span: prim.span.clone(),
+            }),
+        }
+    }
+
+    // ==================================================================
+    // SLOT END
     // ==================================================================
 }

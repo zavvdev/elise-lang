@@ -10,6 +10,7 @@ path = "src/lib.rs"
 elise-ast = { path = "../ir/ast" }
 elise-aast = { path = "../ir/aast" }
 elise-bindings = { path = "../ir/bindings" }
+elise-data = { path = "../frontend/data" }
 elise-parser = { path = "../frontend/parser" }
 elise-semanalyzer = { path = "../frontend/semanalyzer" }
 elise-shared = { path = "../shared" }

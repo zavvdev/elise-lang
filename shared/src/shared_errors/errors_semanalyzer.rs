@@ -11,6 +11,9 @@ pub enum SemanalyzerErr {
     UnknownFunction {
         span: Span,
     },
+    UnknownSlot {
+        span: Span,
+    },
     UnsupportedNode {
         span: Span,
     },

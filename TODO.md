@@ -14,7 +14,9 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
 - [x] Parser
 
-- [x] Data Parser (CSV)
+- [ ] Data Parser (CSV)
+
+    - [ ] Remove null parsing
 
 - [x] TypeBinder
 
@@ -26,21 +28,13 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
     - [x] .typedef
 
-        - [x] Add a validation for schema file semanalyzer result
-              that we don't have any AAst nodes emitted and only
-              type bindings are provided with "Data" type required.
+    - [x] @data slot
 
-        - [x] Tests
-    
     - [ ] .add
 
         - [ ] Tests
     
     - [ ] .get
-
-        - [ ] Tests
-    
-    - [ ] @data slot
 
         - [ ] Tests
 
