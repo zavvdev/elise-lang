@@ -12,6 +12,12 @@ pub struct Pos {
     pub col: usize,
 }
 
+/// Used for implementing a mechanism of locating
+/// nodes for error reporting purposes.
+pub trait Locatable {
+    fn locate() -> String;
+}
+
 pub struct Literal;
 impl Literal {
     pub const TRUE: &str = "true";
