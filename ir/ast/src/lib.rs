@@ -1,4 +1,4 @@
-use elise_shared::{shared_node_names::NodeName, shared_types::Span};
+use elise_shared::shared_types::Span;
 
 #[derive(Debug, PartialEq)]
 pub enum AstNode {
@@ -11,14 +11,6 @@ impl AstNode {
         match self {
             AstNode::Expr(expr) => expr.span().clone(),
             AstNode::Typedef(typedef) => typedef.span().clone(),
-        }
-    }
-
-    // TODO: Do we need this?
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            AstNode::Expr(expr) => expr.as_str(),
-            AstNode::Typedef(typedef) => typedef.as_str(),
         }
     }
 }
@@ -75,7 +67,6 @@ pub enum AstNodeExpr {
 }
 
 impl AstNodeExpr {
-    // TODO: Do we need this?
     pub fn span(&self) -> Span {
         match self {
             AstNodeExpr::Int(p)
@@ -88,22 +79,6 @@ impl AstNodeExpr {
             AstNodeExpr::List(l) => l.span.clone(),
             AstNodeExpr::Dict(d) => d.span.clone(),
             AstNodeExpr::Call(c) => c.span.clone(),
-        }
-    }
-
-    // TODO: Do we need this?
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            AstNodeExpr::Int(_) => NodeName::INT,
-            AstNodeExpr::Float(_) => NodeName::FLOAT,
-            AstNodeExpr::Str(_) => NodeName::STR,
-            AstNodeExpr::Bool(_) => NodeName::BOOL,
-            AstNodeExpr::Ident(_) => NodeName::IDENT,
-            AstNodeExpr::Null(_) => NodeName::NULL,
-            AstNodeExpr::Slot(_) => NodeName::SLOT,
-            AstNodeExpr::Dict(_) => NodeName::DICT,
-            AstNodeExpr::List(_) => NodeName::LIST,
-            AstNodeExpr::Call(_) => NodeName::CALL,
         }
     }
 }
@@ -140,13 +115,8 @@ pub struct AstNodeTypedef {
 }
 
 impl AstNodeTypedef {
-    // TODO: Return owned Span.
     pub fn span(&self) -> Span {
         self.span.clone()
-    }
-    // TODO: Do we need this?
-    pub fn as_str(&self) -> &'static str {
-        NodeName::TYPEDEF
     }
 }
 

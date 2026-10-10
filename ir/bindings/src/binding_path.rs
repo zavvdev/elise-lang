@@ -19,8 +19,6 @@ pub enum BindingPathSegment {
     Field(String),
 }
 impl BindingPathSegment {
-    // For anything that requires string representation, like error reports.
-    // TODO: Do we need this?
     pub fn as_str(&self) -> String {
         match self {
             BindingPathSegment::Root => "Root".to_string(),
@@ -129,7 +127,6 @@ impl BindingPath {
         matches!(root_indexes.as_slice(), [0])
     }
 
-    // TODO: Use a custom error instead of unit?
     /// Merges two paths into a new one. All segments from prepend_path go
     /// to the very beginning, and the rest of the to_path except the Root
     /// segment goes after.
@@ -157,7 +154,6 @@ impl BindingPath {
         Some(BindingPath(new_path))
     }
 
-    // TODO: Do we need this?
     pub fn as_str(&self) -> String {
         format!(
             "[{}]",

@@ -18,8 +18,6 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
 - [x] TypeBinder
 
-- [ ] Review TODOS: check if some span() and as_str IR structs are needed
-
 - [ ] Semantic analyzer
 
     - [x] .typedef

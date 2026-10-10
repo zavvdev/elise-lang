@@ -2,10 +2,7 @@ pub mod binding_path;
 
 use std::collections::HashMap;
 
-use elise_shared::{
-    shared_node_names::NodeName,
-    shared_types::{Locatable, Span},
-};
+use elise_shared::shared_types::Span;
 
 use crate::binding_path::BindingPath;
 
@@ -20,17 +17,6 @@ pub enum BindingType {
     Int,
     List,
     Record,
-}
-
-impl BindingType {
-    // TODO: Do we need this?
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            BindingType::Int => NodeName::INT,
-            BindingType::List => NodeName::LIST,
-            BindingType::Record => NodeName::RECORD,
-        }
-    }
 }
 
 // ==================================================================
@@ -57,27 +43,5 @@ pub struct TypeBindingDesc {
 // ==================================================================
 //
 // TYPE BINDINGS END
-//
-// ==================================================================
-
-// ==================================================================
-//
-// DATA BINDINGS START
-//
-// ==================================================================
-
-pub struct DataBinding<L: Locatable> {
-    pub binding: HashMap<BindingPath, DataBindingDesc<L>>,
-}
-
-pub struct DataBindingDesc<L: Locatable> {
-    pub dtype: BindingType,
-    pub value: String,
-    pub location: L,
-}
-
-// ==================================================================
-//
-// DATA BINDINGS END
 //
 // ==================================================================

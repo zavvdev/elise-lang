@@ -6,18 +6,10 @@ pub struct Span {
     pub end: usize,
 }
 
-// TODO: Deprecated?
 #[derive(Debug, PartialEq, Clone)]
 pub struct Pos {
     pub row: usize,
     pub col: usize,
-}
-
-/// Used for implementing a mechanism of locating
-/// nodes for error reporting purposes.
-// TODO: Relevant?
-pub trait Locatable {
-    fn locate() -> String;
 }
 
 pub struct Literal;
