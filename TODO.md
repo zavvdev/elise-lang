@@ -18,15 +18,31 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
 - [x] TypeBinder
 
-- [ ] Update Grammar and Parser
-
 - [ ] DataBinder
+
+    - [ ] Takes AAst nodes. Before binding data, we adapt it depending on its type,
+          analyze semantics for it since it's just a raw Elise code and then bind.
+          We can use the same binder in Harmony if we want to add a custom data
+          definitions. We would just get AAst nodes from that data and bind it.
+          Additionaly check type match of course.
 
 - [ ] Semantic analyzer
 
     - [x] .typedef
 
     - [x] @data slot
+
+    - [ ] List
+
+        - [ ] Must contain only static data
+
+        - [ ] Tests
+
+    - [ ] Dicts
+
+        - [ ] Must contain only static data
+
+        - [ ] Tests
 
     - [ ] .add
 
