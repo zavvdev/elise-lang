@@ -11,7 +11,6 @@ mod common;
 fn should_fail_for_unknown_slot() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze("@unknown", &mut type_bindings_map, false);
-    println!("result: {:#?}", result);
     assert!(matches!(result, Err(SemanalyzerErr::UnknownSlot { .. })));
 }
 

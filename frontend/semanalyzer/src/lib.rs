@@ -1,6 +1,8 @@
 pub mod builtins;
 
-use elise_aast::{AAstNode, AAstNodeCall, AAstNodeTypedef, AAstNodeTypedefRecordEntries};
+use elise_aast::{
+    AAstNode, AAstNodeCall, AAstNodeData, AAstNodeTypedef, AAstNodeTypedefRecordEntries,
+};
 use elise_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprPrim, AstNodeTypedef, AstNodeTypedefGeneric,
 };
@@ -76,6 +78,7 @@ impl<'a> Harmony<'a> {
         match ast_node {
             AstNode::Expr(AstNodeExpr::Call(call)) => self.analyze_call(call),
             AstNode::Expr(AstNodeExpr::Slot(prim)) => self.analyze_slot(prim),
+            AstNode::Expr(AstNodeExpr::Int(prim)) => self.analyze_int(prim),
             _ => Err(SemanalyzerErr::UnsupportedNode {
                 span: ast_node.span(),
             }),
@@ -305,5 +308,20 @@ impl<'a> Harmony<'a> {
 
     // ==================================================================
     // SLOT END
+    // ==================================================================
+
+    // ==================================================================
+    // INT START
+    // ==================================================================
+
+    fn analyze_int(&mut self, prim: &AstNodeExprPrim) -> Result<AAstNode, SemanalyzerErr> {
+        Ok(AAstNode::Data(AAstNodeData::Int {
+            span: prim.span.clone(),
+            lexeme: prim.lexeme.clone(),
+        }))
+    }
+
+    // ==================================================================
+    // INT END
     // ==================================================================
 }

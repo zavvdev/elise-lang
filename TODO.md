@@ -31,6 +31,8 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
     - [x] .typedef
 
     - [x] @data slot
+    
+    - [x] Int
 
     - [ ] List
 
