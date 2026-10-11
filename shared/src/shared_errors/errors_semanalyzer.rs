@@ -41,4 +41,10 @@ pub enum SemanalyzerErr {
     TypedefMode {
         span: Span,
     },
+    ListInconsistentItemTypes {
+        span: Span,
+    },
+    UnsupportedListItem {
+        span: Span,
+    },
 }

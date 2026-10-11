@@ -1,10 +1,14 @@
 pub mod builtins;
 
+use std::mem::discriminant;
+
 use elise_aast::{
-    AAstNode, AAstNodeCall, AAstNodeData, AAstNodeTypedef, AAstNodeTypedefRecordEntries,
+    AAstNode, AAstNodeCall, AAstNodeData, AAstNodeDataPrim, AAstNodeTypedef,
+    AAstNodeTypedefRecordEntries,
 };
 use elise_ast::{
-    AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprPrim, AstNodeTypedef, AstNodeTypedefGeneric,
+    AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprList, AstNodeExprPrim, AstNodeTypedef,
+    AstNodeTypedefGeneric,
 };
 use elise_binder::type_binder::TypeBinder;
 use elise_bindings::TypeBindingsMap;
@@ -76,9 +80,20 @@ impl<'a> Harmony<'a> {
 
     fn analyze_node(&mut self, ast_node: &AstNode) -> Result<AAstNode, SemanalyzerErr> {
         match ast_node {
-            AstNode::Expr(AstNodeExpr::Call(call)) => self.analyze_call(call),
-            AstNode::Expr(AstNodeExpr::Slot(prim)) => self.analyze_slot(prim),
-            AstNode::Expr(AstNodeExpr::Int(prim)) => self.analyze_int(prim),
+            AstNode::Expr(expr) => self.analyze_node_expr(expr),
+            _ => Err(SemanalyzerErr::UnsupportedNode {
+                span: ast_node.span(),
+            }),
+        }
+    }
+
+    fn analyze_node_expr(&mut self, ast_node: &AstNodeExpr) -> Result<AAstNode, SemanalyzerErr> {
+        match ast_node {
+            AstNodeExpr::Call(call) => self.analyze_call(call),
+            AstNodeExpr::Slot(prim) => self.analyze_slot(prim),
+            AstNodeExpr::Int(prim) => self.analyze_prim(prim, AAstNodeData::Int),
+            AstNodeExpr::Str(prim) => self.analyze_prim(prim, AAstNodeData::Str),
+            AstNodeExpr::List(list) => self.analyze_list(list),
             _ => Err(SemanalyzerErr::UnsupportedNode {
                 span: ast_node.span(),
             }),
@@ -311,17 +326,72 @@ impl<'a> Harmony<'a> {
     // ==================================================================
 
     // ==================================================================
-    // INT START
+    // PRIM START
+    //
+    // Primitive Ast nodes map 1:1 to AAst primitive nodes
+    // so we one a single function for them.
     // ==================================================================
 
-    fn analyze_int(&mut self, prim: &AstNodeExprPrim) -> Result<AAstNode, SemanalyzerErr> {
-        Ok(AAstNode::Data(AAstNodeData::Int {
+    fn analyze_prim(
+        &mut self,
+        prim: &AstNodeExprPrim,
+        variant: fn(AAstNodeDataPrim) -> AAstNodeData,
+    ) -> Result<AAstNode, SemanalyzerErr> {
+        Ok(AAstNode::Data(variant(AAstNodeDataPrim {
             span: prim.span.clone(),
             lexeme: prim.lexeme.clone(),
+        })))
+    }
+
+    // ==================================================================
+    // PRIM END
+    // ==================================================================
+
+    // ==================================================================
+    // LIST START
+    // ==================================================================
+
+    fn analyze_list(&mut self, list: &AstNodeExprList) -> Result<AAstNode, SemanalyzerErr> {
+        // Each list item must be of the same type.
+        // This validation guarantees only a shallow type comparison,
+        // so technically, this code won't fail: [[1, 2], ["3", "4"]]
+        // which is fine, because on the type validation level this code
+        // will be rejected since we have no possibility to express
+        // list item as a union type.
+        let mut item_type: Option<&Box<AstNodeExpr>> = None;
+        for item in list.items.iter() {
+            if let Some(ty) = item_type
+                && discriminant(&**item) != discriminant(ty)
+            {
+                return Err(SemanalyzerErr::ListInconsistentItemTypes { span: item.span() });
+            } else {
+                item_type = Some(item);
+            }
+        }
+
+        // We allow only data nodes inside list items for now in order
+        // to avoid complexity related to expression evaluation at runtime.
+        // Grammatically, this code can be accepted:
+        // [.add(1, 2)] because .add call is an expression that produced a
+        // value, but this will require us to emit an additional type of
+        // AAst nodes that must instruct the Compiler or VM to perform
+        // evaluation of this expression first in order to derive its value
+        // into the list. This will be covered in the future.
+        let mut aast_items = vec![];
+        for item in list.items.iter() {
+            let AAstNode::Data(data_node) = self.analyze_node_expr(item)? else {
+                return Err(SemanalyzerErr::UnsupportedListItem { span: item.span() });
+            };
+            aast_items.push(Box::new(data_node));
+        }
+
+        Ok(AAstNode::Data(AAstNodeData::List {
+            span: list.span.clone(),
+            items: aast_items,
         }))
     }
 
     // ==================================================================
-    // INT END
+    // LIST END
     // ==================================================================
 }

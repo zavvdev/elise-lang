@@ -36,7 +36,11 @@ fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &
         PreExec(err) => msg_preexec::print_err(err),
         ParserSource(err) => msg_parser::print_err(err, source_code),
         ParserSchema(err) => msg_parser::print_err(err, schema_source_code),
-        Semanalyzer(err) => msg_semanalyzer::print_err(err, schema_source_code),
+        // TODO: This works only with one specific source code, but Harmony
+        // can be used for either schema or program code. We need to find
+        // a way of selecting a code for error reports depending on the current
+        // Harmony use-case.
+        Semanalyzer(err) => msg_semanalyzer::print_err(err, source_code),
         DataValidator(err) => msg_data_validator::print_err(err, schema_source_code),
         CsvDataParser(err) => msg_csv_data_parser::print_err(err),
         CsvDataBinder(err) => msg_csv_data_binder::print_err(err),

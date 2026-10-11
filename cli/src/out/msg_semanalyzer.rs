@@ -47,6 +47,11 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             "Only type definitions are supported in this context".to_string(),
             span,
         ),
+        ListInconsistentItemTypes { span } => (
+            "List can contain only elements of the same type".to_string(),
+            span,
+        ),
+        UnsupportedListItem { span } => ("Unsupported list item".to_string(), span),
     };
 
     utils::print_err(&info, Some("Semantic error"));

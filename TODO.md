@@ -18,6 +18,8 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
 - [x] TypeBinder
 
+- [ ] Review .span.clone() calls and move it under impl
+
 - [ ] DataBinder
 
     - [ ] Takes AAst nodes. Before binding data, we adapt it depending on its type,
@@ -34,11 +36,7 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
     
     - [x] Int
 
-    - [ ] List
-
-        - [ ] Must contain only static data
-
-        - [ ] Tests
+    - [x] List
 
     - [ ] Dicts
 
@@ -56,7 +54,8 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
 - [ ] Data adapter for CSV
 
-- [ ] Data validation
+- [ ] Data validation. Must be used for schema validation and also for a validation of the
+      custom data inside Harmony
 
 - [ ] Compiler
 

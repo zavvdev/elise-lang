@@ -52,21 +52,25 @@ impl AAstNodeCall {
 // ==================================================================
 
 #[derive(Debug, PartialEq)]
+pub struct AAstNodeDataPrim {
+    pub lexeme: String,
+    pub span: Span,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum AAstNodeData {
-    Int {
-        lexeme: String,
-        span: Span,
-    },
+    Int(AAstNodeDataPrim),
+    Str(AAstNodeDataPrim),
     List {
         span: Span,
-        items: Box<AAstNodeData>,
+        items: Vec<Box<AAstNodeData>>,
     },
 }
 
 impl AAstNodeData {
     pub fn span(&self) -> Span {
         match self {
-            AAstNodeData::Int { span, .. } => span.clone(),
+            AAstNodeData::Int(prim) | AAstNodeData::Str(prim) => prim.span.clone(),
             AAstNodeData::List { span, .. } => span.clone(),
         }
     }
