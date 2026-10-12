@@ -11,13 +11,13 @@ use elise_ast::{
     AstNodeTypedef, AstNodeTypedefGeneric,
 };
 use elise_binder::type_binder::TypeBinder;
-use elise_bindings::TypeBindingsMap;
+use elise_bindings::{TypeBinding, TypeBindingsMap};
 use elise_shared::{
     shared_errors::{errors_semanalyzer::SemanalyzerErr, errors_type_binder::TypeBinderErr},
-    shared_types::ArityMismatchKind,
+    shared_types::{ArityMismatchKind, Span},
 };
 
-use crate::builtins::{FnTypedef, SlotLexeme, TypedefLexeme};
+use crate::builtins::{FnGet, FnTypedef, SlotLexeme, TypedefLexeme};
 
 pub struct Harmony<'a> {
     pub ast: &'a Vec<AstNode>,
@@ -128,12 +128,32 @@ impl<'a> Harmony<'a> {
     // ==================================================================
 
     // ==================================================================
+    // TYPE INFERENCE START
+    // ==================================================================
+
+    /// Takes AAstNode, filters out everything we cannot use for
+    /// type inference (any entity that does not resolve into a data)
+    /// and returns back TypeBinding.
+    fn _infer_type(_aast_node: &AAstNode) -> Result<TypeBinding, SemanalyzerErr> {
+        // TODO
+
+        Err(SemanalyzerErr::UnknownFunction {
+            span: Span { start: 0, end: 0 },
+        })
+    }
+
+    // ==================================================================
+    // TYPE INFERENCE END
+    // ==================================================================
+
+    // ==================================================================
     // CALL START
     // ==================================================================
 
     fn analyze_call(&mut self, call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
         match call.lexeme.as_str() {
             FnTypedef::LEXEME => self.analyze_call_typedef(call),
+            FnGet::LEXEME => self.analyze_call_get(call),
             _ => Err(SemanalyzerErr::UnknownFunction {
                 span: call.span.clone(),
             }),
@@ -271,7 +291,6 @@ impl<'a> Harmony<'a> {
         Ok(())
     }
 
-    /// Entry point for .typedef function analysis.
     fn analyze_call_typedef(&mut self, call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
         if call.body.len() != FnTypedef::ARGS_LEN {
             return Err(SemanalyzerErr::ArityMismatch {
@@ -305,6 +324,22 @@ impl<'a> Harmony<'a> {
 
     // ==================================================================
     // TYPEDEF CALL END
+    // ==================================================================
+
+    // ==================================================================
+    // GET CALL START
+    // ==================================================================
+
+    fn analyze_call_get(&mut self, _call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
+        // TODO
+
+        Err(SemanalyzerErr::UnknownFunction {
+            span: Span { start: 0, end: 0 },
+        })
+    }
+
+    // ==================================================================
+    // GET CALL END
     // ==================================================================
 
     // ==================================================================

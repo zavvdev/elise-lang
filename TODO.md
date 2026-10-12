@@ -39,12 +39,12 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
     - [x] List
 
     - [x] Dicts
-
-    - [ ] .add
-
-        - [ ] Tests
     
     - [ ] .get
+
+        - [ ] Tests
+
+    - [ ] .add
 
         - [ ] Tests
 

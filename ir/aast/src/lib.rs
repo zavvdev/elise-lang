@@ -1,3 +1,4 @@
+use elise_bindings::{TypeBinding, binding_path::BindingPath};
 use elise_shared::shared_types::Span;
 
 #[derive(Debug, PartialEq)]
@@ -29,12 +30,33 @@ pub enum AAstNodeCall {
         alias: String,
         typedef: AAstNodeTypedef,
     },
+    Get {
+        span: Span,
+        binding_path: BindingPath,
+
+        // This is basically a return type of this function.
+        // TODO: We need to have an ability to get a slice
+        // from a TypeBinding from the beginning of the node
+        // this function's binding_path resolves to, to the
+        // end of the binding.
+        // For example:
+        // If we have this TypeBinding that is used as the first
+        // argument of the .get function
+        // [Root, Field("user")] => Dict
+        // [Root, Field("user"), Field("id")] => Int
+        // and we do .get(@data, "user"),
+        // then the return type binding must be like:
+        // [Root] => Dict
+        // [Root, Field("id")] => Int
+        return_type_binding: TypeBinding,
+    },
 }
 
 impl AAstNodeCall {
     pub fn span(&self) -> Span {
         match self {
             AAstNodeCall::Typedef { typedef, .. } => typedef.span(),
+            AAstNodeCall::Get { span, .. } => span.clone(),
         }
     }
 }
