@@ -2,10 +2,10 @@
 RUN (SourceCode, SchemaCode, Data)
     -> Parse(SourceCode) -> SourceCodeAst +
     -> Parse(ShemaCode) -> SchemaCodeAst +
-    -> Parse(Data) -> ParsedData +
+    -> Parse(CSV) -> ParsedCSV +
     -> Sema(SchemaCodeAst) -> (_SchemaCodeAAst, SchemaTypeBindings)
-    -> AdaptData(ParsedData) -> EliseSourceCode
-    -> BindData(EliseSourceCode) -> DataBinding
+    -> AdaptData(ParsedCSV) -> SourceCode
+    -> BindData(SourceCode) -> DataBinding
     -> Sema(SourceCodeAst, SchemaTypeBindings) -> (SourceCodeAAst, _SourceCodeTypeBindings)
     -> Validate(SchemaTypeBindings, DataBinding)
     -> Compile(SchemaTypeBindings, SourceCodeAAst) -> Bytecode
@@ -20,16 +20,16 @@ BUILD (SourceCode, SchemaCode)
 
 VALIDATE(SchemaCode, Data)
     -> Parse(ShemaCode) -> SchemaCodeAst
-    -> Parse(Data) -> ParsedData
+    -> Parse(CSV) -> ParsedCSV
     -> Sema(SchemaCodeAst) -> (_SchemaCodeAAst, SchemaTypeBindings)
-    -> AdaptData(ParsedData) -> EliseSourceCode
-    -> BindData(EliseSourceCode) -> DataBinding
+    -> AdaptData(ParsedCSV) -> SourceCode
+    -> BindData(SourceCode) -> DataBinding
     -> Validate(SchemaTypeBindings, DataBinding)
 
 EXEC(Bytecode, Data)
-    -> Parse(Data) -> ParsedData
-    -> AdaptData(ParsedData) -> EliseSourceCode
-    -> BindData(EliseSourceCode) -> DataBinding
+    -> Parse(CSV) -> ParsedCSV
+    -> AdaptData(ParsedCSV) -> SourceCode
+    -> BindData(SourceCode) -> DataBinding
     -> VM(Bytecode, DataBinding)
 ```
 

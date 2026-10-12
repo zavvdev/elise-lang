@@ -47,4 +47,7 @@ pub enum SemanalyzerErr {
     UnsupportedListItem {
         span: Span,
     },
+    UnsupportedDictItem {
+        span: Span,
+    },
 }

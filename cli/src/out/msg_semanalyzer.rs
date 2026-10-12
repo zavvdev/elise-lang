@@ -52,6 +52,8 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             span,
         ),
         UnsupportedListItem { span } => ("Unsupported list item".to_string(), span),
+
+        UnsupportedDictItem { span } => ("Unsupported dict item".to_string(), span),
     };
 
     utils::print_err(&info, Some("Semantic error"));

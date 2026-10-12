@@ -3,12 +3,12 @@ pub mod builtins;
 use std::mem::discriminant;
 
 use elise_aast::{
-    AAstNode, AAstNodeCall, AAstNodeData, AAstNodeDataPrim, AAstNodeTypedef,
+    AAstNode, AAstNodeCall, AAstNodeData, AAstNodeDataDictKey, AAstNodeDataPrim, AAstNodeTypedef,
     AAstNodeTypedefRecordEntries,
 };
 use elise_ast::{
-    AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprList, AstNodeExprPrim, AstNodeTypedef,
-    AstNodeTypedefGeneric,
+    AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprDict, AstNodeExprList, AstNodeExprPrim,
+    AstNodeTypedef, AstNodeTypedefGeneric,
 };
 use elise_binder::type_binder::TypeBinder;
 use elise_bindings::TypeBindingsMap;
@@ -94,6 +94,7 @@ impl<'a> Harmony<'a> {
             AstNodeExpr::Int(prim) => self.analyze_prim(prim, AAstNodeData::Int),
             AstNodeExpr::Str(prim) => self.analyze_prim(prim, AAstNodeData::Str),
             AstNodeExpr::List(list) => self.analyze_list(list),
+            AstNodeExpr::Dict(dict) => self.analyze_dict(dict),
             _ => Err(SemanalyzerErr::UnsupportedNode {
                 span: ast_node.span(),
             }),
@@ -393,5 +394,37 @@ impl<'a> Harmony<'a> {
 
     // ==================================================================
     // LIST END
+    // ==================================================================
+
+    // ==================================================================
+    // DICT START
+    // ==================================================================
+
+    fn analyze_dict(&mut self, dict: &AstNodeExprDict) -> Result<AAstNode, SemanalyzerErr> {
+        let mut entries = vec![];
+
+        for entry in dict.entries.iter() {
+            let AAstNode::Data(data_node) = self.analyze_node_expr(&entry.1)? else {
+                return Err(SemanalyzerErr::UnsupportedDictItem {
+                    span: entry.1.span(),
+                });
+            };
+            entries.push((
+                AAstNodeDataDictKey {
+                    span: entry.0.span.clone(),
+                    lexeme: entry.0.lexeme.clone(),
+                },
+                Box::new(data_node),
+            ));
+        }
+
+        Ok(AAstNode::Data(AAstNodeData::Dict {
+            span: dict.span.clone(),
+            entries,
+        }))
+    }
+
+    // ==================================================================
+    // DICT END
     // ==================================================================
 }

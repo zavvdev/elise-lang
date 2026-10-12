@@ -58,12 +58,22 @@ pub struct AAstNodeDataPrim {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct AAstNodeDataDictKey {
+    pub span: Span,
+    pub lexeme: String,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum AAstNodeData {
     Int(AAstNodeDataPrim),
     Str(AAstNodeDataPrim),
     List {
         span: Span,
         items: Vec<Box<AAstNodeData>>,
+    },
+    Dict {
+        span: Span,
+        entries: Vec<(AAstNodeDataDictKey, Box<AAstNodeData>)>,
     },
 }
 
@@ -72,6 +82,7 @@ impl AAstNodeData {
         match self {
             AAstNodeData::Int(prim) | AAstNodeData::Str(prim) => prim.span.clone(),
             AAstNodeData::List { span, .. } => span.clone(),
+            AAstNodeData::Dict { span, .. } => span.clone(),
         }
     }
 }
