@@ -1,5 +1,6 @@
 use crate::shared_types::{ArityMismatchKind, Span};
 
+// TODO: Add more precise errors.
 #[derive(Debug, PartialEq)]
 pub enum SemanalyzerErr {
     ArityMismatch {
@@ -48,6 +49,12 @@ pub enum SemanalyzerErr {
         span: Span,
     },
     UnsupportedDictItem {
+        span: Span,
+    },
+    CannotInferType {
+        span: Span,
+    },
+    NoTypeDefinition {
         span: Span,
     },
 }

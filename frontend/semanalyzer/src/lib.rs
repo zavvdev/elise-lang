@@ -17,7 +17,7 @@ use elise_shared::{
     shared_types::{ArityMismatchKind, Span},
 };
 
-use crate::builtins::{FnGet, FnTypedef, SlotLexeme, TypedefLexeme};
+use crate::builtins::{FnGet, FnTypedef, SlotData, TypedefLexeme};
 
 pub struct Harmony<'a> {
     pub ast: &'a Vec<AstNode>,
@@ -134,12 +134,22 @@ impl<'a> Harmony<'a> {
     /// Takes AAstNode, filters out everything we cannot use for
     /// type inference (any entity that does not resolve into a data)
     /// and returns back TypeBinding.
-    fn _infer_type(_aast_node: &AAstNode) -> Result<TypeBinding, SemanalyzerErr> {
-        // TODO
-
-        Err(SemanalyzerErr::UnknownFunction {
-            span: Span { start: 0, end: 0 },
-        })
+    fn infer_type(&self, aast_node: &AAstNode) -> Result<TypeBinding, SemanalyzerErr> {
+        match aast_node {
+            // NOTE: We support only @data slot for now.
+            AAstNode::SlotData { span } => {
+                let Some(slot_bindings) = self
+                    .type_bindings
+                    .get(&SlotData::TYPEDEF_LEXEME.to_string())
+                else {
+                    return Err(SemanalyzerErr::NoTypeDefinition { span: span.clone() });
+                };
+                Ok(slot_bindings.clone())
+            }
+            unsupported_node => Err(SemanalyzerErr::CannotInferType {
+                span: unsupported_node.span(),
+            }),
+        }
     }
 
     // ==================================================================
@@ -330,8 +340,24 @@ impl<'a> Harmony<'a> {
     // GET CALL START
     // ==================================================================
 
-    fn analyze_call_get(&mut self, _call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
-        // TODO
+    fn analyze_call_get(&mut self, call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
+        if call.body.len() < FnGet::ARGS_LEN_MIN {
+            return Err(SemanalyzerErr::ArityMismatch {
+                fn_name: FnGet::LEXEME,
+                found: call.body.len(),
+                span: call.span.clone(),
+                kind: ArityMismatchKind::MoreEq(FnGet::ARGS_LEN_MIN),
+            });
+        }
+
+        let first_arg = self.analyze_node(call.body.first().unwrap())?;
+        let _data_binding = self.infer_type(&first_arg)?;
+
+        // TODO: Collect the rest of the arguments, validate that
+        // there are either number nodes or string nodes, and
+        // build BindingPath from them. Then try to resolve a
+        // type definition by this path from data_binding.
+        // If not found, emit error.
 
         Err(SemanalyzerErr::UnknownFunction {
             span: Span { start: 0, end: 0 },
@@ -348,7 +374,7 @@ impl<'a> Harmony<'a> {
 
     fn analyze_slot(&mut self, prim: &AstNodeExprPrim) -> Result<AAstNode, SemanalyzerErr> {
         match prim.lexeme.as_str() {
-            SlotLexeme::DATA => Ok(AAstNode::SlotData {
+            SlotData::LEXEME => Ok(AAstNode::SlotData {
                 span: prim.span.clone(),
             }),
             _ => Err(SemanalyzerErr::UnknownSlot {

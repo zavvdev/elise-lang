@@ -54,6 +54,10 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
         UnsupportedListItem { span } => ("Unsupported list item".to_string(), span),
 
         UnsupportedDictItem { span } => ("Unsupported dict item".to_string(), span),
+
+        CannotInferType { span } => ("Unable to infer type".to_string(), span),
+
+        NoTypeDefinition { span } => ("Unable to find a type definition".to_string(), span),
     };
 
     utils::print_err(&info, Some("Semantic error"));

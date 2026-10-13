@@ -17,7 +17,8 @@ impl TypedefLexeme {
     pub const RECORD: &'static str = "Record";
 }
 
-pub struct SlotLexeme;
-impl SlotLexeme {
-    pub const DATA: &'static str = "data";
+pub struct SlotData;
+impl SlotData {
+    pub const LEXEME: &'static str = "data";
+    pub const TYPEDEF_LEXEME: &'static str = "Data";
 }

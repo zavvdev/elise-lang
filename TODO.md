@@ -53,6 +53,8 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 - [ ] Data validation. Must be used for schema validation and also for a validation of the
       custom data inside Harmony
 
+- [ ] Improve error reporting. Add more informative error messages.
+
 - [ ] Compiler
 
 - [ ] VM
