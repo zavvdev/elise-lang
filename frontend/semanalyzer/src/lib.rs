@@ -1,6 +1,6 @@
 pub mod builtins;
 
-use std::mem::discriminant;
+use std::{collections::HashMap, mem::discriminant};
 
 use elise_aast::{
     AAstNode, AAstNodeCall, AAstNodeData, AAstNodeDataDictKey, AAstNodeDataPrim, AAstNodeTypedef,
@@ -11,10 +11,13 @@ use elise_ast::{
     AstNodeTypedef, AstNodeTypedefGeneric,
 };
 use elise_binder::type_binder::TypeBinder;
-use elise_bindings::{TypeBinding, TypeBindingsMap};
+use elise_bindings::{
+    TypeBinding, TypeBindingsMap,
+    binding_path::{BindingPath, BindingPathSegment},
+};
 use elise_shared::{
     shared_errors::{errors_semanalyzer::SemanalyzerErr, errors_type_binder::TypeBinderErr},
-    shared_types::{ArityMismatchKind, Span},
+    shared_types::ArityMismatchKind,
 };
 
 use crate::builtins::{FnGet, FnTypedef, SlotData, TypedefLexeme};
@@ -340,6 +343,52 @@ impl<'a> Harmony<'a> {
     // GET CALL START
     // ==================================================================
 
+    fn build_binding_path(
+        ast_nodes: &Vec<&Box<AstNode>>,
+        // Whether to resolve ast_nodes as type access
+        // with AbstractIndex that can be used for accessing type
+        // definition from type binding maps, or resolve integers as
+        // Index segments for accessing data itself.
+        // We need both because compiler needs data access path
+        // but here in semanalyzer we also need to have type access
+        // path for type resolutions.
+        type_access_only: bool,
+    ) -> Result<BindingPath, SemanalyzerErr> {
+        let mut binding_path = BindingPath::new();
+
+        for ast_node in ast_nodes.iter() {
+            let AstNode::Expr(expr) = ast_node.as_ref() else {
+                return Err(SemanalyzerErr::InvalDataAccessArg {
+                    span: ast_node.span(),
+                });
+            };
+
+            match expr {
+                AstNodeExpr::Int(prim) => {
+                    if type_access_only {
+                        binding_path.push(BindingPathSegment::AbstractIndex);
+                    } else {
+                        binding_path.push(BindingPathSegment::Index(
+                            // Unwrap is safe here since our AST node guarantees
+                            // that integer is parsed correctly.
+                            prim.lexeme.parse::<usize>().unwrap(),
+                        ));
+                    }
+                }
+                AstNodeExpr::Str(prim) => {
+                    binding_path.push(BindingPathSegment::Field(prim.lexeme.clone()));
+                }
+                _ => {
+                    return Err(SemanalyzerErr::InvalDataAccessArg {
+                        span: ast_node.span(),
+                    });
+                }
+            }
+        }
+
+        Ok(binding_path)
+    }
+
     fn analyze_call_get(&mut self, call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
         if call.body.len() < FnGet::ARGS_LEN_MIN {
             return Err(SemanalyzerErr::ArityMismatch {
@@ -351,17 +400,29 @@ impl<'a> Harmony<'a> {
         }
 
         let first_arg = self.analyze_node(call.body.first().unwrap())?;
-        let _data_binding = self.infer_type(&first_arg)?;
+        let type_binding = self.infer_type(&first_arg)?;
 
-        // TODO: Collect the rest of the arguments, validate that
-        // there are either number nodes or string nodes, and
-        // build BindingPath from them. Then try to resolve a
-        // type definition by this path from data_binding.
-        // If not found, emit error.
+        // Skip the first element because it's a data being accessed.
+        let access_args = call.body.iter().skip(1).collect();
+        let type_access_path = Self::build_binding_path(&access_args, true)?;
 
-        Err(SemanalyzerErr::UnknownFunction {
-            span: Span { start: 0, end: 0 },
-        })
+        if !type_binding.contains_key(&type_access_path) {
+            return Err(SemanalyzerErr::UnresolvablePath {
+                span: call.span.clone(),
+            });
+        };
+
+        let data_access_path = Self::build_binding_path(&access_args, false)?;
+
+        Ok(AAstNode::Call(AAstNodeCall::Get {
+            span: call.span.clone(),
+            type_binding_path: type_access_path.clone(),
+            data_binding_path: data_access_path.clone(),
+
+            // TODO:
+            return_type_binding: HashMap::new(),
+            return_data_binding: HashMap::new(),
+        }))
     }
 
     // ==================================================================

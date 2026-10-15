@@ -32,7 +32,8 @@ pub enum AAstNodeCall {
     },
     Get {
         span: Span,
-        binding_path: BindingPath,
+        type_binding_path: BindingPath,
+        data_binding_path: BindingPath,
 
         // This is basically a return type of this function.
         // TODO: We need to have an ability to get a slice
@@ -49,6 +50,7 @@ pub enum AAstNodeCall {
         // [Root] => Dict
         // [Root, Field("id")] => Int
         return_type_binding: TypeBinding,
+        return_data_binding: TypeBinding,
     },
 }
 

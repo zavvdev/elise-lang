@@ -58,6 +58,13 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
         CannotInferType { span } => ("Unable to infer type".to_string(), span),
 
         NoTypeDefinition { span } => ("Unable to find a type definition".to_string(), span),
+
+        InvalDataAccessArg { span } => ("Invalid data access argument".to_string(), span),
+
+        UnresolvablePath { span } => (
+            "Unable to get type definition by using this data access path".to_string(),
+            span,
+        ),
     };
 
     utils::print_err(&info, Some("Semantic error"));

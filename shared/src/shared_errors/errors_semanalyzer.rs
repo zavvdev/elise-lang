@@ -57,4 +57,10 @@ pub enum SemanalyzerErr {
     NoTypeDefinition {
         span: Span,
     },
+    InvalDataAccessArg {
+        span: Span,
+    },
+    UnresolvablePath {
+        span: Span,
+    },
 }
