@@ -414,14 +414,32 @@ impl<'a> Harmony<'a> {
 
         let data_access_path = Self::build_binding_path(&access_args, false)?;
 
+        let mut return_type_binding = HashMap::new();
+
+        // TODO: This process must be moved into TypeBinding impl.
+        for (key, value) in type_binding.into_iter() {
+            println!("key: {:#?}", key);
+            println!("path: {:#?}", type_access_path);
+            // TODO: handle this case:
+            // key: BindingPath(
+            //        [
+            //            Root,
+            //        ],
+            //    )
+            //    path: BindingPath(
+            //        [
+            //            Root,
+            //            AbstractIndex,
+            //        ],
+            //    )
+            return_type_binding.insert(key.strip(&type_access_path).unwrap(), value);
+        }
+
         Ok(AAstNode::Call(AAstNodeCall::Get {
             span: call.span.clone(),
             type_binding_path: type_access_path.clone(),
             data_binding_path: data_access_path.clone(),
-
-            // TODO:
-            return_type_binding: HashMap::new(),
-            return_data_binding: HashMap::new(),
+            return_type_binding,
         }))
     }
 

@@ -116,7 +116,7 @@ impl BindingPath {
 
     /// Path is considered valid if it's not empty,
     /// and has only one Root segment at the beginning.
-    pub fn is_valid(binding_path: &BindingPath) -> bool {
+    pub fn is_valid(binding_path: &Self) -> bool {
         let root_indexes: Vec<_> = binding_path
             .iter()
             .enumerate()
@@ -130,7 +130,7 @@ impl BindingPath {
     /// Merges two paths into a new one. All segments from prepend_path go
     /// to the very beginning, and the rest of the to_path except the Root
     /// segment goes after.
-    pub fn prepend(prepend_path: &BindingPath, to_path: &BindingPath) -> Option<BindingPath> {
+    pub fn prepend(prepend_path: &Self, to_path: &Self) -> Option<Self> {
         if !Self::is_valid(to_path) || !Self::is_valid(prepend_path) {
             return None;
         }
@@ -151,7 +151,17 @@ impl BindingPath {
         // the new_path.
         new_path.extend_from_slice(to_path.get(1..).unwrap_or_default());
 
-        Some(BindingPath(new_path))
+        Some(Self(new_path))
+    }
+
+    pub fn strip(&self, prefix_path: &Self) -> Option<Self> {
+        if !Self::is_valid(prefix_path) {
+            return None;
+        }
+        if let Some(rest) = self.strip_prefix(&prefix_path.0[..]) {
+            return Some(Self::with_segments(rest.to_vec()));
+        }
+        None
     }
 
     pub fn as_str(&self) -> String {

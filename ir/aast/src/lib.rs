@@ -50,7 +50,6 @@ pub enum AAstNodeCall {
         // [Root] => Dict
         // [Root, Field("id")] => Int
         return_type_binding: TypeBinding,
-        return_data_binding: TypeBinding,
     },
 }
 
