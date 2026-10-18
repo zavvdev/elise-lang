@@ -42,6 +42,14 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
     
     - [ ] .get
 
+        - [ ] Currently, when we do .get(.get(@data, 0), "id")
+              we only get a final AAstNodeCall::Get with access path
+              [Root, Field("id")] and return type [Root] => Int.
+              This is correct behavior from technical perspective
+              but we do not include any information what data we're
+              accessing. We must include type information about data
+              being accessed.
+
         - [ ] Tests
 
     - [ ] .add

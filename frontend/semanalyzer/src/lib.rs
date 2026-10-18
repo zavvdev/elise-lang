@@ -139,7 +139,6 @@ impl<'a> Harmony<'a> {
     /// and returns back TypeBinding.
     fn infer_type(&self, aast_node: &AAstNode) -> Result<TypeBinding, SemanalyzerErr> {
         match aast_node {
-            // TODO: Infer type from .get call.
             AAstNode::SlotData { span } => {
                 let Some(slot_bindings) = self
                     .type_bindings
@@ -148,6 +147,9 @@ impl<'a> Harmony<'a> {
                     return Err(SemanalyzerErr::NoTypeDefinition { span: span.clone() });
                 };
                 Ok(slot_bindings.clone())
+            }
+            AAstNode::Call(AAstNodeCall::Get { return_type_binding, .. }) => {
+                Ok(return_type_binding.clone())
             }
             unsupported_node => Err(SemanalyzerErr::CannotInferType {
                 span: unsupported_node.span(),
