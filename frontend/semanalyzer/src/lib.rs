@@ -1,6 +1,6 @@
 pub mod builtins;
 
-use std::{collections::HashMap, mem::discriminant};
+use std::mem::discriminant;
 
 use elise_aast::{
     AAstNode, AAstNodeCall, AAstNodeData, AAstNodeDataDictKey, AAstNodeDataPrim, AAstNodeTypedef,
@@ -12,8 +12,8 @@ use elise_ast::{
 };
 use elise_binder::type_binder::TypeBinder;
 use elise_bindings::{
-    TypeBinding, TypeBindingsMap,
     binding_path::{BindingPath, BindingPathSegment},
+    type_bindings::{AliasedTypeBindings, TypeBinding},
 };
 use elise_shared::{
     shared_errors::{errors_semanalyzer::SemanalyzerErr, errors_type_binder::TypeBinderErr},
@@ -34,7 +34,7 @@ pub struct Harmony<'a> {
     // code semantic analysis stage, so we can access
     // type definitions from schema file inside our source
     // code file.
-    pub type_bindings: &'a mut TypeBindingsMap,
+    pub type_bindings: &'a mut AliasedTypeBindings,
 
     // Instruct semanalyzer to limit analysis to
     // type definitions only. Set to `true` for
@@ -45,7 +45,7 @@ pub struct Harmony<'a> {
 impl<'a> Harmony<'a> {
     pub fn new(
         ast: &'a Vec<AstNode>,
-        global_type_bindings: &'a mut TypeBindingsMap,
+        global_type_bindings: &'a mut AliasedTypeBindings,
         typedef_mode: bool,
     ) -> Self {
         Self {
@@ -139,7 +139,7 @@ impl<'a> Harmony<'a> {
     /// and returns back TypeBinding.
     fn infer_type(&self, aast_node: &AAstNode) -> Result<TypeBinding, SemanalyzerErr> {
         match aast_node {
-            // NOTE: We support only @data slot for now.
+            // TODO: Infer type from .get call.
             AAstNode::SlotData { span } => {
                 let Some(slot_bindings) = self
                     .type_bindings
@@ -344,7 +344,7 @@ impl<'a> Harmony<'a> {
     // ==================================================================
 
     fn build_binding_path(
-        ast_nodes: &Vec<&Box<AstNode>>,
+        ast_nodes: &Vec<&AstNode>,
         // Whether to resolve ast_nodes as type access
         // with AbstractIndex that can be used for accessing type
         // definition from type binding maps, or resolve integers as
@@ -357,7 +357,7 @@ impl<'a> Harmony<'a> {
         let mut binding_path = BindingPath::new();
 
         for ast_node in ast_nodes.iter() {
-            let AstNode::Expr(expr) = ast_node.as_ref() else {
+            let AstNode::Expr(expr) = ast_node else {
                 return Err(SemanalyzerErr::InvalDataAccessArg {
                     span: ast_node.span(),
                 });
@@ -403,10 +403,10 @@ impl<'a> Harmony<'a> {
         let type_binding = self.infer_type(&first_arg)?;
 
         // Skip the first element because it's a data being accessed.
-        let access_args = call.body.iter().skip(1).collect();
+        let access_args = call.body.iter().skip(1).map(|n| &**n).collect();
         let type_access_path = Self::build_binding_path(&access_args, true)?;
 
-        if !type_binding.contains_key(&type_access_path) {
+        if !type_binding.map.contains_key(&type_access_path) {
             return Err(SemanalyzerErr::UnresolvablePath {
                 span: call.span.clone(),
             });
@@ -414,32 +414,11 @@ impl<'a> Harmony<'a> {
 
         let data_access_path = Self::build_binding_path(&access_args, false)?;
 
-        let mut return_type_binding = HashMap::new();
-
-        // TODO: This process must be moved into TypeBinding impl.
-        for (key, value) in type_binding.into_iter() {
-            println!("key: {:#?}", key);
-            println!("path: {:#?}", type_access_path);
-            // TODO: handle this case:
-            // key: BindingPath(
-            //        [
-            //            Root,
-            //        ],
-            //    )
-            //    path: BindingPath(
-            //        [
-            //            Root,
-            //            AbstractIndex,
-            //        ],
-            //    )
-            return_type_binding.insert(key.strip(&type_access_path).unwrap(), value);
-        }
-
         Ok(AAstNode::Call(AAstNodeCall::Get {
             span: call.span.clone(),
             type_binding_path: type_access_path.clone(),
             data_binding_path: data_access_path.clone(),
-            return_type_binding,
+            return_type_binding: type_binding.strip_binding_paths_by_prefix(&type_access_path),
         }))
     }
 

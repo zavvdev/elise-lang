@@ -1,3 +1,14 @@
+//! AST (Abstract Syntax Tree)
+//!
+//! This data structure is the result of our parser (Prelude).
+//! It relies purely on grammar that is defined in GRAMMAR.md
+//! which is in the root of the project.
+//!
+//! Each node is a result of differentiation between grammar
+//! entities such as functions, slots, type annotations etc.
+//! It doesn't know about semantics or behavior, the only
+//! purpose is to represent grammatical structure.
+
 use elise_shared::shared_types::Span;
 
 #[derive(Debug, PartialEq)]
@@ -7,6 +18,8 @@ pub enum AstNode {
 }
 
 impl AstNode {
+    /// For using in error reports in order to locate the node
+    /// in the source code.
     pub fn span(&self) -> Span {
         match self {
             AstNode::Expr(expr) => expr.span().clone(),
@@ -28,6 +41,8 @@ pub struct AstNodeExprCall {
     pub body: Vec<Box<AstNode>>,
 }
 
+// Common descriptor for primitives:
+// Int, Float, Str, Bool, Null, Identifier, Slot.
 #[derive(Debug, PartialEq)]
 pub struct AstNodeExprPrim {
     pub lexeme: String,
@@ -111,6 +126,10 @@ pub enum AstNodeTypedefGeneric {
 pub struct AstNodeTypedef {
     pub span: Span,
     pub lexeme: String,
+    // From the perspective of AST, any type can have a generic.
+    // Since AST is only focused on code structure/grammar,
+    // we don't care here what kind of type we're currently in,
+    // although semantically :Int cannot have a generic type.
     pub generic: Option<AstNodeTypedefGeneric>,
 }
 

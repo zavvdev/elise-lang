@@ -73,12 +73,14 @@ impl BindingPath {
         Self(vec![BindingPathSegment::Root])
     }
 
+    /// Same as `new` but with pre-allocated capacity.
     fn new_sized(size: usize) -> Self {
         let mut new = Vec::with_capacity(size);
         new.insert(0, BindingPathSegment::Root);
         Self(new)
     }
 
+    /// Allows to create a new BindingPath with initial segments.
     pub fn with_segments(segments: Vec<BindingPathSegment>) -> Self {
         let Some(len) = segments.len().checked_add(1) else {
             let mut new = Self::new();
@@ -106,7 +108,7 @@ impl BindingPath {
         }
     }
 
-    // Don't allow to remove the last element.
+    // Don't allow to remove the last element which is Root segment.
     pub fn pop(&mut self) -> Option<BindingPathSegment> {
         if self.0.len() > 1 {
             return self.0.pop();
@@ -130,6 +132,18 @@ impl BindingPath {
     /// Merges two paths into a new one. All segments from prepend_path go
     /// to the very beginning, and the rest of the to_path except the Root
     /// segment goes after.
+    ///
+    /// Ex:
+    /// prepend_path: [Root, AbstractIndex]
+    /// to_path: [Root, Field("id")]
+    /// result: [Root, AbstractIndex, Field("id")]
+    ///
+    /// We use it for building a new binding paths when we need to merge
+    /// type definitions like:
+    /// .typedef (User :Record<{ "id" :Int }>)
+    /// .typedef (Data :List<User>)
+    /// So in this case Data type must include User type binding
+    /// as well.
     pub fn prepend(prepend_path: &Self, to_path: &Self) -> Option<Self> {
         if !Self::is_valid(to_path) || !Self::is_valid(prepend_path) {
             return None;
@@ -154,6 +168,21 @@ impl BindingPath {
         Some(Self(new_path))
     }
 
+    /// Removes `prefix_path` from itself.
+    ///
+    /// Ex:
+    /// self: [Root, AbstractIndex, Field("id")]
+    /// prefix: [Root, AbstractIndex]
+    /// result: [Root, Field("id")]
+    ///
+    /// We use it for narrowing down binding paths
+    /// after we access data and return a reference to
+    /// another data being accessed.
+    ///
+    /// Ex:
+    /// .get(@data, 0)
+    /// After this data access, we return a new binding
+    /// that have its root shifted to AbstractIndex.
     pub fn strip(&self, prefix_path: &Self) -> Option<Self> {
         if !Self::is_valid(prefix_path) {
             return None;

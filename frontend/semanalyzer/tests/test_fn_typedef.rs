@@ -2,8 +2,9 @@ use std::collections::HashMap;
 
 use elise_aast::{AAstNode, AAstNodeCall, AAstNodeTypedef};
 use elise_bindings::{
-    BindingType, TypeBinding, TypeBindingDesc, TypeBindingsMap,
     binding_path::{BindingPath, BindingPathSegment},
+    common::BindingType,
+    type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDesc},
 };
 use elise_shared::{shared_errors::errors_semanalyzer::SemanalyzerErr, shared_types::Span};
 use elise_test_utils::test_utils::semanalyze;
@@ -73,11 +74,11 @@ fn should_analyze_int_aliasing() {
     let mut type_bindings_map = HashMap::new();
     let aast = semanalyze(".typedef(Age :Int)", &mut type_bindings_map, TYPEDEF_MODE).unwrap();
 
-    let mut expected_type_binding: TypeBinding = HashMap::new();
-    let mut expected_type_bindings_map: TypeBindingsMap = HashMap::new();
+    let mut expected_type_binding = TypeBinding::new();
+    let mut expected_type_bindings_map: AliasedTypeBindings = HashMap::new();
     let mut expected_aast: Vec<AAstNode> = vec![];
 
-    expected_type_binding.insert(
+    expected_type_binding.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::Int,
@@ -133,18 +134,18 @@ fn should_analyze_list_aliasing() {
     )
     .unwrap();
 
-    let mut expected_type_binding: TypeBinding = HashMap::new();
-    let mut expected_type_bindings_map: TypeBindingsMap = HashMap::new();
+    let mut expected_type_binding = TypeBinding::new();
+    let mut expected_type_bindings_map: AliasedTypeBindings = HashMap::new();
     let mut expected_aast: Vec<AAstNode> = vec![];
 
-    expected_type_binding.insert(
+    expected_type_binding.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::List,
             span: Span { start: 14, end: 25 },
         },
     );
-    expected_type_binding.insert(
+    expected_type_binding.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
             dtype: BindingType::Int,
@@ -211,18 +212,18 @@ fn should_analyze_record_aliasing() {
     )
     .unwrap();
 
-    let mut expected_type_binding: TypeBinding = HashMap::new();
-    let mut expected_type_bindings_map: TypeBindingsMap = HashMap::new();
+    let mut expected_type_binding = TypeBinding::new();
+    let mut expected_type_bindings_map: AliasedTypeBindings = HashMap::new();
     let mut expected_aast: Vec<AAstNode> = vec![];
 
-    expected_type_binding.insert(
+    expected_type_binding.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::Record,
             span: Span { start: 15, end: 37 },
         },
     );
-    expected_type_binding.insert(
+    expected_type_binding.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("id".to_string())]),
         TypeBindingDesc {
             dtype: BindingType::Int,

@@ -3,8 +3,9 @@ use std::collections::HashMap;
 use elise_aast::AAstNodeTypedef;
 use elise_binder::type_binder::TypeBinder;
 use elise_bindings::{
-    BindingType, TypeBinding, TypeBindingDesc,
     binding_path::{BindingPath, BindingPathSegment},
+    common::BindingType,
+    type_bindings::{TypeBinding, TypeBindingDesc},
 };
 use elise_shared::{shared_errors::errors_type_binder::TypeBinderErr, shared_types::Span};
 use elise_test_utils::test_utils;
@@ -26,7 +27,7 @@ fn should_bind_int() {
     let globals = HashMap::new();
     let binding = TypeBinder::new(&int_aast, &globals).bind().unwrap();
 
-    let mut expected: TypeBinding = HashMap::new();
+    let mut expected = TypeBinding::new();
 
     let binding_path = BindingPath::new();
     let binding_desc = TypeBindingDesc {
@@ -34,8 +35,7 @@ fn should_bind_int() {
         span: Span { start: 0, end: 0 },
     };
 
-    expected.insert(binding_path, binding_desc);
-
+    expected.map.insert(binding_path, binding_desc);
     assert_eq!(binding, expected);
 }
 
@@ -63,16 +63,16 @@ fn should_bind_list_with_primitive_generic() {
     let globals = HashMap::new();
     let binding = TypeBinder::new(&list_aast, &globals).bind().unwrap();
 
-    let mut expected: TypeBinding = HashMap::new();
+    let mut expected = TypeBinding::new();
 
-    expected.insert(
+    expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::List,
             span: Span { start: 0, end: 1 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
             dtype: BindingType::Int,
@@ -98,23 +98,23 @@ fn should_bind_list_with_list_generic() {
     let globals = HashMap::new();
     let binding = TypeBinder::new(&list_aast, &globals).bind().unwrap();
 
-    let mut expected: TypeBinding = HashMap::new();
+    let mut expected = TypeBinding::new();
 
-    expected.insert(
+    expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::List,
             span: Span { start: 0, end: 1 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
             dtype: BindingType::List,
             span: Span { start: 2, end: 3 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![
             BindingPathSegment::AbstractIndex,
             BindingPathSegment::AbstractIndex,
@@ -146,23 +146,23 @@ fn should_bind_list_with_record_generic() {
     let globals = HashMap::new();
     let binding = TypeBinder::new(&list_aast, &globals).bind().unwrap();
 
-    let mut expected: TypeBinding = HashMap::new();
+    let mut expected = TypeBinding::new();
 
-    expected.insert(
+    expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::List,
             span: Span { start: 0, end: 1 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
             dtype: BindingType::Record,
             span: Span { start: 2, end: 3 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![
             BindingPathSegment::AbstractIndex,
             BindingPathSegment::Field("id".to_string()),
@@ -189,23 +189,23 @@ fn should_bind_list_with_custom_type_generic() {
     let globals = test_utils::type_bindings_map();
     let binding = TypeBinder::new(&list_aast, &globals).bind().unwrap();
 
-    let mut expected: TypeBinding = HashMap::new();
+    let mut expected = TypeBinding::new();
 
-    expected.insert(
+    expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::List,
             span: Span { start: 0, end: 1 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
             dtype: BindingType::Record,
             span: Span { start: 0, end: 0 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![
             BindingPathSegment::AbstractIndex,
             BindingPathSegment::Field("id".to_string()),
@@ -246,16 +246,16 @@ fn should_bind_record_with_primitive_values() {
     let globals = HashMap::new();
     let binding = TypeBinder::new(&record_aast, &globals).bind().unwrap();
 
-    let mut expected: TypeBinding = HashMap::new();
+    let mut expected = TypeBinding::new();
 
-    expected.insert(
+    expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::Record,
             span: Span { start: 0, end: 1 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("id".to_string())]),
         TypeBindingDesc {
             dtype: BindingType::Int,
@@ -284,23 +284,23 @@ fn should_bind_record_with_list_values() {
     let globals = HashMap::new();
     let binding = TypeBinder::new(&record_aast, &globals).bind().unwrap();
 
-    let mut expected: TypeBinding = HashMap::new();
+    let mut expected = TypeBinding::new();
 
-    expected.insert(
+    expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::Record,
             span: Span { start: 0, end: 1 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("scores".to_string())]),
         TypeBindingDesc {
             dtype: BindingType::List,
             span: Span { start: 2, end: 3 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![
             BindingPathSegment::Field("scores".to_string()),
             BindingPathSegment::AbstractIndex,
@@ -335,23 +335,23 @@ fn should_bind_record_with_record_values() {
     let globals = HashMap::new();
     let binding = TypeBinder::new(&record_aast, &globals).bind().unwrap();
 
-    let mut expected: TypeBinding = HashMap::new();
+    let mut expected = TypeBinding::new();
 
-    expected.insert(
+    expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::Record,
             span: Span { start: 0, end: 1 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("user".to_string())]),
         TypeBindingDesc {
             dtype: BindingType::Record,
             span: Span { start: 2, end: 3 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![
             BindingPathSegment::Field("user".to_string()),
             BindingPathSegment::Field("id".to_string()),
@@ -381,23 +381,23 @@ fn should_bind_record_with_custom_type_values() {
     let globals = test_utils::type_bindings_map();
     let binding = TypeBinder::new(&record_aast, &globals).bind().unwrap();
 
-    let mut expected: TypeBinding = HashMap::new();
+    let mut expected = TypeBinding::new();
 
-    expected.insert(
+    expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::Record,
             span: Span { start: 0, end: 1 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("test".to_string())]),
         TypeBindingDesc {
             dtype: BindingType::Record,
             span: Span { start: 0, end: 0 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![
             BindingPathSegment::Field("test".to_string()),
             BindingPathSegment::Field("id".to_string()),
@@ -433,9 +433,9 @@ fn should_bind_custom_primitive() {
     let globals = test_utils::type_bindings_map();
     let binding = TypeBinder::new(&custom_aast, &globals).bind().unwrap();
 
-    let mut expected: TypeBinding = HashMap::new();
+    let mut expected = TypeBinding::new();
 
-    expected.insert(
+    expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::Int,
@@ -456,16 +456,16 @@ fn should_bind_custom_list() {
     let globals = test_utils::type_bindings_map();
     let binding = TypeBinder::new(&custom_aast, &globals).bind().unwrap();
 
-    let mut expected: TypeBinding = HashMap::new();
+    let mut expected = TypeBinding::new();
 
-    expected.insert(
+    expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::List,
             span: Span { start: 0, end: 0 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
             dtype: BindingType::Int,
@@ -486,16 +486,16 @@ fn should_bind_custom_record() {
     let globals = test_utils::type_bindings_map();
     let binding = TypeBinder::new(&custom_aast, &globals).bind().unwrap();
 
-    let mut expected: TypeBinding = HashMap::new();
+    let mut expected = TypeBinding::new();
 
-    expected.insert(
+    expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: BindingType::Record,
             span: Span { start: 0, end: 0 },
         },
     );
-    expected.insert(
+    expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("id".to_string())]),
         TypeBindingDesc {
             dtype: BindingType::Int,

@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-
 use elise_aast::{AAstNodeTypedef, AAstNodeTypedefRecordEntries};
 use elise_bindings::{
-    BindingType, TypeBinding, TypeBindingDesc, TypeBindingsMap,
     binding_path::{BindingPath, BindingPathSegment},
+    common::BindingType,
+    type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDesc},
 };
 use elise_shared::{shared_errors::errors_type_binder::TypeBinderErr, shared_types::Span};
 
@@ -12,11 +11,11 @@ pub struct TypeBinder<'a> {
     current_path: BindingPath,
     current_type: Option<BindingType>,
     current_span: Span,
-    globals: &'a TypeBindingsMap,
+    globals: &'a AliasedTypeBindings,
 }
 
 impl<'a> TypeBinder<'a> {
-    pub fn new(aast_typedef: &'a AAstNodeTypedef, globals: &'a TypeBindingsMap) -> Self {
+    pub fn new(aast_typedef: &'a AAstNodeTypedef, globals: &'a AliasedTypeBindings) -> Self {
         Self {
             aast_typedef,
             // Current path that changes according to nesting.
@@ -36,7 +35,7 @@ impl<'a> TypeBinder<'a> {
     }
 
     pub fn bind(&mut self) -> Result<TypeBinding, TypeBinderErr> {
-        let mut binding: TypeBinding = HashMap::new();
+        let mut binding: TypeBinding = TypeBinding::new();
         self.bind_node(self.aast_typedef, &mut binding)?;
         Ok(binding)
     }
@@ -59,7 +58,7 @@ impl<'a> TypeBinder<'a> {
     /// into the bindings.
     fn commit(&mut self, binding: &mut TypeBinding) -> Result<(), TypeBinderErr> {
         if let Some(dtype) = &self.current_type {
-            binding.insert(
+            binding.map.insert(
                 self.current_path.clone(),
                 TypeBindingDesc {
                     dtype: dtype.clone(),
@@ -181,14 +180,14 @@ impl<'a> TypeBinder<'a> {
             });
         };
 
-        for (global_binding_path, global_binding) in global_bindings.iter() {
+        for (global_binding_path, global_binding) in global_bindings.map.iter() {
             let Some(next_path) = BindingPath::prepend(&self.current_path, global_binding_path)
             else {
                 return Err(TypeBinderErr::UnableToMerge {
                     span: global_binding.span.clone(),
                 });
             };
-            binding.insert(next_path, global_binding.clone());
+            binding.map.insert(next_path, global_binding.clone());
         }
 
         Ok(())

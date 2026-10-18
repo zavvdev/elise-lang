@@ -4,8 +4,9 @@ pub mod test_utils {
     use elise_aast::AAstNode;
     use elise_ast::AstNode;
     use elise_bindings::{
-        BindingType, TypeBindingDesc, TypeBindingsMap,
         binding_path::{BindingPath, BindingPathSegment},
+        common::BindingType,
+        type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDesc},
     };
     use elise_parser::Prelude;
     use elise_semanalyzer::Harmony;
@@ -35,7 +36,7 @@ pub mod test_utils {
 
     pub fn semanalyze(
         source_code: &str,
-        global_type_bindings: &mut TypeBindingsMap,
+        global_type_bindings: &mut AliasedTypeBindings,
         typedef_mode: bool,
     ) -> Result<Vec<AAstNode>, SemanalyzerErr> {
         let ast = Prelude::new(source_code.as_bytes()).parse().unwrap();
@@ -58,8 +59,8 @@ pub mod test_utils {
     /// SingleType, RecordType and ListType. We can reference
     /// these aliases in tests and pass the result into
     /// Harmony or TypeBinder globals.
-    pub fn type_bindings_map() -> TypeBindingsMap {
-        let mut map: TypeBindingsMap = HashMap::new();
+    pub fn type_bindings_map() -> AliasedTypeBindings {
+        let mut map: AliasedTypeBindings = HashMap::new();
 
         let mut single_type_bindings = HashMap::new();
         single_type_bindings.insert(
@@ -102,9 +103,18 @@ pub mod test_utils {
             },
         );
 
-        map.insert("SingleType".to_string(), single_type_bindings);
-        map.insert("RecordType".to_string(), record_type_bindings);
-        map.insert("ListType".to_string(), list_type_bindings);
+        map.insert(
+            "SingleType".to_string(),
+            TypeBinding::with(&single_type_bindings),
+        );
+        map.insert(
+            "RecordType".to_string(),
+            TypeBinding::with(&record_type_bindings),
+        );
+        map.insert(
+            "ListType".to_string(),
+            TypeBinding::with(&list_type_bindings),
+        );
 
         map
     }
