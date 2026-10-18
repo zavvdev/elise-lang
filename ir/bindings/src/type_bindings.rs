@@ -4,7 +4,7 @@ use elise_shared::shared_types::Span;
 
 use crate::{binding_path::BindingPath, common::BindingType};
 
-type TypeBindingMap = HashMap<BindingPath, TypeBindingDesc>;
+pub type TypeBindingMap = HashMap<BindingPath, TypeBindingDesc>;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct TypeBinding {

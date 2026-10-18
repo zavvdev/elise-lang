@@ -225,3 +225,48 @@ fn should_prepend_valid_paths() {
 // ==================================================================
 // PREPEND END
 // ==================================================================
+
+// ==================================================================
+// STRIP START
+// ==================================================================
+
+#[test]
+fn should_not_prepend_invalid_prefix() {
+    let path = BindingPath::with_segments(vec![
+        BindingPathSegment::Root,
+        BindingPathSegment::AbstractIndex,
+        BindingPathSegment::Field("id".to_string()),
+    ]);
+    let invalid_prefix = vec![BindingPathSegment::AbstractIndex];
+    assert_eq!(path.strip(&BindingPath(invalid_prefix)), None);
+}
+
+#[test]
+fn should_return_none_if_prefix_not_found() {
+    let path = BindingPath::with_segments(vec![
+        BindingPathSegment::Root,
+        BindingPathSegment::Field("id".to_string()),
+    ]);
+    let prefix = vec![BindingPathSegment::AbstractIndex];
+    assert_eq!(path.strip(&BindingPath(prefix)), None);
+}
+
+#[test]
+fn should_strip_prefix() {
+    let path = BindingPath::with_segments(vec![
+        BindingPathSegment::Root,
+        BindingPathSegment::AbstractIndex,
+        BindingPathSegment::Field("id".to_string()),
+    ]);
+    let prefix = BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]);
+    assert_eq!(
+        path.strip(&prefix),
+        Some(BindingPath::with_segments(vec![BindingPathSegment::Field(
+            "id".to_string()
+        )]))
+    );
+}
+
+// ==================================================================
+// STRIP END
+// ==================================================================
