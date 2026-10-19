@@ -50,8 +50,6 @@ impl<'a> Harmony<'a> {
     ) -> Self {
         Self {
             ast,
-            // Inject as globals if available. Passing global type
-            // bindings into semanalyzer is not required.
             type_bindings: global_type_bindings,
             typedef_mode,
         }

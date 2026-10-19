@@ -81,6 +81,7 @@ pub fn run<'a>(
         .analyze()
         .map_err(LangErr::Semanalyzer)?;
 
+    println!("source ast: {:#?}", source_code_ast);
     println!("aast: {:#?}", source_code_aast);
 
     Ok(RunResult {
