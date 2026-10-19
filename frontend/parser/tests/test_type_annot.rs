@@ -1,4 +1,4 @@
-use elise_ast::{AstNode, AstNodeTypedef, AstNodeTypedefGeneric, AstNodeTypedefRecordKey};
+use elise_ast::{AstNode, AstNodeTypeAnnot, AstNodeTypeAnnotGeneric, AstNodeTypeAnnotRecordKey};
 use elise_parser::Prelude;
 use elise_shared::{
     shared_errors::errors_parser::{ParserErr, ParserErrInfo},
@@ -12,7 +12,7 @@ fn should_parse_without_generic() {
     let input = ":Int".as_bytes();
     let result = Prelude::new(input).parse();
 
-    let expected_result = Ok(vec![AstNode::Typedef(AstNodeTypedef {
+    let expected_result = Ok(vec![AstNode::TypeAnnot(AstNodeTypeAnnot {
         span: Span { start: 0, end: 4 },
         lexeme: "Int".to_string(),
         generic: None,
@@ -69,14 +69,16 @@ fn should_parse_with_single_generic() {
     let input = ":List<:Str>".as_bytes();
     let result = Prelude::new(input).parse();
 
-    let expected_result = Ok(vec![AstNode::Typedef(AstNodeTypedef {
+    let expected_result = Ok(vec![AstNode::TypeAnnot(AstNodeTypeAnnot {
         span: Span { start: 0, end: 11 },
         lexeme: "List".to_string(),
-        generic: Some(AstNodeTypedefGeneric::Single(Box::new(AstNodeTypedef {
-            span: Span { start: 6, end: 10 },
-            lexeme: "Str".to_string(),
-            generic: None,
-        }))),
+        generic: Some(AstNodeTypeAnnotGeneric::Single(Box::new(
+            AstNodeTypeAnnot {
+                span: Span { start: 6, end: 10 },
+                lexeme: "Str".to_string(),
+                generic: None,
+            },
+        ))),
     })]);
 
     assert_eq!(result, expected_result);
@@ -99,10 +101,10 @@ fn should_reject_unopened_generic() {
 }
 
 #[test]
-fn should_reject_non_typedef_in_generic() {
+fn should_reject_non_type_annot_in_generic() {
     let input = ":List<123>".as_bytes();
     let result = Prelude::new(input).parse();
-    let expected_result = Err(ParserErr::InvalGenericTypedef(ParserErrInfo { pos: 9 }));
+    let expected_result = Err(ParserErr::InvalGenericTypeAnnot(ParserErrInfo { pos: 9 }));
     assert_eq!(result, expected_result);
 }
 
@@ -127,25 +129,25 @@ fn should_parse_with_nested_single_generics() {
     let input = ":Optional<:Nullable<:List<:Int>>>".as_bytes();
     let result = Prelude::new(input).parse();
 
-    let int = AstNodeTypedefGeneric::Single(Box::new(AstNodeTypedef {
+    let int = AstNodeTypeAnnotGeneric::Single(Box::new(AstNodeTypeAnnot {
         span: Span { start: 26, end: 30 },
         lexeme: "Int".to_string(),
         generic: None,
     }));
 
-    let list = AstNodeTypedefGeneric::Single(Box::new(AstNodeTypedef {
+    let list = AstNodeTypeAnnotGeneric::Single(Box::new(AstNodeTypeAnnot {
         span: Span { start: 20, end: 31 },
         lexeme: "List".to_string(),
         generic: Some(int),
     }));
 
-    let nullable = AstNodeTypedefGeneric::Single(Box::new(AstNodeTypedef {
+    let nullable = AstNodeTypeAnnotGeneric::Single(Box::new(AstNodeTypeAnnot {
         span: Span { start: 10, end: 32 },
         lexeme: "Nullable".to_string(),
         generic: Some(list),
     }));
 
-    let expected_result = Ok(vec![AstNode::Typedef(AstNodeTypedef {
+    let expected_result = Ok(vec![AstNode::TypeAnnot(AstNodeTypeAnnot {
         span: Span { start: 0, end: 33 },
         lexeme: "Optional".to_string(),
         generic: Some(nullable),
@@ -161,22 +163,22 @@ fn should_parse_with_record_generic() {
 
     let record = vec![
         (
-            AstNodeTypedefRecordKey {
+            AstNodeTypeAnnotRecordKey {
                 lexeme: "id".to_string(),
                 span: Span { start: 8, end: 12 },
             },
-            Box::new(AstNodeTypedef {
+            Box::new(AstNodeTypeAnnot {
                 span: Span { start: 13, end: 17 },
                 lexeme: "Int".to_string(),
                 generic: None,
             }),
         ),
         (
-            AstNodeTypedefRecordKey {
+            AstNodeTypeAnnotRecordKey {
                 lexeme: "name".to_string(),
                 span: Span { start: 19, end: 25 },
             },
-            Box::new(AstNodeTypedef {
+            Box::new(AstNodeTypeAnnot {
                 span: Span { start: 26, end: 30 },
                 lexeme: "Str".to_string(),
                 generic: None,
@@ -184,10 +186,10 @@ fn should_parse_with_record_generic() {
         ),
     ];
 
-    let expected_result = Ok(vec![AstNode::Typedef(AstNodeTypedef {
+    let expected_result = Ok(vec![AstNode::TypeAnnot(AstNodeTypeAnnot {
         span: Span { start: 0, end: 33 },
         lexeme: "Dict".to_string(),
-        generic: Some(AstNodeTypedefGeneric::Record(record)),
+        generic: Some(AstNodeTypeAnnotGeneric::Record(record)),
     })]);
 
     assert_eq!(result, expected_result);
@@ -200,22 +202,22 @@ fn should_parse_with_record_generic_compact() {
 
     let record = vec![
         (
-            AstNodeTypedefRecordKey {
+            AstNodeTypeAnnotRecordKey {
                 lexeme: "id".to_string(),
                 span: Span { start: 7, end: 11 },
             },
-            Box::new(AstNodeTypedef {
+            Box::new(AstNodeTypeAnnot {
                 span: Span { start: 11, end: 15 },
                 lexeme: "Int".to_string(),
                 generic: None,
             }),
         ),
         (
-            AstNodeTypedefRecordKey {
+            AstNodeTypeAnnotRecordKey {
                 lexeme: "name".to_string(),
                 span: Span { start: 16, end: 22 },
             },
-            Box::new(AstNodeTypedef {
+            Box::new(AstNodeTypeAnnot {
                 span: Span { start: 22, end: 26 },
                 lexeme: "Str".to_string(),
                 generic: None,
@@ -223,10 +225,10 @@ fn should_parse_with_record_generic_compact() {
         ),
     ];
 
-    let expected_result = Ok(vec![AstNode::Typedef(AstNodeTypedef {
+    let expected_result = Ok(vec![AstNode::TypeAnnot(AstNodeTypeAnnot {
         span: Span { start: 0, end: 28 },
         lexeme: "Dict".to_string(),
-        generic: Some(AstNodeTypedefGeneric::Record(record)),
+        generic: Some(AstNodeTypeAnnotGeneric::Record(record)),
     })]);
 
     assert_eq!(result, expected_result);
@@ -270,11 +272,11 @@ fn should_parse_with_nested_record_generics() {
     let result = Prelude::new(input).parse();
 
     let record_street = vec![(
-        AstNodeTypedefRecordKey {
+        AstNodeTypeAnnotRecordKey {
             lexeme: "street".to_string(),
             span: Span { start: 37, end: 45 },
         },
-        Box::new(AstNodeTypedef {
+        Box::new(AstNodeTypeAnnot {
             span: Span { start: 46, end: 50 },
             lexeme: "Str".to_string(),
             generic: None,
@@ -283,33 +285,33 @@ fn should_parse_with_nested_record_generics() {
 
     let record = vec![
         (
-            AstNodeTypedefRecordKey {
+            AstNodeTypeAnnotRecordKey {
                 lexeme: "id".to_string(),
                 span: Span { start: 8, end: 12 },
             },
-            Box::new(AstNodeTypedef {
+            Box::new(AstNodeTypeAnnot {
                 span: Span { start: 13, end: 17 },
                 lexeme: "Int".to_string(),
                 generic: None,
             }),
         ),
         (
-            AstNodeTypedefRecordKey {
+            AstNodeTypeAnnotRecordKey {
                 lexeme: "address".to_string(),
                 span: Span { start: 19, end: 28 },
             },
-            Box::new(AstNodeTypedef {
+            Box::new(AstNodeTypeAnnot {
                 span: Span { start: 29, end: 53 },
                 lexeme: "Dict".to_string(),
-                generic: Some(AstNodeTypedefGeneric::Record(record_street)),
+                generic: Some(AstNodeTypeAnnotGeneric::Record(record_street)),
             }),
         ),
     ];
 
-    let expected_result = Ok(vec![AstNode::Typedef(AstNodeTypedef {
+    let expected_result = Ok(vec![AstNode::TypeAnnot(AstNodeTypeAnnot {
         span: Span { start: 0, end: 56 },
         lexeme: "Dict".to_string(),
-        generic: Some(AstNodeTypedefGeneric::Record(record)),
+        generic: Some(AstNodeTypeAnnotGeneric::Record(record)),
     })]);
 
     assert_eq!(result, expected_result);

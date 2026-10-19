@@ -61,7 +61,7 @@ pub enum AAstNodeCall {
         // Raw alias for a new type created with
         // .typedef function.
         alias: String,
-        typedef: AAstNodeTypedef,
+        annot: AAstNodeTypeAnnot,
     },
     Get {
         span: Span,
@@ -118,7 +118,7 @@ pub enum AAstNodeCall {
 impl AAstNodeCall {
     pub fn span(&self) -> Span {
         match self {
-            AAstNodeCall::Typedef { typedef, .. } => typedef.span(),
+            AAstNodeCall::Typedef { annot, .. } => annot.span(),
             AAstNodeCall::Get { span, .. } => span.clone(),
         }
     }
@@ -180,14 +180,14 @@ impl AAstNodeData {
 
 // ==================================================================
 //
-// TYPEDEF START
+// TYPE ANNOTATIONS START
 //
 // ==================================================================
 
-pub type AAstNodeTypedefRecordEntries = Vec<(String, Box<AAstNodeTypedef>)>;
+pub type AAstNodeTypeAnnotRecordEntries = Vec<(String, Box<AAstNodeTypeAnnot>)>;
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum AAstNodeTypedef {
+pub enum AAstNodeTypeAnnot {
     // Represents a reference to a custom data type.
     // For example:
     // .typedef (User :UserShape)
@@ -199,30 +199,30 @@ pub enum AAstNodeTypedef {
     },
     Record {
         span: Span,
-        entries: AAstNodeTypedefRecordEntries,
+        entries: AAstNodeTypeAnnotRecordEntries,
     },
     List {
         span: Span,
-        item_type: Box<AAstNodeTypedef>,
+        item_type: Box<AAstNodeTypeAnnot>,
     },
     Int {
         span: Span,
     },
 }
 
-impl AAstNodeTypedef {
+impl AAstNodeTypeAnnot {
     pub fn span(&self) -> Span {
         match self {
-            AAstNodeTypedef::Custom { span, .. } => span.clone(),
-            AAstNodeTypedef::Record { span, .. } => span.clone(),
-            AAstNodeTypedef::List { span, .. } => span.clone(),
-            AAstNodeTypedef::Int { span, .. } => span.clone(),
+            AAstNodeTypeAnnot::Custom { span, .. } => span.clone(),
+            AAstNodeTypeAnnot::Record { span, .. } => span.clone(),
+            AAstNodeTypeAnnot::List { span, .. } => span.clone(),
+            AAstNodeTypeAnnot::Int { span, .. } => span.clone(),
         }
     }
 }
 
 // ==================================================================
 //
-// TYPEDEF END
+// TYPE ANNOTATIONS END
 //
 // ==================================================================

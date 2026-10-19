@@ -15,10 +15,10 @@ pub enum SemanalyzerErr {
     UnknownSlot {
         span: Span,
     },
-    UnsupportedNode {
+    UnexpNode {
         span: Span,
     },
-    ExpectedTypedef {
+    ExpectedTypeAnnot {
         span: Span,
     },
     UnknownTypedef {

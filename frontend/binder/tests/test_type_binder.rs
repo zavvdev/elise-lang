@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use elise_aast::AAstNodeTypedef;
+use elise_aast::AAstNodeTypeAnnot;
 use elise_binder::type_binder::TypeBinder;
 use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
@@ -20,7 +20,7 @@ mod common;
 
 #[test]
 fn should_bind_int() {
-    let int_aast = AAstNodeTypedef::Int {
+    let int_aast = AAstNodeTypeAnnot::Int {
         span: Span { start: 0, end: 0 },
     };
 
@@ -53,9 +53,9 @@ fn should_bind_int() {
 
 #[test]
 fn should_bind_list_with_primitive_generic() {
-    let list_aast = AAstNodeTypedef::List {
+    let list_aast = AAstNodeTypeAnnot::List {
         span: Span { start: 0, end: 1 },
-        item_type: Box::new(AAstNodeTypedef::Int {
+        item_type: Box::new(AAstNodeTypeAnnot::Int {
             span: Span { start: 2, end: 3 },
         }),
     };
@@ -85,11 +85,11 @@ fn should_bind_list_with_primitive_generic() {
 
 #[test]
 fn should_bind_list_with_list_generic() {
-    let list_aast = AAstNodeTypedef::List {
+    let list_aast = AAstNodeTypeAnnot::List {
         span: Span { start: 0, end: 1 },
-        item_type: Box::new(AAstNodeTypedef::List {
+        item_type: Box::new(AAstNodeTypeAnnot::List {
             span: Span { start: 2, end: 3 },
-            item_type: Box::new(AAstNodeTypedef::Int {
+            item_type: Box::new(AAstNodeTypeAnnot::Int {
                 span: Span { start: 4, end: 5 },
             }),
         }),
@@ -130,13 +130,13 @@ fn should_bind_list_with_list_generic() {
 
 #[test]
 fn should_bind_list_with_record_generic() {
-    let list_aast = AAstNodeTypedef::List {
+    let list_aast = AAstNodeTypeAnnot::List {
         span: Span { start: 0, end: 1 },
-        item_type: Box::new(AAstNodeTypedef::Record {
+        item_type: Box::new(AAstNodeTypeAnnot::Record {
             span: Span { start: 2, end: 3 },
             entries: vec![(
                 "id".to_string(),
-                Box::new(AAstNodeTypedef::Int {
+                Box::new(AAstNodeTypeAnnot::Int {
                     span: Span { start: 4, end: 5 },
                 }),
             )],
@@ -178,9 +178,9 @@ fn should_bind_list_with_record_generic() {
 
 #[test]
 fn should_bind_list_with_custom_type_generic() {
-    let list_aast = AAstNodeTypedef::List {
+    let list_aast = AAstNodeTypeAnnot::List {
         span: Span { start: 0, end: 1 },
-        item_type: Box::new(AAstNodeTypedef::Custom {
+        item_type: Box::new(AAstNodeTypeAnnot::Custom {
             span: Span { start: 2, end: 3 },
             alias: "RecordType".to_string(),
         }),
@@ -233,11 +233,11 @@ fn should_bind_list_with_custom_type_generic() {
 
 #[test]
 fn should_bind_record_with_primitive_values() {
-    let record_aast = AAstNodeTypedef::Record {
+    let record_aast = AAstNodeTypeAnnot::Record {
         span: Span { start: 0, end: 1 },
         entries: vec![(
             "id".to_string(),
-            Box::new(AAstNodeTypedef::Int {
+            Box::new(AAstNodeTypeAnnot::Int {
                 span: Span { start: 2, end: 3 },
             }),
         )],
@@ -268,13 +268,13 @@ fn should_bind_record_with_primitive_values() {
 
 #[test]
 fn should_bind_record_with_list_values() {
-    let record_aast = AAstNodeTypedef::Record {
+    let record_aast = AAstNodeTypeAnnot::Record {
         span: Span { start: 0, end: 1 },
         entries: vec![(
             "scores".to_string(),
-            Box::new(AAstNodeTypedef::List {
+            Box::new(AAstNodeTypeAnnot::List {
                 span: Span { start: 2, end: 3 },
-                item_type: Box::new(AAstNodeTypedef::Int {
+                item_type: Box::new(AAstNodeTypeAnnot::Int {
                     span: Span { start: 4, end: 5 },
                 }),
             }),
@@ -316,15 +316,15 @@ fn should_bind_record_with_list_values() {
 
 #[test]
 fn should_bind_record_with_record_values() {
-    let record_aast = AAstNodeTypedef::Record {
+    let record_aast = AAstNodeTypeAnnot::Record {
         span: Span { start: 0, end: 1 },
         entries: vec![(
             "user".to_string(),
-            Box::new(AAstNodeTypedef::Record {
+            Box::new(AAstNodeTypeAnnot::Record {
                 span: Span { start: 2, end: 3 },
                 entries: vec![(
                     "id".to_string(),
-                    Box::new(AAstNodeTypedef::Int {
+                    Box::new(AAstNodeTypeAnnot::Int {
                         span: Span { start: 4, end: 5 },
                     }),
                 )],
@@ -367,11 +367,11 @@ fn should_bind_record_with_record_values() {
 
 #[test]
 fn should_bind_record_with_custom_type_values() {
-    let record_aast = AAstNodeTypedef::Record {
+    let record_aast = AAstNodeTypeAnnot::Record {
         span: Span { start: 0, end: 1 },
         entries: vec![(
             "test".to_string(),
-            Box::new(AAstNodeTypedef::Custom {
+            Box::new(AAstNodeTypeAnnot::Custom {
                 alias: "RecordType".to_string(),
                 span: Span { start: 2, end: 3 },
             }),
@@ -425,7 +425,7 @@ fn should_bind_record_with_custom_type_values() {
 
 #[test]
 fn should_bind_custom_primitive() {
-    let custom_aast = AAstNodeTypedef::Custom {
+    let custom_aast = AAstNodeTypeAnnot::Custom {
         span: Span { start: 0, end: 1 },
         alias: "SingleType".to_string(),
     };
@@ -448,7 +448,7 @@ fn should_bind_custom_primitive() {
 
 #[test]
 fn should_bind_custom_list() {
-    let custom_aast = AAstNodeTypedef::Custom {
+    let custom_aast = AAstNodeTypeAnnot::Custom {
         span: Span { start: 0, end: 1 },
         alias: "ListType".to_string(),
     };
@@ -478,7 +478,7 @@ fn should_bind_custom_list() {
 
 #[test]
 fn should_bind_custom_record() {
-    let custom_aast = AAstNodeTypedef::Custom {
+    let custom_aast = AAstNodeTypeAnnot::Custom {
         span: Span { start: 0, end: 1 },
         alias: "RecordType".to_string(),
     };
@@ -508,7 +508,7 @@ fn should_bind_custom_record() {
 
 #[test]
 fn should_return_err_if_custom_is_not_in_globals() {
-    let custom_aast = AAstNodeTypedef::Custom {
+    let custom_aast = AAstNodeTypeAnnot::Custom {
         span: Span { start: 0, end: 1 },
         alias: "SingleType".to_string(),
     };
@@ -518,7 +518,7 @@ fn should_return_err_if_custom_is_not_in_globals() {
 
     assert_eq!(
         binding,
-        Err(TypeBinderErr::UnknownTypedef {
+        Err(TypeBinderErr::Unresolvable {
             span: Span { start: 0, end: 1 }
         })
     );

@@ -18,7 +18,7 @@ pub enum ParserErr {
     InvalStr(ParserErrInfo),
     InvalDictPair(ParserErrInfo),
     InvalFnName(ParserErrInfo),
-    InvalGenericTypedef(ParserErrInfo),
+    InvalGenericTypeAnnot(ParserErrInfo),
 
     EmptyGeneric(ParserErrInfo),
     EmptyRecord(ParserErrInfo),

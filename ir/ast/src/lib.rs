@@ -1,36 +1,30 @@
 //! AST (Abstract Syntax Tree)
 //!
 //! This data structure is the result of our parser (Prelude).
-//! It relies purely on grammar that is defined in GRAMMAR.md
-//! which is in the root of the project.
-//!
-//! Each node is a result of differentiation between grammar
-//! entities such as functions, slots, type annotations etc.
-//! It doesn't know about semantics or behavior, the only
-//! purpose is to represent grammatical structure.
+//! It relies purely on grammar that is defined in GRAMMAR.md.
 
 use elise_shared::shared_types::Span;
 
 #[derive(Debug, PartialEq)]
 pub enum AstNode {
     Expr(AstNodeExpr),
-    Typedef(AstNodeTypedef),
+    TypeAnnot(AstNodeTypeAnnot),
 }
 
 impl AstNode {
-    /// For using in error reports in order to locate the node
+    /// For error reports in order to locate the node
     /// in the source code.
     pub fn span(&self) -> Span {
         match self {
             AstNode::Expr(expr) => expr.span().clone(),
-            AstNode::Typedef(typedef) => typedef.span().clone(),
+            AstNode::TypeAnnot(typedef) => typedef.span().clone(),
         }
     }
 }
 
 // ==================================================================
 //
-//  EXPR START
+//  EXPRESSIONS START
 //
 // ==================================================================
 
@@ -100,40 +94,40 @@ impl AstNodeExpr {
 
 // ==================================================================
 //
-//  EXPR END
+//  EXPRESSIONS END
 //
 // ==================================================================
 
 // ==================================================================
 //
-//  TYPEDEF START
+//  TYPE ANNOTATIONS START
 //
 // ==================================================================
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct AstNodeTypedefRecordKey {
+pub struct AstNodeTypeAnnotRecordKey {
     pub lexeme: String,
     pub span: Span,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum AstNodeTypedefGeneric {
-    Single(Box<AstNodeTypedef>),
-    Record(Vec<(AstNodeTypedefRecordKey, Box<AstNodeTypedef>)>),
+pub enum AstNodeTypeAnnotGeneric {
+    Single(Box<AstNodeTypeAnnot>),
+    Record(Vec<(AstNodeTypeAnnotRecordKey, Box<AstNodeTypeAnnot>)>),
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct AstNodeTypedef {
+pub struct AstNodeTypeAnnot {
     pub span: Span,
     pub lexeme: String,
     // From the perspective of AST, any type can have a generic.
     // Since AST is only focused on code structure/grammar,
     // we don't care here what kind of type we're currently in,
     // although semantically :Int cannot have a generic type.
-    pub generic: Option<AstNodeTypedefGeneric>,
+    pub generic: Option<AstNodeTypeAnnotGeneric>,
 }
 
-impl AstNodeTypedef {
+impl AstNodeTypeAnnot {
     pub fn span(&self) -> Span {
         self.span.clone()
     }
@@ -141,6 +135,6 @@ impl AstNodeTypedef {
 
 // ==================================================================
 //
-//  TYPEDEF END
+//  TYPE ANNOTATIONS END
 //
 // ==================================================================

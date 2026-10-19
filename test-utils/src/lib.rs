@@ -40,7 +40,7 @@ pub mod test_utils {
         typedef_mode: bool,
     ) -> Result<Vec<AAstNode>, SemanalyzerErr> {
         let ast = Prelude::new(source_code.as_bytes()).parse().unwrap();
-        Harmony::new(&ast, global_type_bindings, typedef_mode).analyze()
+        Harmony::new(&ast, global_type_bindings, typedef_mode).annotate()
     }
 
     // ==================================================================

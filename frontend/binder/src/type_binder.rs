@@ -1,4 +1,4 @@
-use elise_aast::{AAstNodeTypedef, AAstNodeTypedefRecordEntries};
+use elise_aast::{AAstNodeTypeAnnot, AAstNodeTypeAnnotRecordEntries};
 use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     common::BindingType,
@@ -7,7 +7,7 @@ use elise_bindings::{
 use elise_shared::{shared_errors::errors_type_binder::TypeBinderErr, shared_types::Span};
 
 pub struct TypeBinder<'a> {
-    aast_typedef: &'a AAstNodeTypedef,
+    aast_type_annot: &'a AAstNodeTypeAnnot,
     current_path: BindingPath,
     current_type: Option<BindingType>,
     current_span: Span,
@@ -15,9 +15,9 @@ pub struct TypeBinder<'a> {
 }
 
 impl<'a> TypeBinder<'a> {
-    pub fn new(aast_typedef: &'a AAstNodeTypedef, globals: &'a AliasedTypeBindings) -> Self {
+    pub fn new(aast_type_annot: &'a AAstNodeTypeAnnot, globals: &'a AliasedTypeBindings) -> Self {
         Self {
-            aast_typedef,
+            aast_type_annot,
             // Current path that changes according to nesting.
             // We push here every time we recurse into nested fields
             // like list items or record keys in order to resolve them.
@@ -36,21 +36,21 @@ impl<'a> TypeBinder<'a> {
 
     pub fn bind(&mut self) -> Result<TypeBinding, TypeBinderErr> {
         let mut binding: TypeBinding = TypeBinding::new();
-        self.bind_node(self.aast_typedef, &mut binding)?;
+        self.bind_node(self.aast_type_annot, &mut binding)?;
         Ok(binding)
     }
 
     fn bind_node(
         &mut self,
-        node: &AAstNodeTypedef,
+        node: &AAstNodeTypeAnnot,
         binding: &mut TypeBinding,
     ) -> Result<(), TypeBinderErr> {
         self.current_span = node.span();
         match node {
-            AAstNodeTypedef::Custom { alias, .. } => self.bind_custom(alias, binding),
-            AAstNodeTypedef::Record { entries, .. } => self.bind_record(entries, binding),
-            AAstNodeTypedef::List { item_type, .. } => self.bind_list(item_type, binding),
-            AAstNodeTypedef::Int { .. } => self.bind_primitive(BindingType::Int, binding),
+            AAstNodeTypeAnnot::Custom { alias, .. } => self.bind_custom(alias, binding),
+            AAstNodeTypeAnnot::Record { entries, .. } => self.bind_record(entries, binding),
+            AAstNodeTypeAnnot::List { item_type, .. } => self.bind_list(item_type, binding),
+            AAstNodeTypeAnnot::Int { .. } => self.bind_primitive(BindingType::Int, binding),
         }
     }
 
@@ -106,7 +106,7 @@ impl<'a> TypeBinder<'a> {
 
     fn bind_record(
         &mut self,
-        entries: &AAstNodeTypedefRecordEntries,
+        entries: &AAstNodeTypeAnnotRecordEntries,
         binding: &mut TypeBinding,
     ) -> Result<(), TypeBinderErr> {
         // Capture current type as Record and resolve it right away
@@ -147,7 +147,7 @@ impl<'a> TypeBinder<'a> {
     /// to more than one type.
     fn bind_list(
         &mut self,
-        item_type: &AAstNodeTypedef,
+        item_type: &AAstNodeTypeAnnot,
         binding: &mut TypeBinding,
     ) -> Result<(), TypeBinderErr> {
         // Capture current type and commit it before recursing
@@ -175,7 +175,7 @@ impl<'a> TypeBinder<'a> {
 
     fn bind_custom(&mut self, alias: &str, binding: &mut TypeBinding) -> Result<(), TypeBinderErr> {
         let Some(global_bindings) = self.globals.get(alias) else {
-            return Err(TypeBinderErr::UnknownTypedef {
+            return Err(TypeBinderErr::Unresolvable {
                 span: self.current_span.clone(),
             });
         };

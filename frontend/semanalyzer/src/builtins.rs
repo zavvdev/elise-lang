@@ -10,8 +10,8 @@ impl FnGet {
     pub const ARGS_LEN_MIN: usize = 2;
 }
 
-pub struct TypedefLexeme;
-impl TypedefLexeme {
+pub struct TypeAnnotLexeme;
+impl TypeAnnotLexeme {
     pub const INT: &'static str = "Int";
     pub const LIST: &'static str = "List";
     pub const RECORD: &'static str = "Record";

@@ -19,7 +19,7 @@ pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
         InvalStr(err_info) => ("Invalid string", err_info),
         InvalDictPair(err_info) => ("Invalid dictionary key value pair", err_info),
         InvalFnName(err_info) => ("Invalid function name", err_info),
-        InvalGenericTypedef(err_info) => ("Invalid generic type definition", err_info),
+        InvalGenericTypeAnnot(err_info) => ("Invalid generic type annotation", err_info),
 
         EmptyGeneric(err_info) => ("Empty generic", err_info),
         EmptyRecord(err_info) => ("Empty Record type definition", err_info),

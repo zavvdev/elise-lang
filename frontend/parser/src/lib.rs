@@ -2,7 +2,7 @@ pub mod parser_config;
 
 use elise_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprDict, AstNodeExprDictKey, AstNodeExprList,
-    AstNodeExprPrim, AstNodeTypedef, AstNodeTypedefGeneric, AstNodeTypedefRecordKey,
+    AstNodeExprPrim, AstNodeTypeAnnot, AstNodeTypeAnnotGeneric, AstNodeTypeAnnotRecordKey,
 };
 use elise_shared::shared_types::{Literal, Span};
 use std::str::from_utf8;
@@ -679,11 +679,11 @@ impl<'a> Prelude<'a> {
 
     fn typedef_record_consume(
         &mut self,
-    ) -> Result<Vec<(AstNodeTypedefRecordKey, Box<AstNodeTypedef>)>, ParserErr> {
+    ) -> Result<Vec<(AstNodeTypeAnnotRecordKey, Box<AstNodeTypeAnnot>)>, ParserErr> {
         self.advance();
 
-        let mut entries: Vec<(AstNodeTypedefRecordKey, Box<AstNodeTypedef>)> = vec![];
-        let mut key: Option<AstNodeTypedefRecordKey> = None;
+        let mut entries: Vec<(AstNodeTypeAnnotRecordKey, Box<AstNodeTypeAnnot>)> = vec![];
+        let mut key: Option<AstNodeTypeAnnotRecordKey> = None;
 
         while let Some(c) = self.peek() {
             let is_end = self
@@ -711,7 +711,7 @@ impl<'a> Prelude<'a> {
                     let AstNode::Expr(AstNodeExpr::Str(prim)) = node else {
                         return Err(self.fail(ParserErr::UnexpDictKey));
                     };
-                    key = Some(AstNodeTypedefRecordKey {
+                    key = Some(AstNodeTypeAnnotRecordKey {
                         lexeme: prim.lexeme,
                         span: Span {
                             start: prim.span.start,
@@ -720,7 +720,7 @@ impl<'a> Prelude<'a> {
                     });
                 }
                 Some(k) => {
-                    let AstNode::Typedef(typedef) = node else {
+                    let AstNode::TypeAnnot(typedef) = node else {
                         return Err(self.fail(ParserErr::UnexpDictKey));
                     };
                     entries.push((k, Box::new(typedef)));
@@ -743,8 +743,8 @@ impl<'a> Prelude<'a> {
         }
     }
 
-    fn typedef_consume_generic(&mut self) -> Result<Option<AstNodeTypedefGeneric>, ParserErr> {
-        let mut generic: Option<AstNodeTypedefGeneric> = None;
+    fn typedef_consume_generic(&mut self) -> Result<Option<AstNodeTypeAnnotGeneric>, ParserErr> {
+        let mut generic: Option<AstNodeTypeAnnotGeneric> = None;
 
         if !self.typedef_generic_is_start() {
             return Ok(generic);
@@ -770,13 +770,13 @@ impl<'a> Prelude<'a> {
 
             if self.dict_is_start(&c) {
                 let record = self.typedef_record_consume()?;
-                generic = Some(AstNodeTypedefGeneric::Record(record));
+                generic = Some(AstNodeTypeAnnotGeneric::Record(record));
             } else if let Some(node) = self.get_node_from_char(&c)? {
                 match node {
-                    AstNode::Typedef(typedef) => {
-                        generic = Some(AstNodeTypedefGeneric::Single(Box::new(typedef)));
+                    AstNode::TypeAnnot(typedef) => {
+                        generic = Some(AstNodeTypeAnnotGeneric::Single(Box::new(typedef)));
                     }
-                    _ => return Err(self.fail(ParserErr::InvalGenericTypedef)),
+                    _ => return Err(self.fail(ParserErr::InvalGenericTypeAnnot)),
                 }
             }
         }
@@ -794,7 +794,7 @@ impl<'a> Prelude<'a> {
             let lexeme = self.typedef_consume_lexeme()?;
             let generic = self.typedef_consume_generic()?;
 
-            Ok(Some(AstNode::Typedef(AstNodeTypedef {
+            Ok(Some(AstNode::TypeAnnot(AstNodeTypeAnnot {
                 span: Span {
                     start,
                     end: self.tok_pos,

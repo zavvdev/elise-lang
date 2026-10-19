@@ -74,12 +74,12 @@ pub fn run<'a>(
 
     let mut schema_type_bindings: AliasedTypeBindings = HashMap::new();
     let _schema_aast = Harmony::new(&schema_code_ast, &mut schema_type_bindings, true)
-        .analyze()
-        .map_err(LangErr::Semanalyzer)?;
+        .annotate()
+        .map_err(LangErr::SemanalyzerSchema)?;
 
     let source_code_aast = Harmony::new(&source_code_ast, &mut schema_type_bindings, false)
-        .analyze()
-        .map_err(LangErr::Semanalyzer)?;
+        .annotate()
+        .map_err(LangErr::SemanalyzerSource)?;
 
     println!("source ast: {:#?}", source_code_ast);
     println!("aast: {:#?}", source_code_aast);

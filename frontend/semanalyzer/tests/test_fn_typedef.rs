@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use elise_aast::{AAstNode, AAstNodeCall, AAstNodeTypedef};
+use elise_aast::{AAstNode, AAstNodeCall, AAstNodeTypeAnnot};
 use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     common::BindingType,
@@ -20,7 +20,7 @@ mod common;
 const TYPEDEF_MODE: bool = true;
 
 #[test]
-fn should_fail_for_non_typedef_nodes() {
+fn should_fail_for_non_type_annot_nodes() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze("@data", &mut type_bindings_map, TYPEDEF_MODE);
     assert!(matches!(result, Err(SemanalyzerErr::TypedefMode { .. })));
@@ -48,12 +48,12 @@ fn should_fail_if_first_arg_is_not_ident() {
 }
 
 #[test]
-fn should_fail_if_second_arg_is_not_typedef() {
+fn should_fail_if_second_arg_is_not_type_annot() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(".typedef(Age Age)", &mut type_bindings_map, TYPEDEF_MODE);
     assert!(matches!(
         result,
-        Err(SemanalyzerErr::ExpectedTypedef { .. })
+        Err(SemanalyzerErr::ExpectedTypeAnnot { .. })
     ));
 }
 
@@ -89,7 +89,7 @@ fn should_analyze_int_aliasing() {
 
     expected_aast.push(AAstNode::Call(AAstNodeCall::Typedef {
         alias: "Age".to_string(),
-        typedef: AAstNodeTypedef::Int {
+        annot: AAstNodeTypeAnnot::Int {
             span: Span { start: 13, end: 17 },
         },
     }));
@@ -157,9 +157,9 @@ fn should_analyze_list_aliasing() {
 
     expected_aast.push(AAstNode::Call(AAstNodeCall::Typedef {
         alias: "Data".to_string(),
-        typedef: AAstNodeTypedef::List {
+        annot: AAstNodeTypeAnnot::List {
             span: Span { start: 14, end: 25 },
-            item_type: Box::new(AAstNodeTypedef::Int {
+            item_type: Box::new(AAstNodeTypeAnnot::Int {
                 span: Span { start: 20, end: 24 },
             }),
         },
@@ -235,11 +235,11 @@ fn should_analyze_record_aliasing() {
 
     expected_aast.push(AAstNode::Call(AAstNodeCall::Typedef {
         alias: "User".to_string(),
-        typedef: AAstNodeTypedef::Record {
+        annot: AAstNodeTypeAnnot::Record {
             span: Span { start: 15, end: 37 },
             entries: vec![(
                 "id".to_string(),
-                Box::new(AAstNodeTypedef::Int {
+                Box::new(AAstNodeTypeAnnot::Int {
                     span: Span { start: 30, end: 34 },
                 }),
             )],
