@@ -7,7 +7,8 @@ use elise_bindings::{
     common::BindingType,
     type_bindings::{TypeBinding, TypeBindingDesc},
 };
-use elise_shared::{shared_errors::errors_type_binder::TypeBinderErr, shared_types::Span};
+use elise_shared_errors::errors_type_binder::TypeBinderErr;
+use elise_shared_types::Span;
 use elise_test_utils::test_utils;
 
 mod common;

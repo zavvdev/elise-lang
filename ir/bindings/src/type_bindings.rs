@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use elise_shared::shared_types::Span;
+use elise_shared_types::Span;
 
 use crate::{binding_path::BindingPath, common::BindingType};
 

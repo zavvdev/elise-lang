@@ -3,7 +3,7 @@
 //! This data structure is the result of our parser (Prelude).
 //! It relies purely on grammar that is defined in GRAMMAR.md.
 
-use elise_shared::shared_types::Span;
+use elise_shared_types::Span;
 
 #[derive(Debug, PartialEq)]
 pub enum AstNode {
@@ -16,8 +16,8 @@ impl AstNode {
     /// in the source code.
     pub fn span(&self) -> Span {
         match self {
-            AstNode::Expr(expr) => expr.span().clone(),
-            AstNode::TypeAnnot(typedef) => typedef.span().clone(),
+            AstNode::Expr(expr) => expr.span(),
+            AstNode::TypeAnnot(typedef) => typedef.span(),
         }
     }
 }

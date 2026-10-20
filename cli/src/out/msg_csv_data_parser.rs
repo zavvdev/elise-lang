@@ -1,4 +1,4 @@
-use elise_shared::shared_errors::errors_csv_data_parser::CsvDataParserErr;
+use elise_shared_errors::errors_csv_data_parser::CsvDataParserErr;
 
 use crate::out::utils;
 

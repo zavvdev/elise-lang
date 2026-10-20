@@ -4,7 +4,8 @@ use elise_bindings::{
     common::BindingType,
     type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDesc},
 };
-use elise_shared::{shared_errors::errors_type_binder::TypeBinderErr, shared_types::Span};
+use elise_shared_errors::errors_type_binder::TypeBinderErr;
+use elise_shared_types::Span;
 
 pub struct TypeBinder<'a> {
     aast_type_annot: &'a AAstNodeTypeAnnot,

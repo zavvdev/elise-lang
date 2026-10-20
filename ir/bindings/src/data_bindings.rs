@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use elise_shared::shared_types::Locatable;
+use elise_shared_types::Locatable;
 
 use crate::{binding_path::BindingPath, common::BindingType};
 

@@ -1,6 +1,6 @@
 use elise_ast::{AstNode, AstNodeExpr, AstNodeExprPrim};
 use elise_parser::Prelude;
-use elise_shared::shared_types::Span;
+use elise_shared_types::Span;
 
 mod common;
 

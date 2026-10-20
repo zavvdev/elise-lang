@@ -10,7 +10,8 @@ pub mod test_utils {
     };
     use elise_parser::Prelude;
     use elise_semanalyzer::Harmony;
-    use elise_shared::{shared_errors::errors_semanalyzer::SemanalyzerErr, shared_types::Span};
+    use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
+    use elise_shared_types::Span;
 
     // ==================================================================
     //

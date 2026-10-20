@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use elise_aast::{AAstNode, AAstNodeData, AAstNodeDataPrim};
-use elise_shared::shared_types::Span;
+use elise_shared_types::Span;
 use elise_test_utils::test_utils::semanalyze;
 
 mod common;

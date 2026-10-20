@@ -1,4 +1,4 @@
-use crate::shared_types::{Pos, Span};
+use elise_shared_types::{Pos, Span};
 
 #[derive(Debug, PartialEq)]
 pub enum DataValidatorErr {

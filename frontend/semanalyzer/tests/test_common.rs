@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use elise_shared::shared_errors::errors_semanalyzer::SemanalyzerErr;
+use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
 use elise_test_utils::test_utils::semanalyze;
 
 mod common;

@@ -18,10 +18,8 @@ use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{AliasedTypeBindings, TypeBinding},
 };
-use elise_shared::{
-    shared_errors::{errors_semanalyzer::SemanalyzerErr, errors_type_binder::TypeBinderErr},
-    shared_types::ArityMismatchKind,
-};
+use elise_shared_errors::{errors_semanalyzer::SemanalyzerErr, errors_type_binder::TypeBinderErr};
+use elise_shared_types::ArityMismatchKind;
 
 use crate::{
     builtins::{FnGet, FnTypedef, SlotData, TypeAnnotLexeme},

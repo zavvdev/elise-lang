@@ -14,7 +14,7 @@
 //! so it's not possible anymore to generalize them under one type.
 
 use elise_bindings::{binding_path::BindingPath, type_bindings::TypeBinding};
-use elise_shared::shared_types::Span;
+use elise_shared_types::Span;
 
 #[derive(Debug, PartialEq)]
 pub enum AAstNode {

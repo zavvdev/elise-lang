@@ -1,4 +1,4 @@
-use crate::shared_types::Span;
+use elise_shared_types::Span;
 
 #[derive(Debug, PartialEq)]
 pub enum TypeBinderErr {

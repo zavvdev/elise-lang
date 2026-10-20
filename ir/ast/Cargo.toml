@@ -7,4 +7,4 @@ edition = "2024"
 path = "src/lib.rs"
 
 [dependencies]
-elise-shared = { path = "../../shared" }
+elise-shared-types = { path = "../../shared/types" }

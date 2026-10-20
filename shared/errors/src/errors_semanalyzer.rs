@@ -1,4 +1,4 @@
-use crate::shared_types::{ArityMismatchKind, Span};
+use elise_shared_types::{ArityMismatchKind, Span};
 
 // TODO: Add more precise errors.
 #[derive(Debug, PartialEq)]

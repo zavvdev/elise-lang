@@ -8,10 +8,10 @@ pub mod errors_type_binder;
 
 use errors_csv_data_binder::CsvDataBinderErr;
 use errors_csv_data_parser::CsvDataParserErr;
+use errors_data_validator::DataValidatorErr;
 use errors_parser::ParserErr;
+use errors_preexec::PreExecErr;
 use errors_semanalyzer::SemanalyzerErr;
-
-use crate::shared_errors::{errors_data_validator::DataValidatorErr, errors_preexec::PreExecErr};
 
 #[derive(Debug, PartialEq)]
 pub enum LangErr {

@@ -1,6 +1,7 @@
 mod common;
 
-use elise_shared::{shared_errors::errors_csv_data_parser::CsvDataParserErr::*, shared_types::Pos};
+use elise_shared_errors::{errors_csv_data_parser::CsvDataParserErr::*};
+use elise_shared_types::Pos;
 use elise_test_utils::test_utils;
 
 use crate::csv::csv_data_parser::{CsvDataCol, CsvDataParser, CsvDataParserDataType, CsvDataRow};

@@ -5,7 +5,7 @@ use elise_bindings::{
     common::BindingType,
     type_bindings::{TypeBinding, TypeBindingDesc},
 };
-use elise_shared::shared_types::Span;
+use elise_shared_types::Span;
 
 #[test]
 fn should_strip_binding_paths_by_prefix() {

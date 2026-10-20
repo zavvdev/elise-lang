@@ -8,7 +8,8 @@ path = "src/lib.rs"
 
 [dependencies]
 csv.workspace = true
-elise-shared = { path = "../../shared" }
+elise-shared-types = { path = "../../shared/types" }
+elise-shared-errors = { path = "../../shared/errors" }
 elise-ast = { path = "../../ir/ast" }
 
 [dev-dependencies]

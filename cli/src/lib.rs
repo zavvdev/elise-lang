@@ -16,7 +16,7 @@ use elise_bindings::type_bindings::AliasedTypeBindings;
 //};
 use elise_parser::Prelude;
 use elise_semanalyzer::Harmony;
-use elise_shared::shared_errors::LangErr;
+use elise_shared_errors::LangErr;
 use std::{collections::HashMap, time::Instant};
 
 /// Representation of the successful execution of the

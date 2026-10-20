@@ -1,8 +1,6 @@
 use csv::{ErrorKind, ReaderBuilder};
-use elise_shared::{
-    shared_errors::errors_csv_data_parser::CsvDataParserErr,
-    shared_types::{Literal, Pos},
-};
+use elise_shared_errors::errors_csv_data_parser::CsvDataParserErr;
+use elise_shared_types::{Literal, Pos};
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum CsvDataParserDataType {

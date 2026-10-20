@@ -6,12 +6,12 @@ use elise_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprDict, AstNodeExprDictKey, AstNodeExprList,
     AstNodeExprPrim, AstNodeTypeAnnot, AstNodeTypeAnnotGeneric, AstNodeTypeAnnotRecordKey,
 };
-use elise_shared::shared_types::{Literal, Span};
+use elise_shared_types::{Literal, Span};
 use std::str::from_utf8;
 
 use crate::config::{CharCode, DfaNumState};
 
-use elise_shared::shared_errors::errors_parser::{ParserErr, ParserErrInfo};
+use elise_shared_errors::errors_parser::{ParserErr, ParserErrInfo};
 
 pub struct Prelude<'a> {
     // We expect to have a single char per byte (ASCII) for the

@@ -1,4 +1,4 @@
-use elise_shared::shared_errors::errors_preexec::PreExecErr;
+use elise_shared_errors::errors_preexec::PreExecErr;
 
 use crate::out::utils::{self};
 
