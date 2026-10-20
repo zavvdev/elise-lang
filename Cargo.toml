@@ -18,6 +18,7 @@ members = [
     "runtime/vm",
     "shared/errors",
     "shared/types",
+    "shared/proc_macros",
     "test-utils",
 ]
 
@@ -27,3 +28,5 @@ serial_test = "3.4.0"
 rayon = "1.12.0"
 csv = "1.4.0"
 syn = "3.0.9"
+quote = "1.0.47"
+proc-macro2 = "1.0.107"

@@ -14,6 +14,7 @@
 //! so it's not possible anymore to generalize them under one type.
 
 use elise_bindings::{binding_path::BindingPath, type_bindings::TypeBinding};
+use elise_shared_proc_macros::HasSpan;
 use elise_shared_types::Span;
 
 #[derive(Debug, PartialEq)]
@@ -42,7 +43,7 @@ impl AAstNode {
         match self {
             AAstNode::Call(call) => call.span(),
             AAstNode::Data(data) => data.span(),
-            AAstNode::SlotData { span } => span.clone(),
+            AAstNode::SlotData { span } => *span,
         }
     }
 }
@@ -119,7 +120,7 @@ impl AAstNodeCall {
     pub fn span(&self) -> Span {
         match self {
             AAstNodeCall::Typedef { annot, .. } => annot.span(),
-            AAstNodeCall::Get { span, .. } => span.clone(),
+            AAstNodeCall::Get { span, .. } => *span,
         }
     }
 }
@@ -136,7 +137,7 @@ impl AAstNodeCall {
 //
 // ==================================================================
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, HasSpan)]
 pub struct AAstNodeDataPrim {
     pub lexeme: String,
     pub span: Span,
@@ -165,9 +166,9 @@ pub enum AAstNodeData {
 impl AAstNodeData {
     pub fn span(&self) -> Span {
         match self {
-            AAstNodeData::Int(prim) | AAstNodeData::Str(prim) => prim.span.clone(),
-            AAstNodeData::List { span, .. } => span.clone(),
-            AAstNodeData::Dict { span, .. } => span.clone(),
+            AAstNodeData::Int(prim) | AAstNodeData::Str(prim) => prim.span(),
+            AAstNodeData::List { span, .. } => *span,
+            AAstNodeData::Dict { span, .. } => *span,
         }
     }
 }
@@ -213,10 +214,10 @@ pub enum AAstNodeTypeAnnot {
 impl AAstNodeTypeAnnot {
     pub fn span(&self) -> Span {
         match self {
-            AAstNodeTypeAnnot::Custom { span, .. } => span.clone(),
-            AAstNodeTypeAnnot::Record { span, .. } => span.clone(),
-            AAstNodeTypeAnnot::List { span, .. } => span.clone(),
-            AAstNodeTypeAnnot::Int { span, .. } => span.clone(),
+            AAstNodeTypeAnnot::Custom { span, .. } => *span,
+            AAstNodeTypeAnnot::Record { span, .. } => *span,
+            AAstNodeTypeAnnot::List { span, .. } => *span,
+            AAstNodeTypeAnnot::Int { span, .. } => *span,
         }
     }
 }

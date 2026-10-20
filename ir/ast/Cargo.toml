@@ -8,3 +8,4 @@ path = "src/lib.rs"
 
 [dependencies]
 elise-shared-types = { path = "../../shared/types" }
+elise-shared-proc-macros = { path = "../../shared/proc_macros" }

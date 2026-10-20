@@ -1,6 +1,6 @@
 /// Byte offsets into the source file.
 /// Half-open interval: [start, end)
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Span {
     pub start: usize,
     pub end: usize,

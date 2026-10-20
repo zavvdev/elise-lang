@@ -63,7 +63,7 @@ impl<'a> TypeBinder<'a> {
                 self.current_path.clone(),
                 TypeBindingDesc {
                     dtype: dtype.clone(),
-                    span: self.current_span.clone(),
+                    span: self.current_span,
                 },
             );
             return Ok(());
@@ -177,7 +177,7 @@ impl<'a> TypeBinder<'a> {
     fn bind_custom(&mut self, alias: &str, binding: &mut TypeBinding) -> Result<(), TypeBinderErr> {
         let Some(global_bindings) = self.globals.get(alias) else {
             return Err(TypeBinderErr::Unresolvable {
-                span: self.current_span.clone(),
+                span: self.current_span,
             });
         };
 
@@ -185,7 +185,7 @@ impl<'a> TypeBinder<'a> {
             let Some(next_path) = BindingPath::prepend(&self.current_path, global_binding_path)
             else {
                 return Err(TypeBinderErr::UnableToMerge {
-                    span: global_binding.span.clone(),
+                    span: global_binding.span(),
                 });
             };
             binding.map.insert(next_path, global_binding.clone());

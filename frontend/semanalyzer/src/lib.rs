@@ -125,7 +125,7 @@ impl<'a> Harmony<'a> {
                     .type_bindings
                     .get(&SlotData::TYPEDEF_LEXEME.to_string())
                 else {
-                    return Err(SemanalyzerErr::NoTypeDefinition { span: span.clone() });
+                    return Err(SemanalyzerErr::NoTypeDefinition { span: *span });
                 };
                 Ok(slot_bindings.clone())
             }
@@ -149,12 +149,8 @@ impl<'a> Harmony<'a> {
 
     fn slot(&mut self, prim: &AstNodeExprPrim) -> Result<AAstNode, SemanalyzerErr> {
         match prim.lexeme.as_str() {
-            SlotData::LEXEME => Ok(AAstNode::SlotData {
-                span: prim.span.clone(),
-            }),
-            _ => Err(SemanalyzerErr::UnknownSlot {
-                span: prim.span.clone(),
-            }),
+            SlotData::LEXEME => Ok(AAstNode::SlotData { span: prim.span() }),
+            _ => Err(SemanalyzerErr::UnknownSlot { span: prim.span() }),
         }
     }
 
@@ -175,7 +171,7 @@ impl<'a> Harmony<'a> {
         variant: fn(AAstNodeDataPrim) -> AAstNodeData,
     ) -> Result<AAstNode, SemanalyzerErr> {
         Ok(AAstNode::Data(variant(AAstNodeDataPrim {
-            span: prim.span.clone(),
+            span: prim.span(),
             lexeme: prim.lexeme.clone(),
         })))
     }
@@ -223,7 +219,7 @@ impl<'a> Harmony<'a> {
         }
 
         Ok(AAstNode::Data(AAstNodeData::List {
-            span: list.span.clone(),
+            span: list.span(),
             items: aast_items,
         }))
     }
@@ -247,7 +243,7 @@ impl<'a> Harmony<'a> {
             };
             entries.push((
                 AAstNodeDataDictKey {
-                    span: entry.0.span.clone(),
+                    span: entry.0.span(),
                     lexeme: entry.0.lexeme.clone(),
                 },
                 Box::new(data_node),
@@ -255,7 +251,7 @@ impl<'a> Harmony<'a> {
         }
 
         Ok(AAstNode::Data(AAstNodeData::Dict {
-            span: dict.span.clone(),
+            span: dict.span(),
             entries,
         }))
     }
@@ -272,9 +268,7 @@ impl<'a> Harmony<'a> {
         match call.lexeme.as_str() {
             FnTypedef::LEXEME => self.call_typedef(call),
             FnGet::LEXEME => self.call_get(call),
-            _ => Err(SemanalyzerErr::UnknownFunction {
-                span: call.span.clone(),
-            }),
+            _ => Err(SemanalyzerErr::UnknownFunction { span: call.span() }),
         }
     }
 
@@ -291,7 +285,7 @@ impl<'a> Harmony<'a> {
             return Err(SemanalyzerErr::ArityMismatch {
                 fn_name: FnTypedef::LEXEME,
                 found: call.body.len(),
-                span: call.span.clone(),
+                span: call.span(),
                 kind: ArityMismatchKind::Eq(FnTypedef::ARGS_LEN),
             });
         }
@@ -351,80 +345,66 @@ impl<'a> Harmony<'a> {
     }
 
     fn call_typedef__type_annot_int(
-        typedef: &AstNodeTypeAnnot,
+        annot: &AstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
-        if typedef.generic.is_some() {
-            return Err(SemanalyzerErr::UnexpectedGeneric {
-                span: typedef.span.clone(),
-            });
+        if annot.generic.is_some() {
+            return Err(SemanalyzerErr::UnexpectedGeneric { span: annot.span() });
         }
-        Ok(AAstNodeTypeAnnot::Int {
-            span: typedef.span.clone(),
-        })
+        Ok(AAstNodeTypeAnnot::Int { span: annot.span() })
     }
 
     fn call_typedef__type_annot_list(
         &mut self,
-        typedef: &AstNodeTypeAnnot,
+        annot: &AstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
-        let Some(generic) = typedef.generic.as_ref() else {
-            return Err(SemanalyzerErr::ExpectedGeneric {
-                span: typedef.span.clone(),
-            });
+        let Some(generic) = annot.generic.as_ref() else {
+            return Err(SemanalyzerErr::ExpectedGeneric { span: annot.span() });
         };
 
         let AstNodeTypeAnnotGeneric::Single(single_generic) = generic else {
-            return Err(SemanalyzerErr::InvalidGeneric {
-                span: typedef.span.clone(),
-            });
+            return Err(SemanalyzerErr::InvalidGeneric { span: annot.span() });
         };
 
         Ok(AAstNodeTypeAnnot::List {
-            span: typedef.span.clone(),
+            span: annot.span(),
             item_type: Box::new(self.call_typedef__type_annot(single_generic)?),
         })
     }
 
     fn call_typedef__type_annot_record(
         &mut self,
-        typedef: &AstNodeTypeAnnot,
+        annot: &AstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
-        let Some(generic) = typedef.generic.as_ref() else {
-            return Err(SemanalyzerErr::ExpectedGeneric {
-                span: typedef.span.clone(),
-            });
+        let Some(generic) = annot.generic.as_ref() else {
+            return Err(SemanalyzerErr::ExpectedGeneric { span: annot.span() });
         };
 
         let AstNodeTypeAnnotGeneric::Record(ast_entries) = generic else {
-            return Err(SemanalyzerErr::InvalidGeneric {
-                span: typedef.span.clone(),
-            });
+            return Err(SemanalyzerErr::InvalidGeneric { span: annot.span() });
         };
 
         let entries = ast_entries
             .iter()
-            .map(|(key, typedef)| {
+            .map(|(key, annot)| {
                 Ok((
                     key.lexeme.clone(),
-                    Box::new(self.call_typedef__type_annot(typedef)?),
+                    Box::new(self.call_typedef__type_annot(annot)?),
                 ))
             })
             .collect::<Result<AAstNodeTypeAnnotRecordEntries, SemanalyzerErr>>()?;
 
         Ok(AAstNodeTypeAnnot::Record {
-            span: typedef.span.clone(),
+            span: annot.span(),
             entries,
         })
     }
 
     fn call_typedef__type_annot_custom(
         &self,
-        typedef: &AstNodeTypeAnnot,
+        annot: &AstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
-        if typedef.generic.is_some() {
-            return Err(SemanalyzerErr::UnexpectedGeneric {
-                span: typedef.span.clone(),
-            });
+        if annot.generic.is_some() {
+            return Err(SemanalyzerErr::UnexpectedGeneric { span: annot.span() });
         }
 
         // If we encounter a type definition with an unknown
@@ -433,15 +413,13 @@ impl<'a> Harmony<'a> {
         // we don't have a record of a type definition
         // being resolved, so resolving alias to itself will
         // fail here.
-        if !self.type_bindings.contains_key(&typedef.lexeme) {
-            return Err(SemanalyzerErr::UnknownTypedef {
-                span: typedef.span.clone(),
-            });
+        if !self.type_bindings.contains_key(&annot.lexeme) {
+            return Err(SemanalyzerErr::UnknownTypedef { span: annot.span() });
         }
 
         Ok(AAstNodeTypeAnnot::Custom {
-            alias: typedef.lexeme.clone(),
-            span: typedef.span.clone(),
+            alias: annot.lexeme.clone(),
+            span: annot.span(),
         })
     }
 
@@ -458,7 +436,7 @@ impl<'a> Harmony<'a> {
             return Err(SemanalyzerErr::ArityMismatch {
                 fn_name: FnGet::LEXEME,
                 found: call.body.len(),
-                span: call.span.clone(),
+                span: call.span(),
                 kind: ArityMismatchKind::MoreEq(FnGet::ARGS_LEN_MIN),
             });
         }
@@ -471,15 +449,13 @@ impl<'a> Harmony<'a> {
         let type_access_path = Self::call_get__build_binding_path(&access_args, true)?;
 
         if !type_binding.map.contains_key(&type_access_path) {
-            return Err(SemanalyzerErr::UnresolvablePath {
-                span: call.span.clone(),
-            });
+            return Err(SemanalyzerErr::UnresolvablePath { span: call.span() });
         };
 
         let data_access_path = Self::call_get__build_binding_path(&access_args, false)?;
 
         Ok(AAstNode::Call(AAstNodeCall::Get {
-            span: call.span.clone(),
+            span: call.span(),
             type_binding_path: type_access_path.clone(),
             data_binding_path: data_access_path.clone(),
             return_type_binding: type_binding.strip_binding_paths_by_prefix(&type_access_path),

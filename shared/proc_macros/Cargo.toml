@@ -1,0 +1,13 @@
+[package]
+name = "elise-shared-proc-macros"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/lib.rs"
+proc-macro = true
+
+[dependencies]
+syn.workspace = true
+quote.workspace = true
+proc-macro2.workspace = true
