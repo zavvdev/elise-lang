@@ -6,7 +6,7 @@
 
 - [x] TypeBinder
 
-- [ ] Review .span.clone() calls and move it under impl
+- [ ] Add a proc macro for adding any field getters, so we can do x.span(), x.lexeme()
 
 - [ ] Semantic analyzer
 
