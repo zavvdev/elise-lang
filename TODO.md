@@ -6,7 +6,7 @@
 
 - [x] TypeBinder
 
-- [ ] Add a proc macro for adding any field getters, so we can do x.span(), x.lexeme()
+- [ ] Remove proc_macros crate; install getset crate
 
 - [ ] Semantic analyzer
 
