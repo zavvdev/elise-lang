@@ -74,8 +74,8 @@ impl<'a> Prelude<'a> {
             self.list__consume()
         } else if self.dict__is_start(c) {
             self.dict__consume()
-        } else if Self::typedef__is_start(c) {
-            self.typedef__consume()
+        } else if Self::type_annot__is_start(c) {
+            self.type_annot__consume()
 
         // Matching identifier should be at the very end
         // since it matches any character.
@@ -651,14 +651,14 @@ impl<'a> Prelude<'a> {
     // ==================================================================
 
     // ==================================================================
-    // TYPEDEF START
+    // TYPE ANNOTATIONS START
     // ==================================================================
 
-    fn typedef__is_start(char: &u8) -> bool {
+    fn type_annot__is_start(char: &u8) -> bool {
         *char == CharCode::COLON
     }
 
-    fn typedef__generic_is_start(&mut self) -> bool {
+    fn type_annot__generic_is_start(&mut self) -> bool {
         if let Some(ch) = self.peek()
             && ch == CharCode::LESS
         {
@@ -668,7 +668,7 @@ impl<'a> Prelude<'a> {
         false
     }
 
-    fn typedef__generic_check_end(&mut self, c: &u8) -> Result<bool, ()> {
+    fn type_annot__generic_check_end(&mut self, c: &u8) -> Result<bool, ()> {
         if *c == CharCode::MORE {
             let last_entry = self.depth_stack.pop();
             if last_entry.is_none() || last_entry.unwrap() != CharCode::LESS {
@@ -679,7 +679,7 @@ impl<'a> Prelude<'a> {
         Ok(false)
     }
 
-    fn typedef__record_consume(
+    fn type_annot__record_consume(
         &mut self,
     ) -> Result<Vec<(AstNodeTypeAnnotRecordKey, Box<AstNodeTypeAnnot>)>, ParserErr> {
         self.advance();
@@ -737,7 +737,7 @@ impl<'a> Prelude<'a> {
         Ok(entries)
     }
 
-    fn typedef__consume_lexeme(&mut self) -> Result<String, ParserErr> {
+    fn type_annot__consume_lexeme(&mut self) -> Result<String, ParserErr> {
         let ident_node = self.identifier__consume()?;
         match ident_node {
             Some(AstNode::Expr(AstNodeExpr::Ident(prim))) => Ok(prim.lexeme),
@@ -745,17 +745,19 @@ impl<'a> Prelude<'a> {
         }
     }
 
-    fn typedef__consume_generic(&mut self) -> Result<Option<AstNodeTypeAnnotGeneric>, ParserErr> {
+    fn type_annot__consume_generic(
+        &mut self,
+    ) -> Result<Option<AstNodeTypeAnnotGeneric>, ParserErr> {
         let mut generic: Option<AstNodeTypeAnnotGeneric> = None;
 
-        if !self.typedef__generic_is_start() {
+        if !self.type_annot__generic_is_start() {
             return Ok(generic);
         }
 
         self.advance();
 
         while let Some(c) = self.peek() {
-            let Ok(is_end) = self.typedef__generic_check_end(&c) else {
+            let Ok(is_end) = self.type_annot__generic_check_end(&c) else {
                 return Err(self.fail(ParserErr::UnexpEoGeneric));
             };
             if is_end {
@@ -771,7 +773,7 @@ impl<'a> Prelude<'a> {
             }
 
             if self.dict__is_start(&c) {
-                let record = self.typedef__record_consume()?;
+                let record = self.type_annot__record_consume()?;
                 generic = Some(AstNodeTypeAnnotGeneric::Record(record));
             } else if let Some(node) = self.get_node_from_char(&c)? {
                 match node {
@@ -786,15 +788,15 @@ impl<'a> Prelude<'a> {
         Ok(generic)
     }
 
-    fn typedef__consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
+    fn type_annot__consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let start = self.tok_pos;
         self.advance();
 
         if let Some(c) = self.peek()
             && Self::identifier__is_start(&c)
         {
-            let lexeme = self.typedef__consume_lexeme()?;
-            let generic = self.typedef__consume_generic()?;
+            let lexeme = self.type_annot__consume_lexeme()?;
+            let generic = self.type_annot__consume_generic()?;
 
             Ok(Some(AstNode::TypeAnnot(AstNodeTypeAnnot {
                 span: Span {
@@ -810,6 +812,6 @@ impl<'a> Prelude<'a> {
     }
 
     // ==================================================================
-    // TYPEDEF END
+    // TYPE ANNOTATIONS END
     // ==================================================================
 }
