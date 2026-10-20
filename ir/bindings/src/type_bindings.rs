@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use elise_shared_proc_macros::HasSpan;
 use elise_shared_types::Span;
 
 use crate::{binding_path::BindingPath, common::BindingType};
@@ -52,7 +51,7 @@ impl TypeBinding {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, HasSpan)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct TypeBindingDesc {
     pub dtype: BindingType,
     pub span: Span,

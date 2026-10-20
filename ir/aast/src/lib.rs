@@ -14,7 +14,6 @@
 //! so it's not possible anymore to generalize them under one type.
 
 use elise_bindings::{binding_path::BindingPath, type_bindings::TypeBinding};
-use elise_shared_proc_macros::HasSpan;
 use elise_shared_types::Span;
 
 #[derive(Debug, PartialEq)]
@@ -33,19 +32,6 @@ pub enum AAstNode {
     // Represents a dedicated @data slot that references
     // data being manipulated.
     SlotData { span: Span },
-}
-
-impl AAstNode {
-    /// Returns a Span struct for AAstNode.
-    /// Useful when you want to add a location of this node
-    /// to error report.
-    pub fn span(&self) -> Span {
-        match self {
-            AAstNode::Call(call) => call.span(),
-            AAstNode::Data(data) => data.span(),
-            AAstNode::SlotData { span } => *span,
-        }
-    }
 }
 
 // ==================================================================
@@ -116,15 +102,6 @@ pub enum AAstNodeCall {
     },
 }
 
-impl AAstNodeCall {
-    pub fn span(&self) -> Span {
-        match self {
-            AAstNodeCall::Typedef { annot, .. } => annot.span(),
-            AAstNodeCall::Get { span, .. } => *span,
-        }
-    }
-}
-
 // ==================================================================
 //
 // CALL END
@@ -137,7 +114,7 @@ impl AAstNodeCall {
 //
 // ==================================================================
 
-#[derive(Debug, PartialEq, HasSpan)]
+#[derive(Debug, PartialEq)]
 pub struct AAstNodeDataPrim {
     pub lexeme: String,
     pub span: Span,
@@ -161,16 +138,6 @@ pub enum AAstNodeData {
         span: Span,
         entries: Vec<(AAstNodeDataDictKey, Box<AAstNodeData>)>,
     },
-}
-
-impl AAstNodeData {
-    pub fn span(&self) -> Span {
-        match self {
-            AAstNodeData::Int(prim) | AAstNodeData::Str(prim) => prim.span(),
-            AAstNodeData::List { span, .. } => *span,
-            AAstNodeData::Dict { span, .. } => *span,
-        }
-    }
 }
 
 // ==================================================================
@@ -209,17 +176,6 @@ pub enum AAstNodeTypeAnnot {
     Int {
         span: Span,
     },
-}
-
-impl AAstNodeTypeAnnot {
-    pub fn span(&self) -> Span {
-        match self {
-            AAstNodeTypeAnnot::Custom { span, .. } => *span,
-            AAstNodeTypeAnnot::Record { span, .. } => *span,
-            AAstNodeTypeAnnot::List { span, .. } => *span,
-            AAstNodeTypeAnnot::Int { span, .. } => *span,
-        }
-    }
 }
 
 // ==================================================================

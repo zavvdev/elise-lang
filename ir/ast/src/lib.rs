@@ -3,7 +3,6 @@
 //! This data structure is the result of our parser (Prelude).
 //! It relies purely on grammar that is defined in GRAMMAR.md.
 
-use elise_shared_proc_macros::HasSpan;
 use elise_shared_types::Span;
 
 #[derive(Debug, PartialEq)]
@@ -12,24 +11,13 @@ pub enum AstNode {
     TypeAnnot(AstNodeTypeAnnot),
 }
 
-impl AstNode {
-    /// For error reports in order to locate the node
-    /// in the source code.
-    pub fn span(&self) -> Span {
-        match self {
-            AstNode::Expr(expr) => expr.span(),
-            AstNode::TypeAnnot(annot) => annot.span(),
-        }
-    }
-}
-
 // ==================================================================
 //
 //  EXPRESSIONS START
 //
 // ==================================================================
 
-#[derive(Debug, PartialEq, HasSpan)]
+#[derive(Debug, PartialEq)]
 pub struct AstNodeExprCall {
     pub lexeme: String,
     pub span: Span,
@@ -38,25 +26,25 @@ pub struct AstNodeExprCall {
 
 // Common descriptor for primitives:
 // Int, Float, Str, Bool, Null, Identifier, Slot.
-#[derive(Debug, PartialEq, HasSpan)]
+#[derive(Debug, PartialEq)]
 pub struct AstNodeExprPrim {
     pub lexeme: String,
     pub span: Span,
 }
 
-#[derive(Debug, PartialEq, HasSpan)]
+#[derive(Debug, PartialEq)]
 pub struct AstNodeExprList {
     pub span: Span,
     pub items: Vec<Box<AstNodeExpr>>,
 }
 
-#[derive(Debug, PartialEq, HasSpan)]
+#[derive(Debug, PartialEq)]
 pub struct AstNodeExprDictKey {
     pub span: Span,
     pub lexeme: String,
 }
 
-#[derive(Debug, PartialEq, HasSpan)]
+#[derive(Debug, PartialEq)]
 pub struct AstNodeExprDict {
     pub span: Span,
     pub entries: Vec<(AstNodeExprDictKey, Box<AstNodeExpr>)>,
@@ -74,23 +62,6 @@ pub enum AstNodeExpr {
     Dict(AstNodeExprDict),
     Ident(AstNodeExprPrim),
     Slot(AstNodeExprPrim),
-}
-
-impl AstNodeExpr {
-    pub fn span(&self) -> Span {
-        match self {
-            AstNodeExpr::Int(p)
-            | AstNodeExpr::Float(p)
-            | AstNodeExpr::Str(p)
-            | AstNodeExpr::Bool(p)
-            | AstNodeExpr::Ident(p)
-            | AstNodeExpr::Null(p)
-            | AstNodeExpr::Slot(p) => p.span(),
-            AstNodeExpr::List(l) => l.span(),
-            AstNodeExpr::Dict(d) => d.span(),
-            AstNodeExpr::Call(c) => c.span(),
-        }
-    }
 }
 
 // ==================================================================
@@ -117,7 +88,7 @@ pub enum AstNodeTypeAnnotGeneric {
     Record(Vec<(AstNodeTypeAnnotRecordKey, Box<AstNodeTypeAnnot>)>),
 }
 
-#[derive(Debug, PartialEq, Clone, HasSpan)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct AstNodeTypeAnnot {
     pub span: Span,
     pub lexeme: String,

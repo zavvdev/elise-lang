@@ -189,6 +189,13 @@ name = "elise-shared-types"
 version = "0.1.0"
 
 [[package]]
+name = "elise-test-crate"
+version = "0.1.0"
+dependencies = [
+ "elise-shared-proc-macros",
+]
+
+[[package]]
 name = "elise-test-utils"
 version = "0.1.0"
 dependencies = [

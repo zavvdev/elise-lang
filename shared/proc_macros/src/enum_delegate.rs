@@ -4,7 +4,7 @@
 // works while the compiler is actually expanding a macro. proc_macro2 is a
 // wrapper that mimics it and works everywhere. We need both because the compiler
 // demands one (proc_macro) at the boundary, while the ecosystem and our own code
-// want the other (proc_macro2). syn and quote depend on proc-macro2 internally.
+// want the other (proc_macro2). `syn` and `quote` depend on proc-macro2 internally.
 //
 // proc_macro
 // 1. Ships with the compiler (part of the standard distribution). We don’t list it
@@ -28,7 +28,7 @@
 //    tokens outside expansions.
 //
 // Roughly how it works:
-// compiler
+// rust compiler
 //   │  proc_macro::TokenStream
 //   ▼
 // derive()          ← parse_macro_input! converts to syn types
@@ -40,12 +40,14 @@
 // derive()          ← TokenStream::from(...) converts back
 //   │  proc_macro::TokenStream
 //   ▼
-// compiler
+// rust compiler
 
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, parse_macro_input};
+use syn::{
+    Data, DeriveInput, Fields, FnArg, Pat, TraitItemFn, parse::ParseStream, parse_macro_input,
+};
 
 // pub(crate) means the item is visible anywhere inside the current crate,
 // but not to other crates that depend on it. It sits between private and fully pub.
@@ -63,8 +65,8 @@ pub(crate) fn derive(input: TokenStream) -> TokenStream {
     // `DeriveInput` is syn’s type for “anything you can put #[derive] on”, and has these fields:
     // 1. attrs: other attributes on the item
     // 2. vis: visibility (pub, etc.)
-    // 3. ident: the name (AstExpr)
-    // 4. generics: generic parameters and where clauses
+    // 3. ident: the name (AstExpr for example if it's a `struct AstExpr`)
+    // 4. generics: generic parameters and `where` clauses
     // 5. data: the body, as Data::Struct, Data::Enum or Data::Union
     // If parsing fails, it automatically returns TokenStream with compiler error.
     let input = parse_macro_input!(input as DeriveInput);
@@ -80,8 +82,118 @@ pub(crate) fn derive(input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-// A syntax tree goes in, tokens (proc_macro2::TokenStream) come out.
+/// Parses the contents of `#[enum_delegate(...)]` as a sequence of
+/// method declarations, each ending with `;`.
+fn parse_methods(input: ParseStream) -> syn::Result<Vec<TraitItemFn>> {
+    println!("parse_methods -- input: {:#?}", input);
+    let mut methods = Vec::new();
+    while !input.is_empty() {
+        methods.push(input.parse::<TraitItemFn>()?);
+    }
+    Ok(methods)
+}
+
 fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
+    let name = &input.ident;
+
+    let data = match &input.data {
+        Data::Enum(data) => data,
+        _ => {
+            return Err(syn::Error::new_spanned(
+                name,
+                "EnumDelegate can only be derived for enums",
+            ));
+        }
+    };
+
+    // Collect methods from every #[enum_delegate(...)] attribute.
+    let mut methods: Vec<TraitItemFn> = Vec::new();
+    for attr in input.attrs.iter().filter(|a| a.path().is_ident("enum_delegate")) {
+        methods.extend(attr.parse_args_with(parse_methods)?);
+    }
+    if methods.is_empty() {
+        return Err(syn::Error::new_spanned(
+            name,
+            "EnumDelegate needs at least one method, e.g. #[enum_delegate(fn span(&self) -> Span;)]",
+        ));
+    }
+
+    // Every variant must look like `Variant(Inner)`.
+    let variants = data
+        .variants
+        .iter()
+        .map(|v| match &v.fields {
+            Fields::Unnamed(f) if f.unnamed.len() == 1 => Ok(&v.ident),
+            _ => Err(syn::Error::new_spanned(
+                v,
+                "EnumDelegate requires every variant to have exactly one unnamed field",
+            )),
+        })
+        .collect::<syn::Result<Vec<_>>>()?;
+
+    // One generated method per declared signature.
+    let fns = methods
+        .iter()
+        .map(|m| {
+            if let Some(body) = &m.default {
+                return Err(syn::Error::new_spanned(
+                    body,
+                    "write only the signature, ending with `;`",
+                ));
+            }
+            if m.sig.receiver().is_none() {
+                return Err(syn::Error::new_spanned(
+                    &m.sig,
+                    "the method must take `self`, `&self` or `&mut self`",
+                ));
+            }
+
+            // Names of the non-self parameters, forwarded in the inner call.
+            let args = m
+                .sig
+                .inputs
+                .iter()
+                .filter_map(|a| match a {
+                    FnArg::Typed(pt) => Some(match &*pt.pat {
+                        Pat::Ident(p) => Ok(&p.ident),
+                        other => Err(syn::Error::new_spanned(
+                            other,
+                            "parameters must be plain identifiers",
+                        )),
+                    }),
+                    FnArg::Receiver(_) => None,
+                })
+                .collect::<syn::Result<Vec<_>>>()?;
+
+            let attrs = &m.attrs;
+            let sig = &m.sig;
+            let method = &m.sig.ident;
+
+            // Built outside the variants repetition so `args` isn't iterated twice.
+            let call_args = quote! { #(#args),* };
+
+            Ok(quote! {
+                #(#attrs)*
+                pub #sig {
+                    match self {
+                        #(Self::#variants(inner) => inner.#method(#call_args),)*
+                    }
+                }
+            })
+        })
+        .collect::<syn::Result<Vec<_>>>()?;
+
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+
+    Ok(quote! {
+        impl #impl_generics #name #ty_generics #where_clause {
+            #(#fns)*
+        }
+    })
+}
+
+// A syntax tree goes in, tokens (proc_macro2::TokenStream) come out.
+fn _expand(input: DeriveInput) -> syn::Result<TokenStream2> {
     // Get struct's name on which we call derive macro.
     let name = &input.ident;
 

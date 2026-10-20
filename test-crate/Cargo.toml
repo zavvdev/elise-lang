@@ -1,0 +1,10 @@
+[package]
+name = "elise-test-crate"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+elise-shared-proc-macros = { path = "../shared/proc_macros" }

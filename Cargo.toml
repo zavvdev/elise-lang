@@ -20,6 +20,7 @@ members = [
     "shared/types",
     "shared/proc_macros",
     "test-utils",
+    "test-crate",
 ]
 
 [workspace.dependencies]
