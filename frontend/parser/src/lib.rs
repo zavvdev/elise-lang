@@ -1,4 +1,6 @@
-pub mod parser_config;
+#![allow(non_snake_case)]
+
+pub mod config;
 
 use elise_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprDict, AstNodeExprDictKey, AstNodeExprList,
@@ -7,7 +9,7 @@ use elise_ast::{
 use elise_shared::shared_types::{Literal, Span};
 use std::str::from_utf8;
 
-use crate::parser_config::{CharCode, DfaNumState};
+use crate::config::{CharCode, DfaNumState};
 
 use elise_shared::shared_errors::errors_parser::{ParserErr, ParserErrInfo};
 
@@ -60,25 +62,25 @@ impl<'a> Prelude<'a> {
         if Self::is_separator(c) {
             self.advance();
             Ok(None)
-        } else if self.call_is_start(c) {
-            self.call_consume()
-        } else if self.slot_is_start(c) {
-            self.slot_consume()
-        } else if Self::number_is_start(c) {
-            self.number_consume()
-        } else if Self::string_is_start(c) {
-            self.string_consume()
-        } else if self.list_is_start(c) {
-            self.list_consume()
-        } else if self.dict_is_start(c) {
-            self.dict_consume()
-        } else if Self::typedef_is_start(c) {
-            self.typedef_consume()
+        } else if self.call__is_start(c) {
+            self.call__consume()
+        } else if self.slot__is_start(c) {
+            self.slot__consume()
+        } else if Self::number__is_start(c) {
+            self.number__consume()
+        } else if Self::string__is_start(c) {
+            self.string__consume()
+        } else if self.list__is_start(c) {
+            self.list__consume()
+        } else if self.dict__is_start(c) {
+            self.dict__consume()
+        } else if Self::typedef__is_start(c) {
+            self.typedef__consume()
 
         // Matching identifier should be at the very end
         // since it matches any character.
-        } else if Self::identifier_is_start(c) {
-            self.identifier_consume()
+        } else if Self::identifier__is_start(c) {
+            self.identifier__consume()
         } else {
             Err(self.fail(ParserErr::UnexpTok))
         }
@@ -122,19 +124,19 @@ impl<'a> Prelude<'a> {
     // NUMBER START
     // ==================================================================
 
-    fn number_is_digit(c: &u8) -> bool {
+    fn number__is_digit(c: &u8) -> bool {
         c.is_ascii_digit()
     }
 
-    fn number_is_start(c: &u8) -> bool {
-        Self::number_is_digit(c) || *c == CharCode::MINUS
+    fn number__is_start(c: &u8) -> bool {
+        Self::number__is_digit(c) || *c == CharCode::MINUS
     }
 
-    fn number_is_end(c: &u8) -> bool {
+    fn number__is_end(c: &u8) -> bool {
         Self::is_tok_end(c)
     }
 
-    fn number_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
+    fn number__consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let mut state = DfaNumState::Start;
         let tok_start = self.tok_pos;
 
@@ -182,7 +184,7 @@ impl<'a> Prelude<'a> {
                     self.advance();
                     Scient
                 }
-                (_, c) if Self::number_is_end(&c) => break,
+                (_, c) if Self::number__is_end(&c) => break,
                 _ => {
                     return Err(self.fail(ParserErr::InvalNum));
                 }
@@ -223,23 +225,23 @@ impl<'a> Prelude<'a> {
     // STRING START
     // ==================================================================
 
-    fn string_is_start(char: &u8) -> bool {
+    fn string__is_start(char: &u8) -> bool {
         *char == CharCode::DOUBLE_QT
     }
 
-    fn string_is_end(char: &u8) -> bool {
+    fn string__is_end(char: &u8) -> bool {
         *char == CharCode::DOUBLE_QT
     }
 
-    fn string_is_forbidden_char(char: &u8) -> bool {
+    fn string__is_forbidden_char(char: &u8) -> bool {
         *char == b'\n' || *char == b'\r'
     }
 
-    fn string_is_escape(char: &u8) -> bool {
+    fn string__is_escape(char: &u8) -> bool {
         *char == b'\\'
     }
 
-    fn string_decode_escape(char: Option<u8>) -> Option<u8> {
+    fn string__decode_escape(char: Option<u8>) -> Option<u8> {
         let c = char?;
         Some(match c {
             b'\\' => b'\\',
@@ -256,7 +258,7 @@ impl<'a> Prelude<'a> {
     /// Regardless of the contents, Span will always point
     /// to the start and end position of bytes instead of
     /// encoded characters.
-    fn string_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
+    fn string__consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         // Capture start pos before advancing forward in order to
         // construct valid Span.
         let start = self.tok_pos;
@@ -268,18 +270,18 @@ impl<'a> Prelude<'a> {
         while let Some(c) = self.peek() {
             let mut next_byte = c;
 
-            if Self::string_is_end(&c) {
+            if Self::string__is_end(&c) {
                 closed = true;
                 self.advance();
                 break;
             }
-            if Self::string_is_forbidden_char(&c) {
+            if Self::string__is_forbidden_char(&c) {
                 return Err(self.fail(ParserErr::InvalStr));
             }
-            if Self::string_is_escape(&c) {
+            if Self::string__is_escape(&c) {
                 // Skip escaping back slash.
                 self.advance();
-                if let Some(esc) = Self::string_decode_escape(self.peek()) {
+                if let Some(esc) = Self::string__decode_escape(self.peek()) {
                     next_byte = esc;
                 }
             }
@@ -310,15 +312,15 @@ impl<'a> Prelude<'a> {
     // IDENTIFIER START
     // ==================================================================
 
-    fn identifier_is_start(c: &u8) -> bool {
+    fn identifier__is_start(c: &u8) -> bool {
         c.is_ascii_lowercase() || c.is_ascii_uppercase()
     }
 
-    fn identifier_is_end(c: &u8) -> bool {
+    fn identifier__is_end(c: &u8) -> bool {
         Self::is_tok_end(c)
     }
 
-    fn identifier_is_valid(s: &str) -> bool {
+    fn identifier__is_valid(s: &str) -> bool {
         let mut chars = s.chars();
         match chars.next() {
             Some(c) => {
@@ -330,11 +332,11 @@ impl<'a> Prelude<'a> {
         }
     }
 
-    fn identifier_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
+    fn identifier__consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let start = self.tok_pos;
 
         while let Some(c) = self.peek() {
-            if Self::identifier_is_end(&c) {
+            if Self::identifier__is_end(&c) {
                 break;
             } else {
                 self.advance();
@@ -358,7 +360,7 @@ impl<'a> Prelude<'a> {
             Literal::TRUE | Literal::FALSE => Ok(Some(AstNode::Expr(AstNodeExpr::Bool(primitive)))),
             Literal::NULL => Ok(Some(AstNode::Expr(AstNodeExpr::Null(primitive)))),
             _ => {
-                if Self::identifier_is_valid(&primitive.lexeme) {
+                if Self::identifier__is_valid(&primitive.lexeme) {
                     Ok(Some(AstNode::Expr(AstNodeExpr::Ident(primitive))))
                 } else {
                     Err(self.fail(ParserErr::UnexpTok))
@@ -375,7 +377,7 @@ impl<'a> Prelude<'a> {
     // LIST START
     // ==================================================================
 
-    fn list_is_start(&mut self, c: &u8) -> bool {
+    fn list__is_start(&mut self, c: &u8) -> bool {
         if *c == CharCode::LEFT_SQR_BRACKET {
             self.depth_stack.push(CharCode::LEFT_SQR_BRACKET);
             return true;
@@ -383,7 +385,7 @@ impl<'a> Prelude<'a> {
         false
     }
 
-    fn list_check_end(&mut self, c: &u8) -> Result<bool, ()> {
+    fn list__check_end(&mut self, c: &u8) -> Result<bool, ()> {
         if *c == CharCode::RIGHT_SQR_BRACKET {
             let last_entry = self.depth_stack.pop();
             if last_entry.is_none() || last_entry.unwrap() != CharCode::LEFT_SQR_BRACKET {
@@ -394,13 +396,13 @@ impl<'a> Prelude<'a> {
         Ok(false)
     }
 
-    fn list_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
+    fn list__consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let start = self.tok_pos;
         self.advance();
         let mut items: Vec<Box<AstNodeExpr>> = vec![];
 
         while let Some(c) = self.peek() {
-            let Ok(is_end) = self.list_check_end(&c) else {
+            let Ok(is_end) = self.list__check_end(&c) else {
                 return Err(self.fail(ParserErr::UnexpEoList));
             };
             if is_end {
@@ -433,7 +435,7 @@ impl<'a> Prelude<'a> {
     // DICT START
     // ==================================================================
 
-    fn dict_is_start(&mut self, c: &u8) -> bool {
+    fn dict__is_start(&mut self, c: &u8) -> bool {
         if *c == CharCode::LEFT_CUR_BRACKET {
             self.depth_stack.push(CharCode::LEFT_CUR_BRACKET);
             return true;
@@ -441,7 +443,7 @@ impl<'a> Prelude<'a> {
         false
     }
 
-    fn dict_check_end(&mut self, c: &u8) -> Result<bool, ()> {
+    fn dict__check_end(&mut self, c: &u8) -> Result<bool, ()> {
         if *c == CharCode::RIGHT_CUR_BRACKET {
             let last_entry = self.depth_stack.pop();
             if last_entry.is_none() || last_entry.unwrap() != CharCode::LEFT_CUR_BRACKET {
@@ -452,7 +454,7 @@ impl<'a> Prelude<'a> {
         Ok(false)
     }
 
-    fn dict_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
+    fn dict__consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let start = self.tok_pos;
         self.advance();
 
@@ -461,7 +463,7 @@ impl<'a> Prelude<'a> {
 
         while let Some(c) = self.peek() {
             let is_end = self
-                .dict_check_end(&c)
+                .dict__check_end(&c)
                 .map_err(|_| self.fail(ParserErr::UnexpEoDict))?;
 
             if is_end {
@@ -519,26 +521,26 @@ impl<'a> Prelude<'a> {
     // CALL START
     // ==================================================================
 
-    fn call_is_start(&self, char: &u8) -> bool {
+    fn call__is_start(&self, char: &u8) -> bool {
         if let Some(next_char) = self.peek() {
             return *char == CharCode::CALL_PREFIX && !Self::is_separator(&next_char);
         }
         false
     }
 
-    fn call_is_end(&self, char: &u8) -> bool {
+    fn call__is_end(char: &u8) -> bool {
         *char == CharCode::RIGHT_PAREN
     }
 
-    fn call_validate_name(&self, name: &str) -> Result<String, ParserErr> {
-        if !name.is_empty() && Self::identifier_is_valid(name) {
+    fn call__validate_name(&self, name: &str) -> Result<String, ParserErr> {
+        if !name.is_empty() && Self::identifier__is_valid(name) {
             Ok(name.to_string())
         } else {
             Err(self.fail(ParserErr::InvalFnName))
         }
     }
 
-    fn call_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
+    fn call__consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let call_start = self.tok_pos;
 
         // Go to the start of the function name.
@@ -557,7 +559,7 @@ impl<'a> Prelude<'a> {
 
         let call_name = from_utf8(&self.source_code[call_name_start..self.tok_pos]).unwrap();
         // Allow separators at the end for user preferences.
-        let call_name = self.call_validate_name(call_name.trim_end())?;
+        let call_name = self.call__validate_name(call_name.trim_end())?;
 
         // Go to the next char after the function name.
         self.advance();
@@ -566,7 +568,7 @@ impl<'a> Prelude<'a> {
 
         // Consume function arguments.
         while let Some(c) = self.peek() {
-            if self.call_is_end(&c) {
+            if Self::call__is_end(&c) {
                 let last_entry = self.depth_stack.pop();
                 if last_entry.is_none() || last_entry.unwrap() != CharCode::LEFT_PAREN {
                     return Err(self.fail(ParserErr::UnexpEoFn));
@@ -600,18 +602,18 @@ impl<'a> Prelude<'a> {
     // SLOT START
     // ==================================================================
 
-    fn slot_is_start(&self, char: &u8) -> bool {
+    fn slot__is_start(&self, char: &u8) -> bool {
         if let Some(next_char) = self.peek() {
             return *char == CharCode::SLOT_PREFIX && !Self::is_separator(&next_char);
         }
         false
     }
 
-    fn slot_is_end(c: &u8) -> bool {
+    fn slot__is_end(c: &u8) -> bool {
         Self::is_tok_end(c)
     }
 
-    fn slot_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
+    fn slot__consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let start = self.tok_pos;
 
         // Exclude slot prefix.
@@ -620,7 +622,7 @@ impl<'a> Prelude<'a> {
         let slot_name_start = self.tok_pos;
 
         while let Some(c) = self.peek() {
-            if Self::slot_is_end(&c) {
+            if Self::slot__is_end(&c) {
                 break;
             } else {
                 self.advance();
@@ -631,7 +633,7 @@ impl<'a> Prelude<'a> {
             .unwrap()
             .to_string();
 
-        if Self::identifier_is_valid(&lexeme) {
+        if Self::identifier__is_valid(&lexeme) {
             Ok(Some(AstNode::Expr(AstNodeExpr::Slot(AstNodeExprPrim {
                 lexeme,
                 span: Span {
@@ -652,11 +654,11 @@ impl<'a> Prelude<'a> {
     // TYPEDEF START
     // ==================================================================
 
-    fn typedef_is_start(char: &u8) -> bool {
+    fn typedef__is_start(char: &u8) -> bool {
         *char == CharCode::COLON
     }
 
-    fn typedef_generic_is_start(&mut self) -> bool {
+    fn typedef__generic_is_start(&mut self) -> bool {
         if let Some(ch) = self.peek()
             && ch == CharCode::LESS
         {
@@ -666,7 +668,7 @@ impl<'a> Prelude<'a> {
         false
     }
 
-    fn typedef_generic_check_end(&mut self, c: &u8) -> Result<bool, ()> {
+    fn typedef__generic_check_end(&mut self, c: &u8) -> Result<bool, ()> {
         if *c == CharCode::MORE {
             let last_entry = self.depth_stack.pop();
             if last_entry.is_none() || last_entry.unwrap() != CharCode::LESS {
@@ -677,7 +679,7 @@ impl<'a> Prelude<'a> {
         Ok(false)
     }
 
-    fn typedef_record_consume(
+    fn typedef__record_consume(
         &mut self,
     ) -> Result<Vec<(AstNodeTypeAnnotRecordKey, Box<AstNodeTypeAnnot>)>, ParserErr> {
         self.advance();
@@ -687,7 +689,7 @@ impl<'a> Prelude<'a> {
 
         while let Some(c) = self.peek() {
             let is_end = self
-                .dict_check_end(&c)
+                .dict__check_end(&c)
                 .map_err(|_| self.fail(ParserErr::UnexpEoDict))?;
 
             if is_end {
@@ -735,25 +737,25 @@ impl<'a> Prelude<'a> {
         Ok(entries)
     }
 
-    fn typedef_consume_lexeme(&mut self) -> Result<String, ParserErr> {
-        let ident_node = self.identifier_consume()?;
+    fn typedef__consume_lexeme(&mut self) -> Result<String, ParserErr> {
+        let ident_node = self.identifier__consume()?;
         match ident_node {
             Some(AstNode::Expr(AstNodeExpr::Ident(prim))) => Ok(prim.lexeme),
             _ => Err(self.fail(ParserErr::UnexpTok)),
         }
     }
 
-    fn typedef_consume_generic(&mut self) -> Result<Option<AstNodeTypeAnnotGeneric>, ParserErr> {
+    fn typedef__consume_generic(&mut self) -> Result<Option<AstNodeTypeAnnotGeneric>, ParserErr> {
         let mut generic: Option<AstNodeTypeAnnotGeneric> = None;
 
-        if !self.typedef_generic_is_start() {
+        if !self.typedef__generic_is_start() {
             return Ok(generic);
         }
 
         self.advance();
 
         while let Some(c) = self.peek() {
-            let Ok(is_end) = self.typedef_generic_check_end(&c) else {
+            let Ok(is_end) = self.typedef__generic_check_end(&c) else {
                 return Err(self.fail(ParserErr::UnexpEoGeneric));
             };
             if is_end {
@@ -768,8 +770,8 @@ impl<'a> Prelude<'a> {
                 return Err(self.fail(ParserErr::UnexpTok));
             }
 
-            if self.dict_is_start(&c) {
-                let record = self.typedef_record_consume()?;
+            if self.dict__is_start(&c) {
+                let record = self.typedef__record_consume()?;
                 generic = Some(AstNodeTypeAnnotGeneric::Record(record));
             } else if let Some(node) = self.get_node_from_char(&c)? {
                 match node {
@@ -784,15 +786,15 @@ impl<'a> Prelude<'a> {
         Ok(generic)
     }
 
-    fn typedef_consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
+    fn typedef__consume(&mut self) -> Result<Option<AstNode>, ParserErr> {
         let start = self.tok_pos;
         self.advance();
 
         if let Some(c) = self.peek()
-            && Self::identifier_is_start(&c)
+            && Self::identifier__is_start(&c)
         {
-            let lexeme = self.typedef_consume_lexeme()?;
-            let generic = self.typedef_consume_generic()?;
+            let lexeme = self.typedef__consume_lexeme()?;
+            let generic = self.typedef__consume_generic()?;
 
             Ok(Some(AstNode::TypeAnnot(AstNodeTypeAnnot {
                 span: Span {

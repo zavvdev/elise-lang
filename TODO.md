@@ -18,8 +18,6 @@ NOTE: .elt schema file must contain :Data type definition. It can also define ot
 
 - [x] TypeBinder
 
-- [ ] Review parser function namings. Use same as in semanalyzer
-
 - [ ] Review .span.clone() calls and move it under impl
 
 - [ ] DataBinder
