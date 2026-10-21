@@ -8,6 +8,8 @@ path = "src/lib.rs"
 proc-macro = true
 
 [dependencies]
-syn = { workspace = true, features = ["full"] }
+# add "extra-traits" to be able to debug.
+# syn = { workspace = true, features = ["full", "extra-traits"] }
+syn = { workspace = true, features = ["full", "extra-traits"] }
 quote.workspace = true
 proc-macro2.workspace = true

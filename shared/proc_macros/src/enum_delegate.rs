@@ -82,20 +82,38 @@ pub(crate) fn derive(input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-/// Parses the contents of `#[enum_delegate(...)]` as a sequence of
-/// method declarations, each ending with `;`.
-fn parse_methods(input: ParseStream) -> syn::Result<Vec<TraitItemFn>> {
-    println!("parse_methods -- input: {:#?}", input);
-    let mut methods = Vec::new();
-    while !input.is_empty() {
-        methods.push(input.parse::<TraitItemFn>()?);
-    }
-    Ok(methods)
-}
-
 fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
+    // `input` is a set of tokens that represent an enum that we used
+    // our derive macro on. Ex:
+    //
+    // #[derive(EnumDelegate)]
+    // pub enum Some { ... }
+    //
+    // so `input` has something like:
+    // {
+    //   vis: Visibility::Public(
+    //      Token![pub],
+    //   ),
+    //   ident: Ident {
+    //      ident: "Some",
+    //      span: #0 bytes(126..130),
+    //   },
+    //   data: Data::Enum { .. }
+    // }
+    //
+    // Here we select the name of our enum.
+    println!("input: {:#?}", input);
     let name = &input.ident;
 
+    // `input.data` holds a type of Data we used our derive macro on.
+    // Its variants are:
+    // pub enum Data {
+    //     Struct(DataStruct),
+    //     Enum(DataEnum),
+    //     Union(DataUnion),
+    // }
+    //
+    // So here we need to match that it's an enum.
     let data = match &input.data {
         Data::Enum(data) => data,
         _ => {
@@ -106,11 +124,145 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
         }
     };
 
+    println!("--------: {:#?}", input.attrs);
+
     // Collect methods from every #[enum_delegate(...)] attribute.
+    // `input.attrs` is a list of attribute macros. For example:
+    //
+    // #[enum_delegate(
+    //    fn span(&self) -> Span;
+    // )]
+    // pub enum Some { .. }
+    //
+    // In this case, `input.attrs` will contain something like:
+    //
+    // [
+    //    {
+    //       pound_token: Token![#],
+    //       meta: Meta::List {
+    //          path: Path {
+    //              segments: [
+    //                  PathSegment {
+    //                      ident: Ident {
+    //                          ident: "enum_delegate",
+    //                      },
+    //                  },
+    //              ],
+    //          },
+    //          delimiter: MacroDelimiter::Paren(Paren),
+    //          tokens: TokenStream [
+    //              Ident { ident: "fn" },
+    //              Ident { ident: "span" },
+    //              Group {
+    //                  delimiter: Parenthesis,
+    //                  stream: TokenStream [
+    //                      Punct { ch: '&' },
+    //                      Ident { ident: "self" },
+    //                  ],
+    //              },
+    //              Punct { ch: '-' },
+    //              Punct { ch: '>' },
+    //              Ident { ident: "Span" },
+    //              Punct { ch: ';' },
+    //          ],
+    //       }
+    //    }
+    // ]
     let mut methods: Vec<TraitItemFn> = Vec::new();
-    for attr in input.attrs.iter().filter(|a| a.path().is_ident("enum_delegate")) {
-        methods.extend(attr.parse_args_with(parse_methods)?);
+
+    for attr in input
+        .attrs
+        .iter()
+        // Get only our target attribute.
+        .filter(|a| a.path().is_ident("enum_delegate"))
+    {
+        // Takes the tokens inside the parentheses (see `tokens` on Attribute above)
+        // and passes them to our closure where we parse each of them as TraitItemFn.
+        //
+        // Why do we need to parse each attr?
+        //
+        // Because the attribute's contents arrive as raw tokens. The compiler checks
+        // that #[enum_delegate(...)] is a valid attribute, but it doesn’t look inside
+        // the parentheses. `attr` holds the tokens `fn span (&self) -> Span;` as a flat
+        // list, with no idea what they mean. Parsing is how we turn that list into
+        // something we can ask questions about.
+        //
+        // What the macro needs to know. To generate this:
+        //
+        // impl Some {
+        //    pub fn rename(&mut self, name: String) {
+        //       match self {
+        //           Self::Expr(inner) => inner.rename(name),
+        //           ...
+        //       }
+        //    }
+        // }
+        //
+        // the macro has to answer questions the flat tokens can't:
+        //
+        // 1. What's the method name, so we can write inner.rename(...)?
+        // 2. What are the parameter names, so we can forward name?
+        // 3. Is there a self receiver at all?
+        // 4. Where does one method end and the next begin?
+        // 5. Did the user write a body by mistake?
+        //
+        // Answering these from a flat token list means scanning by hand:
+        // find fn, take the next token as the name, find the parenthesized
+        // group, split it on commas (but not commas inside generics like
+        // HashMap<K, V>), skip the receiver, and take the identifier before
+        // each :. That’s a parser, and a fragile one. `syn` already has a
+        // tested one, so we use it.
+        //
+        // What parsing gives us:
+        // 1. Structure: m.sig.ident, m.sig.inputs, m.sig.receiver() and m.default
+        // are typed fields instead of token positions.
+        // 2. Validation for free: a malformed signature like `fn span(&self -> Span;`
+        // fails with a syn error pointing at the broken token, instead of producing
+        // garbage code.
+        // 3. Reusable pieces: `sig` can be pasted into the output with `#sig` and prints
+        // as valid syntax.
+        methods.extend(attr.parse_args_with(|token_stream: ParseStream| {
+            let mut v = Vec::new();
+            while !token_stream.is_empty() {
+                // What is TraitItemFn and why we use it for parsing:
+                //
+                // TraitItemFn is a plain struct from `syn` that describes a method
+                // declaration as it can appear inside a trait. It holds no behavior.
+                // It’s data, produced by a parser from tokens.
+                //
+                // Its definition is roughly:
+                //
+                // pub struct TraitItemFn {
+                //     pub attrs: Vec<Attribute>,       // doc comments and other #[...] on the method
+                //     pub sig: Signature,              // the signature
+                //     pub default: Option<Block>,      // Some(body) if the method has a body
+                //     pub semi_token: Option<Token![;]>, // the trailing `;` when there's no body
+                // }
+                //
+                // and Signature holds the parts of the function header:
+                //
+                // pub struct Signature {
+                //     pub ident: Ident,                        // method name
+                //     pub generics: Generics,                  // <T> and where clauses
+                //     pub inputs: Punctuated<FnArg, Token![,]>, // parameters, including self
+                //     pub output: ReturnType,                  // `-> Span` or nothing
+                //     // plus const / async / unsafe / abi / variadic markers
+                // }
+                //
+                // TraitItemFn is one of a family of similar syn types, each describing a function
+                // in a different position:
+                //
+                // 1. ItemFn: a free function with a body, like `fn foo() {}` at module level
+                // 2. ImplItemFn: a method inside an `impl block`, which must have a body
+                // 3. TraitItemFn: a method inside a trait, where the body is optional
+                //
+                // We pick TraitItemFn because its syntax is exactly what we want the user to write.
+                v.push(token_stream.parse::<TraitItemFn>()?);
+            }
+            Ok(v)
+        })?);
     }
+
     if methods.is_empty() {
         return Err(syn::Error::new_spanned(
             name,
@@ -131,135 +283,73 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
         })
         .collect::<syn::Result<Vec<_>>>()?;
 
-    // One generated method per declared signature.
-    let fns = methods
-        .iter()
-        .map(|m| {
-            if let Some(body) = &m.default {
-                return Err(syn::Error::new_spanned(
-                    body,
-                    "write only the signature, ending with `;`",
-                ));
+    let qt = quote! {
+        impl #name  {
+            fn some() -> usize {
+                1
             }
-            if m.sig.receiver().is_none() {
-                return Err(syn::Error::new_spanned(
-                    &m.sig,
-                    "the method must take `self`, `&self` or `&mut self`",
-                ));
-            }
-
-            // Names of the non-self parameters, forwarded in the inner call.
-            let args = m
-                .sig
-                .inputs
-                .iter()
-                .filter_map(|a| match a {
-                    FnArg::Typed(pt) => Some(match &*pt.pat {
-                        Pat::Ident(p) => Ok(&p.ident),
-                        other => Err(syn::Error::new_spanned(
-                            other,
-                            "parameters must be plain identifiers",
-                        )),
-                    }),
-                    FnArg::Receiver(_) => None,
-                })
-                .collect::<syn::Result<Vec<_>>>()?;
-
-            let attrs = &m.attrs;
-            let sig = &m.sig;
-            let method = &m.sig.ident;
-
-            // Built outside the variants repetition so `args` isn't iterated twice.
-            let call_args = quote! { #(#args),* };
-
-            Ok(quote! {
-                #(#attrs)*
-                pub #sig {
-                    match self {
-                        #(Self::#variants(inner) => inner.#method(#call_args),)*
-                    }
-                }
-            })
-        })
-        .collect::<syn::Result<Vec<_>>>()?;
-
-    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
-
-    Ok(quote! {
-        impl #impl_generics #name #ty_generics #where_clause {
-            #(#fns)*
-        }
-    })
-}
-
-// A syntax tree goes in, tokens (proc_macro2::TokenStream) come out.
-fn _expand(input: DeriveInput) -> syn::Result<TokenStream2> {
-    // Get struct's name on which we call derive macro.
-    let name = &input.ident;
-
-    // input.data must be a Data::Struct, not an enum or union.
-    // The struct’s fields must be Fields::Named, as in { a: T, b: U }. The other variants
-    // are Unnamed (tuple structs like struct S(u32)) and Unit (struct S;), and neither can
-    // have a field called `span`.
-    let fields = match &input.data {
-        Data::Struct(s) => match &s.fields {
-            // In the success case, fields is &Punctuated<Field, Comma>, which is a list of
-            // fields we can iterate over. Every failure path returns early with
-            // syn::Error::new_spanned(name, "..."). That creates an error attached to
-            // the struct name’s location, so the user sees the red squiggle on BinaryExpr
-            // in their own file.
-            Fields::Named(f) => &f.named,
-            _ => {
-                return Err(syn::Error::new_spanned(
-                    name,
-                    "HasSpan requires a struct with named fields",
-                ));
-            }
-        },
-        _ => {
-            return Err(syn::Error::new_spanned(
-                name,
-                "HasSpan can only be derived for structs",
-            ));
         }
     };
 
-    // Find a field named `span`.
-    let span_field = fields
-        .iter()
-        .find(|f| f.ident.as_ref().is_some_and(|i| *i == "span"))
-        .ok_or_else(|| syn::Error::new_spanned(name, "HasSpan requires a field named `span`"))?;
+    Ok(qt)
 
-    // This takes the field’s declared type as a syn::Type. We’re reusing whatever the user wrote
-    // (Span, crate::Span, ast::Span), so the macro doesn’t need to know where Span lives.
-    let ty = &span_field.ty;
+    //// One generated method per declared signature.
+    //let fns = methods
+    //    .iter()
+    //    .map(|m| {
+    //        if let Some(body) = &m.default {
+    //            return Err(syn::Error::new_spanned(
+    //                body,
+    //                "write only the signature, ending with `;`",
+    //            ));
+    //        }
+    //        if m.sig.receiver().is_none() {
+    //            return Err(syn::Error::new_spanned(
+    //                &m.sig,
+    //                "the method must take `self`, `&self` or `&mut self`",
+    //            ));
+    //        }
 
-    // This handles generic structs. It returns three pieces that print differently, so we can
-    // build a correct impl header. For struct Foo<T: Clone> where T: Debug:
-    // `impl_generics` is `<T: Clone>`
-    // `ty_generics` is `<T>`
-    // `where_clause` is `where T: Debug`
-    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+    //        // Names of the non-self parameters, forwarded in the inner call.
+    //        let args = m
+    //            .sig
+    //            .inputs
+    //            .iter()
+    //            .filter_map(|a| match a {
+    //                FnArg::Typed(pt) => Some(match &*pt.pat {
+    //                    Pat::Ident(p) => Ok(&p.ident),
+    //                    other => Err(syn::Error::new_spanned(
+    //                        other,
+    //                        "parameters must be plain identifiers",
+    //                    )),
+    //                }),
+    //                FnArg::Receiver(_) => None,
+    //            })
+    //            .collect::<syn::Result<Vec<_>>>()?;
 
-    // `quote!` builds a token stream from a template. Anything written as #variable is replaced
-    // by that variable’s tokens, which works for any type implementing ToTokens (idents, types,
-    // generics pieces, and so on). Everything else is emitted literally. The result is a
-    // proc_macro2::TokenStream.
-    //
-    // Ex:
-    // impl AstExpr {
-    //    pub fn span(&self) -> Span {
-    //        self.span
+    //        let attrs = &m.attrs;
+    //        let sig = &m.sig;
+    //        let method = &m.sig.ident;
+
+    //        // Built outside the variants repetition so `args` isn't iterated twice.
+    //        let call_args = quote! { #(#args),* };
+
+    //        Ok(quote! {
+    //            #(#attrs)*
+    //            pub #sig {
+    //                match self {
+    //                    #(Self::#variants(inner) => inner.#method(#call_args),)*
+    //                }
+    //            }
+    //        })
+    //    })
+    //    .collect::<syn::Result<Vec<_>>>()?;
+
+    //let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+
+    //Ok(quote! {
+    //    impl #impl_generics #name #ty_generics #where_clause {
+    //        #(#fns)*
     //    }
-    // }
-    Ok(quote! {
-        // Used as `impl #impl_generics Foo #ty_generics #where_clause`, they give
-        // `impl<T: Clone> Foo<T> where T: Debug`. For a non-generic struct all three print
-        // as nothing, so the same template works for both cases.
-        impl #impl_generics #name #ty_generics #where_clause {
-            pub fn span(&self) -> #ty {
-                self.span
-            }
-        }
-    })
+    //})
 }
