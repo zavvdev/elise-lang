@@ -283,73 +283,100 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
         })
         .collect::<syn::Result<Vec<_>>>()?;
 
-    let qt = quote! {
-        impl #name  {
-            fn some() -> usize {
-                1
+    // One generated method per declared signature.
+    let fns = methods
+        .iter()
+        .map(|m| {
+            // In a trait, a method can optionally come with a default implementation:
+            // trait Example {
+            //     fn required(&self) -> u32;          // no body: implementors must provide it
+            //
+            //     fn provided(&self) -> u32 { 42 }    // has a body: the "default" implementation
+            // }
+            // syn’s TraitItemFn mirrors this grammar, so `default` is the optional body
+            if let Some(body) = &m.default {
+                return Err(syn::Error::new_spanned(
+                    body,
+                    "write only the signature, ending with `;`",
+                ));
             }
+            if m.sig.receiver().is_none() {
+                return Err(syn::Error::new_spanned(
+                    &m.sig,
+                    "the method must take `self`, `&self` or `&mut self`",
+                ));
+            }
+
+            // Names of the non-self parameters, forwarded in the inner call.
+            //
+            // `sig.inputs` is a list of FnArg values, one per parameter, and
+            // FnArg has two variants:
+            //    pub enum FnArg {
+            //        Receiver(Receiver),   // self, &self, &mut self
+            //        Typed(PatType),       // pattern: Type
+            //    }
+            // PatType is the `name: String` shape.
+            //
+            // For fn rename(&mut self, name: String, count: usize); the list is:
+            // [ Receiver(&mut self), Typed(name: String), Typed(count: usize) ]
+            let args = m
+                .sig
+                .inputs
+                .iter()
+                .filter_map(|a| match a {
+                    FnArg::Typed(pt) => Some(match &*pt.pat {
+                        Pat::Ident(p) => Ok(&p.ident),
+                        // What 'plain parameters' means.
+                        // The left side of the colon is a Pat, syn’s type for any Rust pattern,
+                        // the same grammar we use in let and match. A plain identifier is just
+                        // a name, like `name`. Parameters can be other patterns too:
+                        //
+                        // fn a(&self, name: String); --> Pat::Ident - plain identifier
+                        // fn b(&self, _: u32); --> Pat::Wild - underscore, no name at all
+                        // fn c(&self, (x, y): (u32, u32)); --> Pat::Tuple - destructures a tuple
+                        // fn f(&self, [a, b]: [u8; 2]); --> Pat::Slice
+                        //
+                        // Why we reject the other patterns
+                        //
+                        // The generated code has to forward each argument: inner.rename(name).
+                        // That needs one name per parameter.
+                        // `_: u32` has no name, so there’s nothing to write in the call.
+                        // `(x, y): (u32, u32)` binds two names, `x` and `y`, from one argument.
+                        // We’d have to rebuild the tuple `(x, y)` to forward it, and that’s only
+                        // possible for simple patterns. Rejecting them with a clear error is
+                        // simpler than supporting a subset by accident.
+                        other => Err(syn::Error::new_spanned(
+                            other,
+                            "parameters must be plain identifiers",
+                        )),
+                    }),
+                    FnArg::Receiver(_) => None,
+                })
+                .collect::<syn::Result<Vec<_>>>()?;
+
+            let attrs = &m.attrs;
+            let sig = &m.sig;
+            let method = &m.sig.ident;
+
+            // Built outside the variants repetition so `args` isn't iterated twice.
+            let call_args = quote! { #(#args),* };
+
+            Ok(quote! {
+                #(#attrs)*
+                pub #sig {
+                    match self {
+                        #(Self::#variants(inner) => inner.#method(#call_args),)*
+                    }
+                }
+            })
+        })
+        .collect::<syn::Result<Vec<_>>>()?;
+
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+
+    Ok(quote! {
+        impl #impl_generics #name #ty_generics #where_clause {
+            #(#fns)*
         }
-    };
-
-    Ok(qt)
-
-    //// One generated method per declared signature.
-    //let fns = methods
-    //    .iter()
-    //    .map(|m| {
-    //        if let Some(body) = &m.default {
-    //            return Err(syn::Error::new_spanned(
-    //                body,
-    //                "write only the signature, ending with `;`",
-    //            ));
-    //        }
-    //        if m.sig.receiver().is_none() {
-    //            return Err(syn::Error::new_spanned(
-    //                &m.sig,
-    //                "the method must take `self`, `&self` or `&mut self`",
-    //            ));
-    //        }
-
-    //        // Names of the non-self parameters, forwarded in the inner call.
-    //        let args = m
-    //            .sig
-    //            .inputs
-    //            .iter()
-    //            .filter_map(|a| match a {
-    //                FnArg::Typed(pt) => Some(match &*pt.pat {
-    //                    Pat::Ident(p) => Ok(&p.ident),
-    //                    other => Err(syn::Error::new_spanned(
-    //                        other,
-    //                        "parameters must be plain identifiers",
-    //                    )),
-    //                }),
-    //                FnArg::Receiver(_) => None,
-    //            })
-    //            .collect::<syn::Result<Vec<_>>>()?;
-
-    //        let attrs = &m.attrs;
-    //        let sig = &m.sig;
-    //        let method = &m.sig.ident;
-
-    //        // Built outside the variants repetition so `args` isn't iterated twice.
-    //        let call_args = quote! { #(#args),* };
-
-    //        Ok(quote! {
-    //            #(#attrs)*
-    //            pub #sig {
-    //                match self {
-    //                    #(Self::#variants(inner) => inner.#method(#call_args),)*
-    //                }
-    //            }
-    //        })
-    //    })
-    //    .collect::<syn::Result<Vec<_>>>()?;
-
-    //let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
-
-    //Ok(quote! {
-    //    impl #impl_generics #name #ty_generics #where_clause {
-    //        #(#fns)*
-    //    }
-    //})
+    })
 }
