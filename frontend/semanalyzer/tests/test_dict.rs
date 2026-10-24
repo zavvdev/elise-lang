@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use elise_aast::{AAstNode, AAstNodeData, AAstNodeDataDictKey, AAstNodeDataPrim};
+use elise_aast::{
+    AAstNode,
+    aast_node_data::{AAstNodeData, AAstNodeDataDict, AAstNodeDataDictKey, AAstNodeDataPrim},
+};
 use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
 use elise_shared_types::Span;
 use elise_test_utils::test_utils::semanalyze;
@@ -50,7 +53,7 @@ fn should_analyze_dict() {
         false,
     );
 
-    let expected = AAstNode::Data(AAstNodeData::Dict {
+    let expected = AAstNode::Data(AAstNodeData::Dict(AAstNodeDataDict {
         span: Span { start: 0, end: 23 },
         entries: vec![
             (
@@ -74,7 +77,7 @@ fn should_analyze_dict() {
                 })),
             ),
         ],
-    });
+    }));
 
     assert_eq!(result, Ok(vec![expected]));
 }
@@ -88,7 +91,7 @@ fn should_analyze_nested_dict() {
         false,
     );
 
-    let expected = AAstNode::Data(AAstNodeData::Dict {
+    let expected = AAstNode::Data(AAstNodeData::Dict(AAstNodeDataDict {
         span: Span { start: 0, end: 31 },
         entries: vec![
             (
@@ -106,7 +109,7 @@ fn should_analyze_nested_dict() {
                     span: Span { start: 10, end: 13 },
                     lexeme: "b".to_string(),
                 },
-                Box::new(AAstNodeData::Dict {
+                Box::new(AAstNodeData::Dict(AAstNodeDataDict {
                     span: Span { start: 14, end: 29 },
                     entries: vec![(
                         AAstNodeDataDictKey {
@@ -118,10 +121,10 @@ fn should_analyze_nested_dict() {
                             span: Span { start: 20, end: 27 },
                         })),
                     )],
-                }),
+                })),
             ),
         ],
-    });
+    }));
 
     assert_eq!(result, Ok(vec![expected]));
 }

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use elise_shared_types::Span;
+use getset::CopyGetters;
 
 use crate::{binding_path::BindingPath, common::BindingType};
 
@@ -51,9 +52,12 @@ impl TypeBinding {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+// TODO: Check if we need Clone trait here.
+#[derive(Debug, PartialEq, Clone, CopyGetters)]
 pub struct TypeBindingDesc {
     pub dtype: BindingType,
+
+    #[getset(get_copy = "pub")]
     pub span: Span,
 }
 

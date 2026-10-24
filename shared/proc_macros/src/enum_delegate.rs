@@ -102,7 +102,6 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
     // }
     //
     // Here we select the name of our enum.
-    println!("input: {:#?}", input);
     let name = &input.ident;
 
     // `input.data` holds a type of Data we used our derive macro on.
@@ -123,8 +122,6 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
             ));
         }
     };
-
-    println!("--------: {:#?}", input.attrs);
 
     // Collect methods from every #[enum_delegate(...)] attribute.
     // `input.attrs` is a list of attribute macros. For example:

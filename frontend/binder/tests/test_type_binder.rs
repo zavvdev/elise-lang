@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use elise_aast::AAstNodeTypeAnnot;
+use elise_aast::aast_node_call::type_annot::{
+    AAstNodeTypeAnnot, AAstNodeTypeAnnotCustom, AAstNodeTypeAnnotList, AAstNodeTypeAnnotPrim,
+    AAstNodeTypeAnnotRecord,
+};
 use elise_binder::type_binder::TypeBinder;
 use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
@@ -21,9 +24,9 @@ mod common;
 
 #[test]
 fn should_bind_int() {
-    let int_aast = AAstNodeTypeAnnot::Int {
+    let int_aast = AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
         span: Span { start: 0, end: 0 },
-    };
+    });
 
     let globals = HashMap::new();
     let binding = TypeBinder::new(&int_aast, &globals).bind().unwrap();
@@ -54,12 +57,12 @@ fn should_bind_int() {
 
 #[test]
 fn should_bind_list_with_primitive_generic() {
-    let list_aast = AAstNodeTypeAnnot::List {
+    let list_aast = AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
         span: Span { start: 0, end: 1 },
-        item_type: Box::new(AAstNodeTypeAnnot::Int {
+        item_type: Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
             span: Span { start: 2, end: 3 },
-        }),
-    };
+        })),
+    });
 
     let globals = HashMap::new();
     let binding = TypeBinder::new(&list_aast, &globals).bind().unwrap();
@@ -86,15 +89,15 @@ fn should_bind_list_with_primitive_generic() {
 
 #[test]
 fn should_bind_list_with_list_generic() {
-    let list_aast = AAstNodeTypeAnnot::List {
+    let list_aast = AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
         span: Span { start: 0, end: 1 },
-        item_type: Box::new(AAstNodeTypeAnnot::List {
+        item_type: Box::new(AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
             span: Span { start: 2, end: 3 },
-            item_type: Box::new(AAstNodeTypeAnnot::Int {
+            item_type: Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
                 span: Span { start: 4, end: 5 },
-            }),
-        }),
-    };
+            })),
+        })),
+    });
 
     let globals = HashMap::new();
     let binding = TypeBinder::new(&list_aast, &globals).bind().unwrap();
@@ -131,18 +134,18 @@ fn should_bind_list_with_list_generic() {
 
 #[test]
 fn should_bind_list_with_record_generic() {
-    let list_aast = AAstNodeTypeAnnot::List {
+    let list_aast = AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
         span: Span { start: 0, end: 1 },
-        item_type: Box::new(AAstNodeTypeAnnot::Record {
+        item_type: Box::new(AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
             span: Span { start: 2, end: 3 },
             entries: vec![(
                 "id".to_string(),
-                Box::new(AAstNodeTypeAnnot::Int {
+                Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
                     span: Span { start: 4, end: 5 },
-                }),
+                })),
             )],
-        }),
-    };
+        })),
+    });
 
     let globals = HashMap::new();
     let binding = TypeBinder::new(&list_aast, &globals).bind().unwrap();
@@ -179,13 +182,13 @@ fn should_bind_list_with_record_generic() {
 
 #[test]
 fn should_bind_list_with_custom_type_generic() {
-    let list_aast = AAstNodeTypeAnnot::List {
+    let list_aast = AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
         span: Span { start: 0, end: 1 },
-        item_type: Box::new(AAstNodeTypeAnnot::Custom {
+        item_type: Box::new(AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
             span: Span { start: 2, end: 3 },
             alias: "RecordType".to_string(),
-        }),
-    };
+        })),
+    });
 
     let globals = test_utils::type_bindings_map();
     let binding = TypeBinder::new(&list_aast, &globals).bind().unwrap();
@@ -234,15 +237,15 @@ fn should_bind_list_with_custom_type_generic() {
 
 #[test]
 fn should_bind_record_with_primitive_values() {
-    let record_aast = AAstNodeTypeAnnot::Record {
+    let record_aast = AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
         span: Span { start: 0, end: 1 },
         entries: vec![(
             "id".to_string(),
-            Box::new(AAstNodeTypeAnnot::Int {
+            Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
                 span: Span { start: 2, end: 3 },
-            }),
+            })),
         )],
-    };
+    });
 
     let globals = HashMap::new();
     let binding = TypeBinder::new(&record_aast, &globals).bind().unwrap();
@@ -269,18 +272,18 @@ fn should_bind_record_with_primitive_values() {
 
 #[test]
 fn should_bind_record_with_list_values() {
-    let record_aast = AAstNodeTypeAnnot::Record {
+    let record_aast = AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
         span: Span { start: 0, end: 1 },
         entries: vec![(
             "scores".to_string(),
-            Box::new(AAstNodeTypeAnnot::List {
+            Box::new(AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
                 span: Span { start: 2, end: 3 },
-                item_type: Box::new(AAstNodeTypeAnnot::Int {
+                item_type: Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
                     span: Span { start: 4, end: 5 },
-                }),
-            }),
+                })),
+            })),
         )],
-    };
+    });
 
     let globals = HashMap::new();
     let binding = TypeBinder::new(&record_aast, &globals).bind().unwrap();
@@ -317,21 +320,21 @@ fn should_bind_record_with_list_values() {
 
 #[test]
 fn should_bind_record_with_record_values() {
-    let record_aast = AAstNodeTypeAnnot::Record {
+    let record_aast = AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
         span: Span { start: 0, end: 1 },
         entries: vec![(
             "user".to_string(),
-            Box::new(AAstNodeTypeAnnot::Record {
+            Box::new(AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
                 span: Span { start: 2, end: 3 },
                 entries: vec![(
                     "id".to_string(),
-                    Box::new(AAstNodeTypeAnnot::Int {
+                    Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
                         span: Span { start: 4, end: 5 },
-                    }),
+                    })),
                 )],
-            }),
+            })),
         )],
-    };
+    });
 
     let globals = HashMap::new();
     let binding = TypeBinder::new(&record_aast, &globals).bind().unwrap();
@@ -368,16 +371,16 @@ fn should_bind_record_with_record_values() {
 
 #[test]
 fn should_bind_record_with_custom_type_values() {
-    let record_aast = AAstNodeTypeAnnot::Record {
+    let record_aast = AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
         span: Span { start: 0, end: 1 },
         entries: vec![(
             "test".to_string(),
-            Box::new(AAstNodeTypeAnnot::Custom {
+            Box::new(AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
                 alias: "RecordType".to_string(),
                 span: Span { start: 2, end: 3 },
-            }),
+            })),
         )],
-    };
+    });
 
     let globals = test_utils::type_bindings_map();
     let binding = TypeBinder::new(&record_aast, &globals).bind().unwrap();
@@ -426,10 +429,10 @@ fn should_bind_record_with_custom_type_values() {
 
 #[test]
 fn should_bind_custom_primitive() {
-    let custom_aast = AAstNodeTypeAnnot::Custom {
+    let custom_aast = AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
         span: Span { start: 0, end: 1 },
         alias: "SingleType".to_string(),
-    };
+    });
 
     let globals = test_utils::type_bindings_map();
     let binding = TypeBinder::new(&custom_aast, &globals).bind().unwrap();
@@ -449,10 +452,10 @@ fn should_bind_custom_primitive() {
 
 #[test]
 fn should_bind_custom_list() {
-    let custom_aast = AAstNodeTypeAnnot::Custom {
+    let custom_aast = AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
         span: Span { start: 0, end: 1 },
         alias: "ListType".to_string(),
-    };
+    });
 
     let globals = test_utils::type_bindings_map();
     let binding = TypeBinder::new(&custom_aast, &globals).bind().unwrap();
@@ -479,10 +482,10 @@ fn should_bind_custom_list() {
 
 #[test]
 fn should_bind_custom_record() {
-    let custom_aast = AAstNodeTypeAnnot::Custom {
+    let custom_aast = AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
         span: Span { start: 0, end: 1 },
         alias: "RecordType".to_string(),
-    };
+    });
 
     let globals = test_utils::type_bindings_map();
     let binding = TypeBinder::new(&custom_aast, &globals).bind().unwrap();
@@ -509,10 +512,10 @@ fn should_bind_custom_record() {
 
 #[test]
 fn should_return_err_if_custom_is_not_in_globals() {
-    let custom_aast = AAstNodeTypeAnnot::Custom {
+    let custom_aast = AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
         span: Span { start: 0, end: 1 },
         alias: "SingleType".to_string(),
-    };
+    });
 
     let globals = HashMap::new();
     let binding = TypeBinder::new(&custom_aast, &globals).bind();

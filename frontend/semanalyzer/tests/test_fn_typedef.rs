@@ -1,6 +1,16 @@
 use std::collections::HashMap;
 
-use elise_aast::{AAstNode, AAstNodeCall, AAstNodeTypeAnnot};
+use elise_aast::{
+    AAstNode,
+    aast_node_call::{
+        AAstNodeCall,
+        call_typedef::AAstNodeCallTypedef,
+        type_annot::{
+            AAstNodeTypeAnnot, AAstNodeTypeAnnotList, AAstNodeTypeAnnotPrim,
+            AAstNodeTypeAnnotRecord,
+        },
+    },
+};
 use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     common::BindingType,
@@ -88,12 +98,13 @@ fn should_analyze_int_aliasing() {
     );
     expected_type_bindings_map.insert("Age".to_string(), expected_type_binding);
 
-    expected_aast.push(AAstNode::Call(AAstNodeCall::Typedef {
+    expected_aast.push(AAstNode::Call(AAstNodeCall::Typedef(AAstNodeCallTypedef {
+        span: Span { start: 0, end: 18 },
         alias: "Age".to_string(),
-        annot: AAstNodeTypeAnnot::Int {
+        annot: AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
             span: Span { start: 13, end: 17 },
-        },
-    }));
+        }),
+    })));
 
     assert_eq!(type_bindings_map, expected_type_bindings_map);
     assert_eq!(aast, expected_aast);
@@ -156,15 +167,16 @@ fn should_analyze_list_aliasing() {
 
     expected_type_bindings_map.insert("Data".to_string(), expected_type_binding);
 
-    expected_aast.push(AAstNode::Call(AAstNodeCall::Typedef {
+    expected_aast.push(AAstNode::Call(AAstNodeCall::Typedef(AAstNodeCallTypedef {
+        span: Span { start: 0, end: 26 },
         alias: "Data".to_string(),
-        annot: AAstNodeTypeAnnot::List {
+        annot: AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
             span: Span { start: 14, end: 25 },
-            item_type: Box::new(AAstNodeTypeAnnot::Int {
+            item_type: Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
                 span: Span { start: 20, end: 24 },
-            }),
-        },
-    }));
+            })),
+        }),
+    })));
 
     assert_eq!(type_bindings_map, expected_type_bindings_map);
     assert_eq!(aast, expected_aast);
@@ -234,18 +246,19 @@ fn should_analyze_record_aliasing() {
 
     expected_type_bindings_map.insert("User".to_string(), expected_type_binding);
 
-    expected_aast.push(AAstNode::Call(AAstNodeCall::Typedef {
+    expected_aast.push(AAstNode::Call(AAstNodeCall::Typedef(AAstNodeCallTypedef {
+        span: Span { start: 0, end: 38 },
         alias: "User".to_string(),
-        annot: AAstNodeTypeAnnot::Record {
+        annot: AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
             span: Span { start: 15, end: 37 },
             entries: vec![(
                 "id".to_string(),
-                Box::new(AAstNodeTypeAnnot::Int {
+                Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
                     span: Span { start: 30, end: 34 },
-                }),
+                })),
             )],
-        },
-    }));
+        }),
+    })));
 
     assert_eq!(type_bindings_map, expected_type_bindings_map);
     assert_eq!(aast, expected_aast);

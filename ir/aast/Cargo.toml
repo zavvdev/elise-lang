@@ -10,3 +10,4 @@ path = "src/lib.rs"
 elise-shared-types = { path = "../../shared/types" }
 elise-bindings = { path = "../bindings" }
 elise-shared-proc-macros = { path = "../../shared/proc_macros" }
+getset.workspace = true

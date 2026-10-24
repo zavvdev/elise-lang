@@ -6,8 +6,20 @@ pub mod matchers;
 use std::mem::discriminant;
 
 use elise_aast::{
-    AAstNode, AAstNodeCall, AAstNodeData, AAstNodeDataDictKey, AAstNodeDataPrim, AAstNodeTypeAnnot,
-    AAstNodeTypeAnnotRecordEntries,
+    AAstNode,
+    aast_node_call::{
+        AAstNodeCall,
+        call_get::AAstNodeCallGet,
+        call_typedef::AAstNodeCallTypedef,
+        type_annot::{
+            AAstNodeTypeAnnot, AAstNodeTypeAnnotCustom, AAstNodeTypeAnnotList,
+            AAstNodeTypeAnnotPrim, AAstNodeTypeAnnotRecord, AAstNodeTypeAnnotRecordEntries,
+        },
+    },
+    aast_node_data::{
+        AAstNodeData, AAstNodeDataDict, AAstNodeDataDictKey, AAstNodeDataList, AAstNodeDataPrim,
+    },
+    aast_node_slot::AAstNodeSlot,
 };
 use elise_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprDict, AstNodeExprList, AstNodeExprPrim,
@@ -120,7 +132,7 @@ impl<'a> Harmony<'a> {
     /// and returns back TypeBinding.
     fn infer_type_binding(&self, aast_node: &AAstNode) -> Result<TypeBinding, SemanalyzerErr> {
         match aast_node {
-            AAstNode::SlotData { span } => {
+            AAstNode::SlotData(AAstNodeSlot { span }) => {
                 let Some(slot_bindings) = self
                     .type_bindings
                     .get(&SlotData::TYPEDEF_LEXEME.to_string())
@@ -129,10 +141,10 @@ impl<'a> Harmony<'a> {
                 };
                 Ok(slot_bindings.clone())
             }
-            AAstNode::Call(AAstNodeCall::Get {
+            AAstNode::Call(AAstNodeCall::Get(AAstNodeCallGet {
                 return_type_binding,
                 ..
-            }) => Ok(return_type_binding.clone()),
+            })) => Ok(return_type_binding.clone()),
             unsupported_node => Err(SemanalyzerErr::CannotInferType {
                 span: unsupported_node.span(),
             }),
@@ -149,7 +161,7 @@ impl<'a> Harmony<'a> {
 
     fn slot(&mut self, prim: &AstNodeExprPrim) -> Result<AAstNode, SemanalyzerErr> {
         match prim.lexeme.as_str() {
-            SlotData::LEXEME => Ok(AAstNode::SlotData { span: prim.span() }),
+            SlotData::LEXEME => Ok(AAstNode::SlotData(AAstNodeSlot { span: prim.span() })),
             _ => Err(SemanalyzerErr::UnknownSlot { span: prim.span() }),
         }
     }
@@ -218,10 +230,10 @@ impl<'a> Harmony<'a> {
             aast_items.push(Box::new(data_node));
         }
 
-        Ok(AAstNode::Data(AAstNodeData::List {
+        Ok(AAstNode::Data(AAstNodeData::List(AAstNodeDataList {
             span: list.span(),
             items: aast_items,
-        }))
+        })))
     }
 
     // ==================================================================
@@ -250,10 +262,10 @@ impl<'a> Harmony<'a> {
             ));
         }
 
-        Ok(AAstNode::Data(AAstNodeData::Dict {
+        Ok(AAstNode::Data(AAstNodeData::Dict(AAstNodeDataDict {
             span: dict.span(),
             entries,
-        }))
+        })))
     }
 
     // ==================================================================
@@ -305,10 +317,12 @@ impl<'a> Harmony<'a> {
         // Save newly resolved type into a global scope.
         self.call_typedef__type_annot_capture(&identifier.lexeme, &aast_type_annot)?;
 
-        Ok(AAstNode::Call(AAstNodeCall::Typedef {
+        Ok(AAstNode::Call(AAstNodeCall::Typedef(AAstNodeCallTypedef {
+            // TODO: make lexeme a getter like span.
             alias: identifier.lexeme.clone(),
             annot: aast_type_annot,
-        }))
+            span: call.span(),
+        })))
     }
 
     fn call_typedef__type_annot(
@@ -350,7 +364,9 @@ impl<'a> Harmony<'a> {
         if annot.generic.is_some() {
             return Err(SemanalyzerErr::UnexpectedGeneric { span: annot.span() });
         }
-        Ok(AAstNodeTypeAnnot::Int { span: annot.span() })
+        Ok(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
+            span: annot.span(),
+        }))
     }
 
     fn call_typedef__type_annot_list(
@@ -365,10 +381,10 @@ impl<'a> Harmony<'a> {
             return Err(SemanalyzerErr::InvalidGeneric { span: annot.span() });
         };
 
-        Ok(AAstNodeTypeAnnot::List {
+        Ok(AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
             span: annot.span(),
             item_type: Box::new(self.call_typedef__type_annot(single_generic)?),
-        })
+        }))
     }
 
     fn call_typedef__type_annot_record(
@@ -393,10 +409,10 @@ impl<'a> Harmony<'a> {
             })
             .collect::<Result<AAstNodeTypeAnnotRecordEntries, SemanalyzerErr>>()?;
 
-        Ok(AAstNodeTypeAnnot::Record {
+        Ok(AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
             span: annot.span(),
             entries,
-        })
+        }))
     }
 
     fn call_typedef__type_annot_custom(
@@ -417,10 +433,10 @@ impl<'a> Harmony<'a> {
             return Err(SemanalyzerErr::UnknownTypedef { span: annot.span() });
         }
 
-        Ok(AAstNodeTypeAnnot::Custom {
+        Ok(AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
             alias: annot.lexeme.clone(),
             span: annot.span(),
-        })
+        }))
     }
 
     // ==================================================================
@@ -454,12 +470,12 @@ impl<'a> Harmony<'a> {
 
         let data_access_path = Self::call_get__build_binding_path(&access_args, false)?;
 
-        Ok(AAstNode::Call(AAstNodeCall::Get {
+        Ok(AAstNode::Call(AAstNodeCall::Get(AAstNodeCallGet {
             span: call.span(),
             type_binding_path: type_access_path.clone(),
             data_binding_path: data_access_path.clone(),
             return_type_binding: type_binding.strip_binding_paths_by_prefix(&type_access_path),
-        }))
+        })))
     }
 
     fn call_get__build_binding_path(

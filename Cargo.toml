@@ -20,7 +20,6 @@ members = [
     "shared/types",
     "shared/proc_macros",
     "test-utils",
-    "test-crate",
 ]
 
 [workspace.dependencies]
@@ -31,3 +30,4 @@ csv = "1.4.0"
 syn = "3.0.9"
 quote = "1.0.47"
 proc-macro2 = "1.0.107"
+getset = "=0.1.7"

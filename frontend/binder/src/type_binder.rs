@@ -1,4 +1,7 @@
-use elise_aast::{AAstNodeTypeAnnot, AAstNodeTypeAnnotRecordEntries};
+use elise_aast::aast_node_call::type_annot::{
+    AAstNodeTypeAnnot, AAstNodeTypeAnnotCustom, AAstNodeTypeAnnotList, AAstNodeTypeAnnotRecord,
+    AAstNodeTypeAnnotRecordEntries,
+};
 use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     common::BindingType,
@@ -48,9 +51,15 @@ impl<'a> TypeBinder<'a> {
     ) -> Result<(), TypeBinderErr> {
         self.current_span = node.span();
         match node {
-            AAstNodeTypeAnnot::Custom { alias, .. } => self.bind_custom(alias, binding),
-            AAstNodeTypeAnnot::Record { entries, .. } => self.bind_record(entries, binding),
-            AAstNodeTypeAnnot::List { item_type, .. } => self.bind_list(item_type, binding),
+            AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom { alias, .. }) => {
+                self.bind_custom(alias, binding)
+            }
+            AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord { entries, .. }) => {
+                self.bind_record(entries, binding)
+            }
+            AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList { item_type, .. }) => {
+                self.bind_list(item_type, binding)
+            }
             AAstNodeTypeAnnot::Int { .. } => self.bind_primitive(BindingType::Int, binding),
         }
     }

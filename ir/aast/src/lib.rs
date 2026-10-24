@@ -13,10 +13,21 @@
 //! can behave differently and can have different properties,
 //! so it's not possible anymore to generalize them under one type.
 
-use elise_bindings::{binding_path::BindingPath, type_bindings::TypeBinding};
+use elise_shared_proc_macros::EnumDelegate;
 use elise_shared_types::Span;
 
-#[derive(Debug, PartialEq)]
+use crate::{
+    aast_node_call::AAstNodeCall, aast_node_data::AAstNodeData, aast_node_slot::AAstNodeSlot,
+};
+
+pub mod aast_node_call;
+pub mod aast_node_data;
+pub mod aast_node_slot;
+
+#[derive(Debug, PartialEq, EnumDelegate)]
+#[enum_delegate(
+    fn span(&self) -> Span;
+)]
 pub enum AAstNode {
     // Call variant represents a set of known function calls
     // where each of them contains it's own properties.
@@ -31,155 +42,5 @@ pub enum AAstNode {
 
     // Represents a dedicated @data slot that references
     // data being manipulated.
-    SlotData { span: Span },
+    SlotData(AAstNodeSlot),
 }
-
-// ==================================================================
-//
-// CALL START
-//
-// AAst node descriptors for all Call variants.
-//
-// ==================================================================
-
-#[derive(Debug, PartialEq)]
-pub enum AAstNodeCall {
-    Typedef {
-        // Raw alias for a new type created with
-        // .typedef function.
-        alias: String,
-        annot: AAstNodeTypeAnnot,
-    },
-    Get {
-        span: Span,
-
-        // Binding path for type resolution only.
-        // Does not include literal path segments like
-        // Index(0) but rather abstract ones like
-        // AbstractIndex.
-        type_binding_path: BindingPath,
-
-        // Binding path for data accessing.
-        // Does not include abstract path segments but
-        // literal ones, like Index(0).
-        //
-        // NOTE: Not 100% sure if we need this here,
-        // but our compiler will probably need to know
-        // about data access path in order to generate
-        // op code.
-        data_binding_path: BindingPath,
-
-        // Return type of the .get function represented
-        // by TypeBinding structure, where each key has
-        // a type_binding_path removed.
-        //
-        // For example, if we have this type definition:
-        //
-        // .typedef (User :Record<{
-        //                  "id" :Int,
-        //                  "name" :String }>)
-        // .typedef (Data :List<User>)
-        //
-        // Which produces the next binding:
-        // [Root] => List
-        // [Root, AbstractIndex] => Record
-        // [Root, AbstractIndex, Field("id")] => Int
-        // [Root, AbstractIndex, Field("name")] => Str
-        //
-        // then after accessing data with:
-        // .get (@data, 0)
-        // that generates the next binding path:
-        // [Root, AbstractIndex]
-        // our return_type_binding must be:
-        //
-        // [Root] => Record
-        // [Root, Field("id")] => Int
-        // [Root, Field("name")] => Str
-        //
-        // where we strip each path by prefix represented
-        // by path generated from .get data access.
-        return_type_binding: TypeBinding,
-    },
-}
-
-// ==================================================================
-//
-// CALL END
-//
-// ==================================================================
-
-// ==================================================================
-//
-// DATA START
-//
-// ==================================================================
-
-#[derive(Debug, PartialEq)]
-pub struct AAstNodeDataPrim {
-    pub lexeme: String,
-    pub span: Span,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct AAstNodeDataDictKey {
-    pub span: Span,
-    pub lexeme: String,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum AAstNodeData {
-    Int(AAstNodeDataPrim),
-    Str(AAstNodeDataPrim),
-    List {
-        span: Span,
-        items: Vec<Box<AAstNodeData>>,
-    },
-    Dict {
-        span: Span,
-        entries: Vec<(AAstNodeDataDictKey, Box<AAstNodeData>)>,
-    },
-}
-
-// ==================================================================
-//
-// DATA END
-//
-// ==================================================================
-
-// ==================================================================
-//
-// TYPE ANNOTATIONS START
-//
-// ==================================================================
-
-pub type AAstNodeTypeAnnotRecordEntries = Vec<(String, Box<AAstNodeTypeAnnot>)>;
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum AAstNodeTypeAnnot {
-    // Represents a reference to a custom data type.
-    // For example:
-    // .typedef (User :UserShape)
-    // where :UserShape is a reference to the custom
-    // data type.
-    Custom {
-        span: Span,
-        alias: String,
-    },
-    Record {
-        span: Span,
-        entries: AAstNodeTypeAnnotRecordEntries,
-    },
-    List {
-        span: Span,
-        item_type: Box<AAstNodeTypeAnnot>,
-    },
-    Int {
-        span: Span,
-    },
-}
-
-// ==================================================================
-//
-// TYPE ANNOTATIONS END
-//
-// ==================================================================

@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use elise_aast::{AAstNode, AAstNodeData, AAstNodeDataPrim};
+use elise_aast::{
+    AAstNode,
+    aast_node_data::{AAstNodeData, AAstNodeDataPrim},
+};
 use elise_shared_types::Span;
 use elise_test_utils::test_utils::semanalyze;
 
