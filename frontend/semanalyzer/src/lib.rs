@@ -184,7 +184,7 @@ impl<'a> Harmony<'a> {
     ) -> Result<AAstNode, SemanalyzerErr> {
         Ok(AAstNode::Data(variant(AAstNodeDataPrim {
             span: prim.span(),
-            lexeme: prim.lexeme.clone(),
+            lexeme: prim.lexeme(),
         })))
     }
 
@@ -256,7 +256,7 @@ impl<'a> Harmony<'a> {
             entries.push((
                 AAstNodeDataDictKey {
                     span: entry.0.span(),
-                    lexeme: entry.0.lexeme.clone(),
+                    lexeme: entry.0.lexeme(),
                 },
                 Box::new(data_node),
             ));
@@ -319,7 +319,7 @@ impl<'a> Harmony<'a> {
 
         Ok(AAstNode::Call(AAstNodeCall::Typedef(AAstNodeCallTypedef {
             // TODO: make lexeme a getter like span.
-            alias: identifier.lexeme.clone(),
+            alias: identifier.lexeme(),
             annot: aast_type_annot,
             span: call.span(),
         })))
@@ -403,7 +403,7 @@ impl<'a> Harmony<'a> {
             .iter()
             .map(|(key, annot)| {
                 Ok((
-                    key.lexeme.clone(),
+                    key.lexeme(),
                     Box::new(self.call_typedef__type_annot(annot)?),
                 ))
             })
@@ -434,7 +434,7 @@ impl<'a> Harmony<'a> {
         }
 
         Ok(AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
-            alias: annot.lexeme.clone(),
+            alias: annot.lexeme(),
             span: annot.span(),
         }))
     }
@@ -511,7 +511,7 @@ impl<'a> Harmony<'a> {
                     }
                 }
                 AstNodeExpr::Str(prim) => {
-                    binding_path.push(BindingPathSegment::Field(prim.lexeme.clone()));
+                    binding_path.push(BindingPathSegment::Field(prim.lexeme()));
                 }
                 _ => {
                     return Err(SemanalyzerErr::InvalDataAccessArg {

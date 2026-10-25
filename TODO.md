@@ -6,8 +6,6 @@
 
 - [x] TypeBinder
 
-- [ ] add lexeme getter, review lexeme clone calls.
-
 - [ ] review Copy/Clone trait derives whether they're relevant
 
 - [ ] Semantic analyzer
