@@ -52,7 +52,6 @@ impl TypeBinding {
     }
 }
 
-// TODO: Check if we need Clone trait here.
 #[derive(Debug, PartialEq, Clone, CopyGetters)]
 pub struct TypeBindingDesc {
     pub dtype: BindingType,

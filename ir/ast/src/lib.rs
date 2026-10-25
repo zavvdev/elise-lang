@@ -97,7 +97,6 @@ pub struct AstNodeExprDict {
 //
 // ==================================================================
 
-// TODO: Check if we need Clone trait here.
 #[derive(Debug, PartialEq, Clone, CopyGetters, CloneGetters)]
 pub struct AstNodeTypeAnnot {
     #[getset(get_copy = "pub")]

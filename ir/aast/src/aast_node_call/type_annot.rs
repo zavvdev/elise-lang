@@ -2,7 +2,6 @@ use elise_shared_proc_macros::EnumDelegate;
 use elise_shared_types::Span;
 use getset::CopyGetters;
 
-// TODO: Check if we need Clone trait here.
 #[derive(Debug, PartialEq, Clone, EnumDelegate)]
 #[enum_delegate(
     fn span(&self) -> Span;

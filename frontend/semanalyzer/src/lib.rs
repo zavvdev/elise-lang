@@ -318,7 +318,6 @@ impl<'a> Harmony<'a> {
         self.call_typedef__type_annot_capture(&identifier.lexeme, &aast_type_annot)?;
 
         Ok(AAstNode::Call(AAstNodeCall::Typedef(AAstNodeCallTypedef {
-            // TODO: make lexeme a getter like span.
             alias: identifier.lexeme(),
             annot: aast_type_annot,
             span: call.span(),

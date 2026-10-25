@@ -6,8 +6,6 @@
 
 - [x] TypeBinder
 
-- [ ] review Copy/Clone trait derives whether they're relevant
-
 - [ ] Semantic analyzer
 
     - [x] .typedef
