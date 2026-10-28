@@ -2,9 +2,12 @@
 
 pub mod config;
 
+use elise_ast::ast_type_annot::{
+    AstNodeTypeAnnot, AstNodeTypeAnnotGeneric, AstNodeTypeAnnotRecordKey,
+};
 use elise_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprDict, AstNodeExprDictKey, AstNodeExprList,
-    AstNodeExprPrim, AstNodeTypeAnnot, AstNodeTypeAnnotGeneric, AstNodeTypeAnnotRecordKey,
+    AstNodeExprPrim,
 };
 use elise_shared_types::{Literal, Span};
 use std::str::from_utf8;

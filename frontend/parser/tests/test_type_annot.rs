@@ -1,4 +1,7 @@
-use elise_ast::{AstNode, AstNodeTypeAnnot, AstNodeTypeAnnotGeneric, AstNodeTypeAnnotRecordKey};
+use elise_ast::AstNode;
+use elise_ast::ast_type_annot::{
+    AstNodeTypeAnnot, AstNodeTypeAnnotGeneric, AstNodeTypeAnnotRecordKey,
+};
 use elise_parser::Prelude;
 use elise_shared_errors::errors_parser::{ParserErr, ParserErrInfo};
 use elise_shared_types::Span;

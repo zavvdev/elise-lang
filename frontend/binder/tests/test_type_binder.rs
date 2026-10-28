@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use elise_aast::aast_node_call::type_annot::{
+use elise_aast::aast_type_annot::{
     AAstNodeTypeAnnot, AAstNodeTypeAnnotCustom, AAstNodeTypeAnnotList, AAstNodeTypeAnnotPrim,
     AAstNodeTypeAnnotRecord,
 };

@@ -1,4 +1,5 @@
-use elise_ast::{AstNode, AstNodeExpr, AstNodeExprPrim, AstNodeTypeAnnot};
+use elise_ast::ast_type_annot::AstNodeTypeAnnot;
+use elise_ast::{AstNode, AstNodeExpr, AstNodeExprPrim};
 use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
 
 pub fn expect_type_annot_ast_node(ast_node: &AstNode) -> Result<&AstNodeTypeAnnot, SemanalyzerErr> {

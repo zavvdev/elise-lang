@@ -1,16 +1,9 @@
 use std::collections::HashMap;
 
-use elise_aast::{
-    AAstNode,
-    aast_node_call::{
-        AAstNodeCall,
-        call_typedef::AAstNodeCallTypedef,
-        type_annot::{
-            AAstNodeTypeAnnot, AAstNodeTypeAnnotList, AAstNodeTypeAnnotPrim,
-            AAstNodeTypeAnnotRecord,
-        },
-    },
+use elise_aast::aast_type_annot::{
+    AAstNodeTypeAnnot, AAstNodeTypeAnnotList, AAstNodeTypeAnnotPrim, AAstNodeTypeAnnotRecord,
 };
+use elise_aast::{AAstNode, AAstNodeCall, AAstNodeCallTypedef};
 use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     common::BindingType,

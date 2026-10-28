@@ -1,3 +1,1 @@
-.typedef (PI :Int)
-
 .get(@data, 0)
