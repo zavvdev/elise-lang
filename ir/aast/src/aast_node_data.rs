@@ -1,6 +1,6 @@
 use elise_shared_proc_macros::EnumDelegate;
 use elise_shared_types::Span;
-use getset::CopyGetters;
+use getset::{CloneGetters, CopyGetters};
 
 #[derive(Debug, PartialEq, EnumDelegate)]
 #[enum_delegate(
@@ -13,8 +13,9 @@ pub enum AAstNodeData {
     Dict(AAstNodeDataDict),
 }
 
-#[derive(Debug, PartialEq, CopyGetters)]
+#[derive(Debug, PartialEq, CopyGetters, CloneGetters)]
 pub struct AAstNodeDataPrim {
+    #[getset(get_clone = "pub")]
     pub lexeme: String,
 
     #[getset(get_copy = "pub")]

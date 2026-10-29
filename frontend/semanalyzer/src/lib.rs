@@ -463,7 +463,7 @@ impl<'a> Harmony<'a> {
         // and we need only access path here which is the rest of the
         // arguments after the first one.
         let access_args = call.body.iter().skip(1).map(|n| &**n).collect();
-        let type_access_path = Self::call_get__build_type_binding_path(&access_args)?;
+        let type_access_path = self.call_get__build_type_binding_path(&access_args)?;
 
         if !inferred_type_binding_from_data
             .map
@@ -493,6 +493,7 @@ impl<'a> Harmony<'a> {
     // we must do a deep type inference here in order to resolve
     // nested types.
     fn call_get__build_type_binding_path(
+        &mut self,
         ast_nodes: &Vec<&AstNode>,
     ) -> Result<BindingPath, SemanalyzerErr> {
         let mut binding_path = BindingPath::new();
@@ -504,16 +505,18 @@ impl<'a> Harmony<'a> {
                 });
             };
 
-            match expr {
-                AstNodeExpr::Int(_) => {
+            match self.annotate_node_expr(expr)? {
+                AAstNode::Data(AAstNodeData::Int(_)) => {
                     binding_path.push(BindingPathSegment::AbstractIndex);
                 }
-                AstNodeExpr::Str(prim) => {
+                AAstNode::Data(AAstNodeData::Str(prim)) => {
                     binding_path.push(BindingPathSegment::Field(prim.lexeme()));
                 }
-                // TODO: Add type inference from .get call. Check if its return type
-                // is either Int or Str because these are only 2 types that we
-                // support for data accessing.
+                AAstNode::Call(AAstNodeCall::Get(_call_get)) => {
+                    // TODO: Add type inference from .get call. Check if its return type
+                    // is either Int or Str because these are only 2 types that we
+                    // support for data accessing.
+                }
                 _ => {
                     return Err(SemanalyzerErr::InvalDataAccessArg {
                         span: ast_node.span(),
@@ -556,16 +559,13 @@ impl<'a> Harmony<'a> {
                     binding_path.push(BindingPathSegment::Field(prim.lexeme()));
                 }
                 _ => {
-                    // TODO: Convert to AAstNode, check if it's CallGet
-                    // and return None. This is the place where we can potentially
+                    // This is the place where we can potentially
                     // do some optimizations that involve checking whether some
                     // expression returns static data (Int or Str) or computation
                     // dependent data. For example, if some function (other than .get)
                     // explicitly returns string literal or number literal, we can
-                    // catch it here, and produce a valid data binding path.
-                    return Err(SemanalyzerErr::InvalDataAccessArg {
-                        span: ast_node.span(),
-                    });
+                    // catch it here, and produce a valid data binding path segment.
+                    return Ok(None);
                 }
             }
         }
