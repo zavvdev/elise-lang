@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use elise_shared_types::Span;
 use getset::CopyGetters;
 
-use crate::{binding_path::BindingPath, common::BindingType};
+use crate::{
+    binding_path::{BindingPath, BindingPathSegment},
+    common::BindingType,
+};
 
 pub type TypeBindingMap = HashMap<BindingPath, TypeBindingDesc>;
 
@@ -49,6 +52,42 @@ impl TypeBinding {
         }
 
         Self { map: new_map }
+    }
+
+    /// Tries to convert binding entry into a BindingPathSegment
+    /// if a data type carried by the descriptor matches what path
+    /// segment expects.
+    /// BindingPath can be built from Int and Str that represent
+    /// index and access field respectively. If our TypeBinding
+    /// has only one record and that record points to either of
+    /// these data types, it means that we can use this data type
+    /// as a BindingPathSegment and insert it into the `binding_path`.
+    ///
+    /// It's used when we have a function that has its return type
+    /// represented as TypeBinding, and the result of this function
+    /// is used as path segment. For example:
+    /// .get(@data, .get(@data, 0, "id"))
+    /// In this case, nested .get function return type is TypeBinding
+    /// and in order to build a binding path of the outer .get function
+    /// we need to resolve the result of the inner into a BindingPathSegment.
+    /// So we call this function on the return type which augments our
+    /// `binding_path` that is being built.
+    // TODO: Add tests for this function.
+    pub fn insert_as_binding_path_segment(&self, binding_path: &mut BindingPath) -> Option<()> {
+        let mut iter = self.map.iter();
+        let (path, desc) = iter.next()?;
+        if iter.next().is_some() {
+            return None;
+        }
+
+        let segment = match desc.dtype {
+            BindingType::Int => BindingPathSegment::AbstractIndex,
+            BindingType::Str => BindingPathSegment::Field(path.last_seg_field()?),
+            _ => return None,
+        };
+
+        binding_path.push(segment);
+        Some(())
     }
 }
 

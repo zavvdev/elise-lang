@@ -512,10 +512,16 @@ impl<'a> Harmony<'a> {
                 AAstNode::Data(AAstNodeData::Str(prim)) => {
                     binding_path.push(BindingPathSegment::Field(prim.lexeme()));
                 }
-                AAstNode::Call(AAstNodeCall::Get(_call_get)) => {
-                    // TODO: Add type inference from .get call. Check if its return type
-                    // is either Int or Str because these are only 2 types that we
-                    // support for data accessing.
+                // When we have a .get call inside another .get call
+                // we need to get a return type of the nested call and coerce it
+                // into a path segment and insert into the `binding_path`.
+                AAstNode::Call(AAstNodeCall::Get(call_get)) => {
+                    call_get
+                        .return_type_binding
+                        .insert_as_binding_path_segment(&mut binding_path)
+                        .ok_or(SemanalyzerErr::InvalDataAccessArg {
+                            span: ast_node.span(),
+                        })?;
                 }
                 _ => {
                     return Err(SemanalyzerErr::InvalDataAccessArg {
