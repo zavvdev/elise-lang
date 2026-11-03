@@ -93,9 +93,14 @@ pub struct AAstNodeCallGet {
     #[getset(get_copy = "pub")]
     pub span: Span,
 
-    // We still keep body here, because it is possible
-    // to have some complex computation that derive data
-    // access path segments. For example:
+    // Node that is being used as a data for access.
+    // Ex: .get(@data, 0, "id") where @data slot is
+    // this data_node.
+    pub data_node: Box<AAstNode>,
+
+    // We keep data_access_nodes here, because it is
+    // possible to have some complex computation that derive
+    // data access path segments. For example:
     //
     // .get(
     //    .get(@data, 0),
@@ -111,7 +116,7 @@ pub struct AAstNodeCallGet {
     // `data_binding_path` is not None, if it is not None,
     // then we use it, otherwise, we emit op codes for
     // runtime accessing.
-    pub body: Vec<Box<AAstNode>>,
+    pub data_access_nodes: Vec<Box<AAstNode>>,
 
     // Binding path for type resolution only.
     // Does not include literal path segments like
