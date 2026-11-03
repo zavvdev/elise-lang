@@ -1,5 +1,5 @@
 .typedef (Product :Record<{
                     "id"    :Int
-                    "price" :Int }>)
+                    "price" :Str }>)
 
 .typedef (Data :List<:Product>)

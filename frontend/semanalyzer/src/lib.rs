@@ -327,7 +327,12 @@ impl<'a> Harmony<'a> {
         annot: &AstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
         match annot.lexeme.as_str() {
-            TypeAnnotLexeme::INT => Self::call_typedef__type_annot_int(annot),
+            TypeAnnotLexeme::INT => {
+                Self::call_typedef__type_annot_non_generic_prim(annot, AAstNodeTypeAnnot::Int)
+            }
+            TypeAnnotLexeme::STR => {
+                Self::call_typedef__type_annot_non_generic_prim(annot, AAstNodeTypeAnnot::Str)
+            }
             TypeAnnotLexeme::LIST => self.call_typedef__type_annot_list(annot),
             TypeAnnotLexeme::RECORD => self.call_typedef__type_annot_record(annot),
             _ => self.call_typedef__type_annot_custom(annot),
@@ -355,15 +360,14 @@ impl<'a> Harmony<'a> {
         Ok(())
     }
 
-    fn call_typedef__type_annot_int(
+    fn call_typedef__type_annot_non_generic_prim(
         annot: &AstNodeTypeAnnot,
+        prim_variant: fn(AAstNodeTypeAnnotPrim) -> AAstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
         if annot.generic.is_some() {
             return Err(SemanalyzerErr::UnexpectedGeneric { span: annot.span() });
         }
-        Ok(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
-            span: annot.span(),
-        }))
+        Ok(prim_variant(AAstNodeTypeAnnotPrim { span: annot.span() }))
     }
 
     fn call_typedef__type_annot_list(

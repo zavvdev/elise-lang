@@ -13,6 +13,7 @@ impl FnGet {
 pub struct TypeAnnotLexeme;
 impl TypeAnnotLexeme {
     pub const INT: &'static str = "Int";
+    pub const STR: &'static str = "Str";
     pub const LIST: &'static str = "List";
     pub const RECORD: &'static str = "Record";
 }

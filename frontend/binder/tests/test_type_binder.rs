@@ -51,6 +51,39 @@ fn should_bind_int() {
 
 // ==================================================================
 //
+// STR START
+//
+// ==================================================================
+
+#[test]
+fn should_bind_str() {
+    let str_aast = AAstNodeTypeAnnot::Str(AAstNodeTypeAnnotPrim {
+        span: Span { start: 0, end: 0 },
+    });
+
+    let globals = HashMap::new();
+    let binding = TypeBinder::new(&str_aast, &globals).bind().unwrap();
+
+    let mut expected = TypeBinding::new();
+
+    let binding_path = BindingPath::new();
+    let binding_desc = TypeBindingDesc {
+        dtype: BindingType::Str,
+        span: Span { start: 0, end: 0 },
+    };
+
+    expected.map.insert(binding_path, binding_desc);
+    assert_eq!(binding, expected);
+}
+
+// ==================================================================
+//
+// STR END
+//
+// ==================================================================
+
+// ==================================================================
+//
 // LIST START
 //
 // ==================================================================

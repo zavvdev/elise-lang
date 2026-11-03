@@ -125,6 +125,62 @@ fn should_fail_if_int_has_generic() {
 
 // ==================================================================
 //
+// STR START
+//
+// ==================================================================
+
+#[test]
+fn should_analyze_str_aliasing() {
+    let mut type_bindings_map = HashMap::new();
+    let aast = semanalyze(".typedef(Test :Str)", &mut type_bindings_map, TYPEDEF_MODE).unwrap();
+
+    let mut expected_type_binding = TypeBinding::new();
+    let mut expected_type_bindings_map: AliasedTypeBindings = HashMap::new();
+    let mut expected_aast: Vec<AAstNode> = vec![];
+
+    expected_type_binding.map.insert(
+        BindingPath::new(),
+        TypeBindingDesc {
+            dtype: BindingType::Str,
+            span: Span { start: 14, end: 18 },
+        },
+    );
+    expected_type_bindings_map.insert("Test".to_string(), expected_type_binding);
+
+    expected_aast.push(AAstNode::Call(AAstNodeCall::Typedef(AAstNodeCallTypedef {
+        span: Span { start: 0, end: 19 },
+        alias: "Test".to_string(),
+        annot: AAstNodeTypeAnnot::Str(AAstNodeTypeAnnotPrim {
+            span: Span { start: 14, end: 18 },
+        }),
+    })));
+
+    assert_eq!(type_bindings_map, expected_type_bindings_map);
+    assert_eq!(aast, expected_aast);
+}
+
+#[test]
+fn should_fail_if_str_has_generic() {
+    let mut type_bindings_map = HashMap::new();
+    let result = semanalyze(
+        ".typedef(Test :Str<:Int>)",
+        &mut type_bindings_map,
+        TYPEDEF_MODE,
+    );
+    assert!(matches!(
+        result,
+        Err(SemanalyzerErr::UnexpectedGeneric { .. })
+    ));
+}
+
+// ==================================================================
+//
+// INT END
+//
+// ==================================================================
+
+// ==================================================================
+//
 // LIST START
 //
 // ==================================================================

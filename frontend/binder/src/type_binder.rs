@@ -61,6 +61,7 @@ impl<'a> TypeBinder<'a> {
                 self.bind_list(item_type, binding)
             }
             AAstNodeTypeAnnot::Int { .. } => self.bind_primitive(BindingType::Int, binding),
+            AAstNodeTypeAnnot::Str { .. } => self.bind_primitive(BindingType::Str, binding),
         }
     }
 

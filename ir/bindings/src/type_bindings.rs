@@ -82,6 +82,14 @@ impl TypeBinding {
 
         let segment = match desc.dtype {
             BindingType::Int => BindingPathSegment::AbstractIndex,
+            // TODO: THIS HAS TO BE INCORRECT. WE CAN'T USE PATH SEGMENT HERE
+            // BECAUSE WHAT WE NEED IS AN ACTUAL STRING LITERAL BEING RETURNED
+            // AND THIS POINTS TO JUST A STRING THAT IS USED TO ACCESS IT.
+            // Ex:
+            // [Root, Field("name")] => Str
+            // We take "name" here but we need to know what Str is. We can't know
+            // that so I suppose it's impossible to get it and it must be deferred
+            // to runtime.
             BindingType::Str => BindingPathSegment::Field(path.last_seg_field()?),
             _ => return None,
         };

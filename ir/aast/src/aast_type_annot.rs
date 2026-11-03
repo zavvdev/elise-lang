@@ -16,6 +16,7 @@ pub enum AAstNodeTypeAnnot {
     Record(AAstNodeTypeAnnotRecord),
     List(AAstNodeTypeAnnotList),
     Int(AAstNodeTypeAnnotPrim),
+    Str(AAstNodeTypeAnnotPrim),
 }
 
 // ==================================================================
