@@ -477,10 +477,14 @@ impl<'a> Harmony<'a> {
         let return_type_binding =
             inferred_type_binding_from_data.strip_binding_paths_by_prefix(&type_access_path);
 
+        let mut next_body = Vec::with_capacity(call.body.len());
+        for ast_node in call.body.iter() {
+            next_body.push(Box::new(self.annotate_node(ast_node)?));
+        }
+
         Ok(AAstNode::Call(AAstNodeCall::Get(AAstNodeCallGet {
             span: call.span(),
-            // TODO: Add body.
-            body: vec![],
+            body: next_body,
             return_type_binding,
             type_binding_path: type_access_path,
             data_binding_path: data_access_path,

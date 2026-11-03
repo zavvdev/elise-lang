@@ -18,30 +18,7 @@
 
     - [x] Dicts
         
-    - [ ] Create a type definition collector as a part of Harmony that
-          can be used separately. It must accept a mutable AliasedTypeBindings
-          struct that will be enriched with type definitions. It must return
-          its own error types so we can use it only for .elt files
-          with schema code for reports. Then, we can use it inside Harmony
-          annotator as well for collecting local type definitions.
-          In must only collect type definitions made from .typedef calls.
-
-    - [ ] We need to make semantic analysis to have multiple passes.
-          First pass is a type definition collection (.typedef), that uses
-          type collector and produces an aliased type bindings. Second annotates AST
-          nodes that represent data with types (infers type from data if needed).
-          Third applies semantic rules and checks if types match. It can also
-          change the structure of the resulting AAST if needed.
-
     - [ ] .get
-
-        - [ ] Currently, when we do .get(.get(@data, 0), "id")
-              we only get a final AAstNodeCall::Get with access path
-              [Root, Field("id")] and return type [Root] => Int.
-              This is correct behavior from technical perspective
-              but we do not include any information what data we're
-              accessing. We must include type information about data
-              being accessed.
 
         - [ ] Tests
 
