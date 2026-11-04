@@ -113,53 +113,6 @@ fn should_not_pop_if_len_is_1() {
 // ==================================================================
 
 // ==================================================================
-// LAST START
-// ==================================================================
-
-#[test]
-fn should_return_last_segment() {
-    let mut path = BindingPath::new();
-    path.push(BindingPathSegment::Field("test".to_string()));
-    assert_eq!(
-        path.last(),
-        Some(&BindingPathSegment::Field("test".to_string()))
-    );
-}
-
-#[test]
-fn should_return_none_if_len_is_1() {
-    let path = BindingPath::new();
-    assert_eq!(path.last(), None);
-}
-
-// ==================================================================
-// LAST END
-// ==================================================================
-
-// ==================================================================
-// LAST SEG FIELD START
-// ==================================================================
-
-#[test]
-fn should_return_field_lexeme_if_last() {
-    let mut path = BindingPath::new();
-    path.push(BindingPathSegment::Field("test".to_string()));
-    assert_eq!(path.last_seg_field(), Some("test".to_string()));
-}
-
-#[test]
-fn should_return_none_if_last_seg_is_not_field() {
-    let mut path = BindingPath::new();
-    path.push(BindingPathSegment::Field("test".to_string()));
-    path.push(BindingPathSegment::AbstractIndex);
-    assert_eq!(path.last_seg_field(), None);
-}
-
-// ==================================================================
-// LAST SEG FIELD END
-// ==================================================================
-
-// ==================================================================
 // AS_STR START
 // ==================================================================
 

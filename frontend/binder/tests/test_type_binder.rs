@@ -7,8 +7,7 @@ use elise_aast::aast_type_annot::{
 use elise_binder::type_binder::TypeBinder;
 use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
-    common::BindingType,
-    type_bindings::{TypeBinding, TypeBindingDesc},
+    type_bindings::{TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };
 use elise_shared_errors::errors_type_binder::TypeBinderErr;
 use elise_shared_types::Span;
@@ -35,7 +34,7 @@ fn should_bind_int() {
 
     let binding_path = BindingPath::new();
     let binding_desc = TypeBindingDesc {
-        dtype: BindingType::Int,
+        dtype: TypeBindingDataType::Int,
         span: Span { start: 0, end: 0 },
     };
 
@@ -68,7 +67,7 @@ fn should_bind_str() {
 
     let binding_path = BindingPath::new();
     let binding_desc = TypeBindingDesc {
-        dtype: BindingType::Str,
+        dtype: TypeBindingDataType::Str,
         span: Span { start: 0, end: 0 },
     };
 
@@ -105,14 +104,14 @@ fn should_bind_list_with_primitive_generic() {
     expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::List,
+            dtype: TypeBindingDataType::List,
             span: Span { start: 0, end: 1 },
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 2, end: 3 },
         },
     );
@@ -140,14 +139,14 @@ fn should_bind_list_with_list_generic() {
     expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::List,
+            dtype: TypeBindingDataType::List,
             span: Span { start: 0, end: 1 },
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
-            dtype: BindingType::List,
+            dtype: TypeBindingDataType::List,
             span: Span { start: 2, end: 3 },
         },
     );
@@ -157,7 +156,7 @@ fn should_bind_list_with_list_generic() {
             BindingPathSegment::AbstractIndex,
         ]),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 4, end: 5 },
         },
     );
@@ -188,14 +187,14 @@ fn should_bind_list_with_record_generic() {
     expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::List,
+            dtype: TypeBindingDataType::List,
             span: Span { start: 0, end: 1 },
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
-            dtype: BindingType::Record,
+            dtype: TypeBindingDataType::Record,
             span: Span { start: 2, end: 3 },
         },
     );
@@ -205,7 +204,7 @@ fn should_bind_list_with_record_generic() {
             BindingPathSegment::Field("id".to_string()),
         ]),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 4, end: 5 },
         },
     );
@@ -231,14 +230,14 @@ fn should_bind_list_with_custom_type_generic() {
     expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::List,
+            dtype: TypeBindingDataType::List,
             span: Span { start: 0, end: 1 },
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
-            dtype: BindingType::Record,
+            dtype: TypeBindingDataType::Record,
             span: Span { start: 0, end: 0 },
         },
     );
@@ -248,7 +247,7 @@ fn should_bind_list_with_custom_type_generic() {
             BindingPathSegment::Field("id".to_string()),
         ]),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 0, end: 0 },
         },
     );
@@ -288,14 +287,14 @@ fn should_bind_record_with_primitive_values() {
     expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::Record,
+            dtype: TypeBindingDataType::Record,
             span: Span { start: 0, end: 1 },
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("id".to_string())]),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 2, end: 3 },
         },
     );
@@ -326,14 +325,14 @@ fn should_bind_record_with_list_values() {
     expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::Record,
+            dtype: TypeBindingDataType::Record,
             span: Span { start: 0, end: 1 },
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("scores".to_string())]),
         TypeBindingDesc {
-            dtype: BindingType::List,
+            dtype: TypeBindingDataType::List,
             span: Span { start: 2, end: 3 },
         },
     );
@@ -343,7 +342,7 @@ fn should_bind_record_with_list_values() {
             BindingPathSegment::AbstractIndex,
         ]),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 4, end: 5 },
         },
     );
@@ -377,14 +376,14 @@ fn should_bind_record_with_record_values() {
     expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::Record,
+            dtype: TypeBindingDataType::Record,
             span: Span { start: 0, end: 1 },
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("user".to_string())]),
         TypeBindingDesc {
-            dtype: BindingType::Record,
+            dtype: TypeBindingDataType::Record,
             span: Span { start: 2, end: 3 },
         },
     );
@@ -394,7 +393,7 @@ fn should_bind_record_with_record_values() {
             BindingPathSegment::Field("id".to_string()),
         ]),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 4, end: 5 },
         },
     );
@@ -423,14 +422,14 @@ fn should_bind_record_with_custom_type_values() {
     expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::Record,
+            dtype: TypeBindingDataType::Record,
             span: Span { start: 0, end: 1 },
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("test".to_string())]),
         TypeBindingDesc {
-            dtype: BindingType::Record,
+            dtype: TypeBindingDataType::Record,
             span: Span { start: 0, end: 0 },
         },
     );
@@ -440,7 +439,7 @@ fn should_bind_record_with_custom_type_values() {
             BindingPathSegment::Field("id".to_string()),
         ]),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 0, end: 0 },
         },
     );
@@ -475,7 +474,7 @@ fn should_bind_custom_primitive() {
     expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 0, end: 0 },
         },
     );
@@ -498,14 +497,14 @@ fn should_bind_custom_list() {
     expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::List,
+            dtype: TypeBindingDataType::List,
             span: Span { start: 0, end: 0 },
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 0, end: 0 },
         },
     );
@@ -528,14 +527,14 @@ fn should_bind_custom_record() {
     expected.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::Record,
+            dtype: TypeBindingDataType::Record,
             span: Span { start: 0, end: 0 },
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("id".to_string())]),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 0, end: 0 },
         },
     );

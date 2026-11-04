@@ -4,8 +4,7 @@ use elise_aast::aast_type_annot::{
 };
 use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
-    common::BindingType,
-    type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDesc},
+    type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };
 use elise_shared_errors::errors_type_binder::TypeBinderErr;
 use elise_shared_types::Span;
@@ -13,7 +12,7 @@ use elise_shared_types::Span;
 pub struct TypeBinder<'a> {
     aast_type_annot: &'a AAstNodeTypeAnnot,
     current_path: BindingPath,
-    current_type: Option<BindingType>,
+    current_type: Option<TypeBindingDataType>,
     current_span: Span,
     globals: &'a AliasedTypeBindings,
 }
@@ -60,8 +59,8 @@ impl<'a> TypeBinder<'a> {
             AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList { item_type, .. }) => {
                 self.bind_list(item_type, binding)
             }
-            AAstNodeTypeAnnot::Int { .. } => self.bind_primitive(BindingType::Int, binding),
-            AAstNodeTypeAnnot::Str { .. } => self.bind_primitive(BindingType::Str, binding),
+            AAstNodeTypeAnnot::Int { .. } => self.bind_primitive(TypeBindingDataType::Int, binding),
+            AAstNodeTypeAnnot::Str { .. } => self.bind_primitive(TypeBindingDataType::Str, binding),
         }
     }
 
@@ -91,7 +90,7 @@ impl<'a> TypeBinder<'a> {
     /// adhere to the same semantics.
     fn bind_primitive(
         &mut self,
-        dtype: BindingType,
+        dtype: TypeBindingDataType,
         binding: &mut TypeBinding,
     ) -> Result<(), TypeBinderErr> {
         self.current_type = Some(dtype);
@@ -127,7 +126,7 @@ impl<'a> TypeBinder<'a> {
         // because resolving nested types will alter current_path
         // state, so commiting parent after resolving recursively
         // will produce invalid path segments to the parent.
-        self.current_type = Some(BindingType::Record);
+        self.current_type = Some(TypeBindingDataType::Record);
         self.commit(binding)?;
 
         for (key, value) in entries {
@@ -164,7 +163,7 @@ impl<'a> TypeBinder<'a> {
         // Capture current type and commit it before recursing
         // in order to prevent committing parent type with invalid
         // path segments since recursing will alter current_path.
-        self.current_type = Some(BindingType::List);
+        self.current_type = Some(TypeBindingDataType::List);
         self.commit(binding)?;
 
         // Pushing AbstractIndex since our list can have any number of

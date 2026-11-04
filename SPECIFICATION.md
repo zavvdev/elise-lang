@@ -1,11 +1,35 @@
 # Specification
 
-## .let semantics
+## .typedef semantics
+
+Custom type definition function.
 
 ```
-.let (Identifier :TypeDefinition ValueLiteral)
+.typedef (Identifier :TypeDefinition)
 ```
 
-1. Type definition is required
+Example:
 
-2. ValueLiteral data type must match type definition
+```
+.typedef (Product :Record<{
+                    "id"    :Int
+                    "price" :Str }>)
+```
+
+---
+
+## .get semantics
+
+Data access function.
+
+```
+.get (Data (Int | Str)+)
+```
+
+Example:
+
+```
+.get(@data, 0, "price")
+```
+
+---

@@ -4,9 +4,9 @@ use elise_aast::aast_type_annot::{
     AAstNodeTypeAnnot, AAstNodeTypeAnnotList, AAstNodeTypeAnnotPrim, AAstNodeTypeAnnotRecord,
 };
 use elise_aast::{AAstNode, AAstNodeCall, AAstNodeCallTypedef};
+use elise_bindings::type_bindings::TypeBindingDataType;
 use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
-    common::BindingType,
     type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDesc},
 };
 use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
@@ -85,7 +85,7 @@ fn should_analyze_int_aliasing() {
     expected_type_binding.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 13, end: 17 },
         },
     );
@@ -141,7 +141,7 @@ fn should_analyze_str_aliasing() {
     expected_type_binding.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::Str,
+            dtype: TypeBindingDataType::Str,
             span: Span { start: 14, end: 18 },
         },
     );
@@ -202,14 +202,14 @@ fn should_analyze_list_aliasing() {
     expected_type_binding.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::List,
+            dtype: TypeBindingDataType::List,
             span: Span { start: 14, end: 25 },
         },
     );
     expected_type_binding.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 20, end: 24 },
         },
     );
@@ -281,14 +281,14 @@ fn should_analyze_record_aliasing() {
     expected_type_binding.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            dtype: BindingType::Record,
+            dtype: TypeBindingDataType::Record,
             span: Span { start: 15, end: 37 },
         },
     );
     expected_type_binding.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("id".to_string())]),
         TypeBindingDesc {
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
             span: Span { start: 30, end: 34 },
         },
     );

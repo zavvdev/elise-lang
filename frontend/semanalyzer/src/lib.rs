@@ -467,7 +467,7 @@ impl<'a> Harmony<'a> {
         // and we need only access path here which is the rest of the
         // arguments after the first one.
         let access_args = call.body.iter().skip(1).map(|n| &**n).collect();
-        let type_access_path = self.call_get__build_type_binding_path(&access_args)?;
+        let type_access_path = Self::call_get__build_binding_path(&access_args, true)?;
 
         if !inferred_type_binding_from_data
             .map
@@ -476,7 +476,7 @@ impl<'a> Harmony<'a> {
             return Err(SemanalyzerErr::UnresolvablePath { span: call.span() });
         };
 
-        let data_access_path = Self::call_get__build_data_binding_path(&access_args)?;
+        let data_access_path = Self::call_get__build_binding_path(&access_args, false)?;
 
         let return_type_binding =
             inferred_type_binding_from_data.strip_binding_paths_by_prefix(&type_access_path);
@@ -500,63 +500,17 @@ impl<'a> Harmony<'a> {
         })))
     }
 
-    // Derives a BindingPath that represents a type
-    // binding only. It must always be derived since we have
-    // access to all data types at compile time, which means
-    // we must do a deep type inference here in order to resolve
-    // nested types.
-    fn call_get__build_type_binding_path(
-        &mut self,
+    fn call_get__build_binding_path(
         ast_nodes: &Vec<&AstNode>,
+        // Whether to resolve ast_nodes as type access
+        // with AbstractIndex that can be used for accessing type
+        // definition from type binding maps, or resolve integers as
+        // Index segments for accessing data itself.
+        // We need both because compiler needs data access path
+        // but here in semanalyzer we also need to have type access
+        // path for type resolutions.
+        type_access_only: bool,
     ) -> Result<BindingPath, SemanalyzerErr> {
-        let mut binding_path = BindingPath::new();
-
-        for ast_node in ast_nodes.iter() {
-            let AstNode::Expr(expr) = ast_node else {
-                return Err(SemanalyzerErr::InvalDataAccessArg {
-                    span: ast_node.span(),
-                });
-            };
-
-            match self.annotate_node_expr(expr)? {
-                AAstNode::Data(AAstNodeData::Int(_)) => {
-                    binding_path.push(BindingPathSegment::AbstractIndex);
-                }
-                AAstNode::Data(AAstNodeData::Str(prim)) => {
-                    binding_path.push(BindingPathSegment::Field(prim.lexeme()));
-                }
-                // When we have a .get call inside another .get call
-                // we need to get a return type of the nested call and coerce it
-                // into a path segment and insert into the `binding_path`.
-                AAstNode::Call(AAstNodeCall::Get(call_get)) => {
-                    call_get
-                        .return_type_binding
-                        .insert_as_binding_path_segment(&mut binding_path)
-                        .ok_or(SemanalyzerErr::InvalDataAccessArg {
-                            span: ast_node.span(),
-                        })?;
-                }
-                _ => {
-                    return Err(SemanalyzerErr::InvalDataAccessArg {
-                        span: ast_node.span(),
-                    });
-                }
-            }
-        }
-
-        Ok(binding_path)
-    }
-
-    // Same as `call_get__build_type_binding_path`, but tries to
-    // derive a BindingPath that represents a data binding only.
-    // It means that it must contain literal access indexes instead
-    // of AbstractIndex. It returns Option<BindingPath> because
-    // if binding path segment cannot be known at compile time
-    // but can only be derived at runtime because of some computation,
-    // it must return None instead.
-    fn call_get__build_data_binding_path(
-        ast_nodes: &Vec<&AstNode>,
-    ) -> Result<Option<BindingPath>, SemanalyzerErr> {
         let mut binding_path = BindingPath::new();
 
         for ast_node in ast_nodes.iter() {
@@ -568,28 +522,28 @@ impl<'a> Harmony<'a> {
 
             match expr {
                 AstNodeExpr::Int(prim) => {
-                    binding_path.push(BindingPathSegment::Index(
-                        // Unwrap is safe here since our AST node guarantees
-                        // that integer is parsed correctly.
-                        prim.lexeme.parse::<usize>().unwrap(),
-                    ));
+                    if type_access_only {
+                        binding_path.push(BindingPathSegment::AbstractIndex);
+                    } else {
+                        binding_path.push(BindingPathSegment::Index(
+                            // Unwrap is safe here since our AST node guarantees
+                            // that integer is parsed correctly.
+                            prim.lexeme.parse::<usize>().unwrap(),
+                        ));
+                    }
                 }
                 AstNodeExpr::Str(prim) => {
                     binding_path.push(BindingPathSegment::Field(prim.lexeme()));
                 }
                 _ => {
-                    // This is the place where we can potentially
-                    // do some optimizations that involve checking whether some
-                    // expression returns static data (Int or Str) or computation
-                    // dependent data. For example, if some function (other than .get)
-                    // explicitly returns string literal or number literal, we can
-                    // catch it here, and produce a valid data binding path segment.
-                    return Ok(None);
+                    return Err(SemanalyzerErr::InvalDataAccessArg {
+                        span: ast_node.span(),
+                    });
                 }
             }
         }
 
-        Ok(Some(binding_path))
+        Ok(binding_path)
     }
 
     // ==================================================================

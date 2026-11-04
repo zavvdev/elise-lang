@@ -5,8 +5,7 @@ pub mod test_utils {
     use elise_ast::AstNode;
     use elise_bindings::{
         binding_path::{BindingPath, BindingPathSegment},
-        common::BindingType,
-        type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDesc},
+        type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDataType, TypeBindingDesc},
     };
     use elise_parser::Prelude;
     use elise_semanalyzer::Harmony;
@@ -67,7 +66,7 @@ pub mod test_utils {
         single_type_bindings.insert(
             BindingPath::new(),
             TypeBindingDesc {
-                dtype: BindingType::Int,
+                dtype: TypeBindingDataType::Int,
                 span: Span { start: 0, end: 0 },
             },
         );
@@ -76,14 +75,14 @@ pub mod test_utils {
         record_type_bindings.insert(
             BindingPath::new(),
             TypeBindingDesc {
-                dtype: BindingType::Record,
+                dtype: TypeBindingDataType::Record,
                 span: Span { start: 0, end: 0 },
             },
         );
         record_type_bindings.insert(
             BindingPath::with_segments(vec![BindingPathSegment::Field("id".to_string())]),
             TypeBindingDesc {
-                dtype: BindingType::Int,
+                dtype: TypeBindingDataType::Int,
                 span: Span { start: 0, end: 0 },
             },
         );
@@ -92,14 +91,14 @@ pub mod test_utils {
         list_type_bindings.insert(
             BindingPath::new(),
             TypeBindingDesc {
-                dtype: BindingType::List,
+                dtype: TypeBindingDataType::List,
                 span: Span { start: 0, end: 0 },
             },
         );
         list_type_bindings.insert(
             BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
             TypeBindingDesc {
-                dtype: BindingType::Int,
+                dtype: TypeBindingDataType::Int,
                 span: Span { start: 0, end: 0 },
             },
         );

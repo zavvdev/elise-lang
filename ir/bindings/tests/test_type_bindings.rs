@@ -2,8 +2,7 @@ mod common;
 
 use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
-    common::BindingType,
-    type_bindings::{TypeBinding, TypeBindingDesc},
+    type_bindings::{TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };
 use elise_shared_types::Span;
 
@@ -15,14 +14,14 @@ fn should_strip_binding_paths_by_prefix() {
         BindingPath::new(),
         TypeBindingDesc {
             span: Span { start: 0, end: 0 },
-            dtype: BindingType::List,
+            dtype: TypeBindingDataType::List,
         },
     );
     type_binding.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
             span: Span { start: 1, end: 1 },
-            dtype: BindingType::Record,
+            dtype: TypeBindingDataType::Record,
         },
     );
     type_binding.map.insert(
@@ -32,7 +31,7 @@ fn should_strip_binding_paths_by_prefix() {
         ]),
         TypeBindingDesc {
             span: Span { start: 2, end: 2 },
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
         },
     );
 
@@ -46,14 +45,14 @@ fn should_strip_binding_paths_by_prefix() {
         BindingPath::new(),
         TypeBindingDesc {
             span: Span { start: 1, end: 1 },
-            dtype: BindingType::Record,
+            dtype: TypeBindingDataType::Record,
         },
     );
     expected_result.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("id".to_string())]),
         TypeBindingDesc {
             span: Span { start: 2, end: 2 },
-            dtype: BindingType::Int,
+            dtype: TypeBindingDataType::Int,
         },
     );
 

@@ -116,21 +116,6 @@ impl BindingPath {
         None
     }
 
-    pub fn last(&self) -> Option<&BindingPathSegment> {
-        if self.0.len() > 1 {
-            return self.0.last();
-        }
-        None
-    }
-
-    /// Expects the last segment to be a Field segment.
-    pub fn last_seg_field(&self) -> Option<String> {
-        match self.0.last()? {
-            BindingPathSegment::Field(lexeme) => Some(lexeme.clone()),
-            _ => None,
-        }
-    }
-
     /// Path is considered valid if it's not empty,
     /// and has only one Root segment at the beginning.
     pub fn is_valid(binding_path: &Self) -> bool {

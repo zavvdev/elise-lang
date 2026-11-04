@@ -13,6 +13,8 @@
     - [x] @data slot
     
     - [x] Int
+    
+    - [x] Str
 
     - [x] List
 

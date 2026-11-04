@@ -122,20 +122,20 @@ pub struct AAstNodeCallGet {
     // Does not include literal path segments like
     // Index(0) but rather abstract ones like
     // AbstractIndex.
-    // Must not be optional because we can always
-    // infer type since we know all data types
-    // at compile time.
+    //
+    // Might become Option in the future if we
+    // ever want to support dynamic/computed path
+    // segment.
     pub type_binding_path: BindingPath,
 
     // Binding path for data accessing.
     // Does not include abstract path segments but
     // literal ones, like Index(0).
     //
-    // It is wrapped in Option because there may be
-    // a case when we are not able to build a literal
-    // data access path because of runtime computation
-    // that derives an access key.
-    pub data_binding_path: Option<BindingPath>,
+    // Might become Option in the future if we
+    // ever want to support dynamic/computed path
+    // segment.
+    pub data_binding_path: BindingPath,
 
     // Return type of the .get function represented
     // by TypeBinding structure, where each key has
