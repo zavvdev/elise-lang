@@ -1,12 +1,8 @@
 # Specification
 
-## .typedef semantics
+## .typedef function
 
-Custom type definition function.
-
-```
-.typedef (Identifier :TypeDefinition)
-```
+Creates a custom type definition.
 
 Example:
 
@@ -14,17 +10,17 @@ Example:
 .typedef (Product :Record<{
                     "id"    :Int
                     "price" :Str }>)
+
+.typedef (Data :List<:Product>)
 ```
 
 ---
 
-## .get semantics
+## .get function
 
-Data access function.
-
-```
-.get (Data (Int | Str)*)
-```
+Performs data access using provided path.
+Use integers for accessing List indexes,
+and strings for accessing Record fields.
 
 Example:
 
