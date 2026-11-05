@@ -1,12 +1,14 @@
-# Elise: Bytecode-compiled DSL for typed data transformation pipelines
+# Elise: Bytecode-compiled DSL for typed data transformation
 
 /eˈliːs/ → pronounced like “eh-LEES”
 
-[Grammar Rules](./GRAMMAR.md), [Documentation](./DOCUMENTATION.md), [Specification](./SPECIFICATION.md), [Todos](./TODO.md)
+[Grammar Rules](./GRAMMAR.md), [Specification](./SPECIFICATION.md), [Todos](./TODO.md)
 
 ## Overview
 
-A schema-driven data transformation language that compiles type-optimized bytecode from pipeline expressions over structured data. Write once, run against any conforming dataset.
+A domain-specific language for schema-driven data processing, with ahead-of-time compilation to type-optimized bytecode. Write once, run against any conforming dataset.
+
+The main idea is simple: if you know the types of your dataset, you can describe them in a schema, and Elise uses that schema to produce optimized bytecode. These optimizations are possible because the compiler knows all the types at compile time. You can then use that bytecode on any other dataset, as long as it matches the original schema that was used to generate the bytecode.
 
 ## File Types
 
