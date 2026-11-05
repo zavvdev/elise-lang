@@ -20,9 +20,7 @@
 
     - [x] Dicts
         
-    - [ ] .get
-
-        - [ ] Tests
+    - [x] .get
 
     - [ ] .add
 
