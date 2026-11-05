@@ -1,3 +1,13 @@
+//! Type Binder
+//!
+//! This data structure allows us to transform AAst node
+//! that represents a type annotation like :List<:User>
+//! into a flat data structure called TypeBinding (see ir/bindings).
+//!
+//! Type annotation AAst node itself is a nested data structure
+//! which needs to be flattened in order to simplify type validation
+//! and type accessing.
+
 use elise_aast::aast_type_annot::{
     AAstNodeTypeAnnot, AAstNodeTypeAnnotCustom, AAstNodeTypeAnnotList, AAstNodeTypeAnnotRecord,
     AAstNodeTypeAnnotRecordEntries,
@@ -20,11 +30,14 @@ pub struct TypeBinder<'a> {
 impl<'a> TypeBinder<'a> {
     pub fn new(aast_type_annot: &'a AAstNodeTypeAnnot, globals: &'a AliasedTypeBindings) -> Self {
         Self {
+            // Type annotation itself that needs to be flattened.
             aast_type_annot,
-            // Current path that changes according to nesting.
-            // We push here every time we recurse into nested fields
-            // like list items or record keys in order to resolve them.
+
+            // Current path that is being bind. Enriched with
+            // path segments during the process and gets commited
+            // into the resulting binding HashMap when ready.
             current_path: BindingPath::new(),
+
             // Data type that we're currently in and want to resolve.
             // Whenever we encounter a type definition that we distinguish,
             // we capture it into this field.
@@ -32,7 +45,24 @@ impl<'a> TypeBinder<'a> {
 
             current_span: Span { start: 0, end: 0 },
 
-            // Global type bindings injected from outside.
+            // Global type bindings injected from outside as AliasedTypeBindings.
+            // We need this in order to be able to resolve types from custom type
+            // aliases. For example, if we have something like this:
+            //
+            // .typedef (Product :Record<{
+            //         "id"    :Int
+            //         "price" :Str }>)
+            //
+            // .typedef (Data :List<:Product>)
+            //
+            // The last Data type alias references :Product type alias, so
+            // in order to build a TypeBinding for Data, we need to carry
+            // the outer context where the TypeBinding for the Product alias
+            // lives. This allows us to refer to the Product while resolving
+            // Data and merge their BindingPath's into the one, so we can have:
+            // [Root, AbstractIndex, Field("id")] => Int
+            // where the transition from AbstractIndex to Field("id") is the
+            // result of the merge.
             globals,
         }
     }

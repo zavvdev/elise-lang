@@ -1,3 +1,9 @@
+//! Notes that represent literal static data such as:
+//! Int, Str, Dict and List.
+//!
+//! Nodes inside AAstNodeData are intended to be static
+//! literals, not computed values.
+
 use elise_shared_proc_macros::EnumDelegate;
 use elise_shared_types::Span;
 use getset::{CloneGetters, CopyGetters};

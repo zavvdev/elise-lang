@@ -7,6 +7,32 @@ use crate::binding_path::BindingPath;
 
 pub type TypeBindingMap = HashMap<BindingPath, TypeBindingDesc>;
 
+/// This data structure is a flat representation of a type annotation.
+///
+/// For example, let's say we define this type annotation:
+///
+/// .typedef (User :Record<{
+///                         id   :Int
+///                         name :Str}>)
+///
+/// Instead of representing User type as struct with nested nodes,
+/// like we do for Ast and AAst nodes, we flatten it into a HashMap
+/// where each key is a path to the type descriptor
+/// (see TypeBindingMap type above).
+///
+/// So in this case our User type alias will be associated with the
+/// next TypeBinding:
+///
+/// HashMap {
+///     [Root] => Record
+///     [Root, Field("id")] => Int
+///     [Root, Field("name")] => Str
+/// }
+///
+/// This gives us a better way of type validation, because we don't need
+/// to recurse into the nested nodes, and it also simplifies type access.
+/// For example, anyone who has a BindingPath, can try to resolve the type
+/// by accessing it from this HashMap.
 #[derive(Debug, PartialEq, Clone)]
 pub struct TypeBinding {
     pub map: TypeBindingMap,
@@ -52,6 +78,9 @@ impl TypeBinding {
     }
 }
 
+// We keep this enum separately from data_bindings
+// because data types for data bindings need to carry
+// data inside each enum variant.
 #[derive(Debug, PartialEq, Clone)]
 pub enum TypeBindingDataType {
     Int,
@@ -68,4 +97,13 @@ pub struct TypeBindingDesc {
     pub span: Span,
 }
 
+/// Each key is an alias that was created by .typedef function.
+/// For example:
+///
+/// .typedef (User :Record<{
+///                         id   :Int
+///                         name :Str}>)
+///
+/// In this case, the key is "User" string and the value is
+/// TypeBinding that represents this type alias.
 pub type AliasedTypeBindings = HashMap<String, TypeBinding>;

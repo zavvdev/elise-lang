@@ -1,3 +1,23 @@
+//! Semantic analyzer
+//!
+//! Takes AST nodes produced by Prelude (parser) and translates them
+//! into AAST nodes while verifying semantic rules.
+//!
+//! It also have 2 execution modes: type definitions mode and normal mode.
+//! In type definitions mode it analyzes .typedef nodes only. It's used for
+//! semantic analysis of the .elt (schema definitions) file, so we can
+//! reject non-typedef AST nodes.
+//!
+//! During execution, it collects all resolved type definitions which can
+//! also be accepted from outside in order to provide them for the current
+//! execution cycle.
+//!
+//! For example, we first run Harmony for the .elt file which defines our
+//! global data types, then we take collected type definitions produced by
+//! Harmony and inject into the next execution cycle for the .eli (source code)
+//! file so we get our type definitions in scope and any references to types
+//! defined in .elt file are resolved correctly.
+
 #![allow(non_snake_case)]
 
 pub mod builtins;

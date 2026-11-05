@@ -1,3 +1,10 @@
+//! Parser
+//!
+//! Takes raw source code and transforms it into AST nodes.
+//! Since our code is represented in Code-as-data format which
+//! already replicates a correct AST nesting, we skip tokenization
+//! and build AST right away.
+
 #![allow(non_snake_case)]
 
 pub mod config;
