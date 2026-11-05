@@ -103,6 +103,42 @@ pub mod test_utils {
             },
         );
 
+        let mut data_slot_bindings = HashMap::new();
+        data_slot_bindings.insert(
+            BindingPath::new(),
+            TypeBindingDesc {
+                dtype: TypeBindingDataType::List,
+                span: Span { start: 0, end: 0 },
+            },
+        );
+        data_slot_bindings.insert(
+            BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
+            TypeBindingDesc {
+                dtype: TypeBindingDataType::Record,
+                span: Span { start: 0, end: 0 },
+            },
+        );
+        data_slot_bindings.insert(
+            BindingPath::with_segments(vec![
+                BindingPathSegment::AbstractIndex,
+                BindingPathSegment::Field("id".to_string()),
+            ]),
+            TypeBindingDesc {
+                dtype: TypeBindingDataType::Int,
+                span: Span { start: 0, end: 0 },
+            },
+        );
+        data_slot_bindings.insert(
+            BindingPath::with_segments(vec![
+                BindingPathSegment::AbstractIndex,
+                BindingPathSegment::Field("name".to_string()),
+            ]),
+            TypeBindingDesc {
+                dtype: TypeBindingDataType::Str,
+                span: Span { start: 0, end: 0 },
+            },
+        );
+
         map.insert(
             "SingleType".to_string(),
             TypeBinding::with(&single_type_bindings),
@@ -115,6 +151,7 @@ pub mod test_utils {
             "ListType".to_string(),
             TypeBinding::with(&list_type_bindings),
         );
+        map.insert("Data".to_string(), TypeBinding::with(&data_slot_bindings));
 
         map
     }

@@ -23,12 +23,13 @@ Example:
 Data access function.
 
 ```
-.get (Data (Int | Str)+)
+.get (Data (Int | Str)*)
 ```
 
 Example:
 
 ```
+.get(@data)
 .get(@data, 0, "price")
 ```
 

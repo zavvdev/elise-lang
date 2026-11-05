@@ -7,7 +7,7 @@ impl FnTypedef {
 pub struct FnGet;
 impl FnGet {
     pub const LEXEME: &'static str = "get";
-    pub const ARGS_LEN_MIN: usize = 2;
+    pub const ARGS_LEN_MIN: usize = 1;
 }
 
 pub struct TypeAnnotLexeme;
