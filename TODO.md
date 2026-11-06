@@ -24,6 +24,8 @@
 
     - [ ] .add
 
+        - [x] Semantic rules
+
         - [ ] Tests
 
 - [ ] DataBinder

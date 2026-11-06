@@ -10,6 +10,12 @@ impl FnGet {
     pub const ARGS_LEN_MIN: usize = 1;
 }
 
+pub struct FnAdd;
+impl FnAdd {
+    pub const LEXEME: &'static str = "add";
+    pub const ARGS_LEN_MIN: usize = 1;
+}
+
 pub struct TypeAnnotLexeme;
 impl TypeAnnotLexeme {
     pub const INT: &'static str = "Int";

@@ -1,10 +1,18 @@
 mod common;
 
+use std::collections::HashMap;
+
 use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };
 use elise_shared_types::Span;
+
+// ==================================================================
+//
+// strip_binding_paths_by_prefix START
+//
+// ==================================================================
 
 #[test]
 fn should_strip_binding_paths_by_prefix() {
@@ -58,3 +66,65 @@ fn should_strip_binding_paths_by_prefix() {
 
     assert_eq!(result, expected_result);
 }
+
+// ==================================================================
+//
+// strip_binding_paths_by_prefix END
+//
+// ==================================================================
+
+// ==================================================================
+//
+// new_single_binding START
+//
+// ==================================================================
+
+#[test]
+fn should_create_new_single_binding() {
+    let result =
+        TypeBinding::new_single_binding(TypeBindingDataType::Int, Span { start: 0, end: 0 });
+
+    let mut expected_result_map = HashMap::new();
+    expected_result_map.insert(
+        BindingPath::new(),
+        TypeBindingDesc {
+            dtype: TypeBindingDataType::Int,
+            span: Span { start: 0, end: 0 },
+        },
+    );
+    let expected_result = TypeBinding::with(&expected_result_map);
+
+    assert_eq!(result, expected_result);
+}
+
+// ==================================================================
+//
+// new_single_binding END
+//
+// ==================================================================
+
+// ==================================================================
+//
+// is START
+//
+// ==================================================================
+
+#[test]
+fn is_should_return_true_if_dtype_matches() {
+    let result =
+        TypeBinding::new_single_binding(TypeBindingDataType::Int, Span { start: 0, end: 0 });
+    assert_eq!(result.is(TypeBindingDataType::Int), true);
+}
+
+#[test]
+fn is_should_return_false_if_dtype_does_not_match() {
+    let result =
+        TypeBinding::new_single_binding(TypeBindingDataType::Str, Span { start: 0, end: 0 });
+    assert_eq!(result.is(TypeBindingDataType::Int), false);
+}
+
+// ==================================================================
+//
+// is END
+//
+// ==================================================================

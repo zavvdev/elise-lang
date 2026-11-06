@@ -63,4 +63,7 @@ pub enum SemanalyzerErr {
     UnresolvablePath {
         span: Span,
     },
+    UnexpType {
+        span: Span,
+    },
 }

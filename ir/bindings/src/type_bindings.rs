@@ -55,6 +55,15 @@ impl TypeBinding {
         Self { map: map.clone() }
     }
 
+    /// Creates a binding to a single type.
+    /// Ex:
+    /// [Root] => Int
+    pub fn new_single_binding(dtype: TypeBindingDataType, span: Span) -> Self {
+        let mut map = HashMap::new();
+        map.insert(BindingPath::new(), TypeBindingDesc { dtype, span });
+        Self { map }
+    }
+
     /// Removes `binding_path_prefix` from each path segment inside self.map.
     /// Used for building return types of functions that access some data and
     /// returns a new set of data that is accesses.
@@ -75,6 +84,16 @@ impl TypeBinding {
         }
 
         Self { map: new_map }
+    }
+
+    /// Takes dtype and checks if we have only one entry
+    /// and the type descriptor of this entry matches dtype.
+    pub fn is(&self, dtype: TypeBindingDataType) -> bool {
+        if self.map.len() == 1 {
+            let (_, desc) = self.map.iter().next().unwrap();
+            return desc.dtype == dtype;
+        }
+        false
     }
 }
 

@@ -65,6 +65,7 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             "Unable to get type definition by using this data access path".to_string(),
             span,
         ),
+        UnexpType { span } => ("Unexpected type".to_string(), span),
     };
 
     utils::print_err(&info, Some("Semantic error"));

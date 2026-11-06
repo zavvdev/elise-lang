@@ -18,15 +18,31 @@ Example:
 
 ## .get function
 
-Performs data access using provided path.
-Use integers for accessing List indexes,
-and strings for accessing Record fields.
+Performs data access using its arguments as access path.
+Use integers for accessing List indexes, and strings for
+accessing Record fields.
 
 Example:
 
 ```
 .get(@data)
 .get(@data, 0, "price")
+```
+
+---
+
+## .add function
+
+Performs mathematical addition of its arguments.
+Each argument must be an expression that resolves
+to either Int or Float data type.
+
+Example:
+
+```
+.add (1)
+.add (2, 3.4, 12)
+.add (2, .get(@data, 0, "id"))
 ```
 
 ---

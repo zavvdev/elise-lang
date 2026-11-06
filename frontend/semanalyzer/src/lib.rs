@@ -25,6 +25,7 @@ pub mod matchers;
 
 use std::mem::discriminant;
 
+use elise_aast::AAstNodeCallAdd;
 use elise_aast::aast_type_annot::{
     AAstNodeTypeAnnot, AAstNodeTypeAnnotCustom, AAstNodeTypeAnnotList, AAstNodeTypeAnnotPrim,
     AAstNodeTypeAnnotRecord, AAstNodeTypeAnnotRecordEntries,
@@ -41,6 +42,7 @@ use elise_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprDict, AstNodeExprList, AstNodeExprPrim,
 };
 use elise_binder::type_binder::TypeBinder;
+use elise_bindings::type_bindings::TypeBindingDataType;
 use elise_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{AliasedTypeBindings, TypeBinding},
@@ -48,6 +50,7 @@ use elise_bindings::{
 use elise_shared_errors::{errors_semanalyzer::SemanalyzerErr, errors_type_binder::TypeBinderErr};
 use elise_shared_types::ArityMismatchKind;
 
+use crate::builtins::FnAdd;
 use crate::{
     builtins::{FnGet, FnTypedef, SlotData, TypeAnnotLexeme},
     matchers::{expect_identifier_ast_node, expect_type_annot_ast_node},
@@ -147,6 +150,7 @@ impl<'a> Harmony<'a> {
     /// and returns back TypeBinding.
     fn infer_type_binding(&self, aast_node: &AAstNode) -> Result<TypeBinding, SemanalyzerErr> {
         match aast_node {
+            // ========== SLOTS TYPE INFERENCE START ==========
             AAstNode::SlotData(AAstNodeSlot { span }) => {
                 let Some(slot_bindings) = self
                     .type_bindings
@@ -156,10 +160,33 @@ impl<'a> Harmony<'a> {
                 };
                 Ok(slot_bindings.clone())
             }
+            // ========== SLOTS TYPE INFERENCE END ==========
+
+            // ========== ARBITRARY RETURN TYPE INFERENCE START ==========
             AAstNode::Call(AAstNodeCall::Get(AAstNodeCallGet {
                 return_type_binding,
                 ..
             })) => Ok(return_type_binding.clone()),
+            // ========== ARBITRARY RETURN TYPE INFERENCE END ==========
+
+            // ========== INT TYPE INFERENCE START ==========
+            // Since we know that semantically these entities resolve into
+            // a single Int type, we create a new TypeBinding that binds a
+            // single Int type because these entities do not carry their
+            // return types as they cannot have arbitrary ones.
+            AAstNode::Call(AAstNodeCall::Add(AAstNodeCallAdd { span, .. }))
+            | AAstNode::Data(AAstNodeData::Int(AAstNodeDataPrim { span, .. })) => Ok(
+                TypeBinding::new_single_binding(TypeBindingDataType::Int, *span),
+            ),
+            // ========== INT TYPE INFERENCE END ==========
+
+            // ========== STR TYPE INFERENCE START ==========
+            // Same as for Int inference. Non-alternative Str type inference.
+            AAstNode::Data(AAstNodeData::Str(AAstNodeDataPrim { span, .. })) => Ok(
+                TypeBinding::new_single_binding(TypeBindingDataType::Str, *span),
+            ),
+            // ========== STR TYPE INFERENCE END ==========
+
             // TODO: We must support type inference from raw dicts and lists
             // in the future. It'll require full data shape analysis which
             // we don't have currently.
@@ -298,6 +325,7 @@ impl<'a> Harmony<'a> {
         match call.lexeme.as_str() {
             FnTypedef::LEXEME => self.call_typedef(call),
             FnGet::LEXEME => self.call_get(call),
+            FnAdd::LEXEME => self.call_add(call),
             _ => Err(SemanalyzerErr::UnknownFunction { span: call.span() }),
         }
     }
@@ -568,5 +596,42 @@ impl<'a> Harmony<'a> {
 
     // ==================================================================
     // GET CALL END
+    // ==================================================================
+
+    // ==================================================================
+    // ADD CALL START
+    // ==================================================================
+
+    fn call_add(&mut self, call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
+        if call.body.len() < FnAdd::ARGS_LEN_MIN {
+            return Err(SemanalyzerErr::ArityMismatch {
+                fn_name: FnAdd::LEXEME,
+                found: call.body.len(),
+                span: call.span(),
+                kind: ArityMismatchKind::MoreEq(FnAdd::ARGS_LEN_MIN),
+            });
+        }
+
+        let arguments = call
+            .body
+            .iter()
+            .map(|ast_node| self.annotate_node(ast_node).map(Box::new))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        for arg in &arguments {
+            let inferred_type = self.infer_type_binding(arg)?;
+            if !inferred_type.is(TypeBindingDataType::Int) {
+                return Err(SemanalyzerErr::UnexpType { span: arg.span() });
+            }
+        }
+
+        Ok(AAstNode::Call(AAstNodeCall::Add(AAstNodeCallAdd {
+            span: call.span(),
+            arguments,
+        })))
+    }
+
+    // ==================================================================
+    // ADD CALL END
     // ==================================================================
 }
