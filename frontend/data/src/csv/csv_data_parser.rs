@@ -24,6 +24,8 @@ pub struct CsvDataRow {
     pub cols: Vec<CsvDataCol>,
 }
 
+pub type ParsedCsv = Vec<CsvDataRow>;
+
 pub struct CsvDataParser<'a> {
     data: &'a str,
 }
@@ -83,7 +85,7 @@ impl<'a> CsvDataParser<'a> {
         }
     }
 
-    pub fn parse(&self) -> Result<Vec<CsvDataRow>, CsvDataParserErr> {
+    pub fn parse(&self) -> Result<ParsedCsv, CsvDataParserErr> {
         // TODO: Check if it's possible to pre-allocate a capacity for records.
         // At this moment I know that Reader doesn't know the length of records
         // until it walks down to the last one. Maybe we can rely on some

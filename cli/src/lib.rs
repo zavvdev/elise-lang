@@ -6,7 +6,8 @@ pub mod conf;
 pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
-use elise_frontend_data::csv::csv_data_parser::CsvDataParser;
+use elise_frontend_data::adapter::DataAdapter;
+use elise_frontend_data::csv::{csv_data_adapter::CsvDataAdapter, csv_data_parser::CsvDataParser};
 use elise_ir_bindings::type_bindings::AliasedTypeBindings;
 //use elise_data::{
 //    csv::{csv_data_binder::CsvDataBinder, csv_data_parser::CsvDataParser},
@@ -16,6 +17,7 @@ use elise_ir_bindings::type_bindings::AliasedTypeBindings;
 use elise_frontend_parser::Prelude;
 use elise_frontend_semanalyzer::Harmony;
 use elise_shared_errors::LangErr;
+use elise_shared_errors::errors_data_adapter::DataAdapterErr;
 use std::{collections::HashMap, time::Instant};
 
 use crate::conf::config::FileExt;
@@ -87,6 +89,10 @@ pub fn run<'a>(
             .parse()
             .map_err(LangErr::CsvDataParser)?;
         println!("CSV: {:#?}", parsed);
+
+        let adapter = CsvDataAdapter::translate(&parsed)
+            .map_err(|err| LangErr::DataAdapter(DataAdapterErr::Csv(err)))?;
+        println!("Adapted csv: {:#?}", adapter);
     }
 
     Ok(RunResult {
