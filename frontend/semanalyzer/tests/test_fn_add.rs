@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use elise_aast::{
+use elise_ir_aast::{
     AAstNode, AAstNodeCall, AAstNodeCallAdd, AAstNodeCallGet,
     aast_node_data::{AAstNodeData, AAstNodeDataPrim},
     aast_node_slot::AAstNodeSlot,
 };
-use elise_bindings::{
+use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };

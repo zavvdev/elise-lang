@@ -12,25 +12,13 @@ docker\:dev:
 elise\:run:
 	./target/debug/elise --mode=run --source-code=sample.eli --data=sample.csv --data-schema=sample.elt --print-bytecode
 
-elise\:run\:release:
-	./target/debug/elise --mode=run --source-code=sample.eli --data=sample.csv --data-schema=sample.elt --print-bytecode
-
 elise\:build:
-	./target/debug/elise --mode=build --source-code=sample.eli --data-schema=sample.elt --output=sample.elb
-
-elise\:build\:release:
 	./target/debug/elise --mode=build --source-code=sample.eli --data-schema=sample.elt --output=sample.elb
 
 elise\:exec:
 	./target/debug/elise --mode=exec --executable=sample.elb --data=sample.csv
 
-elise\:exec\:release:
-	./target/debug/elise --mode=exec --executable=sample.elb --data=sample.csv
-
 elise\:validate:
-	./target/debug/elise --mode=validate --data=sample.csv --data-schema=sample.elt 
-
-elise\:validate\:release:
 	./target/debug/elise --mode=validate --data=sample.csv --data-schema=sample.elt 
 
 # LOCAL DEV TEST COMMANDS END
@@ -38,8 +26,8 @@ elise\:validate\:release:
 test:
 	cargo test
 
-test\:bytecode:
-	cargo test -p elise-bytecode
+test\:ir-bytecode:
+	cargo test -p elise-ir-bytecode
 
 test\:cli:
 	cargo test -p elise
@@ -48,22 +36,22 @@ test\:compiler:
 	cargo test -p elise-compiler
 
 test\:frontend\:binder:
-	cargo test -p elise-binder
+	cargo test -p elise-frontend-binder
 
 test\:frontend\:data:
-	cargo test -p elise-data
+	cargo test -p elise-frontend-data
 
 test\:frontend\:parser:
-	cargo test -p elise-parser
+	cargo test -p elise-frontend-parser
 
 test\:frontend\:semanalyzer:
-	cargo test -p elise-semanalyzer
+	cargo test -p elise-frontend-semanalyzer
 
 test\:runtime\:vm:
-	cargo test -p elise-vm
+	cargo test -p elise-runtime-vm
 
 test\:ir\:bindings:
-	cargo test -p elise-bindings
+	cargo test -p elise-ir-bindings
 
 check:
 	cargo check

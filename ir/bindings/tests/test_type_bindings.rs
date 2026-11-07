@@ -2,7 +2,7 @@ mod common;
 
 use std::collections::HashMap;
 
-use elise_bindings::{
+use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };

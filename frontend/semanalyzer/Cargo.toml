@@ -1,5 +1,5 @@
 [package]
-name = "elise-semanalyzer"
+name = "elise-frontend-semanalyzer"
 version = "0.1.0"
 edition = "2024"
 
@@ -9,11 +9,11 @@ path = "src/lib.rs"
 [dependencies]
 elise-shared-errors = { path = "../../shared/errors" }
 elise-shared-types = { path = "../../shared/types" }
-elise-aast = { path = "../../ir/aast" }
-elise-ast = { path = "../../ir/ast" }
-elise-bindings = { path = "../../ir/bindings" }
-elise-binder = { path = "../binder" }
-elise-parser = { path = "../parser" }
+elise-ir-aast = { path = "../../ir/aast" }
+elise-ir-ast = { path = "../../ir/ast" }
+elise-ir-bindings = { path = "../../ir/bindings" }
+elise-frontend-binder = { path = "../binder" }
+elise-frontend-parser = { path = "../parser" }
 
 [dev-dependencies]
 elise-test-utils = { path = "../../test-utils" }

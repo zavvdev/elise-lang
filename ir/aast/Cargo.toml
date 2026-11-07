@@ -1,5 +1,5 @@
 [package]
-name = "elise-aast"
+name = "elise-ir-aast"
 version = "0.1.0"
 edition = "2024"
 
@@ -8,6 +8,6 @@ path = "src/lib.rs"
 
 [dependencies]
 elise-shared-types = { path = "../../shared/types" }
-elise-bindings = { path = "../bindings" }
 elise-shared-proc-macros = { path = "../../shared/proc_macros" }
+elise-ir-bindings = { path = "../bindings" }
 getset.workspace = true

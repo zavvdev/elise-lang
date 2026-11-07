@@ -1,4 +1,4 @@
-use elise_parser::Prelude;
+use elise_frontend_parser::Prelude;
 use elise_shared_errors::errors_parser::{ParserErr, ParserErrInfo};
 
 mod common;

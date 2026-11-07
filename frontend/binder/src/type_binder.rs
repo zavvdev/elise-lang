@@ -8,11 +8,11 @@
 //! which needs to be flattened in order to simplify type validation
 //! and type accessing.
 
-use elise_aast::aast_type_annot::{
+use elise_ir_aast::aast_type_annot::{
     AAstNodeTypeAnnot, AAstNodeTypeAnnotCustom, AAstNodeTypeAnnotList, AAstNodeTypeAnnotRecord,
     AAstNodeTypeAnnotRecordEntries,
 };
-use elise_bindings::{
+use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };

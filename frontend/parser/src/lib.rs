@@ -9,10 +9,10 @@
 
 pub mod config;
 
-use elise_ast::ast_type_annot::{
+use elise_ir_ast::ast_type_annot::{
     AstNodeTypeAnnot, AstNodeTypeAnnotGeneric, AstNodeTypeAnnotRecordKey,
 };
-use elise_ast::{
+use elise_ir_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprDict, AstNodeExprDictKey, AstNodeExprList,
     AstNodeExprPrim,
 };

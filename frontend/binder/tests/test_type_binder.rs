@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use elise_aast::aast_type_annot::{
+use elise_frontend_binder::type_binder::TypeBinder;
+use elise_ir_aast::aast_type_annot::{
     AAstNodeTypeAnnot, AAstNodeTypeAnnotCustom, AAstNodeTypeAnnotList, AAstNodeTypeAnnotPrim,
     AAstNodeTypeAnnotRecord,
 };
-use elise_binder::type_binder::TypeBinder;
-use elise_bindings::{
+use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };

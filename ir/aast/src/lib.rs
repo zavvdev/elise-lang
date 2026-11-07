@@ -13,7 +13,7 @@
 //! can behave differently and can have different properties,
 //! so it's not possible anymore to generalize them under one type.
 
-use elise_bindings::{binding_path::BindingPath, type_bindings::TypeBinding};
+use elise_ir_bindings::{binding_path::BindingPath, type_bindings::TypeBinding};
 use elise_shared_proc_macros::EnumDelegate;
 use elise_shared_types::Span;
 use getset::CopyGetters;

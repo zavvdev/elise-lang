@@ -24,6 +24,8 @@
 
     - [x] .add
 
+- [ ] Data adapter for CSV
+
 - [ ] DataBinder
 
     - [ ] Takes AAst nodes. Before binding data, we adapt it depending on its type,
@@ -31,8 +33,6 @@
           We can use the same binder in Harmony if we want to add a custom data
           definitions. We would just get AAst nodes from that data and bind it.
           Additionaly check type match of course.
-
-- [ ] Data adapter for CSV
 
 - [ ] Data validation. Must be used for schema validation and also for a validation of the
       custom data inside Harmony

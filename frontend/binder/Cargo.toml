@@ -1,5 +1,5 @@
 [package]
-name = "elise-binder"
+name = "elise-frontend-binder"
 version = "0.1.0"
 edition = "2024"
 
@@ -9,8 +9,8 @@ path = "src/lib.rs"
 [dependencies]
 elise-shared-types = { path = "../../shared/types" }
 elise-shared-errors = { path = "../../shared/errors" }
-elise-aast = { path = "../../ir/aast" }
-elise-bindings = { path = "../../ir/bindings" }
+elise-ir-aast = { path = "../../ir/aast" }
+elise-ir-bindings = { path = "../../ir/bindings" }
 
 [dev-dependencies]
 elise-test-utils = { path = "../../test-utils" }

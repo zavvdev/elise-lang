@@ -25,25 +25,25 @@ pub mod matchers;
 
 use std::mem::discriminant;
 
-use elise_aast::AAstNodeCallAdd;
-use elise_aast::aast_type_annot::{
+use elise_frontend_binder::type_binder::TypeBinder;
+use elise_ir_aast::AAstNodeCallAdd;
+use elise_ir_aast::aast_type_annot::{
     AAstNodeTypeAnnot, AAstNodeTypeAnnotCustom, AAstNodeTypeAnnotList, AAstNodeTypeAnnotPrim,
     AAstNodeTypeAnnotRecord, AAstNodeTypeAnnotRecordEntries,
 };
-use elise_aast::{
+use elise_ir_aast::{
     AAstNode, AAstNodeCall, AAstNodeCallGet, AAstNodeCallTypedef,
     aast_node_data::{
         AAstNodeData, AAstNodeDataDict, AAstNodeDataDictKey, AAstNodeDataList, AAstNodeDataPrim,
     },
     aast_node_slot::AAstNodeSlot,
 };
-use elise_ast::ast_type_annot::{AstNodeTypeAnnot, AstNodeTypeAnnotGeneric};
-use elise_ast::{
+use elise_ir_ast::ast_type_annot::{AstNodeTypeAnnot, AstNodeTypeAnnotGeneric};
+use elise_ir_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprDict, AstNodeExprList, AstNodeExprPrim,
 };
-use elise_binder::type_binder::TypeBinder;
-use elise_bindings::type_bindings::TypeBindingDataType;
-use elise_bindings::{
+use elise_ir_bindings::type_bindings::TypeBindingDataType;
+use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{AliasedTypeBindings, TypeBinding},
 };

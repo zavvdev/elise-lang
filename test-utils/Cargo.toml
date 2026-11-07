@@ -7,11 +7,11 @@ edition = "2024"
 path = "src/lib.rs"
 
 [dependencies]
-elise-ast = { path = "../ir/ast" }
-elise-aast = { path = "../ir/aast" }
-elise-bindings = { path = "../ir/bindings" }
-elise-data = { path = "../frontend/data" }
-elise-parser = { path = "../frontend/parser" }
-elise-semanalyzer = { path = "../frontend/semanalyzer" }
+elise-ir-ast = { path = "../ir/ast" }
+elise-ir-aast = { path = "../ir/aast" }
+elise-ir-bindings = { path = "../ir/bindings" }
+elise-frontend-data = { path = "../frontend/data" }
+elise-frontend-parser = { path = "../frontend/parser" }
+elise-frontend-semanalyzer = { path = "../frontend/semanalyzer" }
 elise-shared-errors = { path = "../shared/errors" }
 elise-shared-types = { path = "../shared/types" }

@@ -5,6 +5,10 @@ impl FileExt {
     pub const DATA_SCHEMA: &[&str] = &[".elt"];
     pub const CSV: &str = ".csv";
     pub const DATA: &[&str] = &[Self::CSV];
+
+    pub fn is_csv(path: &str) -> bool {
+        path.to_lowercase().ends_with(Self::CSV)
+    }
 }
 
 pub struct ArgName;

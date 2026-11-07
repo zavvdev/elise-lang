@@ -13,10 +13,10 @@ path = "src/main.rs"
 path = "src/lib.rs"
 
 [dependencies]
-elise-data = { path = "../frontend/data" }
-elise-parser = { path = "../frontend/parser" }
-elise-bindings = { path = "../ir/bindings" }
-elise-semanalyzer = { path = "../frontend/semanalyzer" }
+elise-frontend-data = { path = "../frontend/data" }
+elise-frontend-parser = { path = "../frontend/parser" }
+elise-frontend-semanalyzer = { path = "../frontend/semanalyzer" }
+elise-ir-bindings = { path = "../ir/bindings" }
 elise-shared-errors = { path = "../shared/errors" }
 elise-shared-types = { path = "../shared/types" }
 colored.workspace = true

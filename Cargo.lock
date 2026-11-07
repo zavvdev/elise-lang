@@ -80,10 +80,10 @@ name = "elise"
 version = "0.1.0"
 dependencies = [
  "colored",
- "elise-bindings",
- "elise-data",
- "elise-parser",
- "elise-semanalyzer",
+ "elise-frontend-data",
+ "elise-frontend-parser",
+ "elise-frontend-semanalyzer",
+ "elise-ir-bindings",
  "elise-shared-errors",
  "elise-shared-types",
  "rayon",
@@ -91,84 +91,91 @@ dependencies = [
 ]
 
 [[package]]
-name = "elise-aast"
-version = "0.1.0"
-dependencies = [
- "elise-bindings",
- "elise-shared-proc-macros",
- "elise-shared-types",
- "getset",
-]
-
-[[package]]
-name = "elise-ast"
-version = "0.1.0"
-dependencies = [
- "elise-shared-proc-macros",
- "elise-shared-types",
- "getset",
-]
-
-[[package]]
-name = "elise-binder"
-version = "0.1.0"
-dependencies = [
- "elise-aast",
- "elise-bindings",
- "elise-shared-errors",
- "elise-shared-types",
- "elise-test-utils",
-]
-
-[[package]]
-name = "elise-bindings"
-version = "0.1.0"
-dependencies = [
- "elise-shared-proc-macros",
- "elise-shared-types",
- "getset",
-]
-
-[[package]]
-name = "elise-bytecode"
-version = "0.1.0"
-
-[[package]]
 name = "elise-compiler"
 version = "0.1.0"
 
 [[package]]
-name = "elise-data"
+name = "elise-frontend-binder"
+version = "0.1.0"
+dependencies = [
+ "elise-ir-aast",
+ "elise-ir-bindings",
+ "elise-shared-errors",
+ "elise-shared-types",
+ "elise-test-utils",
+]
+
+[[package]]
+name = "elise-frontend-data"
 version = "0.1.0"
 dependencies = [
  "csv",
- "elise-ast",
+ "elise-ir-ast",
  "elise-shared-errors",
  "elise-shared-types",
  "elise-test-utils",
 ]
 
 [[package]]
-name = "elise-parser"
+name = "elise-frontend-parser"
 version = "0.1.0"
 dependencies = [
- "elise-ast",
+ "elise-ir-ast",
  "elise-shared-errors",
  "elise-shared-types",
 ]
 
 [[package]]
-name = "elise-semanalyzer"
+name = "elise-frontend-semanalyzer"
 version = "0.1.0"
 dependencies = [
- "elise-aast",
- "elise-ast",
- "elise-binder",
- "elise-bindings",
- "elise-parser",
+ "elise-frontend-binder",
+ "elise-frontend-parser",
+ "elise-ir-aast",
+ "elise-ir-ast",
+ "elise-ir-bindings",
  "elise-shared-errors",
  "elise-shared-types",
  "elise-test-utils",
+]
+
+[[package]]
+name = "elise-ir-aast"
+version = "0.1.0"
+dependencies = [
+ "elise-ir-bindings",
+ "elise-shared-proc-macros",
+ "elise-shared-types",
+ "getset",
+]
+
+[[package]]
+name = "elise-ir-ast"
+version = "0.1.0"
+dependencies = [
+ "elise-shared-proc-macros",
+ "elise-shared-types",
+ "getset",
+]
+
+[[package]]
+name = "elise-ir-bindings"
+version = "0.1.0"
+dependencies = [
+ "elise-shared-proc-macros",
+ "elise-shared-types",
+ "getset",
+]
+
+[[package]]
+name = "elise-ir-bytecode"
+version = "0.1.0"
+
+[[package]]
+name = "elise-runtime-vm"
+version = "0.1.0"
+dependencies = [
+ "elise-ir-bytecode",
 ]
 
 [[package]]
@@ -195,21 +202,14 @@ version = "0.1.0"
 name = "elise-test-utils"
 version = "0.1.0"
 dependencies = [
- "elise-aast",
- "elise-ast",
- "elise-bindings",
- "elise-data",
- "elise-parser",
- "elise-semanalyzer",
+ "elise-frontend-data",
+ "elise-frontend-parser",
+ "elise-frontend-semanalyzer",
+ "elise-ir-aast",
+ "elise-ir-ast",
+ "elise-ir-bindings",
  "elise-shared-errors",
  "elise-shared-types",
-]
-
-[[package]]
-name = "elise-vm"
-version = "0.1.0"
-dependencies = [
- "elise-bytecode",
 ]
 
 [[package]]

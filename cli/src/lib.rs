@@ -1,5 +1,3 @@
-//! # Elise language public interface
-//!
 //! This file is a boundary between implementation details and
 //! a program consumer. It must only expose functions that are
 //! necessary for running the program.
@@ -8,16 +6,19 @@ pub mod conf;
 pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
-use elise_bindings::type_bindings::AliasedTypeBindings;
+use elise_frontend_data::csv::csv_data_parser::CsvDataParser;
+use elise_ir_bindings::type_bindings::AliasedTypeBindings;
 //use elise_data::{
 //    csv::{csv_data_binder::CsvDataBinder, csv_data_parser::CsvDataParser},
 //    data_binder::{DataBinder, DataBindings},
 //    schema_binder::{SchemaBinder, SchemaBindings},
 //};
-use elise_parser::Prelude;
-use elise_semanalyzer::Harmony;
+use elise_frontend_parser::Prelude;
+use elise_frontend_semanalyzer::Harmony;
 use elise_shared_errors::LangErr;
 use std::{collections::HashMap, time::Instant};
+
+use crate::conf::config::FileExt;
 
 /// Representation of the successful execution of the
 /// program in 'RUN' mode.
@@ -58,7 +59,7 @@ pub struct ValidateResult<'a> {
 /// Entry point for running the program in 'RUN' mode.
 pub fn run<'a>(
     source_code: &'a [u8],
-    _data: &'a str,
+    data: &'a str,
     data_schema: &'a [u8],
     config: &'a ModeRunConf,
 ) -> Result<RunResult<'a>, LangErr> {
@@ -77,12 +78,16 @@ pub fn run<'a>(
         .annotate()
         .map_err(LangErr::SemanalyzerSchema)?;
 
-    let source_code_aast = Harmony::new(&source_code_ast, &mut schema_type_bindings, false)
+    let _source_code_aast = Harmony::new(&source_code_ast, &mut schema_type_bindings, false)
         .annotate()
         .map_err(LangErr::SemanalyzerSource)?;
 
-    println!("source ast: {:#?}", source_code_ast);
-    println!("aast: {:#?}", source_code_aast);
+    if FileExt::is_csv(&config.data_path) {
+        let parsed = CsvDataParser::new(data)
+            .parse()
+            .map_err(LangErr::CsvDataParser)?;
+        println!("CSV: {:#?}", parsed);
+    }
 
     Ok(RunResult {
         config,

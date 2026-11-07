@@ -1,5 +1,5 @@
-use elise_ast::{AstNode, AstNodeExpr, AstNodeExprPrim};
-use elise_parser::Prelude;
+use elise_frontend_parser::Prelude;
+use elise_ir_ast::{AstNode, AstNodeExpr, AstNodeExprPrim};
 use elise_shared_errors::errors_parser::{ParserErr, ParserErrInfo};
 use elise_shared_types::Span;
 

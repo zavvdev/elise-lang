@@ -1,14 +1,14 @@
 pub mod test_utils {
     use std::collections::HashMap;
 
-    use elise_aast::AAstNode;
-    use elise_ast::AstNode;
-    use elise_bindings::{
+    use elise_frontend_parser::Prelude;
+    use elise_frontend_semanalyzer::Harmony;
+    use elise_ir_aast::AAstNode;
+    use elise_ir_ast::AstNode;
+    use elise_ir_bindings::{
         binding_path::{BindingPath, BindingPathSegment},
         type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDataType, TypeBindingDesc},
     };
-    use elise_parser::Prelude;
-    use elise_semanalyzer::Harmony;
     use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
     use elise_shared_types::Span;
 

@@ -1,5 +1,5 @@
 [package]
-name = "elise-data"
+name = "elise-frontend-data"
 version = "0.1.0"
 edition = "2024"
 
@@ -10,7 +10,7 @@ path = "src/lib.rs"
 csv.workspace = true
 elise-shared-types = { path = "../../shared/types" }
 elise-shared-errors = { path = "../../shared/errors" }
-elise-ast = { path = "../../ir/ast" }
+elise-ir-ast = { path = "../../ir/ast" }
 
 [dev-dependencies]
 elise-test-utils= { path = "../../test-utils" }

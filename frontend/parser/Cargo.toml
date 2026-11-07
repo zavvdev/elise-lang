@@ -1,5 +1,5 @@
 [package]
-name = "elise-parser"
+name = "elise-frontend-parser"
 version = "0.1.0"
 edition = "2024"
 
@@ -9,4 +9,4 @@ path = "src/lib.rs"
 [dependencies]
 elise-shared-errors = { path = "../../shared/errors" }
 elise-shared-types = { path = "../../shared/types" }
-elise-ast = { path = "../../ir/ast" }
+elise-ir-ast = { path = "../../ir/ast" }

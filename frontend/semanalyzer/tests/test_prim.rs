@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use elise_aast::{
+use elise_ir_aast::{
     AAstNode,
     aast_node_data::{AAstNodeData, AAstNodeDataPrim},
 };

@@ -1,4 +1,4 @@
-use elise_bindings::binding_path::{BindingPath, BindingPathSegment};
+use elise_ir_bindings::binding_path::{BindingPath, BindingPathSegment};
 
 mod common;
 
