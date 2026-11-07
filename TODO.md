@@ -22,11 +22,7 @@
         
     - [x] .get
 
-    - [ ] .add
-
-        - [x] Semantic rules
-
-        - [ ] Tests
+    - [x] .add
 
 - [ ] DataBinder
 
