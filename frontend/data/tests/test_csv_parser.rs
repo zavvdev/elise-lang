@@ -1,10 +1,11 @@
 mod common;
 
-use elise_shared_errors::{errors_csv_data_parser::CsvDataParserErr::*};
+use elise_frontend_data::csv::csv_data_parser::{
+    CsvDataCol, CsvDataParser, CsvDataParserDataType, CsvDataRow,
+};
+use elise_shared_errors::errors_csv_data_parser::CsvDataParserErr::*;
 use elise_shared_types::Pos;
 use elise_test_utils::test_utils;
-
-use crate::csv::csv_data_parser::{CsvDataCol, CsvDataParser, CsvDataParserDataType, CsvDataRow};
 
 // ==================================================================
 // NUMBER TESTS START

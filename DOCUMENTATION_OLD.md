@@ -1,35 +1,41 @@
 ```
 RUN (SourceCode, SchemaCode, Data)
-    -> Parse(SourceCode) -> SourceCodeAst +
-    -> Parse(ShemaCode) -> SchemaCodeAst +
-    -> Parse(CSV) -> ParsedCSV +
-    -> Sema(SchemaCodeAst) -> (_SchemaCodeAAst, SchemaTypeBindings)
-    -> AdaptData(ParsedCSV) -> SourceCode
-    -> BindData(SourceCode) -> DataBinding
-    -> Sema(SourceCodeAst, SchemaTypeBindings) -> (SourceCodeAAst, _SourceCodeTypeBindings)
-    -> Validate(SchemaTypeBindings, DataBinding)
+    + -> Parse(SourceCode) -> SourceCodeAst
+    + -> Parse(ShemaCode) -> SchemaCodeAst
+    + -> Parse(CSV) -> ParsedCSV
+    + -> Sema(SchemaCodeAst) -> (_SchemaCodeAAst, SchemaTypeBindings)
+    + -> AdaptData(ParsedCSV) -> SourceCodeFromCsv
+    + -> Parse(SourceCodeFromCsv) -> SourceCodeFromCsvAst
+    + -> Sema(SourceCodeFromCsvAst) -> (SourceCodeFromCsvAAst, _SchemaTypeBindings)
+    -> BindData(SourceCodeFromCsvAAst) -> DataBindings
+    + -> Sema(SourceCodeAst, SchemaTypeBindings) -> (SourceCodeAAst, _SourceCodeTypeBindings)
+    -> Validate(SchemaTypeBindings, DataBindings)
     -> Compile(SchemaTypeBindings, SourceCodeAAst) -> Bytecode
     -> VM(Bytecode, DataBinding)
 
 BUILD (SourceCode, SchemaCode)
-    -> Parse(SourceCode) -> SourceCodeAst
-    -> Parse(ShemaCode) -> SchemaCodeAst
-    -> Sema(SchemaCodeAst) -> (_SchemaCodeAAst, SchemaTypeBindings)
-    -> Sema(SourceCodeAst, SchemaTypeBindings) -> (SourceCodeAAst, _SourceCodeTypeBindings)
+    + -> Parse(SourceCode) -> SourceCodeAst
+    + -> Parse(ShemaCode) -> SchemaCodeAst
+    + -> Sema(SchemaCodeAst) -> (_SchemaCodeAAst, SchemaTypeBindings)
+    + -> Sema(SourceCodeAst, SchemaTypeBindings) -> (SourceCodeAAst, _SourceCodeTypeBindings)
     -> Compile(SchemaTypeBindings, SourceCodeAAst) -> Bytecode
 
 VALIDATE(SchemaCode, Data)
-    -> Parse(ShemaCode) -> SchemaCodeAst
-    -> Parse(CSV) -> ParsedCSV
-    -> Sema(SchemaCodeAst) -> (_SchemaCodeAAst, SchemaTypeBindings)
-    -> AdaptData(ParsedCSV) -> SourceCode
-    -> BindData(SourceCode) -> DataBinding
-    -> Validate(SchemaTypeBindings, DataBinding)
+    + -> Parse(ShemaCode) -> SchemaCodeAst
+    + -> Parse(CSV) -> ParsedCSV
+    + -> Sema(SchemaCodeAst) -> (_SchemaCodeAAst, SchemaTypeBindings)
+    + -> AdaptData(ParsedCSV) -> SourceCodeFromCsv
+    + -> Parse(SourceCodeFromCsv) -> SourceCodeFromCsvAst
+    + -> Sema(SourceCodeFromCsvAst) -> (SourceCodeFromCsvAAst, _SchemaTypeBindings)
+    -> BindData(SourceCodeFromCsvAAst) -> DataBindings
+    -> Validate(SchemaTypeBindings, DataBindings)
 
 EXEC(Bytecode, Data)
-    -> Parse(CSV) -> ParsedCSV
-    -> AdaptData(ParsedCSV) -> SourceCode
-    -> BindData(SourceCode) -> DataBinding
+    + -> Parse(CSV) -> ParsedCSV
+    + -> AdaptData(ParsedCSV) -> SourceCodeFromCsv
+    + -> Parse(SourceCodeFromCsv) -> SourceCodeFromCsvAst
+    + -> Sema(SourceCodeFromCsvAst) -> (SourceCodeFromCsvAAst, _SchemaTypeBindings)
+    -> BindData(SourceCodeFromCsvAAst) -> DataBindings
     -> VM(Bytecode, DataBinding)
 ```
 

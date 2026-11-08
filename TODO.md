@@ -24,7 +24,7 @@
 
     - [x] .add
 
-- [ ] Data adapter for CSV
+- [x] Data adapter for CSV
 
 - [ ] DataBinder
 

@@ -87,10 +87,18 @@ pub fn run<'a>(
         let parsed = CsvDataParser::new(data)
             .parse()
             .map_err(LangErr::CsvDataParser)?;
-        println!("CSV: {:#?}", parsed);
 
-        let adapted = CsvDataAdapter::translate(&parsed);
-        println!("Adapted csv: {:#?}", String::from_utf8(adapted));
+        let csv_source_code = CsvDataAdapter::translate(&parsed);
+        let csv_ast = Prelude::new(&csv_source_code)
+            .parse()
+            .map_err(LangErr::ParserSource)?;
+
+        let mut csv_type_bindings = HashMap::new();
+        let csv_aast = Harmony::new(&csv_ast, &mut csv_type_bindings, false)
+            .annotate()
+            .map_err(LangErr::SemanalyzerSchema)?;
+
+        println!("CSV AAST: {:#?}", csv_aast);
     }
 
     Ok(RunResult {
