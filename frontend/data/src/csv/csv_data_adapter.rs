@@ -1,5 +1,4 @@
 use elise_frontend_parser::config::CharCode;
-use elise_shared_errors::errors_data_adapter::CsvDataAdapterErr;
 
 use crate::{
     adapter::DataAdapter,
@@ -11,15 +10,15 @@ type SourceCode = Vec<u8>;
 pub struct CsvDataAdapter;
 
 /// Translates parsed csv data structure into valid Elise source code.
-impl DataAdapter<ParsedCsv, CsvDataAdapterErr> for CsvDataAdapter {
-    fn translate(parsed_csv: &ParsedCsv) -> Result<SourceCode, CsvDataAdapterErr> {
+impl DataAdapter<ParsedCsv> for CsvDataAdapter {
+    fn translate(parsed_csv: &ParsedCsv) -> SourceCode {
         let mut source_code: SourceCode = vec![];
         source_code.push(CharCode::LEFT_SQR_BRACKET);
         for row in parsed_csv {
             Self::translate_dict(row, &mut source_code);
         }
         source_code.push(CharCode::RIGHT_SQR_BRACKET);
-        Ok(source_code)
+        source_code
     }
 }
 

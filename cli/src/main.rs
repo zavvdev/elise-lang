@@ -18,7 +18,6 @@ pub mod out;
 use elise::conf::{Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise::fsys::{read_file_bytes, read_file_string, write_file};
 use elise_shared_errors::LangErr;
-use elise_shared_errors::errors_data_adapter::DataAdapterErr;
 
 use std::env;
 
@@ -26,7 +25,7 @@ use crate::out::msg_modes;
 use crate::out::msg_parser;
 use crate::out::msg_preexec;
 use crate::out::utils::{panic_hook, print_bytecode};
-use crate::out::{msg_conf, msg_csv_data_adapter, msg_csv_data_binder};
+use crate::out::{msg_conf, msg_csv_data_binder};
 use crate::out::{msg_csv_data_parser, msg_semanalyzer};
 use crate::out::{msg_data_validator, msg_fsys};
 
@@ -42,7 +41,6 @@ fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &
         DataValidator(err) => msg_data_validator::print_err(err, schema_source_code),
         CsvDataParser(err) => msg_csv_data_parser::print_err(err),
         CsvDataBinder(err) => msg_csv_data_binder::print_err(err),
-        DataAdapter(DataAdapterErr::Csv(err)) => msg_csv_data_adapter::print_err(err),
     }
 
     std::process::exit(1);

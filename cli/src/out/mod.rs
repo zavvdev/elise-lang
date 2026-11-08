@@ -1,5 +1,4 @@
 pub mod msg_conf;
-pub mod msg_csv_data_adapter;
 pub mod msg_csv_data_binder;
 pub mod msg_csv_data_parser;
 pub mod msg_data_validator;

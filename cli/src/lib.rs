@@ -17,7 +17,6 @@ use elise_ir_bindings::type_bindings::AliasedTypeBindings;
 use elise_frontend_parser::Prelude;
 use elise_frontend_semanalyzer::Harmony;
 use elise_shared_errors::LangErr;
-use elise_shared_errors::errors_data_adapter::DataAdapterErr;
 use std::{collections::HashMap, time::Instant};
 
 use crate::conf::config::FileExt;
@@ -90,8 +89,7 @@ pub fn run<'a>(
             .map_err(LangErr::CsvDataParser)?;
         println!("CSV: {:#?}", parsed);
 
-        let adapted = CsvDataAdapter::translate(&parsed)
-            .map_err(|err| LangErr::DataAdapter(DataAdapterErr::Csv(err)))?;
+        let adapted = CsvDataAdapter::translate(&parsed);
         println!("Adapted csv: {:#?}", String::from_utf8(adapted));
     }
 

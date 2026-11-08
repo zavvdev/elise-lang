@@ -11,6 +11,6 @@
 //! in our source code, can use the same data binder as our
 //! data that comes from data file intself.
 
-pub trait DataAdapter<D, E> {
-    fn translate(parsed_data: &D) -> Result<Vec<u8>, E>;
+pub trait DataAdapter<D> {
+    fn translate(parsed_data: &D) -> Vec<u8>;
 }
