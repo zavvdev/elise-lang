@@ -14,6 +14,7 @@ impl CharCode {
     pub const COLON: u8 = b':';
     pub const LESS: u8 = b'<';
     pub const MORE: u8 = b'>';
+    pub const SPACE_SEPARATOR: u8 = b' ';
 }
 
 /// Deterministic Finite Automata states for parsing numbers.

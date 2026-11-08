@@ -114,7 +114,7 @@ impl<'a> Prelude<'a> {
     }
 
     fn is_separator(c: &u8) -> bool {
-        matches!(c, b' ' | b'\n' | b'\t' | b'\r') || *c == CharCode::COMMA
+        matches!(c, &CharCode::SPACE_SEPARATOR | b'\n' | b'\t' | b'\r') || *c == CharCode::COMMA
     }
 
     fn is_tok_end(c: &u8) -> bool {

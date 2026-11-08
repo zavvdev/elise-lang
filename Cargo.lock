@@ -110,6 +110,7 @@ name = "elise-frontend-data"
 version = "0.1.0"
 dependencies = [
  "csv",
+ "elise-frontend-parser",
  "elise-ir-ast",
  "elise-shared-errors",
  "elise-shared-types",

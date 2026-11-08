@@ -11,6 +11,7 @@ csv.workspace = true
 elise-shared-types = { path = "../../shared/types" }
 elise-shared-errors = { path = "../../shared/errors" }
 elise-ir-ast = { path = "../../ir/ast" }
+elise-frontend-parser = { path = "../parser" }
 
 [dev-dependencies]
 elise-test-utils= { path = "../../test-utils" }

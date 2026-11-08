@@ -90,9 +90,9 @@ pub fn run<'a>(
             .map_err(LangErr::CsvDataParser)?;
         println!("CSV: {:#?}", parsed);
 
-        let adapter = CsvDataAdapter::translate(&parsed)
+        let adapted = CsvDataAdapter::translate(&parsed)
             .map_err(|err| LangErr::DataAdapter(DataAdapterErr::Csv(err)))?;
-        println!("Adapted csv: {:#?}", adapter);
+        println!("Adapted csv: {:#?}", String::from_utf8(adapted));
     }
 
     Ok(RunResult {
