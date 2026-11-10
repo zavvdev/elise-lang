@@ -1,5 +1,9 @@
 # Specification
 
+## @data slot
+
+A reference to the data provided via `--data` CLI flag.
+
 ## .typedef function
 
 Creates a custom type definition.
