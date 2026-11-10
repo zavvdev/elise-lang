@@ -44,8 +44,10 @@ pub struct AAstNodeDataDict {
     pub entries: Vec<(AAstNodeDataDictKey, Box<AAstNodeData>)>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, CloneGetters)]
 pub struct AAstNodeDataDictKey {
     pub span: Span,
+
+    #[getset(get_clone = "pub")]
     pub lexeme: String,
 }

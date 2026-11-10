@@ -85,6 +85,9 @@ pub struct DataBindingDescPrim {
 
 #[derive(Debug, PartialEq, Clone, CopyGetters)]
 pub struct DataBindingDescList {
+    // Making it Option since there might be a case in the future
+    // where we can have a list with dynamic values which amount
+    // is unknown ahead of time.
     pub size: Option<usize>,
 
     #[getset(get_copy = "pub")]

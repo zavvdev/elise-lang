@@ -1,5 +1,7 @@
 # Elise: Bytecode-compiled DSL for typed data transformation
 
+[![XERJ Corpus Hub contributor](https://hub.xerj.org/contributors/zavvdev/badge.svg)](https://hub.xerj.org/contributors/zavvdev)
+
 /eˈliːs/ → pronounced like “eh-LEES”
 
 [Grammar Rules](./GRAMMAR.md), [Specification](./SPECIFICATION.md), [Todos](./TODO.md)

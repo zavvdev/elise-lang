@@ -16,7 +16,9 @@ path = "src/lib.rs"
 elise-frontend-data = { path = "../frontend/data" }
 elise-frontend-parser = { path = "../frontend/parser" }
 elise-frontend-semanalyzer = { path = "../frontend/semanalyzer" }
+elise-frontend-binder = { path = "../frontend/binder" }
 elise-ir-bindings = { path = "../ir/bindings" }
+elise-ir-aast = { path = "../ir/aast" }
 elise-shared-errors = { path = "../shared/errors" }
 elise-shared-types = { path = "../shared/types" }
 colored.workspace = true

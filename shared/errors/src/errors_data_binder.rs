@@ -1,4 +1,5 @@
 #[derive(Debug, PartialEq)]
 pub enum DataBinderErr {
-    Todo,
+    UnresolvablePath { path: String },
+    UnableToBind,
 }

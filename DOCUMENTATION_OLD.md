@@ -7,7 +7,7 @@ RUN (SourceCode, SchemaCode, Data)
     + -> AdaptData(ParsedCSV) -> SourceCodeFromCsv
     + -> Parse(SourceCodeFromCsv) -> SourceCodeFromCsvAst
     + -> Sema(SourceCodeFromCsvAst) -> (SourceCodeFromCsvAAst, _SchemaTypeBindings)
-    -> BindData(SourceCodeFromCsvAAst) -> DataBindings
+    + -> BindData(SourceCodeFromCsvAAst) -> DataBindings
     + -> Sema(SourceCodeAst, SchemaTypeBindings) -> (SourceCodeAAst, _SourceCodeTypeBindings)
     -> Validate(SchemaTypeBindings, DataBindings)
     -> Compile(SchemaTypeBindings, SourceCodeAAst) -> Bytecode

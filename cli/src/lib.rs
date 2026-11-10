@@ -6,8 +6,10 @@ pub mod conf;
 pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
+use elise_frontend_binder::data_binder::DataBinder;
 use elise_frontend_data::adapter::DataAdapter;
 use elise_frontend_data::csv::{csv_data_adapter::CsvDataAdapter, csv_data_parser::CsvDataParser};
+use elise_ir_aast::AAstNode;
 use elise_ir_bindings::type_bindings::AliasedTypeBindings;
 //use elise_data::{
 //    csv::{csv_data_binder::CsvDataBinder, csv_data_parser::CsvDataParser},
@@ -98,7 +100,12 @@ pub fn run<'a>(
             .annotate()
             .map_err(LangErr::SemanalyzerSchema)?;
 
-        println!("CSV AAST: {:#?}", csv_aast);
+        for csv_aast_node in csv_aast {
+            if let AAstNode::Data(data_node) = csv_aast_node {
+                let data_bindings = DataBinder::new(&data_node).bind();
+                println!("CSV bindings: {:#?}", data_bindings);
+            }
+        }
     }
 
     Ok(RunResult {

@@ -80,9 +80,11 @@ name = "elise"
 version = "0.1.0"
 dependencies = [
  "colored",
+ "elise-frontend-binder",
  "elise-frontend-data",
  "elise-frontend-parser",
  "elise-frontend-semanalyzer",
+ "elise-ir-aast",
  "elise-ir-bindings",
  "elise-shared-errors",
  "elise-shared-types",

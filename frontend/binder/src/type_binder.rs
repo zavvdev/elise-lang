@@ -154,7 +154,7 @@ impl<'a> TypeBinder<'a> {
         // [Root, Field("some")] => TRecord
         // We do this before recursing into tested definitions
         // because resolving nested types will alter current_path
-        // state, so commiting parent after resolving recursively
+        // state, so committing parent after resolving recursively
         // will produce invalid path segments to the parent.
         self.current_type = Some(TypeBindingDataType::Record);
         self.commit(binding)?;
@@ -234,7 +234,7 @@ impl<'a> TypeBinder<'a> {
     }
 
     // ==================================================================
-    // LIST END
+    // CUSTOM END
     // ==================================================================
 }
 
