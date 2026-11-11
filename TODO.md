@@ -26,16 +26,15 @@
 
 - [x] Data adapter for CSV
 
-- [ ] DataBinder
+- [x] DataBinder
 
-    - [x] Impl
+- [ ] Data validation
+
+    - [ ] Impl
 
     - [ ] Tests
 
-- [ ] Data validation. Must be used for schema validation and also for a validation of the
-      custom data inside Harmony
-
-- [ ] Improve error reporting. Add more informative error messages.
+- [ ] Improve error reporting. Add more informative error messages
 
 - [ ] Compiler
 

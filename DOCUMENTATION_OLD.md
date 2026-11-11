@@ -27,7 +27,7 @@ VALIDATE(SchemaCode, Data)
     + -> AdaptData(ParsedCSV) -> SourceCodeFromCsv
     + -> Parse(SourceCodeFromCsv) -> SourceCodeFromCsvAst
     + -> Sema(SourceCodeFromCsvAst) -> (SourceCodeFromCsvAAst, _SchemaTypeBindings)
-    -> BindData(SourceCodeFromCsvAAst) -> DataBindings
+    + -> BindData(SourceCodeFromCsvAAst) -> DataBindings
     -> Validate(SchemaTypeBindings, DataBindings)
 
 EXEC(Bytecode, Data)
@@ -35,7 +35,7 @@ EXEC(Bytecode, Data)
     + -> AdaptData(ParsedCSV) -> SourceCodeFromCsv
     + -> Parse(SourceCodeFromCsv) -> SourceCodeFromCsvAst
     + -> Sema(SourceCodeFromCsvAst) -> (SourceCodeFromCsvAAst, _SchemaTypeBindings)
-    -> BindData(SourceCodeFromCsvAAst) -> DataBindings
+    + -> BindData(SourceCodeFromCsvAAst) -> DataBindings
     -> VM(Bytecode, DataBinding)
 ```
 

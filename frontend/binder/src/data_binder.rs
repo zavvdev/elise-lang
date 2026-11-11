@@ -169,8 +169,8 @@ impl<'a> DataBinder<'a> {
         for (idx, item) in aast_list.items.iter().enumerate() {
             self.current_path.push(BindingPathSegment::Index(idx));
             self.bind_node(item, binding)?;
-            self.current_path.pop();
         }
+        self.current_path.pop();
 
         Ok(())
     }
