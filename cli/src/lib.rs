@@ -6,9 +6,11 @@ pub mod conf;
 pub mod fsys;
 
 use conf::{ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
+use elise_frontend_binder::bindings_validator::validate_bindings;
 use elise_frontend_binder::data_binder::DataBinder;
 use elise_frontend_data::adapter::DataAdapter;
 use elise_frontend_data::csv::{csv_data_adapter::CsvDataAdapter, csv_data_parser::CsvDataParser};
+use elise_frontend_semanalyzer::builtins::SlotData;
 use elise_ir_aast::AAstNode;
 use elise_ir_bindings::type_bindings::AliasedTypeBindings;
 //use elise_data::{
@@ -66,6 +68,9 @@ pub fn run<'a>(
     data_schema: &'a [u8],
     config: &'a ModeRunConf,
 ) -> Result<RunResult<'a>, LangErr> {
+    // TODO: this flow is for testing only.
+    // Split it into separate threads and make it look normal.
+
     let start = Instant::now();
 
     let source_code_ast = Prelude::new(source_code)
@@ -102,7 +107,16 @@ pub fn run<'a>(
 
         for csv_aast_node in csv_aast {
             if let AAstNode::Data(data_node) = csv_aast_node {
-                let data_bindings = DataBinder::new(&data_node).bind();
+                let data_bindings = DataBinder::new(&data_node)
+                    .bind()
+                    .map_err(LangErr::DataBinder)?;
+
+                validate_bindings(
+                    &data_bindings,
+                    schema_type_bindings.get(SlotData::TYPEDEF_LEXEME).unwrap(),
+                )
+                .map_err(LangErr::BindingsValidator)?;
+
                 println!("CSV bindings: {:#?}", data_bindings);
             }
         }

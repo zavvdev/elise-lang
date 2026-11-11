@@ -8,22 +8,6 @@
 
 - [x] Semantic analyzer
 
-    - [x] .typedef
-
-    - [x] @data slot
-    
-    - [x] Int
-    
-    - [x] Str
-
-    - [x] List
-
-    - [x] Dicts
-        
-    - [x] .get
-
-    - [x] .add
-
 - [x] Data adapter for CSV
 
 - [x] DataBinder
