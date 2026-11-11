@@ -6,7 +6,7 @@ use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };
-use elise_shared_types::Span;
+use elise_test_utils::test_utils;
 
 // ==================================================================
 //
@@ -21,14 +21,14 @@ fn should_strip_binding_paths_by_prefix() {
     type_binding.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            span: Span { start: 0, end: 0 },
+            span: test_utils::span(),
             dtype: TypeBindingDataType::List,
         },
     );
     type_binding.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
-            span: Span { start: 1, end: 1 },
+            span: test_utils::span(),
             dtype: TypeBindingDataType::Record,
         },
     );
@@ -38,7 +38,7 @@ fn should_strip_binding_paths_by_prefix() {
             BindingPathSegment::Field("id".to_string()),
         ]),
         TypeBindingDesc {
-            span: Span { start: 2, end: 2 },
+            span: test_utils::span(),
             dtype: TypeBindingDataType::Int,
         },
     );
@@ -52,14 +52,14 @@ fn should_strip_binding_paths_by_prefix() {
     expected_result.map.insert(
         BindingPath::new(),
         TypeBindingDesc {
-            span: Span { start: 1, end: 1 },
+            span: test_utils::span(),
             dtype: TypeBindingDataType::Record,
         },
     );
     expected_result.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("id".to_string())]),
         TypeBindingDesc {
-            span: Span { start: 2, end: 2 },
+            span: test_utils::span(),
             dtype: TypeBindingDataType::Int,
         },
     );
@@ -81,15 +81,14 @@ fn should_strip_binding_paths_by_prefix() {
 
 #[test]
 fn should_create_new_single_binding() {
-    let result =
-        TypeBinding::new_single_binding(TypeBindingDataType::Int, Span { start: 0, end: 0 });
+    let result = TypeBinding::new_single_binding(TypeBindingDataType::Int, test_utils::span());
 
     let mut expected_result_map = HashMap::new();
     expected_result_map.insert(
         BindingPath::new(),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Int,
-            span: Span { start: 0, end: 0 },
+            span: test_utils::span(),
         },
     );
     let expected_result = TypeBinding::with(&expected_result_map);
@@ -111,15 +110,13 @@ fn should_create_new_single_binding() {
 
 #[test]
 fn is_should_return_true_if_dtype_matches() {
-    let result =
-        TypeBinding::new_single_binding(TypeBindingDataType::Int, Span { start: 0, end: 0 });
+    let result = TypeBinding::new_single_binding(TypeBindingDataType::Int, test_utils::span());
     assert_eq!(result.is(TypeBindingDataType::Int), true);
 }
 
 #[test]
 fn is_should_return_false_if_dtype_does_not_match() {
-    let result =
-        TypeBinding::new_single_binding(TypeBindingDataType::Str, Span { start: 0, end: 0 });
+    let result = TypeBinding::new_single_binding(TypeBindingDataType::Str, test_utils::span());
     assert_eq!(result.is(TypeBindingDataType::Int), false);
 }
 

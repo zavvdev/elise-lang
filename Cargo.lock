@@ -167,6 +167,7 @@ version = "0.1.0"
 dependencies = [
  "elise-shared-proc-macros",
  "elise-shared-types",
+ "elise-test-utils",
  "getset",
 ]
 

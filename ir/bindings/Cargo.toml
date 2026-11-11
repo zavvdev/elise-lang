@@ -10,3 +10,6 @@ path = "src/lib.rs"
 elise-shared-types = { path = "../../shared/types" }
 elise-shared-proc-macros = { path = "../../shared/proc_macros" }
 getset.workspace = true
+
+[dev-dependencies]
+elise-test-utils = { path = "../../test-utils" }

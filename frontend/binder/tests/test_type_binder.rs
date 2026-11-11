@@ -10,7 +10,6 @@ use elise_ir_bindings::{
     type_bindings::{TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };
 use elise_shared_errors::errors_type_binder::TypeBinderErr;
-use elise_shared_types::Span;
 use elise_test_utils::test_utils;
 
 mod common;
@@ -24,7 +23,7 @@ mod common;
 #[test]
 fn should_bind_int() {
     let int_aast = AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
-        span: Span { start: 0, end: 0 },
+        span: test_utils::span(),
     });
 
     let globals = HashMap::new();
@@ -35,7 +34,7 @@ fn should_bind_int() {
     let binding_path = BindingPath::new();
     let binding_desc = TypeBindingDesc {
         dtype: TypeBindingDataType::Int,
-        span: Span { start: 0, end: 0 },
+        span: test_utils::span(),
     };
 
     expected.map.insert(binding_path, binding_desc);
@@ -57,7 +56,7 @@ fn should_bind_int() {
 #[test]
 fn should_bind_str() {
     let str_aast = AAstNodeTypeAnnot::Str(AAstNodeTypeAnnotPrim {
-        span: Span { start: 0, end: 0 },
+        span: test_utils::span(),
     });
 
     let globals = HashMap::new();
@@ -68,7 +67,7 @@ fn should_bind_str() {
     let binding_path = BindingPath::new();
     let binding_desc = TypeBindingDesc {
         dtype: TypeBindingDataType::Str,
-        span: Span { start: 0, end: 0 },
+        span: test_utils::span(),
     };
 
     expected.map.insert(binding_path, binding_desc);
@@ -90,9 +89,9 @@ fn should_bind_str() {
 #[test]
 fn should_bind_list_with_primitive_generic() {
     let list_aast = AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
-        span: Span { start: 0, end: 1 },
+        span: test_utils::span(),
         item_type: Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
-            span: Span { start: 2, end: 3 },
+            span: test_utils::span(),
         })),
     });
 
@@ -105,14 +104,14 @@ fn should_bind_list_with_primitive_generic() {
         BindingPath::new(),
         TypeBindingDesc {
             dtype: TypeBindingDataType::List,
-            span: Span { start: 0, end: 1 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Int,
-            span: Span { start: 2, end: 3 },
+            span: test_utils::span(),
         },
     );
 
@@ -122,11 +121,11 @@ fn should_bind_list_with_primitive_generic() {
 #[test]
 fn should_bind_list_with_list_generic() {
     let list_aast = AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
-        span: Span { start: 0, end: 1 },
+        span: test_utils::span(),
         item_type: Box::new(AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
-            span: Span { start: 2, end: 3 },
+            span: test_utils::span(),
             item_type: Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
-                span: Span { start: 4, end: 5 },
+                span: test_utils::span(),
             })),
         })),
     });
@@ -140,14 +139,14 @@ fn should_bind_list_with_list_generic() {
         BindingPath::new(),
         TypeBindingDesc {
             dtype: TypeBindingDataType::List,
-            span: Span { start: 0, end: 1 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::List,
-            span: Span { start: 2, end: 3 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
@@ -157,7 +156,7 @@ fn should_bind_list_with_list_generic() {
         ]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Int,
-            span: Span { start: 4, end: 5 },
+            span: test_utils::span(),
         },
     );
 
@@ -167,13 +166,13 @@ fn should_bind_list_with_list_generic() {
 #[test]
 fn should_bind_list_with_record_generic() {
     let list_aast = AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
-        span: Span { start: 0, end: 1 },
+        span: test_utils::span(),
         item_type: Box::new(AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
-            span: Span { start: 2, end: 3 },
+            span: test_utils::span(),
             entries: vec![(
                 "id".to_string(),
                 Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
-                    span: Span { start: 4, end: 5 },
+                    span: test_utils::span(),
                 })),
             )],
         })),
@@ -188,14 +187,14 @@ fn should_bind_list_with_record_generic() {
         BindingPath::new(),
         TypeBindingDesc {
             dtype: TypeBindingDataType::List,
-            span: Span { start: 0, end: 1 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Record,
-            span: Span { start: 2, end: 3 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
@@ -205,7 +204,7 @@ fn should_bind_list_with_record_generic() {
         ]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Int,
-            span: Span { start: 4, end: 5 },
+            span: test_utils::span(),
         },
     );
 
@@ -215,9 +214,9 @@ fn should_bind_list_with_record_generic() {
 #[test]
 fn should_bind_list_with_custom_type_generic() {
     let list_aast = AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
-        span: Span { start: 0, end: 1 },
+        span: test_utils::span(),
         item_type: Box::new(AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
-            span: Span { start: 2, end: 3 },
+            span: test_utils::span(),
             alias: "RecordType".to_string(),
         })),
     });
@@ -231,14 +230,14 @@ fn should_bind_list_with_custom_type_generic() {
         BindingPath::new(),
         TypeBindingDesc {
             dtype: TypeBindingDataType::List,
-            span: Span { start: 0, end: 1 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Record,
-            span: Span { start: 0, end: 0 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
@@ -248,7 +247,7 @@ fn should_bind_list_with_custom_type_generic() {
         ]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Int,
-            span: Span { start: 0, end: 0 },
+            span: test_utils::span(),
         },
     );
 
@@ -270,11 +269,11 @@ fn should_bind_list_with_custom_type_generic() {
 #[test]
 fn should_bind_record_with_primitive_values() {
     let record_aast = AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
-        span: Span { start: 0, end: 1 },
+        span: test_utils::span(),
         entries: vec![(
             "id".to_string(),
             Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
-                span: Span { start: 2, end: 3 },
+                span: test_utils::span(),
             })),
         )],
     });
@@ -288,14 +287,14 @@ fn should_bind_record_with_primitive_values() {
         BindingPath::new(),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Record,
-            span: Span { start: 0, end: 1 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("id".to_string())]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Int,
-            span: Span { start: 2, end: 3 },
+            span: test_utils::span(),
         },
     );
 
@@ -305,13 +304,13 @@ fn should_bind_record_with_primitive_values() {
 #[test]
 fn should_bind_record_with_list_values() {
     let record_aast = AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
-        span: Span { start: 0, end: 1 },
+        span: test_utils::span(),
         entries: vec![(
             "scores".to_string(),
             Box::new(AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
-                span: Span { start: 2, end: 3 },
+                span: test_utils::span(),
                 item_type: Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
-                    span: Span { start: 4, end: 5 },
+                    span: test_utils::span(),
                 })),
             })),
         )],
@@ -326,14 +325,14 @@ fn should_bind_record_with_list_values() {
         BindingPath::new(),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Record,
-            span: Span { start: 0, end: 1 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("scores".to_string())]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::List,
-            span: Span { start: 2, end: 3 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
@@ -343,7 +342,7 @@ fn should_bind_record_with_list_values() {
         ]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Int,
-            span: Span { start: 4, end: 5 },
+            span: test_utils::span(),
         },
     );
 
@@ -353,15 +352,15 @@ fn should_bind_record_with_list_values() {
 #[test]
 fn should_bind_record_with_record_values() {
     let record_aast = AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
-        span: Span { start: 0, end: 1 },
+        span: test_utils::span(),
         entries: vec![(
             "user".to_string(),
             Box::new(AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
-                span: Span { start: 2, end: 3 },
+                span: test_utils::span(),
                 entries: vec![(
                     "id".to_string(),
                     Box::new(AAstNodeTypeAnnot::Int(AAstNodeTypeAnnotPrim {
-                        span: Span { start: 4, end: 5 },
+                        span: test_utils::span(),
                     })),
                 )],
             })),
@@ -377,14 +376,14 @@ fn should_bind_record_with_record_values() {
         BindingPath::new(),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Record,
-            span: Span { start: 0, end: 1 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("user".to_string())]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Record,
-            span: Span { start: 2, end: 3 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
@@ -394,7 +393,7 @@ fn should_bind_record_with_record_values() {
         ]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Int,
-            span: Span { start: 4, end: 5 },
+            span: test_utils::span(),
         },
     );
 
@@ -404,12 +403,12 @@ fn should_bind_record_with_record_values() {
 #[test]
 fn should_bind_record_with_custom_type_values() {
     let record_aast = AAstNodeTypeAnnot::Record(AAstNodeTypeAnnotRecord {
-        span: Span { start: 0, end: 1 },
+        span: test_utils::span(),
         entries: vec![(
             "test".to_string(),
             Box::new(AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
                 alias: "RecordType".to_string(),
-                span: Span { start: 2, end: 3 },
+                span: test_utils::span(),
             })),
         )],
     });
@@ -423,14 +422,14 @@ fn should_bind_record_with_custom_type_values() {
         BindingPath::new(),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Record,
-            span: Span { start: 0, end: 1 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("test".to_string())]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Record,
-            span: Span { start: 0, end: 0 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
@@ -440,7 +439,7 @@ fn should_bind_record_with_custom_type_values() {
         ]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Int,
-            span: Span { start: 0, end: 0 },
+            span: test_utils::span(),
         },
     );
 
@@ -462,7 +461,7 @@ fn should_bind_record_with_custom_type_values() {
 #[test]
 fn should_bind_custom_primitive() {
     let custom_aast = AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
-        span: Span { start: 0, end: 1 },
+        span: test_utils::span(),
         alias: "SingleType".to_string(),
     });
 
@@ -475,7 +474,7 @@ fn should_bind_custom_primitive() {
         BindingPath::new(),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Int,
-            span: Span { start: 0, end: 0 },
+            span: test_utils::span(),
         },
     );
 
@@ -485,7 +484,7 @@ fn should_bind_custom_primitive() {
 #[test]
 fn should_bind_custom_list() {
     let custom_aast = AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
-        span: Span { start: 0, end: 1 },
+        span: test_utils::span(),
         alias: "ListType".to_string(),
     });
 
@@ -498,14 +497,14 @@ fn should_bind_custom_list() {
         BindingPath::new(),
         TypeBindingDesc {
             dtype: TypeBindingDataType::List,
-            span: Span { start: 0, end: 0 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::AbstractIndex]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Int,
-            span: Span { start: 0, end: 0 },
+            span: test_utils::span(),
         },
     );
 
@@ -515,7 +514,7 @@ fn should_bind_custom_list() {
 #[test]
 fn should_bind_custom_record() {
     let custom_aast = AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
-        span: Span { start: 0, end: 1 },
+        span: test_utils::span(),
         alias: "RecordType".to_string(),
     });
 
@@ -528,14 +527,14 @@ fn should_bind_custom_record() {
         BindingPath::new(),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Record,
-            span: Span { start: 0, end: 0 },
+            span: test_utils::span(),
         },
     );
     expected.map.insert(
         BindingPath::with_segments(vec![BindingPathSegment::Field("id".to_string())]),
         TypeBindingDesc {
             dtype: TypeBindingDataType::Int,
-            span: Span { start: 0, end: 0 },
+            span: test_utils::span(),
         },
     );
 
@@ -545,7 +544,7 @@ fn should_bind_custom_record() {
 #[test]
 fn should_return_err_if_custom_is_not_in_globals() {
     let custom_aast = AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
-        span: Span { start: 0, end: 1 },
+        span: test_utils::span(),
         alias: "SingleType".to_string(),
     });
 
@@ -555,7 +554,7 @@ fn should_return_err_if_custom_is_not_in_globals() {
     assert_eq!(
         binding,
         Err(TypeBinderErr::Unresolvable {
-            span: Span { start: 0, end: 1 }
+            span: test_utils::span(),
         })
     );
 }
