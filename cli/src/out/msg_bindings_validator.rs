@@ -6,7 +6,8 @@ pub fn print_err(err: &BindingsValidatorErr) {
     use BindingsValidatorErr::*;
 
     let info = match err {
-        Todo => "Todo",
+        TypeMismatch => "Type mismatch",
+        MissingTypeDeclaration => "Missing type declaration",
     };
 
     utils::print_err(info, Some("Bindings Validator Error"));

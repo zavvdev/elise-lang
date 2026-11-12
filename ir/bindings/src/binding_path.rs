@@ -193,6 +193,41 @@ impl BindingPath {
         None
     }
 
+    /// Searches for all BindingPathSegment::Index(n) variants
+    /// and replaces them with BindingPathSegment::AbstractIndex.
+    /// We use it for validating data against schema.
+    /// Returns None if the path doesn't have any Index variants
+    /// so there is nothing to replace.
+    pub fn indexes_into_abstract(&self) -> Option<Self> {
+        // Get all positions of Index variants.
+        let indices: Vec<usize> = self
+            .0
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, msg)| matches!(msg, BindingPathSegment::Index(..)).then_some(idx))
+            .collect();
+
+        if indices.is_empty() {
+            return None;
+        }
+
+        // Create a new path with Index variants replaced.
+        let next_path = self
+            .0
+            .iter()
+            .enumerate()
+            .map(|(idx, segment)| {
+                if indices.contains(&idx) {
+                    BindingPathSegment::AbstractIndex
+                } else {
+                    segment.clone()
+                }
+            })
+            .collect::<Vec<BindingPathSegment>>();
+
+        Some(Self(next_path))
+    }
+
     pub fn as_str(&self) -> String {
         format!(
             "[{}]",

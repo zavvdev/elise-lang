@@ -14,11 +14,12 @@
 
 - [ ] Data validation
 
-    - [ ] Impl
+    - [x] Impl
 
     - [ ] Tests
 
-- [ ] Improve error reporting. Add more informative error messages
+- [ ] Improve error reporting. Add more informative error messages. Consider collecting as much
+  errors as possible instead of failing fast.
 
 - [ ] Compiler
 

@@ -270,3 +270,39 @@ fn should_strip_prefix() {
 // ==================================================================
 // STRIP END
 // ==================================================================
+
+// ==================================================================
+// indexes_into_abstract START
+// ==================================================================
+
+#[test]
+fn should_replace_index_segments_with_abstract_indexes() {
+    let path = BindingPath::with_segments(vec![
+        BindingPathSegment::Root,
+        BindingPathSegment::Index(0),
+        BindingPathSegment::Field("names".to_string()),
+        BindingPathSegment::Index(1),
+    ]);
+
+    let expected_result = BindingPath::with_segments(vec![
+        BindingPathSegment::Root,
+        BindingPathSegment::AbstractIndex,
+        BindingPathSegment::Field("names".to_string()),
+        BindingPathSegment::AbstractIndex,
+    ]);
+
+    assert_eq!(path.indexes_into_abstract().unwrap(), expected_result,);
+}
+
+#[test]
+fn should_return_none_if_no_index_segments_found() {
+    let path = BindingPath::with_segments(vec![
+        BindingPathSegment::Root,
+        BindingPathSegment::AbstractIndex,
+    ]);
+    assert_eq!(path.indexes_into_abstract(), None,);
+}
+
+// ==================================================================
+// indexes_into_abstract END
+// ==================================================================

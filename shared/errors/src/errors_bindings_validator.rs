@@ -1,4 +1,7 @@
 #[derive(Debug, PartialEq)]
 pub enum BindingsValidatorErr {
-    Todo,
+    // TODO: Add metadata.
+    TypeMismatch,
+    // TODO: Add metadata.
+    MissingTypeDeclaration,
 }
