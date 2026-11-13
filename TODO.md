@@ -12,11 +12,7 @@
 
 - [x] DataBinder
 
-- [ ] Data validation
-
-    - [x] Impl
-
-    - [ ] Tests
+- [x] Data validation
 
 - [ ] Improve error reporting. Add more informative error messages. Consider collecting as much
   errors as possible instead of failing fast.

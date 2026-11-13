@@ -27,6 +27,11 @@ fn match_type(
     }
 }
 
+/// Type verification for data bindings.
+/// Takes data bindings and type bindings. Maps through
+/// data binding entries and uses its binding path to
+/// access the respective type definition in order to proof
+/// that path points to the same type in data and type bindings.
 pub fn validate_bindings(
     data_binding: &DataBinding,
     type_binding: &TypeBinding,
