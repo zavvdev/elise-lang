@@ -1,6 +1,6 @@
 use csv::{ErrorKind, ReaderBuilder};
 use elise_shared_errors::errors_csv_data_parser::CsvDataParserErr;
-use elise_shared_types::{Literal, Pos};
+use elise_shared_types::{Literal, TablePos};
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum CsvDataParserDataType {
@@ -16,7 +16,7 @@ pub struct CsvDataCol {
     pub name: String,
     pub dtype: CsvDataParserDataType,
     pub value: String,
-    pub pos: Pos,
+    pub pos: TablePos,
 }
 
 #[derive(Debug, PartialEq)]
@@ -116,7 +116,7 @@ impl<'a> CsvDataParser<'a> {
                     name: col_name,
                     dtype: Self::infer_type(col),
                     value: col.trim().to_string(),
-                    pos: Pos {
+                    pos: TablePos {
                         row: row_index,
                         col: col_index,
                     },

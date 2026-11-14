@@ -4,7 +4,7 @@ use elise_frontend_data::csv::csv_data_parser::{
     CsvDataCol, CsvDataParser, CsvDataParserDataType, CsvDataRow,
 };
 use elise_shared_errors::errors_csv_data_parser::CsvDataParserErr::*;
-use elise_shared_types::Pos;
+use elise_shared_types::TablePos;
 use elise_test_utils::test_utils;
 
 // ==================================================================
@@ -25,7 +25,7 @@ fn should_parse_int() {
                 name: test_utils::csv::build_header(i),
                 value: n.to_string(),
                 dtype: CsvDataParserDataType::Int,
-                pos: Pos { row: 0, col: i },
+                pos: TablePos { row: 0, col: i },
             })
             .collect(),
     };
@@ -62,7 +62,7 @@ fn should_parse_float() {
                 name: test_utils::csv::build_header(i),
                 value: n.to_string(),
                 dtype: CsvDataParserDataType::Float,
-                pos: Pos { row: 0, col: i },
+                pos: TablePos { row: 0, col: i },
             })
             .collect(),
     };
@@ -92,7 +92,7 @@ fn should_parse_bool() {
                 name: test_utils::csv::build_header(i),
                 value: n.to_string(),
                 dtype: CsvDataParserDataType::Bool,
-                pos: Pos { row: 0, col: i },
+                pos: TablePos { row: 0, col: i },
             })
             .collect(),
     };
@@ -122,25 +122,25 @@ fn should_parse_string() {
                     name: test_utils::csv::build_header(0),
                     value: "john".to_string(),
                     dtype: CsvDataParserDataType::Str,
-                    pos: Pos { row: 0, col: 0 },
+                    pos: TablePos { row: 0, col: 0 },
                 },
                 CsvDataCol {
                     name: test_utils::csv::build_header(1),
                     value: "".to_string(),
                     dtype: CsvDataParserDataType::Str,
-                    pos: Pos { row: 0, col: 1 },
+                    pos: TablePos { row: 0, col: 1 },
                 },
                 CsvDataCol {
                     name: test_utils::csv::build_header(2),
                     value: "".to_string(),
                     dtype: CsvDataParserDataType::Str,
-                    pos: Pos { row: 0, col: 2 },
+                    pos: TablePos { row: 0, col: 2 },
                 },
                 CsvDataCol {
                     name: test_utils::csv::build_header(3),
                     value: "".to_string(),
                     dtype: CsvDataParserDataType::Str,
-                    pos: Pos { row: 0, col: 3 },
+                    pos: TablePos { row: 0, col: 3 },
                 }
             ],
         }])
@@ -169,7 +169,7 @@ fn should_parse_null() {
                 name: test_utils::csv::build_header(i),
                 value: n.trim().to_string(),
                 dtype: CsvDataParserDataType::Null,
-                pos: Pos { row: 0, col: i },
+                pos: TablePos { row: 0, col: i },
             })
             .collect(),
     };
@@ -215,7 +215,7 @@ fn should_trim_values() {
                 name: test_utils::csv::build_header(i),
                 value: n.trim().to_string(),
                 dtype: types.get(i).unwrap().clone(),
-                pos: Pos { row: 0, col: i },
+                pos: TablePos { row: 0, col: i },
             })
             .collect(),
     };

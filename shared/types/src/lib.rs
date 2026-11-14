@@ -7,7 +7,7 @@ pub struct Span {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Pos {
+pub struct TablePos {
     pub row: usize,
     pub col: usize,
 }

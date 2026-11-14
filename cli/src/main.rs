@@ -21,13 +21,13 @@ use elise_shared_errors::LangErr;
 
 use std::env;
 
+use crate::out::msg_fsys;
 use crate::out::msg_modes;
 use crate::out::msg_parser;
 use crate::out::msg_preexec;
 use crate::out::utils::{panic_hook, print_bytecode};
 use crate::out::{msg_bindings_validator, msg_conf, msg_data_binder};
 use crate::out::{msg_csv_data_parser, msg_semanalyzer};
-use crate::out::{msg_data_validator, msg_fsys};
 
 fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &[u8]) -> ! {
     use LangErr::*;
@@ -38,7 +38,6 @@ fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &
         ParserSchema(err) => msg_parser::print_err(err, schema_source_code),
         SemanalyzerSource(err) => msg_semanalyzer::print_err(err, source_code),
         SemanalyzerSchema(err) => msg_semanalyzer::print_err(err, schema_source_code),
-        DataValidator(err) => msg_data_validator::print_err(err, schema_source_code),
         CsvDataParser(err) => msg_csv_data_parser::print_err(err),
         BindingsValidator(err) => msg_bindings_validator::print_err(err),
         DataBinder(err) => msg_data_binder::print_err(err),
