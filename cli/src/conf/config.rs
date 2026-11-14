@@ -135,3 +135,7 @@ pub const VALIDATE_ARGS: &[Arg] = &[
         def: None,
     },
 ];
+
+pub fn get_modes_list() -> Vec<String> {
+    ArgValue::MODES.into_iter().map(String::from).collect()
+}

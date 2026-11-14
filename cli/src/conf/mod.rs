@@ -10,12 +10,13 @@ use std::collections::HashMap;
 
 use config::{ArgName, ArgValue, BUILD_ARGS, EXEC_ARGS, RUN_ARGS, VALIDATE_ARGS};
 
-use crate::conf::config::ArgType;
+use crate::conf::config::{ArgType, get_modes_list};
 
 #[derive(Debug, PartialEq)]
 pub struct InvalidArg {
     pub arg_name: String,
     pub provided: String,
+    pub expected: Vec<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -77,6 +78,7 @@ impl Conf {
             Some(mode) => Err(ConfErr::ArgInvalid(InvalidArg {
                 provided: mode.to_string(),
                 arg_name: ArgName::MODE.to_string(),
+                expected: get_modes_list(),
             })),
             None => Err(ConfErr::ArgRequired(ArgName::MODE.to_string())),
         }
@@ -156,6 +158,7 @@ impl Conf {
             _ => Err(ConfErr::ArgInvalid(InvalidArg {
                 provided: mode.to_string(),
                 arg_name: ArgName::MODE.to_string(),
+                expected: get_modes_list(),
             })),
         }?;
 
@@ -248,6 +251,7 @@ impl Conf {
             _ => Err(ConfErr::ArgInvalid(InvalidArg {
                 provided: mode.to_string(),
                 arg_name: ArgName::MODE.to_string(),
+                expected: get_modes_list(),
             })),
         }
     }
@@ -261,7 +265,7 @@ impl Conf {
 
 #[cfg(test)]
 mod tests {
-    use crate::conf::config::ArgName;
+    use crate::conf::config::{ArgName, get_modes_list};
     use crate::conf::{
         Conf, ConfErr, InvalidArg, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf,
     };
@@ -289,6 +293,7 @@ mod tests {
             Err(ConfErr::ArgInvalid(InvalidArg {
                 provided: "invalid".to_string(),
                 arg_name: ArgName::MODE.to_string(),
+                expected: get_modes_list(),
             }))
         );
     }

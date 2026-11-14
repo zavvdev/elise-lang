@@ -80,8 +80,8 @@ pub fn get_source_code_slice(source_code: &[u8], byte_pos: usize) -> Option<Sour
 
 pub fn print_err(message: &str, label: Option<&str>) {
     let label: &str = label.unwrap_or("Error");
-    let error = format!("{}. {}", label.red().bold(), message);
-    eprintln!("{}", error.red().bold());
+    let error = format!("{}\n{}", label.red().bold(), message);
+    eprintln!("{}", error.red());
 }
 
 pub fn print_err_source_code_pos(row: usize, col: usize) {
