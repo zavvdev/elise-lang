@@ -438,7 +438,7 @@ impl<'a> Prelude<'a> {
                 match node {
                     // List items must contain only expression nodes.
                     AstNode::Expr(expr) => items.push(Box::new(expr)),
-                    _ => return Err(self.fail(ParserErr::UnexpListItem, None)),
+                    _ => return Err(self.fail(ParserErr::UnexpListItem, Some(node.span().start))),
                 }
             }
         }
@@ -488,6 +488,7 @@ impl<'a> Prelude<'a> {
 
         let mut entries: Vec<(AstNodeExprDictKey, Box<AstNodeExpr>)> = vec![];
         let mut key: Option<AstNodeExprDictKey> = None;
+        let mut last_key_tok_pos: usize = self.tok_pos;
 
         while let Some(c) = self.peek() {
             let is_end = self
@@ -499,7 +500,7 @@ impl<'a> Prelude<'a> {
                 // have a dangling key to match, return error since
                 // dict must have an even number of children expressions.
                 if key.is_some() {
-                    return Err(self.fail(ParserErr::InvalDictPair, None));
+                    return Err(self.fail(ParserErr::InvalDictPair, Some(last_key_tok_pos)));
                 }
                 self.advance();
                 break;
@@ -520,6 +521,7 @@ impl<'a> Prelude<'a> {
                     let AstNodeExpr::Str(prim) = expr else {
                         return Err(self.fail(ParserErr::UnexpDictKey, None));
                     };
+                    last_key_tok_pos = prim.span.start;
                     key = Some(AstNodeExprDictKey {
                         lexeme: prim.lexeme,
                         span: Span {
@@ -560,11 +562,11 @@ impl<'a> Prelude<'a> {
         *char == CharCode::RIGHT_PAREN
     }
 
-    fn call__validate_name(&self, name: &str) -> Result<String, ParserErr> {
+    fn call__validate_name(&self, name: &str, start_pos: usize) -> Result<String, ParserErr> {
         if !name.is_empty() && Self::identifier__is_valid(name) {
             Ok(name.to_string())
         } else {
-            Err(self.fail(ParserErr::InvalFnName, None))
+            Err(self.fail(ParserErr::InvalFnName, Some(start_pos)))
         }
     }
 
@@ -590,7 +592,7 @@ impl<'a> Prelude<'a> {
 
         let call_name = from_utf8(&self.source_code[call_name_start..self.tok_pos]).unwrap();
         // Allow separators at the end for user preferences.
-        let call_name = self.call__validate_name(call_name.trim_end())?;
+        let call_name = self.call__validate_name(call_name.trim_end(), call_name_start)?;
 
         // Go to the next char after the function name.
         self.advance();
@@ -716,6 +718,7 @@ impl<'a> Prelude<'a> {
     fn type_annot__record_consume(
         &mut self,
     ) -> Result<Vec<(AstNodeTypeAnnotRecordKey, Box<AstNodeTypeAnnot>)>, ParserErr> {
+        let record_start_pos = self.tok_pos;
         self.advance();
 
         let mut entries: Vec<(AstNodeTypeAnnotRecordKey, Box<AstNodeTypeAnnot>)> = vec![];
@@ -765,7 +768,7 @@ impl<'a> Prelude<'a> {
         }
 
         if entries.is_empty() {
-            return Err(self.fail(ParserErr::EmptyRecord, None));
+            return Err(self.fail(ParserErr::EmptyRecord, Some(record_start_pos)));
         }
 
         Ok(entries)
@@ -796,7 +799,7 @@ impl<'a> Prelude<'a> {
             };
             if is_end {
                 if generic.is_none() {
-                    return Err(self.fail(ParserErr::EmptyGeneric, None));
+                    return Err(self.fail(ParserErr::EmptyGeneric, Some(self.tok_pos - 1)));
                 }
                 self.advance();
                 break;
@@ -814,7 +817,11 @@ impl<'a> Prelude<'a> {
                     AstNode::TypeAnnot(typedef) => {
                         generic = Some(AstNodeTypeAnnotGeneric::Single(Box::new(typedef)));
                     }
-                    _ => return Err(self.fail(ParserErr::InvalGenericTypeAnnot, None)),
+                    _ => {
+                        return Err(
+                            self.fail(ParserErr::InvalGenericTypeAnnot, Some(node.span().start))
+                        );
+                    }
                 }
             }
         }

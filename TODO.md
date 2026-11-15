@@ -20,11 +20,7 @@
 
     - [x] cli_run, cli_build, cli_exec, cli_validate in main.rs
 
-    - [ ] Prelude
-
-      - [x] UnexpTok
-
-      - [x] UntermDelim
+    - [x] Prelude
 
 - [ ] Compiler
 

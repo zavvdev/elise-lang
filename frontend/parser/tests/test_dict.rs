@@ -186,7 +186,7 @@ fn should_not_allow_invalid_pair() {
     let code = r##"{ "a" 1, "b" }"##;
     assert_eq!(
         Prelude::new(code.as_bytes()).parse(),
-        Err(ParserErr::InvalDictPair(ParserErrInfo { pos: 13 }))
+        Err(ParserErr::InvalDictPair(ParserErrInfo { pos: 9 }))
     );
 }
 

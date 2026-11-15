@@ -94,34 +94,34 @@ fn should_not_allow_separator_after_call_symbol() {
     let code = ". some-fn()";
     assert_eq!(
         Prelude::new(code.as_bytes()).parse(),
-        Err(ParserErr::InvalFnName(ParserErrInfo { pos: 9 }))
+        Err(ParserErr::InvalFnName(ParserErrInfo { pos: 1 }))
     );
 }
 
 #[test]
 fn should_reject_invalid_names() {
     let identifiers = vec![
-        ("1asd", 5),
-        ("!asd", 5),
-        ("@asd", 5),
-        ("#asd", 5),
-        ("$asd", 5),
-        ("%asd", 5),
-        ("^asd", 5),
-        ("&asd", 5),
-        ("*asd", 5),
-        ("-asd", 5),
-        ("_asd", 5),
-        ("=asd", 5),
-        ("+asd", 5),
-        ("?asd", 5),
-        ("?asd", 5),
-        (">asd", 5),
-        ("<asd", 5),
-        ("/asd", 5),
-        ("asd<", 5),
-        ("asd>", 5),
-        ("asd%", 5),
+        ("1asd", 1),
+        ("!asd", 1),
+        ("@asd", 1),
+        ("#asd", 1),
+        ("$asd", 1),
+        ("%asd", 1),
+        ("^asd", 1),
+        ("&asd", 1),
+        ("*asd", 1),
+        ("-asd", 1),
+        ("_asd", 1),
+        ("=asd", 1),
+        ("+asd", 1),
+        ("?asd", 1),
+        ("?asd", 1),
+        (">asd", 1),
+        ("<asd", 1),
+        ("/asd", 1),
+        ("asd<", 1),
+        ("asd>", 1),
+        ("asd%", 1),
     ];
     for (identifier, pos) in identifiers {
         assert_eq!(
