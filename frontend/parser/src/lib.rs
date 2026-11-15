@@ -23,6 +23,12 @@ use crate::config::{CharCode, DfaNumState};
 
 use elise_shared_errors::errors_parser::{ParserErr, ParserErrInfo};
 
+#[derive(PartialEq)]
+struct DepthStackEntry {
+    ch: u8,
+    tok_pos: usize,
+}
+
 pub struct Prelude<'a> {
     // We expect to have a single char per byte (ASCII) for the
     // language itself. String literals should support UTF-8 and
@@ -30,7 +36,7 @@ pub struct Prelude<'a> {
     source_code: &'a [u8],
     tok_pos: usize,
     // Track open and closed brackets via stack.
-    depth_stack: Vec<u8>,
+    depth_stack: Vec<DepthStackEntry>,
 }
 
 // Top-Down, Leftmost, Non-backtracking, Recursive
@@ -56,14 +62,19 @@ impl<'a> Prelude<'a> {
         }
 
         if !self.depth_stack.is_empty() {
-            return Err(self.fail(ParserErr::UnexpEoFile));
+            let last_entry = self.depth_stack.last().unwrap();
+            return Err(self.fail(ParserErr::UntermDelim, Some(last_entry.tok_pos)));
         }
 
         Ok(ast)
     }
 
-    fn fail(&self, variant: fn(ParserErrInfo) -> ParserErr) -> ParserErr {
-        variant(ParserErrInfo { pos: self.tok_pos })
+    fn fail(&self, variant: fn(ParserErrInfo) -> ParserErr, pos: Option<usize>) -> ParserErr {
+        if let Some(custom_pos) = pos {
+            variant(ParserErrInfo { pos: custom_pos })
+        } else {
+            variant(ParserErrInfo { pos: self.tok_pos })
+        }
     }
 
     /// This function was decomposed from parse function in order
@@ -92,7 +103,7 @@ impl<'a> Prelude<'a> {
         } else if Self::identifier__is_start(c) {
             self.identifier__consume()
         } else {
-            Err(self.fail(ParserErr::UnexpTok))
+            Err(self.fail(ParserErr::UnexpTok, None))
         }
     }
 
@@ -196,7 +207,7 @@ impl<'a> Prelude<'a> {
                 }
                 (_, c) if Self::number__is_end(&c) => break,
                 _ => {
-                    return Err(self.fail(ParserErr::InvalNum));
+                    return Err(self.fail(ParserErr::InvalNum, None));
                 }
             };
         }
@@ -205,7 +216,7 @@ impl<'a> Prelude<'a> {
         let value = from_utf8(&self.source_code[tok_start..tok_end]);
 
         if value.is_err() {
-            return Err(self.fail(ParserErr::InvalNum));
+            return Err(self.fail(ParserErr::InvalNum, None));
         }
 
         let primitive = AstNodeExprPrim {
@@ -223,7 +234,7 @@ impl<'a> Prelude<'a> {
             DfaNumState::Frac | DfaNumState::Scient => {
                 Ok(Some(AstNode::Expr(AstNodeExpr::Float(primitive))))
             }
-            _ => Err(self.fail(ParserErr::InvalNum)),
+            _ => Err(self.fail(ParserErr::InvalNum, None)),
         }
     }
 
@@ -286,7 +297,7 @@ impl<'a> Prelude<'a> {
                 break;
             }
             if Self::string__is_forbidden_char(&c) {
-                return Err(self.fail(ParserErr::InvalStr));
+                return Err(self.fail(ParserErr::InvalStr, None));
             }
             if Self::string__is_escape(&c) {
                 // Skip escaping back slash.
@@ -300,13 +311,14 @@ impl<'a> Prelude<'a> {
         }
 
         if !closed {
-            return Err(self.fail(ParserErr::UntermStr));
+            return Err(self.fail(ParserErr::UntermStr, None));
         }
 
         let end = self.tok_pos;
 
         // Preserve UTF-8 encoding for string.
-        let value = std::str::from_utf8(&slice).map_err(|_| self.fail(ParserErr::InvalStr))?;
+        let value =
+            std::str::from_utf8(&slice).map_err(|_| self.fail(ParserErr::InvalStr, None))?;
 
         Ok(Some(AstNode::Expr(AstNodeExpr::Str(AstNodeExprPrim {
             lexeme: value.to_owned(),
@@ -373,7 +385,7 @@ impl<'a> Prelude<'a> {
                 if Self::identifier__is_valid(&primitive.lexeme) {
                     Ok(Some(AstNode::Expr(AstNodeExpr::Ident(primitive))))
                 } else {
-                    Err(self.fail(ParserErr::UnexpTok))
+                    Err(self.fail(ParserErr::UnexpTok, None))
                 }
             }
         }
@@ -389,7 +401,10 @@ impl<'a> Prelude<'a> {
 
     fn list__is_start(&mut self, c: &u8) -> bool {
         if *c == CharCode::LEFT_SQR_BRACKET {
-            self.depth_stack.push(CharCode::LEFT_SQR_BRACKET);
+            self.depth_stack.push(DepthStackEntry {
+                ch: CharCode::LEFT_SQR_BRACKET,
+                tok_pos: self.tok_pos,
+            });
             return true;
         }
         false
@@ -398,7 +413,7 @@ impl<'a> Prelude<'a> {
     fn list__check_end(&mut self, c: &u8) -> Result<bool, ()> {
         if *c == CharCode::RIGHT_SQR_BRACKET {
             let last_entry = self.depth_stack.pop();
-            if last_entry.is_none() || last_entry.unwrap() != CharCode::LEFT_SQR_BRACKET {
+            if last_entry.is_none() || last_entry.unwrap().ch != CharCode::LEFT_SQR_BRACKET {
                 return Err(());
             }
             return Ok(true);
@@ -413,7 +428,7 @@ impl<'a> Prelude<'a> {
 
         while let Some(c) = self.peek() {
             let Ok(is_end) = self.list__check_end(&c) else {
-                return Err(self.fail(ParserErr::UnexpEoList));
+                return Err(self.fail(ParserErr::UnexpEoList, None));
             };
             if is_end {
                 self.advance();
@@ -423,7 +438,7 @@ impl<'a> Prelude<'a> {
                 match node {
                     // List items must contain only expression nodes.
                     AstNode::Expr(expr) => items.push(Box::new(expr)),
-                    _ => return Err(self.fail(ParserErr::UnexpListItem)),
+                    _ => return Err(self.fail(ParserErr::UnexpListItem, None)),
                 }
             }
         }
@@ -447,7 +462,10 @@ impl<'a> Prelude<'a> {
 
     fn dict__is_start(&mut self, c: &u8) -> bool {
         if *c == CharCode::LEFT_CUR_BRACKET {
-            self.depth_stack.push(CharCode::LEFT_CUR_BRACKET);
+            self.depth_stack.push(DepthStackEntry {
+                ch: CharCode::LEFT_CUR_BRACKET,
+                tok_pos: self.tok_pos,
+            });
             return true;
         }
         false
@@ -456,7 +474,7 @@ impl<'a> Prelude<'a> {
     fn dict__check_end(&mut self, c: &u8) -> Result<bool, ()> {
         if *c == CharCode::RIGHT_CUR_BRACKET {
             let last_entry = self.depth_stack.pop();
-            if last_entry.is_none() || last_entry.unwrap() != CharCode::LEFT_CUR_BRACKET {
+            if last_entry.is_none() || last_entry.unwrap().ch != CharCode::LEFT_CUR_BRACKET {
                 return Err(());
             }
             return Ok(true);
@@ -474,14 +492,14 @@ impl<'a> Prelude<'a> {
         while let Some(c) = self.peek() {
             let is_end = self
                 .dict__check_end(&c)
-                .map_err(|_| self.fail(ParserErr::UnexpEoDict))?;
+                .map_err(|_| self.fail(ParserErr::UnexpEoDict, None))?;
 
             if is_end {
                 // If we ended up in the end of the dict but we still
                 // have a dangling key to match, return error since
                 // dict must have an even number of children expressions.
                 if key.is_some() {
-                    return Err(self.fail(ParserErr::InvalDictPair));
+                    return Err(self.fail(ParserErr::InvalDictPair, None));
                 }
                 self.advance();
                 break;
@@ -493,14 +511,14 @@ impl<'a> Prelude<'a> {
 
             // Dictionaries must contain only expression nodes.
             let AstNode::Expr(expr) = node else {
-                return Err(self.fail(ParserErr::UnexpDictKey));
+                return Err(self.fail(ParserErr::UnexpDictKey, None));
             };
 
             match key.take() {
                 None => {
                     // Key must always be a string expression.
                     let AstNodeExpr::Str(prim) = expr else {
-                        return Err(self.fail(ParserErr::UnexpDictKey));
+                        return Err(self.fail(ParserErr::UnexpDictKey, None));
                     };
                     key = Some(AstNodeExprDictKey {
                         lexeme: prim.lexeme,
@@ -546,7 +564,7 @@ impl<'a> Prelude<'a> {
         if !name.is_empty() && Self::identifier__is_valid(name) {
             Ok(name.to_string())
         } else {
-            Err(self.fail(ParserErr::InvalFnName))
+            Err(self.fail(ParserErr::InvalFnName, None))
         }
     }
 
@@ -560,7 +578,10 @@ impl<'a> Prelude<'a> {
 
         while let Some(c) = self.peek() {
             if c == CharCode::LEFT_PAREN {
-                self.depth_stack.push(CharCode::LEFT_PAREN);
+                self.depth_stack.push(DepthStackEntry {
+                    ch: CharCode::LEFT_PAREN,
+                    tok_pos: self.tok_pos,
+                });
                 break;
             } else {
                 self.advance();
@@ -580,8 +601,8 @@ impl<'a> Prelude<'a> {
         while let Some(c) = self.peek() {
             if Self::call__is_end(&c) {
                 let last_entry = self.depth_stack.pop();
-                if last_entry.is_none() || last_entry.unwrap() != CharCode::LEFT_PAREN {
-                    return Err(self.fail(ParserErr::UnexpEoFn));
+                if last_entry.is_none() || last_entry.unwrap().ch != CharCode::LEFT_PAREN {
+                    return Err(self.fail(ParserErr::UnexpEoFn, None));
                 }
                 self.advance();
                 break;
@@ -652,7 +673,7 @@ impl<'a> Prelude<'a> {
                 },
             }))))
         } else {
-            Err(self.fail(ParserErr::UnexpTok))
+            Err(self.fail(ParserErr::UnexpTok, None))
         }
     }
 
@@ -672,7 +693,10 @@ impl<'a> Prelude<'a> {
         if let Some(ch) = self.peek()
             && ch == CharCode::LESS
         {
-            self.depth_stack.push(CharCode::LESS);
+            self.depth_stack.push(DepthStackEntry {
+                ch: CharCode::LESS,
+                tok_pos: self.tok_pos,
+            });
             return true;
         }
         false
@@ -681,7 +705,7 @@ impl<'a> Prelude<'a> {
     fn type_annot__generic_check_end(&mut self, c: &u8) -> Result<bool, ()> {
         if *c == CharCode::MORE {
             let last_entry = self.depth_stack.pop();
-            if last_entry.is_none() || last_entry.unwrap() != CharCode::LESS {
+            if last_entry.is_none() || last_entry.unwrap().ch != CharCode::LESS {
                 return Err(());
             }
             return Ok(true);
@@ -700,14 +724,14 @@ impl<'a> Prelude<'a> {
         while let Some(c) = self.peek() {
             let is_end = self
                 .dict__check_end(&c)
-                .map_err(|_| self.fail(ParserErr::UnexpEoDict))?;
+                .map_err(|_| self.fail(ParserErr::UnexpEoDict, None))?;
 
             if is_end {
                 // If we ended up in the end of the record but we still
                 // have a dangling key to match, return error since
                 // record must have an even number of children expressions.
                 if key.is_some() {
-                    return Err(self.fail(ParserErr::InvalDictPair));
+                    return Err(self.fail(ParserErr::InvalDictPair, None));
                 }
                 self.advance();
                 break;
@@ -721,7 +745,7 @@ impl<'a> Prelude<'a> {
                 None => {
                     // Key must always be a string expression.
                     let AstNode::Expr(AstNodeExpr::Str(prim)) = node else {
-                        return Err(self.fail(ParserErr::UnexpDictKey));
+                        return Err(self.fail(ParserErr::UnexpDictKey, None));
                     };
                     key = Some(AstNodeTypeAnnotRecordKey {
                         lexeme: prim.lexeme,
@@ -733,7 +757,7 @@ impl<'a> Prelude<'a> {
                 }
                 Some(k) => {
                     let AstNode::TypeAnnot(typedef) = node else {
-                        return Err(self.fail(ParserErr::UnexpDictKey));
+                        return Err(self.fail(ParserErr::UnexpDictKey, None));
                     };
                     entries.push((k, Box::new(typedef)));
                 }
@@ -741,7 +765,7 @@ impl<'a> Prelude<'a> {
         }
 
         if entries.is_empty() {
-            return Err(self.fail(ParserErr::EmptyRecord));
+            return Err(self.fail(ParserErr::EmptyRecord, None));
         }
 
         Ok(entries)
@@ -751,7 +775,7 @@ impl<'a> Prelude<'a> {
         let ident_node = self.identifier__consume()?;
         match ident_node {
             Some(AstNode::Expr(AstNodeExpr::Ident(prim))) => Ok(prim.lexeme),
-            _ => Err(self.fail(ParserErr::UnexpTok)),
+            _ => Err(self.fail(ParserErr::UnexpTok, None)),
         }
     }
 
@@ -768,18 +792,18 @@ impl<'a> Prelude<'a> {
 
         while let Some(c) = self.peek() {
             let Ok(is_end) = self.type_annot__generic_check_end(&c) else {
-                return Err(self.fail(ParserErr::UnexpEoGeneric));
+                return Err(self.fail(ParserErr::UnexpEoGeneric, None));
             };
             if is_end {
                 if generic.is_none() {
-                    return Err(self.fail(ParserErr::EmptyGeneric));
+                    return Err(self.fail(ParserErr::EmptyGeneric, None));
                 }
                 self.advance();
                 break;
             }
 
             if generic.is_some() {
-                return Err(self.fail(ParserErr::UnexpTok));
+                return Err(self.fail(ParserErr::UnexpTok, None));
             }
 
             if self.dict__is_start(&c) {
@@ -790,7 +814,7 @@ impl<'a> Prelude<'a> {
                     AstNode::TypeAnnot(typedef) => {
                         generic = Some(AstNodeTypeAnnotGeneric::Single(Box::new(typedef)));
                     }
-                    _ => return Err(self.fail(ParserErr::InvalGenericTypeAnnot)),
+                    _ => return Err(self.fail(ParserErr::InvalGenericTypeAnnot, None)),
                 }
             }
         }
@@ -817,7 +841,7 @@ impl<'a> Prelude<'a> {
                 generic,
             })))
         } else {
-            Err(self.fail(ParserErr::UnexpTok))
+            Err(self.fail(ParserErr::UnexpTok, None))
         }
     }
 

@@ -6,7 +6,6 @@ pub struct ParserErrInfo {
 #[derive(Debug, PartialEq)]
 pub enum ParserErr {
     UnexpTok(ParserErrInfo),
-    UnexpEoFile(ParserErrInfo),
     UnexpEoList(ParserErrInfo),
     UnexpEoGeneric(ParserErrInfo),
     UnexpEoDict(ParserErrInfo),
@@ -24,4 +23,5 @@ pub enum ParserErr {
     EmptyRecord(ParserErrInfo),
 
     UntermStr(ParserErrInfo),
+    UntermDelim(ParserErrInfo),
 }

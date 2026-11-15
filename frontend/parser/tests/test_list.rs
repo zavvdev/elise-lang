@@ -66,6 +66,6 @@ fn should_not_allow_non_closed() {
     let code = "[[1, 3]";
     assert_eq!(
         Prelude::new(code.as_bytes()).parse(),
-        Err(ParserErr::UnexpEoFile(ParserErrInfo { pos: 7 }))
+        Err(ParserErr::UntermDelim(ParserErrInfo { pos: 0 }))
     );
 }

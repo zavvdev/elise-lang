@@ -7,7 +7,6 @@ pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
 
     let info = match parser_err {
         UnexpTok(err_info) => ("Unexpected token", err_info),
-        UnexpEoFile(err_info) => ("Unexpected end of file", err_info),
         UnexpEoList(err_info) => ("Unexpected end of list", err_info),
         UnexpEoGeneric(err_info) => ("Unexpected end of generic", err_info),
         UnexpEoDict(err_info) => ("Unexpected end of dictionary", err_info),
@@ -24,7 +23,8 @@ pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
         EmptyGeneric(err_info) => ("Empty generic", err_info),
         EmptyRecord(err_info) => ("Empty Record type definition", err_info),
 
-        UntermStr(err_info) => ("Unterminated string", err_info),
+        UntermStr(err_info) => ("Unclosed string", err_info),
+        UntermDelim(err_info) => ("Unclosed delimiter", err_info),
     };
 
     utils::print_err(info.0, Some("Parser error"));

@@ -22,6 +22,10 @@
 
     - [ ] Prelude
 
+      - [x] UnexpTok
+
+      - [x] UntermDelim
+
 - [ ] Compiler
 
 - [ ] VM
