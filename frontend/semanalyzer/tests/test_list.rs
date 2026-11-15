@@ -34,7 +34,7 @@ fn should_fail_for_unsupported_items() {
     let result = semanalyze(r##"[.typedef(Some :Int)]"##, &mut type_bindings_map, false);
     assert_eq!(
         result,
-        Err(SemanalyzerErr::UnsupportedListItem {
+        Err(SemanalyzerErr::UnsupListItem {
             span: Span { start: 1, end: 20 }
         })
     );

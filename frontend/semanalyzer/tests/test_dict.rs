@@ -26,7 +26,7 @@ fn should_fail_for_unsupported_items() {
     );
     assert_eq!(
         result,
-        Err(SemanalyzerErr::UnsupportedDictItem {
+        Err(SemanalyzerErr::UnsupDictItem {
             span: Span { start: 6, end: 25 }
         })
     );

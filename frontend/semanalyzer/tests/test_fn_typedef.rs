@@ -45,20 +45,14 @@ fn should_fail_for_invalid_number_of_arguments() {
 fn should_fail_if_first_arg_is_not_ident() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(".typedef(:Int :Int)", &mut type_bindings_map, TYPEDEF_MODE);
-    assert!(matches!(
-        result,
-        Err(SemanalyzerErr::ExpectedIdentifier { .. })
-    ));
+    assert!(matches!(result, Err(SemanalyzerErr::ExpIdentifier { .. })));
 }
 
 #[test]
 fn should_fail_if_second_arg_is_not_type_annot() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(".typedef(Age Age)", &mut type_bindings_map, TYPEDEF_MODE);
-    assert!(matches!(
-        result,
-        Err(SemanalyzerErr::ExpectedTypeAnnot { .. })
-    ));
+    assert!(matches!(result, Err(SemanalyzerErr::ExpTypeAnnot { .. })));
 }
 
 // ==================================================================
@@ -111,10 +105,7 @@ fn should_fail_if_int_has_generic() {
         &mut type_bindings_map,
         TYPEDEF_MODE,
     );
-    assert!(matches!(
-        result,
-        Err(SemanalyzerErr::UnexpectedGeneric { .. })
-    ));
+    assert!(matches!(result, Err(SemanalyzerErr::UnexpGeneric { .. })));
 }
 
 // ==================================================================
@@ -167,10 +158,7 @@ fn should_fail_if_str_has_generic() {
         &mut type_bindings_map,
         TYPEDEF_MODE,
     );
-    assert!(matches!(
-        result,
-        Err(SemanalyzerErr::UnexpectedGeneric { .. })
-    ));
+    assert!(matches!(result, Err(SemanalyzerErr::UnexpGeneric { .. })));
 }
 
 // ==================================================================
@@ -235,10 +223,7 @@ fn should_analyze_list_aliasing() {
 fn should_fail_if_list_has_no_generic() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(".typedef(Age :List)", &mut type_bindings_map, TYPEDEF_MODE);
-    assert!(matches!(
-        result,
-        Err(SemanalyzerErr::ExpectedGeneric { .. })
-    ));
+    assert!(matches!(result, Err(SemanalyzerErr::ExpGeneric { .. })));
 }
 
 #[test]
@@ -249,7 +234,7 @@ fn should_fail_if_list_has_invalid_generic() {
         &mut type_bindings_map,
         TYPEDEF_MODE,
     );
-    assert!(matches!(result, Err(SemanalyzerErr::InvalidGeneric { .. })));
+    assert!(matches!(result, Err(SemanalyzerErr::InvalGeneric { .. })));
 }
 
 // ==================================================================
@@ -321,10 +306,7 @@ fn should_fail_if_record_has_no_generic() {
         &mut type_bindings_map,
         TYPEDEF_MODE,
     );
-    assert!(matches!(
-        result,
-        Err(SemanalyzerErr::ExpectedGeneric { .. })
-    ));
+    assert!(matches!(result, Err(SemanalyzerErr::ExpGeneric { .. })));
 }
 
 #[test]
@@ -335,7 +317,7 @@ fn should_fail_if_record_has_invalid_generic() {
         &mut type_bindings_map,
         TYPEDEF_MODE,
     );
-    assert!(matches!(result, Err(SemanalyzerErr::InvalidGeneric { .. })));
+    assert!(matches!(result, Err(SemanalyzerErr::InvalGeneric { .. })));
 }
 
 // ==================================================================
@@ -358,24 +340,21 @@ fn should_fail_if_custom_alias_has_generic() {
         &mut type_bindings_map,
         TYPEDEF_MODE,
     );
-    assert!(matches!(
-        result,
-        Err(SemanalyzerErr::UnexpectedGeneric { .. })
-    ));
+    assert!(matches!(result, Err(SemanalyzerErr::UnexpGeneric { .. })));
 }
 
 #[test]
 fn should_fail_if_custom_is_aliasing_undefined() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(".typedef(Age :Some)", &mut type_bindings_map, TYPEDEF_MODE);
-    assert!(matches!(result, Err(SemanalyzerErr::UnknownTypedef { .. })));
+    assert!(matches!(result, Err(SemanalyzerErr::UnknTypedef { .. })));
 }
 
 #[test]
 fn should_fail_if_custom_aliasing_itself() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(".typedef(Age :Age)", &mut type_bindings_map, TYPEDEF_MODE);
-    assert!(matches!(result, Err(SemanalyzerErr::UnknownTypedef { .. })));
+    assert!(matches!(result, Err(SemanalyzerErr::UnknTypedef { .. })));
 }
 
 #[test]
@@ -386,7 +365,7 @@ fn should_fail_if_custom_aliasing_itself_deep() {
         &mut type_bindings_map,
         TYPEDEF_MODE,
     );
-    assert!(matches!(result, Err(SemanalyzerErr::UnknownTypedef { .. })));
+    assert!(matches!(result, Err(SemanalyzerErr::UnknTypedef { .. })));
 }
 
 // ==================================================================

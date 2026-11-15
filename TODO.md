@@ -22,6 +22,13 @@
 
     - [x] Prelude
 
+    - [ ] Harmony
+
+    - [ ] Remove Parser Error and Semantic Error titles from the error reports and use meaningful
+      titles like "Syntax error: ..."
+
+    - [ ] Add error codes like E201, E202
+
 - [ ] Compiler
 
 - [ ] VM

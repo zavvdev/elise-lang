@@ -23,23 +23,31 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             span,
         ),
 
-        UnknownFunction { span } => ("Unknown function".to_string(), span),
+        UnknFn { span } => ("Unknown function".to_string(), span),
 
-        UnknownSlot { span } => ("Unknown slot".to_string(), span),
+        UnknSlot { span } => ("Unknown slot".to_string(), span),
+
+        UnknTypedef { span } => ("Unknown type definition".to_string(), span),
 
         UnexpNode { span } => ("Unexpected expression".to_string(), span),
 
-        ExpectedTypeAnnot { span } => ("Expected type annotation".to_string(), span),
+        UnexpGeneric { span } => ("Unexpected generic".to_string(), span),
 
-        UnknownTypedef { span } => ("Unknown type definition".to_string(), span),
+        UnexpType { span } => ("Unexpected type".to_string(), span),
 
-        ExpectedIdentifier { span } => ("Expected identifier".to_string(), span),
+        ExpTypeAnnot { span } => ("Expected type annotation".to_string(), span),
 
-        UnexpectedGeneric { span } => ("Unexpected generic".to_string(), span),
+        ExpIdentifier { span } => ("Expected identifier".to_string(), span),
 
-        ExpectedGeneric { span } => ("Expected generic".to_string(), span),
+        ExpGeneric { span } => ("Expected generic".to_string(), span),
 
-        InvalidGeneric { span } => ("Invalid generic".to_string(), span),
+        UnsupListItem { span } => ("Unsupported list item".to_string(), span),
+
+        UnsupDictItem { span } => ("Unsupported dict item".to_string(), span),
+
+        InvalGeneric { span } => ("Invalid generic".to_string(), span),
+
+        InvalDataAccessArg { span } => ("Invalid data access argument".to_string(), span),
 
         UnresolvableTypedef { span } => ("Unresolvable type definition".to_string(), span),
 
@@ -51,24 +59,18 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             "List can contain only elements of the same type".to_string(),
             span,
         ),
-        UnsupportedListItem { span } => ("Unsupported list item".to_string(), span),
-
-        UnsupportedDictItem { span } => ("Unsupported dict item".to_string(), span),
 
         CannotInferType { span } => ("Unable to infer type".to_string(), span),
 
         NoTypeDefinition { span } => ("Unable to find a type definition".to_string(), span),
 
-        InvalDataAccessArg { span } => ("Invalid data access argument".to_string(), span),
-
         UnresolvablePath { span } => (
             "Unable to get type definition by using this data access path".to_string(),
             span,
         ),
-        UnexpType { span } => ("Unexpected type".to_string(), span),
     };
 
-    utils::print_err(&info, Some("Semantic error"));
+    utils::print_err(&info, Some("Semantic Error"));
 
     if let Some(code) = get_source_code_slice(source_code, span.start) {
         print_err_source_code_pos(code.pos.row, code.pos.col);

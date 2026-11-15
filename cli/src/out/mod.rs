@@ -5,6 +5,5 @@ pub mod msg_data_binder;
 pub mod msg_fsys;
 pub mod msg_modes;
 pub mod msg_parser;
-pub mod msg_preexec;
 pub mod msg_semanalyzer;
 pub mod utils;

@@ -9,33 +9,51 @@ pub enum SemanalyzerErr {
         found: usize,
         span: Span,
     },
-    UnknownFunction {
+
+    UnknFn {
         span: Span,
     },
-    UnknownSlot {
+    UnknSlot {
         span: Span,
     },
+    UnknTypedef {
+        span: Span,
+    },
+
     UnexpNode {
         span: Span,
     },
-    ExpectedTypeAnnot {
+    UnexpGeneric {
         span: Span,
     },
-    UnknownTypedef {
+    UnexpType {
         span: Span,
     },
-    ExpectedIdentifier {
+
+    ExpTypeAnnot {
         span: Span,
     },
-    UnexpectedGeneric {
+    ExpIdentifier {
         span: Span,
     },
-    ExpectedGeneric {
+    ExpGeneric {
         span: Span,
     },
-    InvalidGeneric {
+
+    UnsupListItem {
         span: Span,
     },
+    UnsupDictItem {
+        span: Span,
+    },
+
+    InvalGeneric {
+        span: Span,
+    },
+    InvalDataAccessArg {
+        span: Span,
+    },
+
     UnresolvableTypedef {
         span: Span,
     },
@@ -45,25 +63,13 @@ pub enum SemanalyzerErr {
     ListInconsistentItemTypes {
         span: Span,
     },
-    UnsupportedListItem {
-        span: Span,
-    },
-    UnsupportedDictItem {
-        span: Span,
-    },
     CannotInferType {
         span: Span,
     },
     NoTypeDefinition {
         span: Span,
     },
-    InvalDataAccessArg {
-        span: Span,
-    },
     UnresolvablePath {
-        span: Span,
-    },
-    UnexpType {
         span: Span,
     },
 }

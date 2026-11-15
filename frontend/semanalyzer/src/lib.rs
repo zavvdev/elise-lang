@@ -207,7 +207,7 @@ impl<'a> Harmony<'a> {
     fn slot(&mut self, prim: &AstNodeExprPrim) -> Result<AAstNode, SemanalyzerErr> {
         match prim.lexeme.as_str() {
             SlotData::LEXEME => Ok(AAstNode::SlotData(AAstNodeSlot { span: prim.span() })),
-            _ => Err(SemanalyzerErr::UnknownSlot { span: prim.span() }),
+            _ => Err(SemanalyzerErr::UnknSlot { span: prim.span() }),
         }
     }
 
@@ -270,7 +270,7 @@ impl<'a> Harmony<'a> {
         let mut aast_items = vec![];
         for item in list.items.iter() {
             let AAstNode::Data(data_node) = self.annotate_node_expr(item)? else {
-                return Err(SemanalyzerErr::UnsupportedListItem { span: item.span() });
+                return Err(SemanalyzerErr::UnsupListItem { span: item.span() });
             };
             aast_items.push(Box::new(data_node));
         }
@@ -294,7 +294,7 @@ impl<'a> Harmony<'a> {
 
         for entry in dict.entries.iter() {
             let AAstNode::Data(data_node) = self.annotate_node_expr(&entry.1)? else {
-                return Err(SemanalyzerErr::UnsupportedDictItem {
+                return Err(SemanalyzerErr::UnsupDictItem {
                     span: entry.1.span(),
                 });
             };
@@ -326,7 +326,7 @@ impl<'a> Harmony<'a> {
             FnTypedef::LEXEME => self.call_typedef(call),
             FnGet::LEXEME => self.call_get(call),
             FnAdd::LEXEME => self.call_add(call),
-            _ => Err(SemanalyzerErr::UnknownFunction { span: call.span() }),
+            _ => Err(SemanalyzerErr::UnknFn { span: call.span() }),
         }
     }
 
@@ -396,7 +396,7 @@ impl<'a> Harmony<'a> {
             Ok(bindings) => self.type_bindings.insert(alias.to_string(), bindings),
             Err(bind_err) => match bind_err {
                 TypeBinderErr::Unresolvable { span } => {
-                    return Err(SemanalyzerErr::UnknownTypedef { span });
+                    return Err(SemanalyzerErr::UnknTypedef { span });
                 }
                 _ => {
                     return Err(SemanalyzerErr::UnresolvableTypedef {
@@ -413,7 +413,7 @@ impl<'a> Harmony<'a> {
         prim_variant: fn(AAstNodeTypeAnnotPrim) -> AAstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
         if annot.generic.is_some() {
-            return Err(SemanalyzerErr::UnexpectedGeneric { span: annot.span() });
+            return Err(SemanalyzerErr::UnexpGeneric { span: annot.span() });
         }
         Ok(prim_variant(AAstNodeTypeAnnotPrim { span: annot.span() }))
     }
@@ -423,11 +423,11 @@ impl<'a> Harmony<'a> {
         annot: &AstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
         let Some(generic) = annot.generic.as_ref() else {
-            return Err(SemanalyzerErr::ExpectedGeneric { span: annot.span() });
+            return Err(SemanalyzerErr::ExpGeneric { span: annot.span() });
         };
 
         let AstNodeTypeAnnotGeneric::Single(single_generic) = generic else {
-            return Err(SemanalyzerErr::InvalidGeneric { span: annot.span() });
+            return Err(SemanalyzerErr::InvalGeneric { span: annot.span() });
         };
 
         Ok(AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
@@ -441,11 +441,11 @@ impl<'a> Harmony<'a> {
         annot: &AstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
         let Some(generic) = annot.generic.as_ref() else {
-            return Err(SemanalyzerErr::ExpectedGeneric { span: annot.span() });
+            return Err(SemanalyzerErr::ExpGeneric { span: annot.span() });
         };
 
         let AstNodeTypeAnnotGeneric::Record(ast_entries) = generic else {
-            return Err(SemanalyzerErr::InvalidGeneric { span: annot.span() });
+            return Err(SemanalyzerErr::InvalGeneric { span: annot.span() });
         };
 
         let entries = ast_entries
@@ -469,7 +469,7 @@ impl<'a> Harmony<'a> {
         annot: &AstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
         if annot.generic.is_some() {
-            return Err(SemanalyzerErr::UnexpectedGeneric { span: annot.span() });
+            return Err(SemanalyzerErr::UnexpGeneric { span: annot.span() });
         }
 
         // If we encounter a type definition with an unknown
@@ -479,7 +479,7 @@ impl<'a> Harmony<'a> {
         // being resolved, so resolving alias to itself will
         // fail here.
         if !self.type_bindings.contains_key(&annot.lexeme) {
-            return Err(SemanalyzerErr::UnknownTypedef { span: annot.span() });
+            return Err(SemanalyzerErr::UnknTypedef { span: annot.span() });
         }
 
         Ok(AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
