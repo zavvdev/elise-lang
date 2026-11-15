@@ -109,7 +109,7 @@ impl<'a> Harmony<'a> {
     fn annotate_node(&mut self, ast_node: &AstNode) -> Result<AAstNode, SemanalyzerErr> {
         match ast_node {
             AstNode::Expr(expr) => self.annotate_node_expr(expr),
-            _ => Err(SemanalyzerErr::UnexpNode {
+            _ => Err(SemanalyzerErr::ExpExpression {
                 span: ast_node.span(),
             }),
         }

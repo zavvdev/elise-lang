@@ -23,13 +23,13 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             span,
         ),
 
-        UnknFn { span } => ("Unknown function".to_string(), span),
+        UnknFn { span } => ("Unknown function call".to_string(), span),
 
         UnknSlot { span } => ("Unknown slot".to_string(), span),
 
         UnknTypedef { span } => ("Unknown type definition".to_string(), span),
 
-        UnexpNode { span } => ("Unexpected expression".to_string(), span),
+        UnexpNode { span } => ("Unexpected node".to_string(), span),
 
         UnexpGeneric { span } => ("Unexpected generic".to_string(), span),
 
@@ -40,6 +40,8 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
         ExpIdentifier { span } => ("Expected identifier".to_string(), span),
 
         ExpGeneric { span } => ("Expected generic".to_string(), span),
+
+        ExpExpression { span } => ("Expected expression".to_string(), span),
 
         UnsupListItem { span } => ("Unsupported list item".to_string(), span),
 

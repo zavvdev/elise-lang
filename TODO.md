@@ -24,8 +24,50 @@
 
     - [ ] Harmony
 
+      - [x] ArityMismatch 
+
+      - [x] UnknFn 
+
+      - [x] UnknSlot 
+    
+      - [x] UnknTypedef 
+
+      - [x] UnexpNode 
+
+      - [ ] UnexpGeneric 
+
+      - [ ] UnexpType 
+
+      - [ ] ExpTypeAnnot 
+
+      - [ ] ExpIdentifier 
+
+      - [ ] ExpGeneric 
+      
+      - [x] ExpExpression
+
+      - [ ] UnsupListItem 
+
+      - [ ] UnsupDictItem 
+
+      - [ ] InvalGeneric 
+
+      - [ ] InvalDataAccessArg 
+
+      - [ ] UnresolvableTypedef 
+
+      - [ ] TypedefMode 
+
+      - [ ] ListInconsistentItemTypes 
+
+      - [ ] CannotInferType 
+
+      - [ ] NoTypeDefinition 
+
+      - [ ] UnresolvablePath 
+
     - [ ] Remove Parser Error and Semantic Error titles from the error reports and use meaningful
-      titles like "Syntax error: ..."
+          titles like "Syntax error: ...". Improve messages as well.
 
     - [ ] Add error codes like E201, E202
 

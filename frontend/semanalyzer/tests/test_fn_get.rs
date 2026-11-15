@@ -35,7 +35,7 @@ fn should_fail_with_arity_mismatch() {
 fn should_fail_for_invalid_arg() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(".get(:Int)", &mut type_bindings_map, TYPEDEF_MODE);
-    assert!(matches!(result, Err(SemanalyzerErr::UnexpNode { .. })));
+    assert!(matches!(result, Err(SemanalyzerErr::ExpExpression { .. })));
 }
 
 #[test]

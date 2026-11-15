@@ -39,6 +39,9 @@ pub enum SemanalyzerErr {
     ExpGeneric {
         span: Span,
     },
+    ExpExpression {
+        span: Span,
+    },
 
     UnsupListItem {
         span: Span,
