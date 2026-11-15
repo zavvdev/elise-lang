@@ -10,7 +10,7 @@ use std::fs;
 #[derive(PartialEq, Debug)]
 pub struct FileDescriptor<T> {
     pub path: String,
-    pub content: T,
+    pub contents: T,
 }
 
 #[derive(PartialEq, Debug)]
@@ -21,9 +21,9 @@ pub struct FileRwErr {
 
 pub fn read_file_string(path: &str) -> Result<FileDescriptor<String>, FileRwErr> {
     match fs::read_to_string(path) {
-        Ok(content) => Ok(FileDescriptor {
+        Ok(contents) => Ok(FileDescriptor {
             path: path.to_string(),
-            content,
+            contents,
         }),
         Err(e) => Err(FileRwErr {
             message: e.to_string(),
@@ -34,9 +34,9 @@ pub fn read_file_string(path: &str) -> Result<FileDescriptor<String>, FileRwErr>
 
 pub fn read_file_bytes(path: &str) -> Result<FileDescriptor<Vec<u8>>, FileRwErr> {
     match fs::read(path) {
-        Ok(content) => Ok(FileDescriptor {
+        Ok(contents) => Ok(FileDescriptor {
             path: path.to_string(),
-            content,
+            contents,
         }),
         Err(e) => Err(FileRwErr {
             message: e.to_string(),
@@ -85,7 +85,7 @@ mod tests {
             result,
             Ok(FileDescriptor {
                 path: file_name.to_string(),
-                content: contents.to_string(),
+                contents: contents.to_string(),
             })
         );
         fs::remove_file(file_name).expect("Failed to delete test file");
@@ -118,7 +118,7 @@ mod tests {
             result,
             Ok(FileDescriptor {
                 path: file_name.to_string(),
-                content: vec![97, 98, 99],
+                contents: vec![97, 98, 99],
             })
         );
         fs::remove_file(file_name).expect("Failed to delete test file");

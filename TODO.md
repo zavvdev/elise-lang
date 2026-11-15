@@ -18,7 +18,9 @@
 
     - [x] ConfErr
 
-    - [ ] cli_run in main.rs
+    - [x] cli_run, cli_build, cli_exec, cli_validate in main.rs
+
+    - [ ] Prelude
 
 - [ ] Compiler
 

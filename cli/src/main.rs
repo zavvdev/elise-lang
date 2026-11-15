@@ -29,7 +29,12 @@ use crate::out::utils::{panic_hook, print_bytecode};
 use crate::out::{msg_bindings_validator, msg_conf, msg_data_binder};
 use crate::out::{msg_csv_data_parser, msg_semanalyzer};
 
-fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &[u8]) -> ! {
+fn handle_lang_err(
+    lang_err: &LangErr,
+    source_code: &[u8],
+    schema_source_code: &[u8],
+    _data_source: &str, // TODO: Use it for showing data slice in error report.
+) -> ! {
     use LangErr::*;
 
     match lang_err {
@@ -50,7 +55,7 @@ fn cli_run(conf: &ModeRunConf) {
     // We need to keep source code globally available in order to
     // be able to pass it to the function that handles errors.
     let source_code = match read_file_bytes(&conf.source_code_path) {
-        Ok(desc) => desc.content,
+        Ok(desc) => desc.contents,
         Err(e) => {
             return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
         }
@@ -59,7 +64,7 @@ fn cli_run(conf: &ModeRunConf) {
     // We need to keep schema source code globally available in order to
     // be able to pass it to the function that handles errors.
     let schema_source_code = match read_file_bytes(&conf.data_schema_path) {
-        Ok(desc) => desc.content,
+        Ok(desc) => desc.contents,
         Err(e) => {
             return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
         }
@@ -67,8 +72,10 @@ fn cli_run(conf: &ModeRunConf) {
 
     match read_file_string(&conf.data_path) {
         Ok(data_desc) => {
-            let run_res = elise::run(&source_code, &data_desc.content, &schema_source_code, conf)
-                .unwrap_or_else(|e| handle_lang_err(&e, &source_code, &schema_source_code));
+            let run_res = elise::run(&source_code, &data_desc.contents, &schema_source_code, conf)
+                .unwrap_or_else(|e| {
+                    handle_lang_err(&e, &source_code, &schema_source_code, &data_desc.contents)
+                });
 
             msg_modes::print_run_result(&run_res.output, run_res.ms);
 
@@ -90,26 +97,22 @@ fn cli_run(conf: &ModeRunConf) {
 }
 
 fn cli_build(conf: &ModeBuildConf) {
-    // We need to keep source code globally available in order to
-    // be able to pass it to the function that handles errors.
     let source_code = match read_file_bytes(&conf.source_code_path) {
-        Ok(desc) => desc.content,
+        Ok(desc) => desc.contents,
         Err(e) => {
             return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
         }
     };
 
-    // We need to keep schema source code globally available in order to
-    // be able to pass it to the function that handles errors.
     let schema_source_code = match read_file_bytes(&conf.data_schema_path) {
-        Ok(desc) => desc.content,
+        Ok(desc) => desc.contents,
         Err(e) => {
             return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
         }
     };
 
     let build_res = elise::build(&source_code, &schema_source_code, conf)
-        .unwrap_or_else(|e| handle_lang_err(&e, &source_code, &schema_source_code));
+        .unwrap_or_else(|e| handle_lang_err(&e, &source_code, &schema_source_code, ""));
 
     let out_path = &build_res.config.executable_output_path;
 
@@ -125,8 +128,8 @@ fn cli_exec(conf: &ModeExecConf) {
         read_file_string(&conf.data_path),
     ) {
         (Ok(executable_desc), Ok(data_desc)) => {
-            let exec_res = elise::exec(&executable_desc.content, &data_desc.content, conf)
-                .unwrap_or_else(|e| handle_lang_err(&e, &[], &[]));
+            let exec_res = elise::exec(&executable_desc.contents, &data_desc.contents, conf)
+                .unwrap_or_else(|e| handle_lang_err(&e, &[], &[], &data_desc.contents));
 
             msg_modes::print_run_result(&exec_res.output, exec_res.ms);
         }
@@ -142,10 +145,8 @@ fn cli_exec(conf: &ModeExecConf) {
 }
 
 fn cli_validate(conf: &ModeValidateConf) {
-    // We need to keep schema source code globally available in order to
-    // be able to pass it to the function that handles errors.
     let schema_source_code = match read_file_bytes(&conf.data_schema_path) {
-        Ok(desc) => desc.content,
+        Ok(desc) => desc.contents,
         Err(e) => {
             return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
         }
@@ -153,8 +154,10 @@ fn cli_validate(conf: &ModeValidateConf) {
 
     match read_file_string(&conf.data_path) {
         Ok(data_desc) => {
-            let validate_res = elise::validate(&data_desc.content, &schema_source_code, conf)
-                .unwrap_or_else(|e| handle_lang_err(&e, &[], &schema_source_code));
+            let validate_res = elise::validate(&data_desc.contents, &schema_source_code, conf)
+                .unwrap_or_else(|e| {
+                    handle_lang_err(&e, &[], &schema_source_code, &data_desc.contents)
+                });
 
             msg_modes::print_validate_result(validate_res.ms);
         }

@@ -2,9 +2,9 @@ use crate::out::utils;
 
 pub fn print_file_rw_err(msg: &str, path: &str, read: bool) {
     let label = if read {
-        Some("File reader error")
+        Some("File Reader Error")
     } else {
-        Some("File writer error")
+        Some("File Writer Error")
     };
     utils::print_err(&format!("{} ({})", msg, path), label);
 }
