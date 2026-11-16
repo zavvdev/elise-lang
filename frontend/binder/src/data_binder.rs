@@ -69,7 +69,7 @@ impl<'a> DataBinder<'a> {
             return Ok(());
         }
         Err(DataBinderErr::UnresolvablePath {
-            path: self.current_path.as_str(),
+            path: self.current_path.as_string(),
         })
     }
 

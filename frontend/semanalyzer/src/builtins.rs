@@ -1,3 +1,5 @@
+// TODO: Move those names under shared/types?
+
 pub struct FnTypedef;
 impl FnTypedef {
     pub const LEXEME: &'static str = "typedef";

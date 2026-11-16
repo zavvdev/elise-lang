@@ -16,7 +16,7 @@ pub enum SemanalyzerErr {
     UnknSlot {
         span: Span,
     },
-    UnknTypedef {
+    UnknType {
         span: Span,
     },
 
@@ -28,8 +28,11 @@ pub enum SemanalyzerErr {
     },
     UnexpType {
         span: Span,
+        expected: Vec<String>,
+        found: String,
     },
 
+    // TODO: Maybe we can collapse them into one?
     ExpTypeAnnot {
         span: Span,
     },

@@ -30,13 +30,13 @@
 
       - [x] UnknSlot 
     
-      - [x] UnknTypedef 
+      - [x] UnknType
 
       - [x] UnexpNode 
 
       - [x] UnexpGeneric 
 
-      - [ ] UnexpType 
+      - [x] UnexpType 
 
       - [ ] ExpTypeAnnot 
 

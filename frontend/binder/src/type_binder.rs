@@ -108,7 +108,7 @@ impl<'a> TypeBinder<'a> {
             return Ok(());
         }
         Err(TypeBinderErr::UnresolvablePath {
-            path: self.current_path.as_str(),
+            path: self.current_path.as_string(),
         })
     }
 

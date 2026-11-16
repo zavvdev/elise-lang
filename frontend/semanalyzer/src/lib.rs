@@ -48,7 +48,7 @@ use elise_ir_bindings::{
     type_bindings::{AliasedTypeBindings, TypeBinding},
 };
 use elise_shared_errors::{errors_semanalyzer::SemanalyzerErr, errors_type_binder::TypeBinderErr};
-use elise_shared_types::ArityMismatchKind;
+use elise_shared_types::{ArityMismatchKind, DataTypeName};
 
 use crate::builtins::FnAdd;
 use crate::{
@@ -396,7 +396,7 @@ impl<'a> Harmony<'a> {
             Ok(bindings) => self.type_bindings.insert(alias.to_string(), bindings),
             Err(bind_err) => match bind_err {
                 TypeBinderErr::Unresolvable { span } => {
-                    return Err(SemanalyzerErr::UnknTypedef { span });
+                    return Err(SemanalyzerErr::UnknType { span });
                 }
                 _ => {
                     return Err(SemanalyzerErr::UnresolvableTypedef {
@@ -450,7 +450,8 @@ impl<'a> Harmony<'a> {
             return Err(SemanalyzerErr::InvalGeneric { span: annot.span() });
         };
 
-        let entries = ast_gen_record.entries
+        let entries = ast_gen_record
+            .entries
             .iter()
             .map(|(key, annot)| {
                 Ok((
@@ -483,7 +484,7 @@ impl<'a> Harmony<'a> {
         // being resolved, so resolving alias to itself will
         // fail here.
         if !self.type_bindings.contains_key(&annot.lexeme) {
-            return Err(SemanalyzerErr::UnknTypedef { span: annot.span() });
+            return Err(SemanalyzerErr::UnknType { span: annot.span() });
         }
 
         Ok(AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {
@@ -623,9 +624,13 @@ impl<'a> Harmony<'a> {
             .collect::<Result<Vec<_>, _>>()?;
 
         for arg in &arguments {
-            let inferred_type = self.infer_type_binding(arg)?;
-            if !inferred_type.is(TypeBindingDataType::Int) {
-                return Err(SemanalyzerErr::UnexpType { span: arg.span() });
+            let inferred_type = self.infer_type_binding(arg)?.as_data_type();
+            if inferred_type != TypeBindingDataType::Int {
+                return Err(SemanalyzerErr::UnexpType {
+                    span: arg.span(),
+                    expected: vec![DataTypeName::INT.to_string()],
+                    found: inferred_type.as_string(),
+                });
             }
         }
 

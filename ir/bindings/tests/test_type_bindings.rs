@@ -104,24 +104,21 @@ fn should_create_new_single_binding() {
 
 // ==================================================================
 //
-// is START
+// as_data_type START
 //
 // ==================================================================
 
 #[test]
-fn is_should_return_true_if_dtype_matches() {
-    let result = TypeBinding::new_single_binding(TypeBindingDataType::Int, test_utils::span());
-    assert_eq!(result.is(TypeBindingDataType::Int), true);
-}
-
-#[test]
-fn is_should_return_false_if_dtype_does_not_match() {
-    let result = TypeBinding::new_single_binding(TypeBindingDataType::Str, test_utils::span());
-    assert_eq!(result.is(TypeBindingDataType::Int), false);
+fn is_should_return_data_type_of_the_root_segment() {
+    assert_eq!(
+        TypeBinding::new_single_binding(TypeBindingDataType::Int, test_utils::span())
+            .as_data_type(),
+        TypeBindingDataType::Int
+    );
 }
 
 // ==================================================================
 //
-// is END
+// as_data_type END
 //
 // ==================================================================

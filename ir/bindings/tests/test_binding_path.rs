@@ -113,19 +113,19 @@ fn should_not_pop_if_len_is_1() {
 // ==================================================================
 
 // ==================================================================
-// AS_STR START
+// AS_STRING START
 // ==================================================================
 
 #[test]
-fn should_return_segments_as_str() {
+fn should_return_segments_as_string() {
     let mut path = BindingPath::new();
     path.push(BindingPathSegment::Field("test".to_string()));
     path.push(BindingPathSegment::AbstractIndex);
-    assert_eq!(path.as_str(), "[Root, Field(\"test\"), AbstractIndex]");
+    assert_eq!(path.as_string(), "[Root, Field(\"test\"), AbstractIndex]");
 }
 
 // ==================================================================
-// AS_STR END
+// AS_STRING END
 // ==================================================================
 
 // ==================================================================

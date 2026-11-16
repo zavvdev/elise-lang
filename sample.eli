@@ -1,5 +1,1 @@
-.add (1, .get(@data, 0, "age"))
-
-.typedef(Some :Int)
-
-.typedef(User :Int<:Str>)
+.add (1, "2")

@@ -19,7 +19,7 @@ pub enum BindingPathSegment {
     Field(String),
 }
 impl BindingPathSegment {
-    pub fn as_str(&self) -> String {
+    pub fn as_string(&self) -> String {
         match self {
             BindingPathSegment::Root => "Root".to_string(),
             BindingPathSegment::AbstractIndex => "AbstractIndex".to_string(),
@@ -228,12 +228,12 @@ impl BindingPath {
         Some(Self(next_path))
     }
 
-    pub fn as_str(&self) -> String {
+    pub fn as_string(&self) -> String {
         format!(
             "[{}]",
             self.0
                 .iter()
-                .map(|seg| seg.as_str())
+                .map(|seg| seg.as_string())
                 .collect::<Vec<_>>()
                 .join(", ")
         )

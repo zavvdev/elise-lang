@@ -347,14 +347,14 @@ fn should_fail_if_custom_alias_has_generic() {
 fn should_fail_if_custom_is_aliasing_undefined() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(".typedef(Age :Some)", &mut type_bindings_map, TYPEDEF_MODE);
-    assert!(matches!(result, Err(SemanalyzerErr::UnknTypedef { .. })));
+    assert!(matches!(result, Err(SemanalyzerErr::UnknType { .. })));
 }
 
 #[test]
 fn should_fail_if_custom_aliasing_itself() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(".typedef(Age :Age)", &mut type_bindings_map, TYPEDEF_MODE);
-    assert!(matches!(result, Err(SemanalyzerErr::UnknTypedef { .. })));
+    assert!(matches!(result, Err(SemanalyzerErr::UnknType { .. })));
 }
 
 #[test]
@@ -365,7 +365,7 @@ fn should_fail_if_custom_aliasing_itself_deep() {
         &mut type_bindings_map,
         TYPEDEF_MODE,
     );
-    assert!(matches!(result, Err(SemanalyzerErr::UnknTypedef { .. })));
+    assert!(matches!(result, Err(SemanalyzerErr::UnknType { .. })));
 }
 
 // ==================================================================

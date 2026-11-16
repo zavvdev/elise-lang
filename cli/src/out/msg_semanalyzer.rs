@@ -17,7 +17,7 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             format!(
                 "Invalid number of arguments for \"{}\" function. Expected: {}, found: {}",
                 fn_name,
-                kind.as_str(),
+                kind.as_string(),
                 found,
             ),
             span,
@@ -27,13 +27,39 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
 
         UnknSlot { span } => ("Unknown slot".to_string(), span),
 
-        UnknTypedef { span } => ("Unknown type definition".to_string(), span),
+        UnknType { span } => ("Unknown type definition".to_string(), span),
 
         UnexpNode { span } => ("Unexpected node".to_string(), span),
 
         UnexpGeneric { span } => ("Unexpected generic".to_string(), span),
 
-        UnexpType { span } => ("Unexpected type".to_string(), span),
+        UnexpType {
+            span,
+            expected,
+            found,
+        } => {
+            if expected.is_empty() {
+                (format!("Unexpected type {}", found), span)
+            } else if expected.len() == 1 {
+                (
+                    format!(
+                        "Unexpected type. Expected {}, found {}",
+                        expected.first().unwrap(),
+                        found
+                    ),
+                    span,
+                )
+            } else {
+                (
+                    format!(
+                        "Unexpected type. Expected one of [{}], found {}",
+                        expected.join(", "),
+                        found
+                    ),
+                    span,
+                )
+            }
+        }
 
         ExpTypeAnnot { span } => ("Expected type annotation".to_string(), span),
 

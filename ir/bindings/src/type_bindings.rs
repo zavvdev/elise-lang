@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use elise_shared_types::Span;
+use elise_shared_types::{DataTypeName, Span};
 use getset::CopyGetters;
 
 use crate::binding_path::BindingPath;
@@ -86,14 +86,10 @@ impl TypeBinding {
         Self { map: new_map }
     }
 
-    /// Takes dtype and checks if we have only one entry
-    /// and the type descriptor of this entry matches dtype.
-    pub fn is(&self, dtype: TypeBindingDataType) -> bool {
-        if self.map.len() == 1 {
-            let (_, desc) = self.map.iter().next().unwrap();
-            return desc.dtype == dtype;
-        }
-        false
+    /// Gets a descriptor by Root segment and returns its data type.
+    pub fn as_data_type(&self) -> TypeBindingDataType {
+        let root = self.map.get(&BindingPath::new()).unwrap();
+        root.dtype.clone()
     }
 }
 
@@ -106,6 +102,16 @@ pub enum TypeBindingDataType {
     Str,
     List,
     Record,
+}
+impl TypeBindingDataType {
+    pub fn as_string(&self) -> String {
+        match self {
+            Self::Int => DataTypeName::INT.to_string(),
+            Self::Str => DataTypeName::STR.to_string(),
+            Self::List => DataTypeName::LIST.to_string(),
+            Self::Record => DataTypeName::RECORD.to_string(),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, CopyGetters)]

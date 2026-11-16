@@ -12,12 +12,6 @@ pub struct TablePos {
     pub col: usize,
 }
 
-/// Used for implementing a mechanism of locating
-/// nodes for error reporting purposes.
-pub trait Locatable {
-    fn locate() -> String;
-}
-
 pub struct Literal;
 impl Literal {
     pub const TRUE: &str = "true";
@@ -25,6 +19,7 @@ impl Literal {
     pub const NULL: &str = "null";
 }
 
+// TODO: Must be under shared/errors.
 /// Determines what exactly expected arguments number means.
 #[derive(Debug, PartialEq)]
 pub enum ArityMismatchKind {
@@ -36,7 +31,7 @@ pub enum ArityMismatchKind {
     Range((usize, usize)),
 }
 impl ArityMismatchKind {
-    pub fn as_str(&self) -> String {
+    pub fn as_string(&self) -> String {
         match self {
             ArityMismatchKind::Eq(n) => format!("{}", n),
             ArityMismatchKind::MoreEq(n) => format!(">={n}"),
@@ -46,4 +41,16 @@ impl ArityMismatchKind {
             ArityMismatchKind::Range((min, max)) => format!(">={min}, <={max}"),
         }
     }
+}
+
+// TODO: Prob needs to be just Name and list all possible name aliases for any nodes
+//       including function names, slot names, type names etc.
+//       Also, each method `as_string` must be renamed to `name` except those that do
+//       not return a literal name.
+pub struct DataTypeName;
+impl DataTypeName {
+    pub const INT: &str = "Int";
+    pub const STR: &str = "Str";
+    pub const LIST: &str = "List";
+    pub const RECORD: &str = "Record";
 }
