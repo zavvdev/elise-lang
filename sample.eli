@@ -2,4 +2,4 @@
 
 .typedef(Some :Int)
 
-.typedef(User :Some<:Str>)
+.typedef(User :Int<:Str>)

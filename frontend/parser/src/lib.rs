@@ -10,7 +10,8 @@
 pub mod config;
 
 use elise_ir_ast::ast_type_annot::{
-    AstNodeTypeAnnot, AstNodeTypeAnnotGeneric, AstNodeTypeAnnotRecordKey,
+    AstNodeTypeAnnot, AstNodeTypeAnnotGeneric, AstNodeTypeAnnotGenericRecord,
+    AstNodeTypeAnnotGenericSingle, AstNodeTypeAnnotRecordKey,
 };
 use elise_ir_ast::{
     AstNode, AstNodeExpr, AstNodeExprCall, AstNodeExprDict, AstNodeExprDictKey, AstNodeExprList,
@@ -786,6 +787,7 @@ impl<'a> Prelude<'a> {
         &mut self,
     ) -> Result<Option<AstNodeTypeAnnotGeneric>, ParserErr> {
         let mut generic: Option<AstNodeTypeAnnotGeneric> = None;
+        let generic_start_pos = self.tok_pos;
 
         if !self.type_annot__generic_is_start() {
             return Ok(generic);
@@ -811,11 +813,27 @@ impl<'a> Prelude<'a> {
 
             if self.dict__is_start(&c) {
                 let record = self.type_annot__record_consume()?;
-                generic = Some(AstNodeTypeAnnotGeneric::Record(record));
+                generic = Some(AstNodeTypeAnnotGeneric::Record(
+                    AstNodeTypeAnnotGenericRecord {
+                        entries: record,
+                        span: Span {
+                            start: generic_start_pos,
+                            end: self.tok_pos,
+                        },
+                    },
+                ));
             } else if let Some(node) = self.get_node_from_char(&c)? {
                 match node {
                     AstNode::TypeAnnot(typedef) => {
-                        generic = Some(AstNodeTypeAnnotGeneric::Single(Box::new(typedef)));
+                        generic = Some(AstNodeTypeAnnotGeneric::Single(
+                            AstNodeTypeAnnotGenericSingle {
+                                annot: Box::new(typedef),
+                                span: Span {
+                                    start: generic_start_pos,
+                                    end: self.tok_pos,
+                                },
+                            },
+                        ));
                     }
                     _ => {
                         return Err(

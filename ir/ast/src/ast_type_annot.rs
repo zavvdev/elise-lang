@@ -1,3 +1,4 @@
+use elise_shared_proc_macros::EnumDelegate;
 use elise_shared_types::Span;
 use getset::{CloneGetters, CopyGetters};
 
@@ -16,16 +17,36 @@ pub struct AstNodeTypeAnnot {
     pub generic: Option<AstNodeTypeAnnotGeneric>,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, EnumDelegate)]
+#[enum_delegate(
+    fn span(&self) -> Span;
+)]
 pub enum AstNodeTypeAnnotGeneric {
-    Single(Box<AstNodeTypeAnnot>),
-    Record(Vec<(AstNodeTypeAnnotRecordKey, Box<AstNodeTypeAnnot>)>),
+    Single(AstNodeTypeAnnotGenericSingle),
+    Record(AstNodeTypeAnnotGenericRecord),
 }
 
-#[derive(Debug, PartialEq, Clone, CloneGetters)]
+#[derive(Debug, PartialEq, Clone, CopyGetters)]
+pub struct AstNodeTypeAnnotGenericSingle {
+    pub annot: Box<AstNodeTypeAnnot>,
+
+    #[getset(get_copy = "pub")]
+    pub span: Span,
+}
+
+#[derive(Debug, PartialEq, Clone, CopyGetters)]
+pub struct AstNodeTypeAnnotGenericRecord {
+    pub entries: Vec<(AstNodeTypeAnnotRecordKey, Box<AstNodeTypeAnnot>)>,
+
+    #[getset(get_copy = "pub")]
+    pub span: Span,
+}
+
+#[derive(Debug, PartialEq, Clone, CloneGetters, CopyGetters)]
 pub struct AstNodeTypeAnnotRecordKey {
     #[getset(get_clone = "pub")]
     pub lexeme: String,
 
+    #[getset(get_copy = "pub")]
     pub span: Span,
 }

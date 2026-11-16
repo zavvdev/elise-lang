@@ -412,8 +412,10 @@ impl<'a> Harmony<'a> {
         annot: &AstNodeTypeAnnot,
         prim_variant: fn(AAstNodeTypeAnnotPrim) -> AAstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
-        if annot.generic.is_some() {
-            return Err(SemanalyzerErr::UnexpGeneric { span: annot.span() });
+        if let Some(generic) = annot.generic.as_ref() {
+            return Err(SemanalyzerErr::UnexpGeneric {
+                span: generic.span(),
+            });
         }
         Ok(prim_variant(AAstNodeTypeAnnotPrim { span: annot.span() }))
     }
@@ -432,7 +434,7 @@ impl<'a> Harmony<'a> {
 
         Ok(AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
             span: annot.span(),
-            item_type: Box::new(self.call_typedef__type_annot(single_generic)?),
+            item_type: Box::new(self.call_typedef__type_annot(&single_generic.annot)?),
         }))
     }
 
@@ -444,11 +446,11 @@ impl<'a> Harmony<'a> {
             return Err(SemanalyzerErr::ExpGeneric { span: annot.span() });
         };
 
-        let AstNodeTypeAnnotGeneric::Record(ast_entries) = generic else {
+        let AstNodeTypeAnnotGeneric::Record(ast_gen_record) = generic else {
             return Err(SemanalyzerErr::InvalGeneric { span: annot.span() });
         };
 
-        let entries = ast_entries
+        let entries = ast_gen_record.entries
             .iter()
             .map(|(key, annot)| {
                 Ok((
@@ -468,8 +470,10 @@ impl<'a> Harmony<'a> {
         &self,
         annot: &AstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
-        if annot.generic.is_some() {
-            return Err(SemanalyzerErr::UnexpGeneric { span: annot.span() });
+        if let Some(generic) = annot.generic.as_ref() {
+            return Err(SemanalyzerErr::UnexpGeneric {
+                span: generic.span(),
+            });
         }
 
         // If we encounter a type definition with an unknown
