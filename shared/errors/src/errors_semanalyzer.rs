@@ -1,4 +1,26 @@
-use elise_shared_types::{ArityMismatchKind, Span};
+use elise_shared_types::Span;
+
+#[derive(Debug, PartialEq)]
+pub enum ArityMismatchKind {
+    Eq(usize),
+    MoreEq(usize),
+    LessEq(usize),
+    More(usize),
+    Less(usize),
+    Range((usize, usize)),
+}
+impl ArityMismatchKind {
+    pub fn as_string(&self) -> String {
+        match self {
+            ArityMismatchKind::Eq(n) => format!("{}", n),
+            ArityMismatchKind::MoreEq(n) => format!(">={n}"),
+            ArityMismatchKind::LessEq(n) => format!("<={n}"),
+            ArityMismatchKind::More(n) => format!(">{n}"),
+            ArityMismatchKind::Less(n) => format!("<{n}"),
+            ArityMismatchKind::Range((min, max)) => format!(">={min}, <={max}"),
+        }
+    }
+}
 
 // TODO: Add more precise errors.
 #[derive(Debug, PartialEq)]

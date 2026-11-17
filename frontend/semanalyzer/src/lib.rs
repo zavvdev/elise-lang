@@ -47,8 +47,9 @@ use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{AliasedTypeBindings, TypeBinding},
 };
+use elise_shared_errors::errors_semanalyzer::ArityMismatchKind;
 use elise_shared_errors::{errors_semanalyzer::SemanalyzerErr, errors_type_binder::TypeBinderErr};
-use elise_shared_types::{ArityMismatchKind, DataTypeName};
+use elise_shared_types::DataTypeName;
 
 use crate::builtins::FnAdd;
 use crate::{

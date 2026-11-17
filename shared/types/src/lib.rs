@@ -19,30 +19,6 @@ impl Literal {
     pub const NULL: &str = "null";
 }
 
-// TODO: Must be under shared/errors.
-/// Determines what exactly expected arguments number means.
-#[derive(Debug, PartialEq)]
-pub enum ArityMismatchKind {
-    Eq(usize),
-    MoreEq(usize),
-    LessEq(usize),
-    More(usize),
-    Less(usize),
-    Range((usize, usize)),
-}
-impl ArityMismatchKind {
-    pub fn as_string(&self) -> String {
-        match self {
-            ArityMismatchKind::Eq(n) => format!("{}", n),
-            ArityMismatchKind::MoreEq(n) => format!(">={n}"),
-            ArityMismatchKind::LessEq(n) => format!("<={n}"),
-            ArityMismatchKind::More(n) => format!(">{n}"),
-            ArityMismatchKind::Less(n) => format!("<{n}"),
-            ArityMismatchKind::Range((min, max)) => format!(">={min}, <={max}"),
-        }
-    }
-}
-
 // TODO: Prob needs to be just Name and list all possible name aliases for any nodes
 //       including function names, slot names, type names etc.
 //       Also, each method `as_string` must be renamed to `name` except those that do
