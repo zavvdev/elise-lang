@@ -26,13 +26,13 @@
 
       - [x] ArityMismatch 
 
-      - [x] UnknFn 
+      - [x] UnknFnCall
 
       - [x] UnknSlot 
     
       - [x] UnknType
 
-      - [x] UnexpNode 
+      - [x] UnexpExpr
 
       - [x] UnexpGeneric 
 

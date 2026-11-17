@@ -32,7 +32,7 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             span,
         ),
 
-        UnexpExpr { span, name } => (format!(r##"Unexpected expression "{}""##, name), span),
+        UnexpExpr { span, name } => (format!("Unexpected {}", name), span),
 
         UnexpGeneric { span } => ("Unexpected generic".to_string(), span),
 
