@@ -3,6 +3,6 @@ use elise_shared_types::Span;
 #[derive(Debug, PartialEq)]
 pub enum TypeBinderErr {
     UnresolvablePath { path: String },
-    Unresolvable { span: Span },
+    UnresolvableType { span: Span, name: String },
     UnableToMerge { span: Span },
 }

@@ -13,7 +13,7 @@ _(...)_ - grouping terminals/non-terminals
 _/* ... */_ - semantic description (not a part of EBNF)
 
 ```
-<instruction> ::= <expression> | <typedef>
+<instruction> ::= <expression> | <type-annotation>
 
 <expression> ::= <call> | <primitive> | <compound> | <identifier> | <slot>
 
@@ -29,11 +29,11 @@ _/* ... */_ - semantic description (not a part of EBNF)
 
 <slot> ::= '@' <identifier>
 
-<typedef> ::= ':' <identifier> <typedef-generic>?
+<type-annotation> ::= ':' <identifier> <type-annotation-generic>?
 
-<typedef-generic> ::= '<' (<typedef> | <typedef-record>) '>'
+<type-annotation-generic> ::= '<' (<type-annotation> | <type-annotation-record>) '>'
 
-<typedef-record> ::= '{' (<string> <typedef>)+ '}'
+<type-annotation-record> ::= '{' (<string> <type-annotation>)+ '}'
 
 <string> ::= '"' <string-char>* '"'
 <string-char> ::= /* any character except " (double quote) */

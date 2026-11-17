@@ -132,8 +132,9 @@ impl<'a> Harmony<'a> {
             AstNodeExpr::Str(prim) => self.prim(prim, AAstNodeData::Str),
             AstNodeExpr::List(list) => self.list(list),
             AstNodeExpr::Dict(dict) => self.dict(dict),
-            _ => Err(SemanalyzerErr::UnexpNode {
+            expr => Err(SemanalyzerErr::UnexpExpr {
                 span: ast_node.span(),
+                name: expr.name(),
             }),
         }
     }
@@ -202,7 +203,10 @@ impl<'a> Harmony<'a> {
     fn slot(&mut self, prim: &AstNodeExprPrim) -> Result<AAstNode, SemanalyzerErr> {
         match prim.lexeme.as_str() {
             Name::SLOT__DATA => Ok(AAstNode::SlotData(AAstNodeSlot { span: prim.span() })),
-            _ => Err(SemanalyzerErr::UnknSlot { span: prim.span() }),
+            name => Err(SemanalyzerErr::UnknSlot {
+                span: prim.span(),
+                name: name.to_string(),
+            }),
         }
     }
 
@@ -321,7 +325,10 @@ impl<'a> Harmony<'a> {
             builtins::fns::typedef::NAME => self.call_typedef(call),
             builtins::fns::get::NAME => self.call_get(call),
             builtins::fns::add::NAME => self.call_add(call),
-            _ => Err(SemanalyzerErr::UnknFn { span: call.span() }),
+            name => Err(SemanalyzerErr::UnknFnCall {
+                span: call.span(),
+                name: name.to_string(),
+            }),
         }
     }
 
@@ -390,8 +397,8 @@ impl<'a> Harmony<'a> {
         match TypeBinder::new(aast_typedef, self.type_bindings).bind() {
             Ok(bindings) => self.type_bindings.insert(alias.to_string(), bindings),
             Err(bind_err) => match bind_err {
-                TypeBinderErr::Unresolvable { span } => {
-                    return Err(SemanalyzerErr::UnknType { span });
+                TypeBinderErr::UnresolvableType { span, name } => {
+                    return Err(SemanalyzerErr::UnknType { span, name });
                 }
                 _ => {
                     return Err(SemanalyzerErr::UnresolvableTypedef {
@@ -479,7 +486,10 @@ impl<'a> Harmony<'a> {
         // being resolved, so resolving alias to itself will
         // fail here.
         if !self.type_bindings.contains_key(&annot.lexeme) {
-            return Err(SemanalyzerErr::UnknType { span: annot.span() });
+            return Err(SemanalyzerErr::UnknType {
+                span: annot.span(),
+                name: annot.lexeme.clone(),
+            });
         }
 
         Ok(AAstNodeTypeAnnot::Custom(AAstNodeTypeAnnotCustom {

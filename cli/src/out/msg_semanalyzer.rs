@@ -23,13 +23,16 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             span,
         ),
 
-        UnknFn { span } => ("Unknown function call".to_string(), span),
+        UnknFnCall { span, name } => (format!(r##"Cannot find function named "{}""##, name), span),
 
-        UnknSlot { span } => ("Unknown slot".to_string(), span),
+        UnknSlot { span, name } => (format!(r##"Cannot find slot named "{}""##, name), span),
 
-        UnknType { span } => ("Unknown type definition".to_string(), span),
+        UnknType { span, name } => (
+            format!(r##"Cannot find type definition named "{}""##, name),
+            span,
+        ),
 
-        UnexpNode { span } => ("Unexpected node".to_string(), span),
+        UnexpExpr { span, name } => (format!(r##"Unexpected expression "{}""##, name), span),
 
         UnexpGeneric { span } => ("Unexpected generic".to_string(), span),
 

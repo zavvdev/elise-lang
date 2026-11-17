@@ -31,18 +31,22 @@ pub enum SemanalyzerErr {
         span: Span,
     },
 
-    UnknFn {
+    UnknFnCall {
         span: Span,
+        name: String,
     },
     UnknSlot {
         span: Span,
+        name: String,
     },
     UnknType {
         span: Span,
+        name: String,
     },
 
-    UnexpNode {
+    UnexpExpr {
         span: Span,
+        name: String,
     },
     UnexpGeneric {
         span: Span,
@@ -53,7 +57,7 @@ pub enum SemanalyzerErr {
         found: String,
     },
 
-    // TODO: Maybe we can collapse them into one?
+    // TODO: Maybe we can collapse them into UnexpExpr?
     ExpTypeAnnot {
         span: Span,
     },

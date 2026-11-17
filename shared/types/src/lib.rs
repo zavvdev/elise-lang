@@ -32,4 +32,15 @@ impl Name {
     pub const FN__ADD: &'static str = "add";
 
     pub const SLOT__DATA: &'static str = "data";
+
+    pub const EXPR__CALL: &'static str = "CallExpression";
+    pub const EXPR__INT: &'static str = "IntExpression";
+    pub const EXPR__FLOAT: &'static str = "FloatExpression";
+    pub const EXPR__STR: &'static str = "StrExpression";
+    pub const EXPR__BOOL: &'static str = "BoolExpression";
+    pub const EXPR__NULL: &'static str = "NullExpression";
+    pub const EXPR__LIST: &'static str = "ListExpression";
+    pub const EXPR__DICT: &'static str = "DictExpression";
+    pub const EXPR__IDENTIFIER: &'static str = "IdentifierExpression";
+    pub const EXPR__SLOT: &'static str = "SlotExpression";
 }

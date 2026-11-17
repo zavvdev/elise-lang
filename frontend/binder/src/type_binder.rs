@@ -215,8 +215,9 @@ impl<'a> TypeBinder<'a> {
 
     fn bind_custom(&mut self, alias: &str, binding: &mut TypeBinding) -> Result<(), TypeBinderErr> {
         let Some(global_bindings) = self.globals.get(alias) else {
-            return Err(TypeBinderErr::Unresolvable {
+            return Err(TypeBinderErr::UnresolvableType {
                 span: self.current_span,
+                name: alias.to_string(),
             });
         };
 

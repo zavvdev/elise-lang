@@ -6,7 +6,7 @@
 pub mod ast_type_annot;
 
 use elise_shared_proc_macros::EnumDelegate;
-use elise_shared_types::Span;
+use elise_shared_types::{Name, Span};
 use getset::{CloneGetters, CopyGetters};
 
 use crate::ast_type_annot::AstNodeTypeAnnot;
@@ -41,6 +41,23 @@ pub enum AstNodeExpr {
     Dict(AstNodeExprDict),
     Ident(AstNodeExprPrim),
     Slot(AstNodeExprPrim),
+}
+
+impl AstNodeExpr {
+    pub fn name(&self) -> String {
+        match self {
+            Self::Call(_) => Name::EXPR__CALL.to_string(),
+            Self::Int(_) => Name::EXPR__INT.to_string(),
+            Self::Float(_) => Name::EXPR__FLOAT.to_string(),
+            Self::Str(_) => Name::EXPR__STR.to_string(),
+            Self::Bool(_) => Name::EXPR__BOOL.to_string(),
+            Self::Null(_) => Name::EXPR__NULL.to_string(),
+            Self::List(_) => Name::EXPR__LIST.to_string(),
+            Self::Dict(_) => Name::EXPR__DICT.to_string(),
+            Self::Ident(_) => Name::EXPR__IDENTIFIER.to_string(),
+            Self::Slot(_) => Name::EXPR__SLOT.to_string(),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, CopyGetters)]

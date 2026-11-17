@@ -9,5 +9,5 @@ mod common;
 fn should_fail_for_unknown_fn_call() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(".unknown()", &mut type_bindings_map, false);
-    assert!(matches!(result, Err(SemanalyzerErr::UnknFn { .. })));
+    assert!(matches!(result, Err(SemanalyzerErr::UnknFnCall { .. })));
 }

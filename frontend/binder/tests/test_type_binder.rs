@@ -553,8 +553,9 @@ fn should_return_err_if_custom_is_not_in_globals() {
 
     assert_eq!(
         binding,
-        Err(TypeBinderErr::Unresolvable {
+        Err(TypeBinderErr::UnresolvableType {
             span: test_utils::span(),
+            name: "SingleType".to_string(),
         })
     );
 }
