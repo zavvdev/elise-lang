@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use elise_shared_types::{DataTypeName, Span};
+use elise_shared_types::{Name, Span};
 use getset::CopyGetters;
 
 use crate::binding_path::BindingPath;
@@ -104,12 +104,12 @@ pub enum TypeBindingDataType {
     Record,
 }
 impl TypeBindingDataType {
-    pub fn as_string(&self) -> String {
+    pub fn name(&self) -> String {
         match self {
-            Self::Int => DataTypeName::INT.to_string(),
-            Self::Str => DataTypeName::STR.to_string(),
-            Self::List => DataTypeName::LIST.to_string(),
-            Self::Record => DataTypeName::RECORD.to_string(),
+            Self::Int => Name::TYPE_ANNOT__INT.to_string(),
+            Self::Str => Name::TYPE_ANNOT__STR.to_string(),
+            Self::List => Name::TYPE_ANNOT__LIST.to_string(),
+            Self::Record => Name::TYPE_ANNOT__RECORD.to_string(),
         }
     }
 }

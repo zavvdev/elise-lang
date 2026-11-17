@@ -10,7 +10,6 @@ use elise_frontend_binder::bindings_validator::validate_bindings;
 use elise_frontend_binder::data_binder::DataBinder;
 use elise_frontend_data::adapter::DataAdapter;
 use elise_frontend_data::csv::{csv_data_adapter::CsvDataAdapter, csv_data_parser::CsvDataParser};
-use elise_frontend_semanalyzer::builtins::SlotData;
 use elise_ir_aast::AAstNode;
 use elise_ir_bindings::type_bindings::AliasedTypeBindings;
 //use elise_data::{
@@ -21,6 +20,7 @@ use elise_ir_bindings::type_bindings::AliasedTypeBindings;
 use elise_frontend_parser::Prelude;
 use elise_frontend_semanalyzer::Harmony;
 use elise_shared_errors::LangErr;
+use elise_shared_types::Name;
 use std::{collections::HashMap, time::Instant};
 
 use crate::conf::config::FileExt;
@@ -113,7 +113,9 @@ pub fn run<'a>(
 
                 validate_bindings(
                     &data_bindings,
-                    schema_type_bindings.get(SlotData::TYPEDEF_LEXEME).unwrap(),
+                    schema_type_bindings
+                        .get(Name::TYPE_ANNOT__SLOT_DATA)
+                        .unwrap(),
                 )
                 .map_err(LangErr::BindingsValidator)?;
 

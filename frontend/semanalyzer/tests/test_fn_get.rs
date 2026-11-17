@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use elise_frontend_semanalyzer::builtins::SlotData;
 use elise_ir_aast::{
     AAstNode, AAstNodeCall, AAstNodeCallGet,
     aast_node_data::{AAstNodeData, AAstNodeDataPrim},
@@ -11,7 +10,7 @@ use elise_ir_bindings::{
     type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };
 use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
-use elise_shared_types::Span;
+use elise_shared_types::{Name, Span};
 use elise_test_utils::test_utils::{semanalyze, type_bindings_map};
 
 mod common;
@@ -126,7 +125,7 @@ fn should_accept_a_single_data_arg() {
     );
 
     type_bindings_map.insert(
-        SlotData::TYPEDEF_LEXEME.to_string(),
+        Name::TYPE_ANNOT__SLOT_DATA.to_string(),
         TypeBinding::with(&data_slot_bindings),
     );
 
@@ -212,7 +211,7 @@ fn should_access_data_by_str() {
         },
     );
     type_bindings_map.insert(
-        SlotData::TYPEDEF_LEXEME.to_string(),
+        Name::TYPE_ANNOT__SLOT_DATA.to_string(),
         TypeBinding::with(&data_slot_bindings),
     );
     let result = semanalyze(

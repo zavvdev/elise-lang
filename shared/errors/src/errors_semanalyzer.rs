@@ -22,7 +22,6 @@ impl ArityMismatchKind {
     }
 }
 
-// TODO: Add more precise errors.
 #[derive(Debug, PartialEq)]
 pub enum SemanalyzerErr {
     ArityMismatch {

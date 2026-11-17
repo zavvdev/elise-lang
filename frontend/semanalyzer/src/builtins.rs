@@ -1,33 +1,22 @@
-// TODO: Move those names under shared/types?
+pub mod fns {
+    pub mod typedef {
+        use elise_shared_types::Name;
 
-pub struct FnTypedef;
-impl FnTypedef {
-    pub const LEXEME: &'static str = "typedef";
-    pub const ARGS_LEN: usize = 2;
-}
+        pub const NAME: &str = Name::FN__TYPEDEF;
+        pub const ARGS_LEN: usize = 2;
+    }
 
-pub struct FnGet;
-impl FnGet {
-    pub const LEXEME: &'static str = "get";
-    pub const ARGS_LEN_MIN: usize = 1;
-}
+    pub mod get {
+        use elise_shared_types::Name;
 
-pub struct FnAdd;
-impl FnAdd {
-    pub const LEXEME: &'static str = "add";
-    pub const ARGS_LEN_MIN: usize = 1;
-}
+        pub const NAME: &str = Name::FN__GET;
+        pub const ARGS_LEN_MIN: usize = 1;
+    }
 
-pub struct TypeAnnotLexeme;
-impl TypeAnnotLexeme {
-    pub const INT: &'static str = "Int";
-    pub const STR: &'static str = "Str";
-    pub const LIST: &'static str = "List";
-    pub const RECORD: &'static str = "Record";
-}
+    pub mod add {
+        use elise_shared_types::Name;
 
-pub struct SlotData;
-impl SlotData {
-    pub const LEXEME: &'static str = "data";
-    pub const TYPEDEF_LEXEME: &'static str = "Data";
+        pub const NAME: &str = Name::FN__ADD;
+        pub const ARGS_LEN_MIN: usize = 1;
+    }
 }

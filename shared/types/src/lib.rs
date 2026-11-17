@@ -14,19 +14,22 @@ pub struct TablePos {
 
 pub struct Literal;
 impl Literal {
-    pub const TRUE: &str = "true";
-    pub const FALSE: &str = "false";
-    pub const NULL: &str = "null";
+    pub const TRUE: &'static str = "true";
+    pub const FALSE: &'static str = "false";
+    pub const NULL: &'static str = "null";
 }
 
-// TODO: Prob needs to be just Name and list all possible name aliases for any nodes
-//       including function names, slot names, type names etc.
-//       Also, each method `as_string` must be renamed to `name` except those that do
-//       not return a literal name.
-pub struct DataTypeName;
-impl DataTypeName {
-    pub const INT: &str = "Int";
-    pub const STR: &str = "Str";
-    pub const LIST: &str = "List";
-    pub const RECORD: &str = "Record";
+pub struct Name;
+impl Name {
+    pub const TYPE_ANNOT__INT: &'static str = "Int";
+    pub const TYPE_ANNOT__STR: &'static str = "Str";
+    pub const TYPE_ANNOT__LIST: &'static str = "List";
+    pub const TYPE_ANNOT__RECORD: &'static str = "Record";
+    pub const TYPE_ANNOT__SLOT_DATA: &'static str = "Data";
+
+    pub const FN__TYPEDEF: &'static str = "typedef";
+    pub const FN__GET: &'static str = "get";
+    pub const FN__ADD: &'static str = "add";
+
+    pub const SLOT__DATA: &'static str = "data";
 }

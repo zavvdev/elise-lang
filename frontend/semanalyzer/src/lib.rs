@@ -49,13 +49,9 @@ use elise_ir_bindings::{
 };
 use elise_shared_errors::errors_semanalyzer::ArityMismatchKind;
 use elise_shared_errors::{errors_semanalyzer::SemanalyzerErr, errors_type_binder::TypeBinderErr};
-use elise_shared_types::DataTypeName;
+use elise_shared_types::Name;
 
-use crate::builtins::FnAdd;
-use crate::{
-    builtins::{FnGet, FnTypedef, SlotData, TypeAnnotLexeme},
-    matchers::{expect_identifier_ast_node, expect_type_annot_ast_node},
-};
+use crate::matchers::{expect_identifier_ast_node, expect_type_annot_ast_node};
 
 pub struct Harmony<'a> {
     pub ast: &'a Vec<AstNode>,
@@ -153,9 +149,7 @@ impl<'a> Harmony<'a> {
         match aast_node {
             // ========== SLOTS TYPE INFERENCE START ==========
             AAstNode::SlotData(AAstNodeSlot { span }) => {
-                let Some(slot_bindings) = self
-                    .type_bindings
-                    .get(&SlotData::TYPEDEF_LEXEME.to_string())
+                let Some(slot_bindings) = self.type_bindings.get(Name::TYPE_ANNOT__SLOT_DATA)
                 else {
                     return Err(SemanalyzerErr::NoTypeDefinition { span: *span });
                 };
@@ -207,7 +201,7 @@ impl<'a> Harmony<'a> {
 
     fn slot(&mut self, prim: &AstNodeExprPrim) -> Result<AAstNode, SemanalyzerErr> {
         match prim.lexeme.as_str() {
-            SlotData::LEXEME => Ok(AAstNode::SlotData(AAstNodeSlot { span: prim.span() })),
+            Name::SLOT__DATA => Ok(AAstNode::SlotData(AAstNodeSlot { span: prim.span() })),
             _ => Err(SemanalyzerErr::UnknSlot { span: prim.span() }),
         }
     }
@@ -324,9 +318,9 @@ impl<'a> Harmony<'a> {
 
     fn call(&mut self, call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
         match call.lexeme.as_str() {
-            FnTypedef::LEXEME => self.call_typedef(call),
-            FnGet::LEXEME => self.call_get(call),
-            FnAdd::LEXEME => self.call_add(call),
+            builtins::fns::typedef::NAME => self.call_typedef(call),
+            builtins::fns::get::NAME => self.call_get(call),
+            builtins::fns::add::NAME => self.call_add(call),
             _ => Err(SemanalyzerErr::UnknFn { span: call.span() }),
         }
     }
@@ -340,12 +334,12 @@ impl<'a> Harmony<'a> {
     // ==================================================================
 
     fn call_typedef(&mut self, call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
-        if call.body.len() != FnTypedef::ARGS_LEN {
+        if call.body.len() != builtins::fns::typedef::ARGS_LEN {
             return Err(SemanalyzerErr::ArityMismatch {
-                fn_name: FnTypedef::LEXEME,
+                fn_name: builtins::fns::typedef::NAME,
                 found: call.body.len(),
                 span: call.span(),
-                kind: ArityMismatchKind::Eq(FnTypedef::ARGS_LEN),
+                kind: ArityMismatchKind::Eq(builtins::fns::typedef::ARGS_LEN),
             });
         }
 
@@ -376,14 +370,14 @@ impl<'a> Harmony<'a> {
         annot: &AstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
         match annot.lexeme.as_str() {
-            TypeAnnotLexeme::INT => {
+            Name::TYPE_ANNOT__INT => {
                 Self::call_typedef__type_annot_non_generic_prim(annot, AAstNodeTypeAnnot::Int)
             }
-            TypeAnnotLexeme::STR => {
+            Name::TYPE_ANNOT__STR => {
                 Self::call_typedef__type_annot_non_generic_prim(annot, AAstNodeTypeAnnot::Str)
             }
-            TypeAnnotLexeme::LIST => self.call_typedef__type_annot_list(annot),
-            TypeAnnotLexeme::RECORD => self.call_typedef__type_annot_record(annot),
+            Name::TYPE_ANNOT__LIST => self.call_typedef__type_annot_list(annot),
+            Name::TYPE_ANNOT__RECORD => self.call_typedef__type_annot_record(annot),
             _ => self.call_typedef__type_annot_custom(annot),
         }
     }
@@ -503,12 +497,12 @@ impl<'a> Harmony<'a> {
     // ==================================================================
 
     fn call_get(&mut self, call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
-        if call.body.len() < FnGet::ARGS_LEN_MIN {
+        if call.body.len() < builtins::fns::get::ARGS_LEN_MIN {
             return Err(SemanalyzerErr::ArityMismatch {
-                fn_name: FnGet::LEXEME,
+                fn_name: builtins::fns::get::NAME,
                 found: call.body.len(),
                 span: call.span(),
-                kind: ArityMismatchKind::MoreEq(FnGet::ARGS_LEN_MIN),
+                kind: ArityMismatchKind::MoreEq(builtins::fns::get::ARGS_LEN_MIN),
             });
         }
 
@@ -609,12 +603,12 @@ impl<'a> Harmony<'a> {
     // ==================================================================
 
     fn call_add(&mut self, call: &AstNodeExprCall) -> Result<AAstNode, SemanalyzerErr> {
-        if call.body.len() < FnAdd::ARGS_LEN_MIN {
+        if call.body.len() < builtins::fns::add::ARGS_LEN_MIN {
             return Err(SemanalyzerErr::ArityMismatch {
-                fn_name: FnAdd::LEXEME,
+                fn_name: builtins::fns::add::NAME,
                 found: call.body.len(),
                 span: call.span(),
-                kind: ArityMismatchKind::MoreEq(FnAdd::ARGS_LEN_MIN),
+                kind: ArityMismatchKind::MoreEq(builtins::fns::add::ARGS_LEN_MIN),
             });
         }
 
@@ -629,8 +623,8 @@ impl<'a> Harmony<'a> {
             if inferred_type != TypeBindingDataType::Int {
                 return Err(SemanalyzerErr::UnexpType {
                     span: arg.span(),
-                    expected: vec![DataTypeName::INT.to_string()],
-                    found: inferred_type.as_string(),
+                    expected: vec![Name::TYPE_ANNOT__INT.to_string()],
+                    found: inferred_type.name(),
                 });
             }
         }
