@@ -31,6 +31,9 @@ pub enum SemanalyzerErr {
         span: Span,
     },
 
+    // =================================
+    // UNKNOWNS START
+    // =================================
     UnknFnCall {
         span: Span,
         name: String,
@@ -43,7 +46,13 @@ pub enum SemanalyzerErr {
         span: Span,
         name: String,
     },
+    // =================================
+    // UNKNOWNS END
+    // =================================
 
+    // =================================
+    // UNEXPECTED START
+    // =================================
     UnexpNode {
         span: Span,
         expected: Vec<String>,
@@ -59,19 +68,12 @@ pub enum SemanalyzerErr {
         expected: Vec<String>,
         found: String,
     },
-
-    // TODO: Maybe we can collapse them into UnexpExpr?
-    ExpTypeAnnot {
+    // =================================
+    // UNEXPECTED END
+    // =================================
+    MissingGeneric {
         span: Span,
-    },
-    ExpIdentifier {
-        span: Span,
-    },
-    ExpGeneric {
-        span: Span,
-    },
-    ExpExpression {
-        span: Span,
+        type_annot: String,
     },
 
     UnsupListItem {

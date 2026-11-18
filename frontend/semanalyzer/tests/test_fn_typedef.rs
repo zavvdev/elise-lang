@@ -45,14 +45,28 @@ fn should_fail_for_invalid_number_of_arguments() {
 fn should_fail_if_first_arg_is_not_ident() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(".typedef(:Int :Int)", &mut type_bindings_map, TYPEDEF_MODE);
-    assert!(matches!(result, Err(SemanalyzerErr::ExpIdentifier { .. })));
+    assert_eq!(
+        result,
+        Err(SemanalyzerErr::UnexpNode {
+            span: Span { start: 9, end: 13 },
+            found: Name::NODE__TYPE_ANNOT.to_string(),
+            expected: vec![Name::EXPR__IDENTIFIER.to_string()]
+        })
+    );
 }
 
 #[test]
 fn should_fail_if_second_arg_is_not_type_annot() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(".typedef(Age Age)", &mut type_bindings_map, TYPEDEF_MODE);
-    assert!(matches!(result, Err(SemanalyzerErr::ExpTypeAnnot { .. })));
+    assert_eq!(
+        result,
+        Err(SemanalyzerErr::UnexpNode {
+            span: Span { start: 13, end: 16 },
+            found: Name::NODE__EXPR.to_string(),
+            expected: vec![Name::NODE__TYPE_ANNOT.to_string()]
+        })
+    );
 }
 
 // ==================================================================
@@ -108,7 +122,7 @@ fn should_fail_if_int_has_generic() {
     assert_eq!(
         result,
         Err(SemanalyzerErr::UnexpNode {
-            found: Name::GENERIC.to_string(),
+            found: Name::NODE__GENERIC.to_string(),
             expected: vec![],
             span: Span { start: 17, end: 22 }
         })
@@ -168,7 +182,7 @@ fn should_fail_if_str_has_generic() {
     assert_eq!(
         result,
         Err(SemanalyzerErr::UnexpNode {
-            found: Name::GENERIC.to_string(),
+            found: Name::NODE__GENERIC.to_string(),
             expected: vec![],
             span: Span { start: 18, end: 23 }
         })
@@ -237,7 +251,7 @@ fn should_analyze_list_aliasing() {
 fn should_fail_if_list_has_no_generic() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(".typedef(Age :List)", &mut type_bindings_map, TYPEDEF_MODE);
-    assert!(matches!(result, Err(SemanalyzerErr::ExpGeneric { .. })));
+    assert!(matches!(result, Err(SemanalyzerErr::MissingGeneric { .. })));
 }
 
 #[test]
@@ -320,7 +334,7 @@ fn should_fail_if_record_has_no_generic() {
         &mut type_bindings_map,
         TYPEDEF_MODE,
     );
-    assert!(matches!(result, Err(SemanalyzerErr::ExpGeneric { .. })));
+    assert!(matches!(result, Err(SemanalyzerErr::MissingGeneric { .. })));
 }
 
 #[test]
@@ -357,7 +371,7 @@ fn should_fail_if_custom_alias_has_generic() {
     assert_eq!(
         result,
         Err(SemanalyzerErr::UnexpNode {
-            found: Name::GENERIC.to_string(),
+            found: Name::NODE__GENERIC.to_string(),
             expected: vec![],
             span: Span { start: 18, end: 23 }
         })

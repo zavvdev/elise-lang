@@ -20,6 +20,15 @@ pub enum AstNode {
     TypeAnnot(AstNodeTypeAnnot),
 }
 
+impl AstNode {
+    pub fn name(&self) -> String {
+        match self {
+            Self::Expr(_) => Name::NODE__EXPR.to_string(),
+            Self::TypeAnnot(_) => Name::NODE__TYPE_ANNOT.to_string(),
+        }
+    }
+}
+
 // ==================================================================
 //
 //  EXPRESSIONS START

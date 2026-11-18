@@ -106,8 +106,10 @@ impl<'a> Harmony<'a> {
     fn annotate_node(&mut self, ast_node: &AstNode) -> Result<AAstNode, SemanalyzerErr> {
         match ast_node {
             AstNode::Expr(expr) => self.annotate_node_expr(expr),
-            _ => Err(SemanalyzerErr::ExpExpression {
+            _ => Err(SemanalyzerErr::UnexpNode {
                 span: ast_node.span(),
+                found: ast_node.name(),
+                expected: vec![Name::NODE__EXPR.to_string()],
             }),
         }
     }
@@ -425,7 +427,7 @@ impl<'a> Harmony<'a> {
         if let Some(generic) = annot.generic.as_ref() {
             return Err(SemanalyzerErr::UnexpNode {
                 span: generic.span(),
-                found: Name::GENERIC.to_string(),
+                found: Name::NODE__GENERIC.to_string(),
                 expected: vec![],
             });
         }
@@ -437,7 +439,10 @@ impl<'a> Harmony<'a> {
         annot: &AstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
         let Some(generic) = annot.generic.as_ref() else {
-            return Err(SemanalyzerErr::ExpGeneric { span: annot.span() });
+            return Err(SemanalyzerErr::MissingGeneric {
+                span: annot.span(),
+                type_annot: annot.lexeme(),
+            });
         };
 
         let AstNodeTypeAnnotGeneric::Single(single_generic) = generic else {
@@ -455,7 +460,10 @@ impl<'a> Harmony<'a> {
         annot: &AstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
         let Some(generic) = annot.generic.as_ref() else {
-            return Err(SemanalyzerErr::ExpGeneric { span: annot.span() });
+            return Err(SemanalyzerErr::MissingGeneric {
+                span: annot.span(),
+                type_annot: annot.lexeme(),
+            });
         };
 
         let AstNodeTypeAnnotGeneric::Record(ast_gen_record) = generic else {
@@ -486,7 +494,7 @@ impl<'a> Harmony<'a> {
         if let Some(generic) = annot.generic.as_ref() {
             return Err(SemanalyzerErr::UnexpNode {
                 span: generic.span(),
-                found: Name::GENERIC.to_string(),
+                found: Name::NODE__GENERIC.to_string(),
                 expected: vec![],
             });
         }
@@ -500,7 +508,7 @@ impl<'a> Harmony<'a> {
         if !self.type_bindings.contains_key(&annot.lexeme) {
             return Err(SemanalyzerErr::UnknType {
                 span: annot.span(),
-                name: annot.lexeme.clone(),
+                name: annot.lexeme(),
             });
         }
 

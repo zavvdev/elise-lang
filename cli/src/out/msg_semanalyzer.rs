@@ -116,13 +116,9 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             }
         }
 
-        ExpTypeAnnot { span } => ("Expected type annotation".to_string(), span),
-
-        ExpIdentifier { span } => ("Expected identifier".to_string(), span),
-
-        ExpGeneric { span } => ("Expected generic".to_string(), span),
-
-        ExpExpression { span } => ("Expected expression".to_string(), span),
+        MissingGeneric { span, type_annot } => {
+            (format!("Missing generic for {} type", type_annot), span)
+        }
 
         UnsupListItem { span } => ("Unsupported list item".to_string(), span),
 

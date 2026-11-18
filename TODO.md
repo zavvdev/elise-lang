@@ -38,14 +38,8 @@
 
       - [x] UnexpType 
 
-      - [ ] ExpTypeAnnot 
-
-      - [ ] ExpIdentifier 
-
-      - [ ] ExpGeneric 
+      - [x] MissingGeneric 
       
-      - [ ] ExpExpression
-
       - [ ] UnsupListItem 
 
       - [ ] UnsupDictItem 
