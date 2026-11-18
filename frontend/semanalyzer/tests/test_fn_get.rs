@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use elise_ir_aast::{
     AAstNode, AAstNodeCall, AAstNodeCallGet,
-    aast_node_data::{AAstNodeData, AAstNodeDataPrim},
+    aast_node_literal::{AAstNodeLiteral, AAstNodeLiteralPrim},
     aast_node_slot::AAstNodeSlot,
 };
 use elise_ir_bindings::{
@@ -185,8 +185,8 @@ fn should_access_data_by_int() {
         data_node: Box::new(AAstNode::SlotData(AAstNodeSlot {
             span: Span { start: 5, end: 10 },
         })),
-        data_access_nodes: vec![Box::new(AAstNode::Data(AAstNodeData::Int(
-            AAstNodeDataPrim {
+        data_access_nodes: vec![Box::new(AAstNode::Literal(AAstNodeLiteral::Int(
+            AAstNodeLiteralPrim {
                 lexeme: "0".to_string(),
                 span: Span { start: 12, end: 13 },
             },
@@ -241,8 +241,8 @@ fn should_access_data_by_str() {
         data_node: Box::new(AAstNode::SlotData(AAstNodeSlot {
             span: Span { start: 5, end: 10 },
         })),
-        data_access_nodes: vec![Box::new(AAstNode::Data(AAstNodeData::Str(
-            AAstNodeDataPrim {
+        data_access_nodes: vec![Box::new(AAstNode::Literal(AAstNodeLiteral::Str(
+            AAstNodeLiteralPrim {
                 lexeme: "name".to_string(),
                 span: Span { start: 12, end: 18 },
             },
@@ -283,14 +283,18 @@ fn should_access_data_by_int_and_str() {
             span: Span { start: 5, end: 10 },
         })),
         data_access_nodes: vec![
-            Box::new(AAstNode::Data(AAstNodeData::Int(AAstNodeDataPrim {
-                lexeme: "0".to_string(),
-                span: Span { start: 12, end: 13 },
-            }))),
-            Box::new(AAstNode::Data(AAstNodeData::Str(AAstNodeDataPrim {
-                lexeme: "id".to_string(),
-                span: Span { start: 15, end: 19 },
-            }))),
+            Box::new(AAstNode::Literal(AAstNodeLiteral::Int(
+                AAstNodeLiteralPrim {
+                    lexeme: "0".to_string(),
+                    span: Span { start: 12, end: 13 },
+                },
+            ))),
+            Box::new(AAstNode::Literal(AAstNodeLiteral::Str(
+                AAstNodeLiteralPrim {
+                    lexeme: "id".to_string(),
+                    span: Span { start: 15, end: 19 },
+                },
+            ))),
         ],
         type_binding_path: BindingPath::with_segments(vec![
             BindingPathSegment::AbstractIndex,

@@ -106,7 +106,7 @@ pub fn run<'a>(
             .map_err(LangErr::SemanalyzerSchema)?;
 
         for csv_aast_node in csv_aast {
-            if let AAstNode::Data(data_node) = csv_aast_node {
+            if let AAstNode::Literal(data_node) = csv_aast_node {
                 let data_bindings = DataBinder::new(&data_node)
                     .bind()
                     .map_err(LangErr::DataBinder)?;

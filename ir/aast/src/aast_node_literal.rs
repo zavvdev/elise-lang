@@ -1,7 +1,7 @@
 //! Notes that represent literal static data such as:
 //! Int, Str, Dict and List.
 //!
-//! Nodes inside AAstNodeData are intended to be static
+//! Nodes inside AAstNodeLiteral are intended to be static
 //! literals, not computed values.
 
 use elise_shared_proc_macros::EnumDelegate;
@@ -12,15 +12,15 @@ use getset::{CloneGetters, CopyGetters};
 #[enum_delegate(
     fn span(&self) -> Span;
 )]
-pub enum AAstNodeData {
-    Int(AAstNodeDataPrim),
-    Str(AAstNodeDataPrim),
-    List(AAstNodeDataList),
-    Dict(AAstNodeDataDict),
+pub enum AAstNodeLiteral {
+    Int(AAstNodeLiteralPrim),
+    Str(AAstNodeLiteralPrim),
+    List(AAstNodeLiteralList),
+    Dict(AAstNodeLiteralDict),
 }
 
 #[derive(Debug, PartialEq, CopyGetters, CloneGetters)]
-pub struct AAstNodeDataPrim {
+pub struct AAstNodeLiteralPrim {
     #[getset(get_clone = "pub")]
     pub lexeme: String,
 
@@ -29,23 +29,23 @@ pub struct AAstNodeDataPrim {
 }
 
 #[derive(Debug, PartialEq, CopyGetters)]
-pub struct AAstNodeDataList {
+pub struct AAstNodeLiteralList {
     #[getset(get_copy = "pub")]
     pub span: Span,
 
-    pub items: Vec<Box<AAstNodeData>>,
+    pub items: Vec<Box<AAstNodeLiteral>>,
 }
 
 #[derive(Debug, PartialEq, CopyGetters)]
-pub struct AAstNodeDataDict {
+pub struct AAstNodeLiteralDict {
     #[getset(get_copy = "pub")]
     pub span: Span,
 
-    pub entries: Vec<(AAstNodeDataDictKey, Box<AAstNodeData>)>,
+    pub entries: Vec<(AAstNodeLiteralDictKey, Box<AAstNodeLiteral>)>,
 }
 
 #[derive(Debug, PartialEq, CloneGetters)]
-pub struct AAstNodeDataDictKey {
+pub struct AAstNodeLiteralDictKey {
     pub span: Span,
 
     #[getset(get_clone = "pub")]

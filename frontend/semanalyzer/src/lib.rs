@@ -33,8 +33,9 @@ use elise_ir_aast::aast_type_annot::{
 };
 use elise_ir_aast::{
     AAstNode, AAstNodeCall, AAstNodeCallGet, AAstNodeCallTypedef,
-    aast_node_data::{
-        AAstNodeData, AAstNodeDataDict, AAstNodeDataDictKey, AAstNodeDataList, AAstNodeDataPrim,
+    aast_node_literal::{
+        AAstNodeLiteral, AAstNodeLiteralDict, AAstNodeLiteralDictKey, AAstNodeLiteralList,
+        AAstNodeLiteralPrim,
     },
     aast_node_slot::AAstNodeSlot,
 };
@@ -130,8 +131,8 @@ impl<'a> Harmony<'a> {
         match ast_node {
             AstNodeExpr::Call(call) => self.call(call),
             AstNodeExpr::Slot(prim) => self.slot(prim),
-            AstNodeExpr::Int(prim) => self.prim(prim, AAstNodeData::Int),
-            AstNodeExpr::Str(prim) => self.prim(prim, AAstNodeData::Str),
+            AstNodeExpr::Int(prim) => self.prim(prim, AAstNodeLiteral::Int),
+            AstNodeExpr::Str(prim) => self.prim(prim, AAstNodeLiteral::Str),
             AstNodeExpr::List(list) => self.list(list),
             AstNodeExpr::Dict(dict) => self.dict(dict),
             expr => Err(SemanalyzerErr::UnexpExpr {
@@ -181,14 +182,14 @@ impl<'a> Harmony<'a> {
             // single Int type because these entities do not carry their
             // return types as they cannot have arbitrary ones.
             AAstNode::Call(AAstNodeCall::Add(AAstNodeCallAdd { span, .. }))
-            | AAstNode::Data(AAstNodeData::Int(AAstNodeDataPrim { span, .. })) => Ok(
+            | AAstNode::Literal(AAstNodeLiteral::Int(AAstNodeLiteralPrim { span, .. })) => Ok(
                 TypeBinding::new_single_binding(TypeBindingDataType::Int, *span),
             ),
             // ========== INT TYPE INFERENCE END ==========
 
             // ========== STR TYPE INFERENCE START ==========
             // Same as for Int inference. Non-alternative Str type inference.
-            AAstNode::Data(AAstNodeData::Str(AAstNodeDataPrim { span, .. })) => Ok(
+            AAstNode::Literal(AAstNodeLiteral::Str(AAstNodeLiteralPrim { span, .. })) => Ok(
                 TypeBinding::new_single_binding(TypeBindingDataType::Str, *span),
             ),
             // ========== STR TYPE INFERENCE END ==========
@@ -234,9 +235,9 @@ impl<'a> Harmony<'a> {
     fn prim(
         &mut self,
         prim: &AstNodeExprPrim,
-        variant: fn(AAstNodeDataPrim) -> AAstNodeData,
+        variant: fn(AAstNodeLiteralPrim) -> AAstNodeLiteral,
     ) -> Result<AAstNode, SemanalyzerErr> {
-        Ok(AAstNode::Data(variant(AAstNodeDataPrim {
+        Ok(AAstNode::Literal(variant(AAstNodeLiteralPrim {
             span: prim.span(),
             lexeme: prim.lexeme(),
         })))
@@ -278,7 +279,7 @@ impl<'a> Harmony<'a> {
         // into the list. This will be covered in the future.
         let mut aast_items = vec![];
         for item in list.items.iter() {
-            let AAstNode::Data(data_node) = self.annotate_node_expr(item)? else {
+            let AAstNode::Literal(data_node) = self.annotate_node_expr(item)? else {
                 return Err(SemanalyzerErr::UnexpExpr {
                     span: item.span(),
                     expected: vec![Name::EXPR__LITERAL.to_string()],
@@ -288,10 +289,12 @@ impl<'a> Harmony<'a> {
             aast_items.push(Box::new(data_node));
         }
 
-        Ok(AAstNode::Data(AAstNodeData::List(AAstNodeDataList {
-            span: list.span(),
-            items: aast_items,
-        })))
+        Ok(AAstNode::Literal(AAstNodeLiteral::List(
+            AAstNodeLiteralList {
+                span: list.span(),
+                items: aast_items,
+            },
+        )))
     }
 
     // ==================================================================
@@ -306,7 +309,7 @@ impl<'a> Harmony<'a> {
         let mut entries = vec![];
 
         for entry in dict.entries.iter() {
-            let AAstNode::Data(data_node) = self.annotate_node_expr(&entry.1)? else {
+            let AAstNode::Literal(data_node) = self.annotate_node_expr(&entry.1)? else {
                 return Err(SemanalyzerErr::UnexpExpr {
                     span: entry.1.span(),
                     found: entry.1.name(),
@@ -314,7 +317,7 @@ impl<'a> Harmony<'a> {
                 });
             };
             entries.push((
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: entry.0.span(),
                     lexeme: entry.0.lexeme(),
                 },
@@ -322,10 +325,12 @@ impl<'a> Harmony<'a> {
             ));
         }
 
-        Ok(AAstNode::Data(AAstNodeData::Dict(AAstNodeDataDict {
-            span: dict.span(),
-            entries,
-        })))
+        Ok(AAstNode::Literal(AAstNodeLiteral::Dict(
+            AAstNodeLiteralDict {
+                span: dict.span(),
+                entries,
+            },
+        )))
     }
 
     // ==================================================================

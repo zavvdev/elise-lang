@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use elise_ir_aast::{
     AAstNode,
-    aast_node_data::{AAstNodeData, AAstNodeDataDict, AAstNodeDataDictKey, AAstNodeDataPrim},
+    aast_node_literal::{
+        AAstNodeLiteral, AAstNodeLiteralDict, AAstNodeLiteralDictKey, AAstNodeLiteralPrim,
+    },
 };
 use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
 use elise_shared_types::{Name, Span};
@@ -55,25 +57,25 @@ fn should_analyze_dict() {
         false,
     );
 
-    let expected = AAstNode::Data(AAstNodeData::Dict(AAstNodeDataDict {
+    let expected = AAstNode::Literal(AAstNodeLiteral::Dict(AAstNodeLiteralDict {
         span: Span { start: 0, end: 23 },
         entries: vec![
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: Span { start: 2, end: 5 },
                     lexeme: "a".to_string(),
                 },
-                Box::new(AAstNodeData::Int(AAstNodeDataPrim {
+                Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
                     lexeme: "42".to_string(),
                     span: Span { start: 6, end: 8 },
                 })),
             ),
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: Span { start: 10, end: 13 },
                     lexeme: "b".to_string(),
                 },
-                Box::new(AAstNodeData::Str(AAstNodeDataPrim {
+                Box::new(AAstNodeLiteral::Str(AAstNodeLiteralPrim {
                     lexeme: "hello".to_string(),
                     span: Span { start: 14, end: 21 },
                 })),
@@ -93,32 +95,32 @@ fn should_analyze_nested_dict() {
         false,
     );
 
-    let expected = AAstNode::Data(AAstNodeData::Dict(AAstNodeDataDict {
+    let expected = AAstNode::Literal(AAstNodeLiteral::Dict(AAstNodeLiteralDict {
         span: Span { start: 0, end: 31 },
         entries: vec![
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: Span { start: 2, end: 5 },
                     lexeme: "a".to_string(),
                 },
-                Box::new(AAstNodeData::Int(AAstNodeDataPrim {
+                Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
                     lexeme: "42".to_string(),
                     span: Span { start: 6, end: 8 },
                 })),
             ),
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: Span { start: 10, end: 13 },
                     lexeme: "b".to_string(),
                 },
-                Box::new(AAstNodeData::Dict(AAstNodeDataDict {
+                Box::new(AAstNodeLiteral::Dict(AAstNodeLiteralDict {
                     span: Span { start: 14, end: 29 },
                     entries: vec![(
-                        AAstNodeDataDictKey {
+                        AAstNodeLiteralDictKey {
                             span: Span { start: 16, end: 19 },
                             lexeme: "c".to_string(),
                         },
-                        Box::new(AAstNodeData::Str(AAstNodeDataPrim {
+                        Box::new(AAstNodeLiteral::Str(AAstNodeLiteralPrim {
                             lexeme: "hello".to_string(),
                             span: Span { start: 20, end: 27 },
                         })),

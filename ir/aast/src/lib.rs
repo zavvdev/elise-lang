@@ -19,10 +19,11 @@ use elise_shared_types::{Name, Span};
 use getset::CopyGetters;
 
 use crate::{
-    aast_node_data::AAstNodeData, aast_node_slot::AAstNodeSlot, aast_type_annot::AAstNodeTypeAnnot,
+    aast_node_literal::AAstNodeLiteral, aast_node_slot::AAstNodeSlot,
+    aast_type_annot::AAstNodeTypeAnnot,
 };
 
-pub mod aast_node_data;
+pub mod aast_node_literal;
 pub mod aast_node_slot;
 pub mod aast_type_annot;
 
@@ -35,22 +36,23 @@ pub enum AAstNode {
     // where each of them contains it's own properties.
     Call(AAstNodeCall),
 
-    // Data variant represents a set of nodes that act as a
+    // Literal variant represents a set of nodes that act as a
     // literal data, such as: integers, strings, lists etc.
     // This allows us to do more granular validation of
     // arguments for functions that must accept only
-    // Data nodes.
-    Data(AAstNodeData),
+    // Literal nodes.
+    Literal(AAstNodeLiteral),
 
     // Represents a dedicated @data slot that references
     // data being manipulated.
+    // TODO: Just Slot?
     SlotData(AAstNodeSlot),
 }
 impl AAstNode {
     pub fn name(&self) -> String {
         match self {
             Self::Call(_) => Name::EXPR__CALL.to_string(),
-            Self::Data(_) => Name::EXPR__LITERAL.to_string(),
+            Self::Literal(_) => Name::EXPR__LITERAL.to_string(),
             Self::SlotData(_) => Name::EXPR__SLOT.to_string(),
         }
     }

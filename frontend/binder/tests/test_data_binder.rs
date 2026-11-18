@@ -1,6 +1,7 @@
 use elise_frontend_binder::data_binder::DataBinder;
-use elise_ir_aast::aast_node_data::{
-    AAstNodeData, AAstNodeDataDict, AAstNodeDataDictKey, AAstNodeDataList, AAstNodeDataPrim,
+use elise_ir_aast::aast_node_literal::{
+    AAstNodeLiteral, AAstNodeLiteralDict, AAstNodeLiteralDictKey, AAstNodeLiteralList,
+    AAstNodeLiteralPrim,
 };
 use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
@@ -20,7 +21,7 @@ mod common;
 
 #[test]
 fn should_bind_primitive() {
-    let int_aast = AAstNodeData::Int(AAstNodeDataPrim {
+    let int_aast = AAstNodeLiteral::Int(AAstNodeLiteralPrim {
         lexeme: "1".to_string(),
         span: test_utils::span(),
     });
@@ -53,14 +54,14 @@ fn should_bind_primitive() {
 
 #[test]
 fn should_bind_flat_list() {
-    let list_aast = AAstNodeData::List(AAstNodeDataList {
+    let list_aast = AAstNodeLiteral::List(AAstNodeLiteralList {
         span: test_utils::span(),
         items: vec![
-            Box::new(AAstNodeData::Int(AAstNodeDataPrim {
+            Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
                 lexeme: "1".to_string(),
                 span: test_utils::span(),
             })),
-            Box::new(AAstNodeData::Int(AAstNodeDataPrim {
+            Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
                 lexeme: "2".to_string(),
                 span: test_utils::span(),
             })),
@@ -97,16 +98,16 @@ fn should_bind_flat_list() {
 
 #[test]
 fn should_bind_nested_list() {
-    let list_aast = AAstNodeData::List(AAstNodeDataList {
+    let list_aast = AAstNodeLiteral::List(AAstNodeLiteralList {
         span: test_utils::span(),
-        items: vec![Box::new(AAstNodeData::List(AAstNodeDataList {
+        items: vec![Box::new(AAstNodeLiteral::List(AAstNodeLiteralList {
             span: test_utils::span(),
             items: vec![
-                Box::new(AAstNodeData::Int(AAstNodeDataPrim {
+                Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
                     lexeme: "1".to_string(),
                     span: test_utils::span(),
                 })),
-                Box::new(AAstNodeData::Int(AAstNodeDataPrim {
+                Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
                     lexeme: "2".to_string(),
                     span: test_utils::span(),
                 })),
@@ -169,25 +170,25 @@ fn should_bind_nested_list() {
 
 #[test]
 fn should_bind_flat_dict() {
-    let dict_aast = AAstNodeData::Dict(AAstNodeDataDict {
+    let dict_aast = AAstNodeLiteral::Dict(AAstNodeLiteralDict {
         span: test_utils::span(),
         entries: vec![
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: test_utils::span(),
                     lexeme: "id".to_string(),
                 },
-                Box::new(AAstNodeData::Int(AAstNodeDataPrim {
+                Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
                     lexeme: "1".to_string(),
                     span: test_utils::span(),
                 })),
             ),
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: test_utils::span(),
                     lexeme: "name".to_string(),
                 },
-                Box::new(AAstNodeData::Str(AAstNodeDataPrim {
+                Box::new(AAstNodeLiteral::Str(AAstNodeLiteralPrim {
                     lexeme: "John".to_string(),
                     span: test_utils::span(),
                 })),
@@ -224,35 +225,35 @@ fn should_bind_flat_dict() {
 
 #[test]
 fn should_bind_nested_dict() {
-    let nested_dict = AAstNodeData::Dict(AAstNodeDataDict {
+    let nested_dict = AAstNodeLiteral::Dict(AAstNodeLiteralDict {
         span: test_utils::span(),
         entries: vec![
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: test_utils::span(),
                     lexeme: "id".to_string(),
                 },
-                Box::new(AAstNodeData::Int(AAstNodeDataPrim {
+                Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
                     lexeme: "1".to_string(),
                     span: test_utils::span(),
                 })),
             ),
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: test_utils::span(),
                     lexeme: "name".to_string(),
                 },
-                Box::new(AAstNodeData::Str(AAstNodeDataPrim {
+                Box::new(AAstNodeLiteral::Str(AAstNodeLiteralPrim {
                     lexeme: "John".to_string(),
                     span: test_utils::span(),
                 })),
             ),
         ],
     });
-    let dict_aast = AAstNodeData::Dict(AAstNodeDataDict {
+    let dict_aast = AAstNodeLiteral::Dict(AAstNodeLiteralDict {
         span: test_utils::span(),
         entries: vec![(
-            AAstNodeDataDictKey {
+            AAstNodeLiteralDictKey {
                 span: test_utils::span(),
                 lexeme: "user".to_string(),
             },
@@ -313,42 +314,42 @@ fn should_bind_nested_dict() {
 
 #[test]
 fn should_bind_mixed_data() {
-    let dict1 = AAstNodeData::Dict(AAstNodeDataDict {
+    let dict1 = AAstNodeLiteral::Dict(AAstNodeLiteralDict {
         span: test_utils::span(),
         entries: vec![
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: test_utils::span(),
                     lexeme: "id".to_string(),
                 },
-                Box::new(AAstNodeData::Int(AAstNodeDataPrim {
+                Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
                     lexeme: "1".to_string(),
                     span: test_utils::span(),
                 })),
             ),
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: test_utils::span(),
                     lexeme: "name".to_string(),
                 },
-                Box::new(AAstNodeData::Str(AAstNodeDataPrim {
+                Box::new(AAstNodeLiteral::Str(AAstNodeLiteralPrim {
                     lexeme: "John".to_string(),
                     span: test_utils::span(),
                 })),
             ),
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: test_utils::span(),
                     lexeme: "address".to_string(),
                 },
-                Box::new(AAstNodeData::Dict(AAstNodeDataDict {
+                Box::new(AAstNodeLiteral::Dict(AAstNodeLiteralDict {
                     span: test_utils::span(),
                     entries: vec![(
-                        AAstNodeDataDictKey {
+                        AAstNodeLiteralDictKey {
                             span: test_utils::span(),
                             lexeme: "street".to_string(),
                         },
-                        Box::new(AAstNodeData::Str(AAstNodeDataPrim {
+                        Box::new(AAstNodeLiteral::Str(AAstNodeLiteralPrim {
                             span: test_utils::span(),
                             lexeme: "Washington St.".to_string(),
                         })),
@@ -357,42 +358,42 @@ fn should_bind_mixed_data() {
             ),
         ],
     });
-    let dict2 = AAstNodeData::Dict(AAstNodeDataDict {
+    let dict2 = AAstNodeLiteral::Dict(AAstNodeLiteralDict {
         span: test_utils::span(),
         entries: vec![
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: test_utils::span(),
                     lexeme: "id".to_string(),
                 },
-                Box::new(AAstNodeData::Int(AAstNodeDataPrim {
+                Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
                     lexeme: "2".to_string(),
                     span: test_utils::span(),
                 })),
             ),
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: test_utils::span(),
                     lexeme: "name".to_string(),
                 },
-                Box::new(AAstNodeData::Str(AAstNodeDataPrim {
+                Box::new(AAstNodeLiteral::Str(AAstNodeLiteralPrim {
                     lexeme: "Jane".to_string(),
                     span: test_utils::span(),
                 })),
             ),
             (
-                AAstNodeDataDictKey {
+                AAstNodeLiteralDictKey {
                     span: test_utils::span(),
                     lexeme: "address".to_string(),
                 },
-                Box::new(AAstNodeData::Dict(AAstNodeDataDict {
+                Box::new(AAstNodeLiteral::Dict(AAstNodeLiteralDict {
                     span: test_utils::span(),
                     entries: vec![(
-                        AAstNodeDataDictKey {
+                        AAstNodeLiteralDictKey {
                             span: test_utils::span(),
                             lexeme: "street".to_string(),
                         },
-                        Box::new(AAstNodeData::Str(AAstNodeDataPrim {
+                        Box::new(AAstNodeLiteral::Str(AAstNodeLiteralPrim {
                             span: test_utils::span(),
                             lexeme: "Wall St.".to_string(),
                         })),
@@ -401,7 +402,7 @@ fn should_bind_mixed_data() {
             ),
         ],
     });
-    let data_aast = AAstNodeData::List(AAstNodeDataList {
+    let data_aast = AAstNodeLiteral::List(AAstNodeLiteralList {
         span: test_utils::span(),
         items: vec![Box::new(dict1), Box::new(dict2)],
     });

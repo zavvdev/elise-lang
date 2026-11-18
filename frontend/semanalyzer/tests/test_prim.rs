@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use elise_ir_aast::{
     AAstNode,
-    aast_node_data::{AAstNodeData, AAstNodeDataPrim},
+    aast_node_literal::{AAstNodeLiteral, AAstNodeLiteralPrim},
 };
 use elise_shared_types::Span;
 use elise_test_utils::test_utils::semanalyze;
@@ -15,10 +15,12 @@ fn should_analyze_int() {
     let result = semanalyze("42", &mut type_bindings_map, false);
     assert_eq!(
         result,
-        Ok(vec![AAstNode::Data(AAstNodeData::Int(AAstNodeDataPrim {
-            span: Span { start: 0, end: 2 },
-            lexeme: "42".to_string()
-        }))])
+        Ok(vec![AAstNode::Literal(AAstNodeLiteral::Int(
+            AAstNodeLiteralPrim {
+                span: Span { start: 0, end: 2 },
+                lexeme: "42".to_string()
+            }
+        ))])
     );
 }
 
@@ -28,9 +30,11 @@ fn should_analyze_str() {
     let result = semanalyze(r##""elise""##, &mut type_bindings_map, false);
     assert_eq!(
         result,
-        Ok(vec![AAstNode::Data(AAstNodeData::Str(AAstNodeDataPrim {
-            span: Span { start: 0, end: 7 },
-            lexeme: "elise".to_string()
-        }))])
+        Ok(vec![AAstNode::Literal(AAstNodeLiteral::Str(
+            AAstNodeLiteralPrim {
+                span: Span { start: 0, end: 7 },
+                lexeme: "elise".to_string()
+            }
+        ))])
     );
 }

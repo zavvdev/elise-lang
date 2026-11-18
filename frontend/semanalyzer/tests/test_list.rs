@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use elise_ir_aast::{
     AAstNode,
-    aast_node_data::{AAstNodeData, AAstNodeDataList, AAstNodeDataPrim},
+    aast_node_literal::{AAstNodeLiteral, AAstNodeLiteralList, AAstNodeLiteralPrim},
 };
 use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
 use elise_shared_types::{Name, Span};
@@ -60,19 +60,21 @@ fn should_analyze_list() {
     let result = semanalyze(r##"[42, 43]"##, &mut type_bindings_map, false);
     assert_eq!(
         result,
-        Ok(vec![AAstNode::Data(AAstNodeData::List(AAstNodeDataList {
-            span: Span { start: 0, end: 8 },
-            items: vec![
-                Box::new(AAstNodeData::Int(AAstNodeDataPrim {
-                    lexeme: "42".to_string(),
-                    span: Span { start: 1, end: 3 },
-                })),
-                Box::new(AAstNodeData::Int(AAstNodeDataPrim {
-                    lexeme: "43".to_string(),
-                    span: Span { start: 5, end: 7 },
-                }))
-            ]
-        }))])
+        Ok(vec![AAstNode::Literal(AAstNodeLiteral::List(
+            AAstNodeLiteralList {
+                span: Span { start: 0, end: 8 },
+                items: vec![
+                    Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
+                        lexeme: "42".to_string(),
+                        span: Span { start: 1, end: 3 },
+                    })),
+                    Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
+                        lexeme: "43".to_string(),
+                        span: Span { start: 5, end: 7 },
+                    }))
+                ]
+            }
+        ))])
     );
 }
 
@@ -81,22 +83,24 @@ fn should_analyze_nested_list() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(r##"[[1, 2]]"##, &mut type_bindings_map, false);
 
-    let expected_result = Ok(vec![AAstNode::Data(AAstNodeData::List(AAstNodeDataList {
-        span: Span { start: 0, end: 8 },
-        items: vec![Box::new(AAstNodeData::List(AAstNodeDataList {
-            span: Span { start: 1, end: 7 },
-            items: vec![
-                Box::new(AAstNodeData::Int(AAstNodeDataPrim {
-                    lexeme: "1".to_string(),
-                    span: Span { start: 2, end: 3 },
-                })),
-                Box::new(AAstNodeData::Int(AAstNodeDataPrim {
-                    lexeme: "2".to_string(),
-                    span: Span { start: 5, end: 6 },
-                })),
-            ],
-        }))],
-    }))]);
+    let expected_result = Ok(vec![AAstNode::Literal(AAstNodeLiteral::List(
+        AAstNodeLiteralList {
+            span: Span { start: 0, end: 8 },
+            items: vec![Box::new(AAstNodeLiteral::List(AAstNodeLiteralList {
+                span: Span { start: 1, end: 7 },
+                items: vec![
+                    Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
+                        lexeme: "1".to_string(),
+                        span: Span { start: 2, end: 3 },
+                    })),
+                    Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
+                        lexeme: "2".to_string(),
+                        span: Span { start: 5, end: 6 },
+                    })),
+                ],
+            }))],
+        },
+    ))]);
 
     assert_eq!(result, expected_result);
 }
@@ -106,25 +110,27 @@ fn should_analyze_nested_list_where_each_has_diff_item_types() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze(r##"[[1], ["2"]]"##, &mut type_bindings_map, false);
 
-    let expected_result = Ok(vec![AAstNode::Data(AAstNodeData::List(AAstNodeDataList {
-        span: Span { start: 0, end: 12 },
-        items: vec![
-            Box::new(AAstNodeData::List(AAstNodeDataList {
-                span: Span { start: 1, end: 4 },
-                items: vec![Box::new(AAstNodeData::Int(AAstNodeDataPrim {
-                    lexeme: "1".to_string(),
-                    span: Span { start: 2, end: 3 },
-                }))],
-            })),
-            Box::new(AAstNodeData::List(AAstNodeDataList {
-                span: Span { start: 6, end: 11 },
-                items: vec![Box::new(AAstNodeData::Str(AAstNodeDataPrim {
-                    lexeme: "2".to_string(),
-                    span: Span { start: 7, end: 10 },
-                }))],
-            })),
-        ],
-    }))]);
+    let expected_result = Ok(vec![AAstNode::Literal(AAstNodeLiteral::List(
+        AAstNodeLiteralList {
+            span: Span { start: 0, end: 12 },
+            items: vec![
+                Box::new(AAstNodeLiteral::List(AAstNodeLiteralList {
+                    span: Span { start: 1, end: 4 },
+                    items: vec![Box::new(AAstNodeLiteral::Int(AAstNodeLiteralPrim {
+                        lexeme: "1".to_string(),
+                        span: Span { start: 2, end: 3 },
+                    }))],
+                })),
+                Box::new(AAstNodeLiteral::List(AAstNodeLiteralList {
+                    span: Span { start: 6, end: 11 },
+                    items: vec![Box::new(AAstNodeLiteral::Str(AAstNodeLiteralPrim {
+                        lexeme: "2".to_string(),
+                        span: Span { start: 7, end: 10 },
+                    }))],
+                })),
+            ],
+        },
+    ))]);
 
     assert_eq!(result, expected_result);
 }

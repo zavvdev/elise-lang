@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use elise_ir_aast::{
     AAstNode, AAstNodeCall, AAstNodeCallAdd, AAstNodeCallGet,
-    aast_node_data::{AAstNodeData, AAstNodeDataPrim},
+    aast_node_literal::{AAstNodeLiteral, AAstNodeLiteralPrim},
     aast_node_slot::AAstNodeSlot,
 };
 use elise_ir_bindings::{
@@ -56,8 +56,8 @@ fn should_allow_single_arg() {
 
     let expected_result = vec![AAstNode::Call(AAstNodeCall::Add(AAstNodeCallAdd {
         span: Span { start: 0, end: 7 },
-        arguments: vec![Box::new(AAstNode::Data(AAstNodeData::Int(
-            AAstNodeDataPrim {
+        arguments: vec![Box::new(AAstNode::Literal(AAstNodeLiteral::Int(
+            AAstNodeLiteralPrim {
                 span: Span { start: 5, end: 6 },
                 lexeme: "1".to_string(),
             },
@@ -75,18 +75,24 @@ fn should_allow_more_than_one_arg() {
     let expected_result = vec![AAstNode::Call(AAstNodeCall::Add(AAstNodeCallAdd {
         span: Span { start: 0, end: 13 },
         arguments: vec![
-            Box::new(AAstNode::Data(AAstNodeData::Int(AAstNodeDataPrim {
-                span: Span { start: 5, end: 6 },
-                lexeme: "1".to_string(),
-            }))),
-            Box::new(AAstNode::Data(AAstNodeData::Int(AAstNodeDataPrim {
-                span: Span { start: 8, end: 9 },
-                lexeme: "2".to_string(),
-            }))),
-            Box::new(AAstNode::Data(AAstNodeData::Int(AAstNodeDataPrim {
-                span: Span { start: 11, end: 12 },
-                lexeme: "3".to_string(),
-            }))),
+            Box::new(AAstNode::Literal(AAstNodeLiteral::Int(
+                AAstNodeLiteralPrim {
+                    span: Span { start: 5, end: 6 },
+                    lexeme: "1".to_string(),
+                },
+            ))),
+            Box::new(AAstNode::Literal(AAstNodeLiteral::Int(
+                AAstNodeLiteralPrim {
+                    span: Span { start: 8, end: 9 },
+                    lexeme: "2".to_string(),
+                },
+            ))),
+            Box::new(AAstNode::Literal(AAstNodeLiteral::Int(
+                AAstNodeLiteralPrim {
+                    span: Span { start: 11, end: 12 },
+                    lexeme: "3".to_string(),
+                },
+            ))),
         ],
     }))];
 
@@ -101,21 +107,27 @@ fn should_allow_nested_add_calls() {
     let expected_result = vec![AAstNode::Call(AAstNodeCall::Add(AAstNodeCallAdd {
         span: Span { start: 0, end: 19 },
         arguments: vec![
-            Box::new(AAstNode::Data(AAstNodeData::Int(AAstNodeDataPrim {
-                span: Span { start: 5, end: 6 },
-                lexeme: "1".to_string(),
-            }))),
+            Box::new(AAstNode::Literal(AAstNodeLiteral::Int(
+                AAstNodeLiteralPrim {
+                    span: Span { start: 5, end: 6 },
+                    lexeme: "1".to_string(),
+                },
+            ))),
             Box::new(AAstNode::Call(AAstNodeCall::Add(AAstNodeCallAdd {
                 span: Span { start: 8, end: 18 },
                 arguments: vec![
-                    Box::new(AAstNode::Data(AAstNodeData::Int(AAstNodeDataPrim {
-                        span: Span { start: 13, end: 14 },
-                        lexeme: "2".to_string(),
-                    }))),
-                    Box::new(AAstNode::Data(AAstNodeData::Int(AAstNodeDataPrim {
-                        span: Span { start: 16, end: 17 },
-                        lexeme: "3".to_string(),
-                    }))),
+                    Box::new(AAstNode::Literal(AAstNodeLiteral::Int(
+                        AAstNodeLiteralPrim {
+                            span: Span { start: 13, end: 14 },
+                            lexeme: "2".to_string(),
+                        },
+                    ))),
+                    Box::new(AAstNode::Literal(AAstNodeLiteral::Int(
+                        AAstNodeLiteralPrim {
+                            span: Span { start: 16, end: 17 },
+                            lexeme: "3".to_string(),
+                        },
+                    ))),
                 ],
             }))),
         ],
@@ -145,24 +157,30 @@ fn should_allow_get_call_if_accessing_numbers() {
     let expected_result = vec![AAstNode::Call(AAstNodeCall::Add(AAstNodeCallAdd {
         span: Span { start: 0, end: 29 },
         arguments: vec![
-            Box::new(AAstNode::Data(AAstNodeData::Int(AAstNodeDataPrim {
-                span: Span { start: 5, end: 6 },
-                lexeme: "1".to_string(),
-            }))),
+            Box::new(AAstNode::Literal(AAstNodeLiteral::Int(
+                AAstNodeLiteralPrim {
+                    span: Span { start: 5, end: 6 },
+                    lexeme: "1".to_string(),
+                },
+            ))),
             Box::new(AAstNode::Call(AAstNodeCall::Get(AAstNodeCallGet {
                 span: Span { start: 8, end: 28 },
                 data_node: Box::new(AAstNode::SlotData(AAstNodeSlot {
                     span: Span { start: 13, end: 18 },
                 })),
                 data_access_nodes: vec![
-                    Box::new(AAstNode::Data(AAstNodeData::Int(AAstNodeDataPrim {
-                        lexeme: "0".to_string(),
-                        span: Span { start: 20, end: 21 },
-                    }))),
-                    Box::new(AAstNode::Data(AAstNodeData::Str(AAstNodeDataPrim {
-                        lexeme: "id".to_string(),
-                        span: Span { start: 23, end: 27 },
-                    }))),
+                    Box::new(AAstNode::Literal(AAstNodeLiteral::Int(
+                        AAstNodeLiteralPrim {
+                            lexeme: "0".to_string(),
+                            span: Span { start: 20, end: 21 },
+                        },
+                    ))),
+                    Box::new(AAstNode::Literal(AAstNodeLiteral::Str(
+                        AAstNodeLiteralPrim {
+                            lexeme: "id".to_string(),
+                            span: Span { start: 23, end: 27 },
+                        },
+                    ))),
                 ],
                 type_binding_path: BindingPath::with_segments(vec![
                     BindingPathSegment::AbstractIndex,

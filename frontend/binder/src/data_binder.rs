@@ -7,8 +7,8 @@
 //! Data AAst node itself is a nested data structure which needs to be
 //! flattened in order to simplify data validation and data accessing.
 
-use elise_ir_aast::aast_node_data::{
-    AAstNodeData, AAstNodeDataDict, AAstNodeDataList, AAstNodeDataPrim,
+use elise_ir_aast::aast_node_literal::{
+    AAstNodeLiteral, AAstNodeLiteralDict, AAstNodeLiteralList, AAstNodeLiteralPrim,
 };
 use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
@@ -19,13 +19,13 @@ use elise_ir_bindings::{
 use elise_shared_errors::errors_data_binder::DataBinderErr;
 
 pub struct DataBinder<'a> {
-    aast_data_node: &'a AAstNodeData,
+    aast_data_node: &'a AAstNodeLiteral,
     current_path: BindingPath,
     current_desc: Option<DataBindingDesc>,
 }
 
 impl<'a> DataBinder<'a> {
-    pub fn new(aast_data_node: &'a AAstNodeData) -> Self {
+    pub fn new(aast_data_node: &'a AAstNodeLiteral) -> Self {
         Self {
             // Data node itself that needs to be flattened.
             aast_data_node,
@@ -50,14 +50,14 @@ impl<'a> DataBinder<'a> {
 
     fn bind_node(
         &mut self,
-        node: &AAstNodeData,
+        node: &AAstNodeLiteral,
         binding: &mut DataBinding,
     ) -> Result<(), DataBinderErr> {
         match node {
-            AAstNodeData::Int(prim) => self.bind_primitive(DataBindingDesc::Int, prim, binding),
-            AAstNodeData::Str(prim) => self.bind_primitive(DataBindingDesc::Str, prim, binding),
-            AAstNodeData::Dict(dict) => self.bind_dict(dict, binding),
-            AAstNodeData::List(list) => self.bind_list(list, binding),
+            AAstNodeLiteral::Int(prim) => self.bind_primitive(DataBindingDesc::Int, prim, binding),
+            AAstNodeLiteral::Str(prim) => self.bind_primitive(DataBindingDesc::Str, prim, binding),
+            AAstNodeLiteral::Dict(dict) => self.bind_dict(dict, binding),
+            AAstNodeLiteral::List(list) => self.bind_list(list, binding),
         }
     }
 
@@ -82,7 +82,7 @@ impl<'a> DataBinder<'a> {
     fn bind_primitive(
         &mut self,
         desc: fn(DataBindingDescPrim) -> DataBindingDesc,
-        aast_prim: &AAstNodeDataPrim,
+        aast_prim: &AAstNodeLiteralPrim,
         binding: &mut DataBinding,
     ) -> Result<(), DataBinderErr> {
         self.current_desc = Some(desc(DataBindingDescPrim {
@@ -111,7 +111,7 @@ impl<'a> DataBinder<'a> {
 
     fn bind_dict(
         &mut self,
-        aast_dict: &AAstNodeDataDict,
+        aast_dict: &AAstNodeLiteralDict,
         binding: &mut DataBinding,
     ) -> Result<(), DataBinderErr> {
         // Capture current descriptor as Dict and resolve it right away
@@ -154,7 +154,7 @@ impl<'a> DataBinder<'a> {
     /// to more than one data type.
     fn bind_list(
         &mut self,
-        aast_list: &AAstNodeDataList,
+        aast_list: &AAstNodeLiteralList,
         binding: &mut DataBinding,
     ) -> Result<(), DataBinderErr> {
         // Capture current descriptor and commit it before recursing
