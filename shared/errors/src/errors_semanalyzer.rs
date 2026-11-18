@@ -76,13 +76,6 @@ pub enum SemanalyzerErr {
         type_annot: String,
     },
 
-    UnsupListItem {
-        span: Span,
-    },
-    UnsupDictItem {
-        span: Span,
-    },
-
     InvalGeneric {
         span: Span,
     },

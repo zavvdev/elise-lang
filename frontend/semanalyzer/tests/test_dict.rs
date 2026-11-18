@@ -5,7 +5,7 @@ use elise_ir_aast::{
     aast_node_data::{AAstNodeData, AAstNodeDataDict, AAstNodeDataDictKey, AAstNodeDataPrim},
 };
 use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
-use elise_shared_types::Span;
+use elise_shared_types::{Name, Span};
 use elise_test_utils::test_utils::semanalyze;
 
 mod common;
@@ -26,8 +26,10 @@ fn should_fail_for_unsupported_items() {
     );
     assert_eq!(
         result,
-        Err(SemanalyzerErr::UnsupDictItem {
-            span: Span { start: 6, end: 25 }
+        Err(SemanalyzerErr::UnexpExpr {
+            span: Span { start: 6, end: 25 },
+            found: Name::EXPR__CALL.to_string(),
+            expected: vec![Name::EXPR__VALUE_LITERAL.to_string()],
         })
     );
 }

@@ -120,10 +120,6 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             (format!("Missing generic for {} type", type_annot), span)
         }
 
-        UnsupListItem { span } => ("Unsupported list item".to_string(), span),
-
-        UnsupDictItem { span } => ("Unsupported dict item".to_string(), span),
-
         InvalGeneric { span } => ("Invalid generic".to_string(), span),
 
         InvalDataAccessArg { span } => ("Invalid data access argument".to_string(), span),

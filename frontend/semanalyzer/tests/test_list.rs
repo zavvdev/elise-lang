@@ -5,7 +5,7 @@ use elise_ir_aast::{
     aast_node_data::{AAstNodeData, AAstNodeDataList, AAstNodeDataPrim},
 };
 use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
-use elise_shared_types::Span;
+use elise_shared_types::{Name, Span};
 use elise_test_utils::test_utils::semanalyze;
 
 mod common;
@@ -34,8 +34,10 @@ fn should_fail_for_unsupported_items() {
     let result = semanalyze(r##"[.typedef(Some :Int)]"##, &mut type_bindings_map, false);
     assert_eq!(
         result,
-        Err(SemanalyzerErr::UnsupListItem {
-            span: Span { start: 1, end: 20 }
+        Err(SemanalyzerErr::UnexpExpr {
+            span: Span { start: 1, end: 20 },
+            found: Name::EXPR__CALL.to_string(),
+            expected: vec![Name::EXPR__VALUE_LITERAL.to_string()]
         })
     );
 }

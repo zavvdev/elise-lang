@@ -1,3 +1,1 @@
-.add (1, 2)
-
-.typedef (A :Record)
+[.typedef(A :Int)]

@@ -15,7 +15,7 @@
 
 use elise_ir_bindings::{binding_path::BindingPath, type_bindings::TypeBinding};
 use elise_shared_proc_macros::EnumDelegate;
-use elise_shared_types::Span;
+use elise_shared_types::{Name, Span};
 use getset::CopyGetters;
 
 use crate::{
@@ -45,6 +45,15 @@ pub enum AAstNode {
     // Represents a dedicated @data slot that references
     // data being manipulated.
     SlotData(AAstNodeSlot),
+}
+impl AAstNode {
+    pub fn name(&self) -> String {
+        match self {
+            Self::Call(_) => Name::EXPR__CALL.to_string(),
+            Self::Data(_) => Name::EXPR__VALUE_LITERAL.to_string(),
+            Self::SlotData(_) => Name::EXPR__SLOT.to_string(),
+        }
+    }
 }
 
 // ==================================================================

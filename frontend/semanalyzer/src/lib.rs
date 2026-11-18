@@ -268,7 +268,7 @@ impl<'a> Harmony<'a> {
             }
         }
 
-        // We allow only data nodes inside list items for now in order
+        // NOTE: We allow only data nodes inside list items for now in order
         // to avoid complexity related to expression evaluation at runtime.
         // Grammatically, this code can be accepted:
         // [.add(1, 2)] because .add call is an expression that produced a
@@ -279,7 +279,11 @@ impl<'a> Harmony<'a> {
         let mut aast_items = vec![];
         for item in list.items.iter() {
             let AAstNode::Data(data_node) = self.annotate_node_expr(item)? else {
-                return Err(SemanalyzerErr::UnsupListItem { span: item.span() });
+                return Err(SemanalyzerErr::UnexpExpr {
+                    span: item.span(),
+                    expected: vec![Name::EXPR__VALUE_LITERAL.to_string()],
+                    found: item.name(),
+                });
             };
             aast_items.push(Box::new(data_node));
         }
@@ -303,8 +307,10 @@ impl<'a> Harmony<'a> {
 
         for entry in dict.entries.iter() {
             let AAstNode::Data(data_node) = self.annotate_node_expr(&entry.1)? else {
-                return Err(SemanalyzerErr::UnsupDictItem {
+                return Err(SemanalyzerErr::UnexpExpr {
                     span: entry.1.span(),
+                    found: entry.1.name(),
+                    expected: vec![Name::EXPR__VALUE_LITERAL.to_string()],
                 });
             };
             entries.push((

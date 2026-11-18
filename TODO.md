@@ -40,10 +40,6 @@
 
       - [x] MissingGeneric 
       
-      - [ ] UnsupListItem 
-
-      - [ ] UnsupDictItem 
-
       - [ ] InvalGeneric 
 
       - [ ] InvalDataAccessArg 

@@ -43,6 +43,7 @@ impl Name {
     pub const EXPR__DICT: &'static str = "DictExpression";
     pub const EXPR__IDENTIFIER: &'static str = "IdentifierExpression";
     pub const EXPR__SLOT: &'static str = "SlotExpression";
+    pub const EXPR__VALUE_LITERAL: &'static str = "ValueLiteralExpression";
 
     pub const NODE__GENERIC: &'static str = "Generic";
     pub const NODE__TYPE_ANNOT: &'static str = "TypeAnnotation";
