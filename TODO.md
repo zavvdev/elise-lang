@@ -32,9 +32,9 @@
     
       - [x] UnknType
 
-      - [ ] UnexpNode
+      - [x] UnexpNode
       
-      - [ ] UnexpExpr (Add expected list)
+      - [x] UnexpExpr
 
       - [x] UnexpType 
 

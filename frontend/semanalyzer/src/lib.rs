@@ -134,7 +134,15 @@ impl<'a> Harmony<'a> {
             AstNodeExpr::Dict(dict) => self.dict(dict),
             expr => Err(SemanalyzerErr::UnexpExpr {
                 span: ast_node.span(),
-                name: expr.name(),
+                found: expr.name(),
+                expected: vec![
+                    Name::EXPR__CALL.to_string(),
+                    Name::EXPR__SLOT.to_string(),
+                    Name::EXPR__INT.to_string(),
+                    Name::EXPR__STR.to_string(),
+                    Name::EXPR__LIST.to_string(),
+                    Name::EXPR__DICT.to_string(),
+                ],
             }),
         }
     }

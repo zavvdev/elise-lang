@@ -51,7 +51,8 @@ pub enum SemanalyzerErr {
     },
     UnexpExpr {
         span: Span,
-        name: String,
+        found: String,
+        expected: Vec<String>,
     },
     UnexpType {
         span: Span,

@@ -60,7 +60,33 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             }
         }
 
-        UnexpExpr { span, name } => (format!("Unexpected {}", name), span),
+        UnexpExpr {
+            span,
+            found,
+            expected,
+        } => {
+            if expected.is_empty() {
+                (format!("Unexpected {}", found), span)
+            } else if expected.len() == 1 {
+                (
+                    format!(
+                        "Unexpected expression. Expected {}, found {}",
+                        expected.first().unwrap(),
+                        found
+                    ),
+                    span,
+                )
+            } else {
+                (
+                    format!(
+                        "Unexpected expression. Expected one of [{}], found {}",
+                        expected.join(", "),
+                        found
+                    ),
+                    span,
+                )
+            }
+        }
 
         UnexpType {
             span,
