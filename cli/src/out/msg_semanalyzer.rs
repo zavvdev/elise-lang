@@ -32,9 +32,35 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             span,
         ),
 
-        UnexpExpr { span, name } => (format!("Unexpected {}", name), span),
+        UnexpNode {
+            span,
+            expected,
+            found,
+        } => {
+            if expected.is_empty() {
+                (format!("Unexpected {}", found), span)
+            } else if expected.len() == 1 {
+                (
+                    format!(
+                        "Unexpected node. Expected {}, found {}",
+                        expected.first().unwrap(),
+                        found
+                    ),
+                    span,
+                )
+            } else {
+                (
+                    format!(
+                        "Unexpected node. Expected one of [{}], found {}",
+                        expected.join(", "),
+                        found
+                    ),
+                    span,
+                )
+            }
+        }
 
-        UnexpGeneric { span } => ("Unexpected generic".to_string(), span),
+        UnexpExpr { span, name } => (format!("Unexpected {}", name), span),
 
         UnexpType {
             span,

@@ -44,12 +44,14 @@ pub enum SemanalyzerErr {
         name: String,
     },
 
+    UnexpNode {
+        span: Span,
+        expected: Vec<String>,
+        found: String,
+    },
     UnexpExpr {
         span: Span,
         name: String,
-    },
-    UnexpGeneric {
-        span: Span,
     },
     UnexpType {
         span: Span,

@@ -10,7 +10,7 @@ use elise_ir_bindings::{
     type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDesc},
 };
 use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
-use elise_shared_types::Span;
+use elise_shared_types::{Name, Span};
 use elise_test_utils::test_utils::semanalyze;
 
 mod common;
@@ -105,7 +105,14 @@ fn should_fail_if_int_has_generic() {
         &mut type_bindings_map,
         TYPEDEF_MODE,
     );
-    assert!(matches!(result, Err(SemanalyzerErr::UnexpGeneric { .. })));
+    assert_eq!(
+        result,
+        Err(SemanalyzerErr::UnexpNode {
+            found: Name::GENERIC.to_string(),
+            expected: vec![],
+            span: Span { start: 17, end: 22 }
+        })
+    );
 }
 
 // ==================================================================
@@ -158,7 +165,14 @@ fn should_fail_if_str_has_generic() {
         &mut type_bindings_map,
         TYPEDEF_MODE,
     );
-    assert!(matches!(result, Err(SemanalyzerErr::UnexpGeneric { .. })));
+    assert_eq!(
+        result,
+        Err(SemanalyzerErr::UnexpNode {
+            found: Name::GENERIC.to_string(),
+            expected: vec![],
+            span: Span { start: 18, end: 23 }
+        })
+    );
 }
 
 // ==================================================================
@@ -340,7 +354,14 @@ fn should_fail_if_custom_alias_has_generic() {
         &mut type_bindings_map,
         TYPEDEF_MODE,
     );
-    assert!(matches!(result, Err(SemanalyzerErr::UnexpGeneric { .. })));
+    assert_eq!(
+        result,
+        Err(SemanalyzerErr::UnexpNode {
+            found: Name::GENERIC.to_string(),
+            expected: vec![],
+            span: Span { start: 18, end: 23 }
+        })
+    );
 }
 
 #[test]

@@ -43,4 +43,6 @@ impl Name {
     pub const EXPR__DICT: &'static str = "DictExpression";
     pub const EXPR__IDENTIFIER: &'static str = "IdentifierExpression";
     pub const EXPR__SLOT: &'static str = "SlotExpression";
+
+    pub const GENERIC: &'static str = "Generic";
 }

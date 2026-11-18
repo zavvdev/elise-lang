@@ -415,8 +415,10 @@ impl<'a> Harmony<'a> {
         prim_variant: fn(AAstNodeTypeAnnotPrim) -> AAstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
         if let Some(generic) = annot.generic.as_ref() {
-            return Err(SemanalyzerErr::UnexpGeneric {
+            return Err(SemanalyzerErr::UnexpNode {
                 span: generic.span(),
+                found: Name::GENERIC.to_string(),
+                expected: vec![],
             });
         }
         Ok(prim_variant(AAstNodeTypeAnnotPrim { span: annot.span() }))
@@ -474,8 +476,10 @@ impl<'a> Harmony<'a> {
         annot: &AstNodeTypeAnnot,
     ) -> Result<AAstNodeTypeAnnot, SemanalyzerErr> {
         if let Some(generic) = annot.generic.as_ref() {
-            return Err(SemanalyzerErr::UnexpGeneric {
+            return Err(SemanalyzerErr::UnexpNode {
                 span: generic.span(),
+                found: Name::GENERIC.to_string(),
+                expected: vec![],
             });
         }
 
