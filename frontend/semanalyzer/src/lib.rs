@@ -281,7 +281,7 @@ impl<'a> Harmony<'a> {
             let AAstNode::Data(data_node) = self.annotate_node_expr(item)? else {
                 return Err(SemanalyzerErr::UnexpExpr {
                     span: item.span(),
-                    expected: vec![Name::EXPR__VALUE_LITERAL.to_string()],
+                    expected: vec![Name::EXPR__LITERAL.to_string()],
                     found: item.name(),
                 });
             };
@@ -310,7 +310,7 @@ impl<'a> Harmony<'a> {
                 return Err(SemanalyzerErr::UnexpExpr {
                     span: entry.1.span(),
                     found: entry.1.name(),
-                    expected: vec![Name::EXPR__VALUE_LITERAL.to_string()],
+                    expected: vec![Name::EXPR__LITERAL.to_string()],
                 });
             };
             entries.push((

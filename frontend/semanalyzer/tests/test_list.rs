@@ -37,7 +37,7 @@ fn should_fail_for_unsupported_items() {
         Err(SemanalyzerErr::UnexpExpr {
             span: Span { start: 1, end: 20 },
             found: Name::EXPR__CALL.to_string(),
-            expected: vec![Name::EXPR__VALUE_LITERAL.to_string()]
+            expected: vec![Name::EXPR__LITERAL.to_string()]
         })
     );
 }

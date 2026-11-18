@@ -50,7 +50,7 @@ impl AAstNode {
     pub fn name(&self) -> String {
         match self {
             Self::Call(_) => Name::EXPR__CALL.to_string(),
-            Self::Data(_) => Name::EXPR__VALUE_LITERAL.to_string(),
+            Self::Data(_) => Name::EXPR__LITERAL.to_string(),
             Self::SlotData(_) => Name::EXPR__SLOT.to_string(),
         }
     }
