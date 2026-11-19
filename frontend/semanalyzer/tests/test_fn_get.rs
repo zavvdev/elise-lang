@@ -50,7 +50,7 @@ fn should_fail_if_no_typedef_for_slot() {
     let result = semanalyze(".get(@data)", &mut type_bindings_map, TYPEDEF_MODE);
     assert!(matches!(
         result,
-        Err(SemanalyzerErr::NoTypeDefinition { .. })
+        Err(SemanalyzerErr::MissingTypeDefinition { .. })
     ));
 }
 
@@ -72,10 +72,14 @@ fn should_fail_if_cannot_infer_type() {
 fn should_fail_for_type_annot_in_path() {
     let mut type_bindings_map = type_bindings_map();
     let result = semanalyze(".get(@data, :Int)", &mut type_bindings_map, TYPEDEF_MODE);
-    assert!(matches!(
+    assert_eq!(
         result,
-        Err(SemanalyzerErr::InvalDataAccessArg { .. })
-    ));
+        Err(SemanalyzerErr::UnexpNode {
+            span: Span { start: 12, end: 16 },
+            expected: vec![Name::NODE__EXPR.to_string()],
+            found: Name::NODE__TYPE_ANNOT.to_string(),
+        })
+    );
 }
 
 #[test]
@@ -86,10 +90,14 @@ fn should_fail_for_other_than_int_or_str_in_path() {
         &mut type_bindings_map,
         TYPEDEF_MODE,
     );
-    assert!(matches!(
+    assert_eq!(
         result,
-        Err(SemanalyzerErr::InvalDataAccessArg { .. })
-    ));
+        Err(SemanalyzerErr::UnexpExpr {
+            span: Span { start: 12, end: 21 },
+            expected: vec![Name::EXPR__INT.to_string(), Name::EXPR__STR.to_string()],
+            found: Name::EXPR__LIST.to_string(),
+        })
+    );
 }
 
 #[test]
@@ -102,7 +110,7 @@ fn should_fail_if_accessing_not_resolvable() {
     );
     assert!(matches!(
         result,
-        Err(SemanalyzerErr::UnresolvablePath { .. })
+        Err(SemanalyzerErr::UndefinedDataAccess { .. })
     ));
 }
 

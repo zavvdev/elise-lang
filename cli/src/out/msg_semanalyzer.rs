@@ -120,27 +120,33 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             (format!("Missing generic for {} type", type_annot), span)
         }
 
-        InvalGeneric { span } => ("Invalid generic".to_string(), span),
+        MissingTypeDefinition { span, for_name } => {
+            (format!("Missing type definition for {}", for_name), span)
+        }
 
-        InvalDataAccessArg { span } => ("Invalid data access argument".to_string(), span),
+        InvalGeneric { span, type_annot } => (format!("Invalid generic for {}", type_annot), span),
 
-        UnresolvableTypedef { span } => ("Unresolvable type definition".to_string(), span),
+        UnresolvableTypePath { path, span } => (
+            format!("Unable to resolve type definition following {}", path),
+            span,
+        ),
 
-        TypedefMode { span } => (
+        UnableToCoalesceType { name, span } => (format!("Unable to coalesce {} type", name), span),
+
+        TypedefContextViolation { span } => (
             "Only type definitions are supported in this context".to_string(),
             span,
         ),
-        ListInconsistentItemTypes { span } => (
+
+        InconsistentListItems { span } => (
             "List can contain only elements of the same type".to_string(),
             span,
         ),
 
-        CannotInferType { span } => ("Unable to infer type".to_string(), span),
+        CannotInferType { span, name } => (format!("Unable to infer type from {}", name), span),
 
-        NoTypeDefinition { span } => ("Unable to find a type definition".to_string(), span),
-
-        UnresolvablePath { span } => (
-            "Unable to get type definition by using this data access path".to_string(),
+        UndefinedDataAccess { span } => (
+            "Nothing exists by following this data access path".to_string(),
             span,
         ),
     };

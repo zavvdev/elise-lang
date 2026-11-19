@@ -22,7 +22,7 @@ fn should_fail_if_item_types_differ() {
     let result = semanalyze(r##"[1, "2"]"##, &mut type_bindings_map, false);
     assert_eq!(
         result,
-        Err(SemanalyzerErr::ListInconsistentItemTypes {
+        Err(SemanalyzerErr::InconsistentListItems {
             span: Span { start: 4, end: 7 }
         })
     );

@@ -25,7 +25,7 @@ pub mod matchers;
 
 use std::mem::discriminant;
 
-use elise_frontend_binder::type_binder::TypeBinder;
+use elise_frontend_binder::type_binder::{TypeBinder, TypeBinderErr};
 use elise_ir_aast::AAstNodeCallAdd;
 use elise_ir_aast::aast_type_annot::{
     AAstNodeTypeAnnot, AAstNodeTypeAnnotCustom, AAstNodeTypeAnnotList, AAstNodeTypeAnnotPrim,
@@ -49,7 +49,7 @@ use elise_ir_bindings::{
     type_bindings::{AliasedTypeBindings, TypeBinding},
 };
 use elise_shared_errors::errors_semanalyzer::ArityMismatchKind;
-use elise_shared_errors::{errors_semanalyzer::SemanalyzerErr, errors_type_binder::TypeBinderErr};
+use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
 use elise_shared_types::Name;
 
 use crate::matchers::{expect_identifier_ast_node, expect_type_annot_ast_node};
@@ -120,7 +120,7 @@ impl<'a> Harmony<'a> {
             AAstNode::Call(AAstNodeCall::Typedef { .. }) => Ok(()),
             node => {
                 if self.typedef_mode {
-                    return Err(SemanalyzerErr::TypedefMode { span: node.span() });
+                    return Err(SemanalyzerErr::TypedefContextViolation { span: node.span() });
                 }
                 Ok(())
             }
@@ -163,7 +163,10 @@ impl<'a> Harmony<'a> {
             AAstNode::SlotData(AAstNodeSlot { span }) => {
                 let Some(slot_bindings) = self.type_bindings.get(Name::TYPE_ANNOT__SLOT_DATA)
                 else {
-                    return Err(SemanalyzerErr::NoTypeDefinition { span: *span });
+                    return Err(SemanalyzerErr::MissingTypeDefinition {
+                        span: *span,
+                        for_name: Name::SLOT__DATA.to_string(),
+                    });
                 };
                 Ok(slot_bindings.clone())
             }
@@ -199,6 +202,7 @@ impl<'a> Harmony<'a> {
             // we don't have currently.
             unsupported_node => Err(SemanalyzerErr::CannotInferType {
                 span: unsupported_node.span(),
+                name: aast_node.name(),
             }),
         }
     }
@@ -263,7 +267,7 @@ impl<'a> Harmony<'a> {
             if let Some(ty) = item_type
                 && discriminant(&**item) != discriminant(ty)
             {
-                return Err(SemanalyzerErr::ListInconsistentItemTypes { span: item.span() });
+                return Err(SemanalyzerErr::InconsistentListItems { span: item.span() });
             } else {
                 item_type = Some(item);
             }
@@ -421,10 +425,11 @@ impl<'a> Harmony<'a> {
                 TypeBinderErr::UnresolvableType { span, name } => {
                     return Err(SemanalyzerErr::UnknType { span, name });
                 }
-                _ => {
-                    return Err(SemanalyzerErr::UnresolvableTypedef {
-                        span: aast_typedef.span(),
-                    });
+                TypeBinderErr::UnresolvablePath { path, span } => {
+                    return Err(SemanalyzerErr::UnresolvableTypePath { span, path });
+                }
+                TypeBinderErr::UnableToCoalesce { span, name } => {
+                    return Err(SemanalyzerErr::UnableToCoalesceType { span, name });
                 }
             },
         };
@@ -457,7 +462,10 @@ impl<'a> Harmony<'a> {
         };
 
         let AstNodeTypeAnnotGeneric::Single(single_generic) = generic else {
-            return Err(SemanalyzerErr::InvalGeneric { span: annot.span() });
+            return Err(SemanalyzerErr::InvalGeneric {
+                span: generic.span(),
+                type_annot: Name::TYPE_ANNOT__LIST.to_string(),
+            });
         };
 
         Ok(AAstNodeTypeAnnot::List(AAstNodeTypeAnnotList {
@@ -478,7 +486,10 @@ impl<'a> Harmony<'a> {
         };
 
         let AstNodeTypeAnnotGeneric::Record(ast_gen_record) = generic else {
-            return Err(SemanalyzerErr::InvalGeneric { span: annot.span() });
+            return Err(SemanalyzerErr::InvalGeneric {
+                span: generic.span(),
+                type_annot: Name::TYPE_ANNOT__RECORD.to_string(),
+            });
         };
 
         let entries = ast_gen_record
@@ -562,7 +573,9 @@ impl<'a> Harmony<'a> {
             .map
             .contains_key(&type_access_path)
         {
-            return Err(SemanalyzerErr::UnresolvablePath { span: call.span() });
+            return Err(SemanalyzerErr::UndefinedDataAccess {
+                span: data_as_first_arg.span(),
+            });
         };
 
         let data_access_path = Self::call_get__build_binding_path(&access_args, false)?;
@@ -604,8 +617,10 @@ impl<'a> Harmony<'a> {
 
         for ast_node in ast_nodes.iter() {
             let AstNode::Expr(expr) = ast_node else {
-                return Err(SemanalyzerErr::InvalDataAccessArg {
+                return Err(SemanalyzerErr::UnexpNode {
                     span: ast_node.span(),
+                    expected: vec![Name::NODE__EXPR.to_string()],
+                    found: ast_node.name(),
                 });
             };
 
@@ -625,8 +640,10 @@ impl<'a> Harmony<'a> {
                     binding_path.push(BindingPathSegment::Field(prim.lexeme()));
                 }
                 _ => {
-                    return Err(SemanalyzerErr::InvalDataAccessArg {
+                    return Err(SemanalyzerErr::UnexpExpr {
                         span: ast_node.span(),
+                        found: expr.name(),
+                        expected: vec![Name::EXPR__INT.to_string(), Name::EXPR__STR.to_string()],
                     });
                 }
             }

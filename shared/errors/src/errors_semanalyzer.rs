@@ -24,15 +24,8 @@ impl ArityMismatchKind {
 
 #[derive(Debug, PartialEq)]
 pub enum SemanalyzerErr {
-    ArityMismatch {
-        fn_name: &'static str,
-        kind: ArityMismatchKind,
-        found: usize,
-        span: Span,
-    },
-
     // =================================
-    // UNKNOWNS START
+    // UNKNOWN START
     // =================================
     UnknFnCall {
         span: Span,
@@ -47,7 +40,7 @@ pub enum SemanalyzerErr {
         name: String,
     },
     // =================================
-    // UNKNOWNS END
+    // UNKNOWN END
     // =================================
 
     // =================================
@@ -71,34 +64,58 @@ pub enum SemanalyzerErr {
     // =================================
     // UNEXPECTED END
     // =================================
+
+    // =================================
+    // MISSING START
+    // =================================
     MissingGeneric {
         span: Span,
         type_annot: String,
     },
 
-    InvalGeneric {
+    MissingTypeDefinition {
         span: Span,
+        for_name: String,
     },
-    InvalDataAccessArg {
+    // =================================
+    // MISSING END
+    // =================================
+    ArityMismatch {
+        fn_name: &'static str,
+        kind: ArityMismatchKind,
+        found: usize,
         span: Span,
     },
 
-    UnresolvableTypedef {
+    InvalGeneric {
+        span: Span,
+        type_annot: String,
+    },
+
+    UnresolvableTypePath {
+        path: String,
         span: Span,
     },
-    TypedefMode {
+
+    UnableToCoalesceType {
+        name: String,
         span: Span,
     },
-    ListInconsistentItemTypes {
+
+    TypedefContextViolation {
         span: Span,
     },
+
+    InconsistentListItems {
+        span: Span,
+    },
+
     CannotInferType {
         span: Span,
+        name: String,
     },
-    NoTypeDefinition {
-        span: Span,
-    },
-    UnresolvablePath {
+
+    UndefinedDataAccess {
         span: Span,
     },
 }

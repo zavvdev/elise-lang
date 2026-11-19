@@ -27,7 +27,10 @@ const TYPEDEF_MODE: bool = true;
 fn should_fail_for_non_type_annot_nodes() {
     let mut type_bindings_map = HashMap::new();
     let result = semanalyze("@data", &mut type_bindings_map, TYPEDEF_MODE);
-    assert!(matches!(result, Err(SemanalyzerErr::TypedefMode { .. })));
+    assert!(matches!(
+        result,
+        Err(SemanalyzerErr::TypedefContextViolation { .. })
+    ));
 }
 
 #[test]

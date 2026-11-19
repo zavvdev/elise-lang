@@ -16,8 +16,14 @@ use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };
-use elise_shared_errors::errors_type_binder::TypeBinderErr;
 use elise_shared_types::Span;
+
+#[derive(Debug, PartialEq)]
+pub enum TypeBinderErr {
+    UnresolvablePath { path: String, span: Span },
+    UnresolvableType { span: Span, name: String },
+    UnableToCoalesce { span: Span, name: String },
+}
 
 pub struct TypeBinder<'a> {
     aast_type_annot: &'a AAstNodeTypeAnnot,
@@ -109,6 +115,7 @@ impl<'a> TypeBinder<'a> {
         }
         Err(TypeBinderErr::UnresolvablePath {
             path: self.current_path.as_string(),
+            span: self.current_span,
         })
     }
 
@@ -224,8 +231,9 @@ impl<'a> TypeBinder<'a> {
         for (global_binding_path, global_binding) in global_bindings.map.iter() {
             let Some(next_path) = BindingPath::prepend(&self.current_path, global_binding_path)
             else {
-                return Err(TypeBinderErr::UnableToMerge {
+                return Err(TypeBinderErr::UnableToCoalesce {
                     span: global_binding.span(),
+                    name: alias.to_string(),
                 });
             };
             binding.map.insert(next_path, global_binding.clone());
