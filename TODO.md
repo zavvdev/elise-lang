@@ -24,7 +24,7 @@
 
     - [x] Harmony
 
-    - [ ] CsvDataParser
+    - [x] CsvDataParser
 
     - [ ] BindingsValidator
 

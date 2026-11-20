@@ -34,8 +34,8 @@ pub fn print_err(csv_parser_err: &CsvDataParserErr) {
         }
         Io { kind, detail } => format!("Unable to read.\n{}, {}.", kind, detail),
         MissingHeader { col } => format!("Missing header at col: {}", col),
-        Unknown => "Unknown failure.".to_string(),
+        Unknown => "Unknown error.".to_string(),
     };
 
-    utils::print_err(&info, Some("Csv parser error"));
+    utils::print_err(&info, Some("Csv Parser Error"));
 }
