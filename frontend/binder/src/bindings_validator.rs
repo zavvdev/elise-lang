@@ -7,23 +7,32 @@ fn match_type(
     binding_path: &BindingPath,
     type_binding: &TypeBinding,
     data_desc: &DataBindingDesc,
+    error_report_binding_path: &BindingPath,
 ) -> Result<(), BindingsValidatorErr> {
-    let type_desc = type_binding
-        .map
-        .get(binding_path)
-        .ok_or(BindingsValidatorErr::MissingTypeDeclaration)?;
+    let type_desc =
+        type_binding
+            .map
+            .get(binding_path)
+            .ok_or(BindingsValidatorErr::MissingTypeDeclaration {
+                data_path_info: error_report_binding_path.as_string(),
+                data_type_info: data_desc.name(),
+            })?;
 
-    let expected = match data_desc {
+    let matched_type = match data_desc {
         DataBindingDesc::Int(_) => TypeBindingDataType::Int,
         DataBindingDesc::Str(_) => TypeBindingDataType::Str,
         DataBindingDesc::List(_) => TypeBindingDataType::List,
         DataBindingDesc::Dict(_) => TypeBindingDataType::Record,
     };
 
-    if type_desc.dtype == expected {
+    if type_desc.dtype == matched_type {
         Ok(())
     } else {
-        Err(BindingsValidatorErr::TypeMismatch)
+        Err(BindingsValidatorErr::TypeMismatch {
+            data_path_info: error_report_binding_path.as_string(),
+            expected: type_desc.dtype.name(),
+            found: data_desc.name(),
+        })
     }
 }
 
@@ -36,20 +45,12 @@ pub fn validate_bindings(
     data_binding: &DataBinding,
     type_binding: &TypeBinding,
 ) -> Result<(), BindingsValidatorErr> {
-    if let Some((data_binding_path, data_descriptor)) = data_binding.map.iter().next() {
-        // Check if data_binding_path has Index segments, and if it does,
-        // replace them with AbstractIndex segments in order to be able to
-        // get type information from type_binding.
-        match data_binding_path.indexes_into_abstract() {
-            // If data_binding_path has indexes, a new path is returned.
-            Some(path) => {
-                return match_type(&path, type_binding, data_descriptor);
-            }
-            None => {
-                return match_type(data_binding_path, type_binding, data_descriptor);
-            }
-        }
+    for (data_binding_path, data_descriptor) in data_binding.map.iter() {
+        // Replace Index segments with AbstractIndex segments, if any,
+        // so type information can be looked up in type_binding.
+        let abstract_path = data_binding_path.indexes_into_abstract();
+        let path = abstract_path.as_ref().unwrap_or(data_binding_path);
+        match_type(path, type_binding, data_descriptor, data_binding_path)?;
     }
-
     Ok(())
 }

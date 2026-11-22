@@ -84,10 +84,10 @@ fn should_fail_if_type_missing() {
         },
     );
 
-    assert_eq!(
+    assert!(matches!(
         validate_bindings(&data_bindings, &type_bindings),
-        Err(BindingsValidatorErr::MissingTypeDeclaration)
-    );
+        Err(BindingsValidatorErr::MissingTypeDeclaration { .. })
+    ));
 }
 
 #[test]
@@ -110,10 +110,10 @@ fn should_fail_if_type_doesnt_match() {
         },
     );
 
-    assert_eq!(
+    assert!(matches!(
         validate_bindings(&data_bindings, &type_bindings),
-        Err(BindingsValidatorErr::TypeMismatch)
-    );
+        Err(BindingsValidatorErr::TypeMismatch { .. })
+    ));
 }
 
 #[test]

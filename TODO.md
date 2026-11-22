@@ -26,7 +26,7 @@
 
     - [x] CsvDataParser
 
-    - [ ] BindingsValidator
+    - [x] BindingsValidator
 
     - [ ] DataBinder
 

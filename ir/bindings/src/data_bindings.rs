@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use elise_shared_proc_macros::EnumDelegate;
-use elise_shared_types::Span;
+use elise_shared_types::{Name, Span};
 use getset::CopyGetters;
 
 use crate::binding_path::BindingPath;
@@ -73,6 +73,16 @@ pub enum DataBindingDesc {
     // a dynamic data access. But since ir/aast already
     // depends on ir/bindings, we might need to introduce
     // something in between in order to avoid circular deps.
+}
+impl DataBindingDesc {
+    pub fn name(&self) -> String {
+        match self {
+            Self::Int(_) => Name::TYPE_ANNOT__INT.to_string(),
+            Self::Str(_) => Name::TYPE_ANNOT__STR.to_string(),
+            Self::List(_) => Name::TYPE_ANNOT__LIST.to_string(),
+            Self::Dict(_) => Name::TYPE_ANNOT__RECORD.to_string(),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, CopyGetters)]

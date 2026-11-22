@@ -118,8 +118,6 @@ pub fn run<'a>(
                         .unwrap(),
                 )
                 .map_err(LangErr::BindingsValidator)?;
-
-                println!("CSV bindings: {:#?}", data_bindings);
             }
         }
     }
