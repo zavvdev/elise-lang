@@ -86,7 +86,7 @@ dependencies = [
  "elise-frontend-semanalyzer",
  "elise-ir-aast",
  "elise-ir-bindings",
- "elise-shared-errors",
+ "elise-shared-diagnostics",
  "elise-shared-types",
  "rayon",
  "serial_test",
@@ -102,7 +102,7 @@ version = "0.1.0"
 dependencies = [
  "elise-ir-aast",
  "elise-ir-bindings",
- "elise-shared-errors",
+ "elise-shared-diagnostics",
  "elise-shared-types",
  "elise-test-utils",
 ]
@@ -114,7 +114,7 @@ dependencies = [
  "csv",
  "elise-frontend-parser",
  "elise-ir-ast",
- "elise-shared-errors",
+ "elise-shared-diagnostics",
  "elise-shared-types",
  "elise-test-utils",
 ]
@@ -124,7 +124,7 @@ name = "elise-frontend-parser"
 version = "0.1.0"
 dependencies = [
  "elise-ir-ast",
- "elise-shared-errors",
+ "elise-shared-diagnostics",
  "elise-shared-types",
 ]
 
@@ -137,7 +137,7 @@ dependencies = [
  "elise-ir-aast",
  "elise-ir-ast",
  "elise-ir-bindings",
- "elise-shared-errors",
+ "elise-shared-diagnostics",
  "elise-shared-types",
  "elise-test-utils",
 ]
@@ -183,7 +183,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "elise-shared-errors"
+name = "elise-shared-diagnostics"
 version = "0.1.0"
 dependencies = [
  "elise-shared-types",
@@ -212,7 +212,7 @@ dependencies = [
  "elise-ir-aast",
  "elise-ir-ast",
  "elise-ir-bindings",
- "elise-shared-errors",
+ "elise-shared-diagnostics",
  "elise-shared-types",
 ]
 

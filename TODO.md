@@ -28,7 +28,7 @@
 
     - [x] BindingsValidator
 
-    - [ ] DataBinder
+    - [x] DataBinder
 
     - [ ] Remove Parser Error and Semantic Error titles from the error reports and use meaningful
           titles like "Syntax error: ...". Improve messages as well.

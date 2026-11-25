@@ -3,7 +3,7 @@ mod common;
 use elise_frontend_data::csv::csv_data_parser::{
     CsvDataCol, CsvDataParser, CsvDataParserDataType, CsvDataRow,
 };
-use elise_shared_errors::errors_csv_data_parser::CsvDataParserErr::*;
+use elise_shared_diagnostics::errors_csv_data_parser::CsvDataParserErr::*;
 use elise_shared_types::TablePos;
 use elise_test_utils::test_utils;
 

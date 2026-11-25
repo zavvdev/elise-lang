@@ -6,7 +6,7 @@ use elise_ir_aast::{
         AAstNodeLiteral, AAstNodeLiteralDict, AAstNodeLiteralDictKey, AAstNodeLiteralPrim,
     },
 };
-use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
+use elise_shared_diagnostics::errors_semanalyzer::SemanalyzerErr;
 use elise_shared_types::{Name, Span};
 use elise_test_utils::test_utils::semanalyze;
 

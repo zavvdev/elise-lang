@@ -22,7 +22,7 @@ use std::str::from_utf8;
 
 use crate::config::{CharCode, DfaNumState};
 
-use elise_shared_errors::errors_parser::{ParserErr, ParserErrInfo};
+use elise_shared_diagnostics::errors_parser::{ParserErr, ParserErrInfo};
 
 #[derive(PartialEq)]
 struct DepthStackEntry {

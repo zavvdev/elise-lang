@@ -16,7 +16,7 @@ members = [
     "ir/bindings",
     "ir/bytecode",
     "runtime/vm",
-    "shared/errors",
+    "shared/diagnostics",
     "shared/types",
     "shared/proc_macros",
     "test-utils",

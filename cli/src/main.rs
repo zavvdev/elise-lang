@@ -17,7 +17,7 @@ pub mod out;
 
 use elise::conf::{Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise::fsys::{read_file_bytes, read_file_string, write_file};
-use elise_shared_errors::LangErr;
+use elise_shared_diagnostics::LangErr;
 
 use std::env;
 
@@ -32,7 +32,6 @@ fn handle_lang_err(
     lang_err: &LangErr,
     source_code: &[u8],
     schema_source_code: &[u8],
-    _data_source: &str, // TODO: Use it for showing data slice in error report.
 ) -> ! {
     use LangErr::*;
 
@@ -50,6 +49,7 @@ fn handle_lang_err(
 }
 
 fn cli_run(conf: &ModeRunConf) {
+    println!("conf: {:#?}", conf);
     // We need to keep source code globally available in order to
     // be able to pass it to the function that handles errors.
     let source_code = match read_file_bytes(&conf.source_code_path) {
@@ -72,7 +72,7 @@ fn cli_run(conf: &ModeRunConf) {
         Ok(data_desc) => {
             let run_res = elise::run(&source_code, &data_desc.contents, &schema_source_code, conf)
                 .unwrap_or_else(|e| {
-                    handle_lang_err(&e, &source_code, &schema_source_code, &data_desc.contents)
+                    handle_lang_err(&e, &source_code, &schema_source_code)
                 });
 
             msg_modes::print_run_result(&run_res.output, run_res.ms);
@@ -110,7 +110,7 @@ fn cli_build(conf: &ModeBuildConf) {
     };
 
     let build_res = elise::build(&source_code, &schema_source_code, conf)
-        .unwrap_or_else(|e| handle_lang_err(&e, &source_code, &schema_source_code, ""));
+        .unwrap_or_else(|e| handle_lang_err(&e, &source_code, &schema_source_code));
 
     let out_path = &build_res.config.executable_output_path;
 
@@ -127,7 +127,7 @@ fn cli_exec(conf: &ModeExecConf) {
     ) {
         (Ok(executable_desc), Ok(data_desc)) => {
             let exec_res = elise::exec(&executable_desc.contents, &data_desc.contents, conf)
-                .unwrap_or_else(|e| handle_lang_err(&e, &[], &[], &data_desc.contents));
+                .unwrap_or_else(|e| handle_lang_err(&e, &[], &[]));
 
             msg_modes::print_run_result(&exec_res.output, exec_res.ms);
         }
@@ -154,7 +154,7 @@ fn cli_validate(conf: &ModeValidateConf) {
         Ok(data_desc) => {
             let validate_res = elise::validate(&data_desc.contents, &schema_source_code, conf)
                 .unwrap_or_else(|e| {
-                    handle_lang_err(&e, &[], &schema_source_code, &data_desc.contents)
+                    handle_lang_err(&e, &[], &schema_source_code)
                 });
 
             msg_modes::print_validate_result(validate_res.ms);

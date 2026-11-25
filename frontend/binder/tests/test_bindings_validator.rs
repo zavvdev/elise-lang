@@ -6,7 +6,7 @@ use elise_ir_bindings::{
     },
     type_bindings::{TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };
-use elise_shared_errors::errors_bindings_validator::BindingsValidatorErr;
+use elise_shared_diagnostics::errors_bindings_validator::BindingsValidatorErr;
 use elise_test_utils::test_utils;
 
 mod common;

@@ -25,7 +25,7 @@ pub mod matchers;
 
 use std::mem::discriminant;
 
-use elise_frontend_binder::type_binder::{TypeBinder, TypeBinderErr};
+use elise_frontend_binder::type_binder::TypeBinder;
 use elise_ir_aast::AAstNodeCallAdd;
 use elise_ir_aast::aast_type_annot::{
     AAstNodeTypeAnnot, AAstNodeTypeAnnotCustom, AAstNodeTypeAnnotList, AAstNodeTypeAnnotPrim,
@@ -48,8 +48,9 @@ use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{AliasedTypeBindings, TypeBinding},
 };
-use elise_shared_errors::errors_semanalyzer::ArityMismatchKind;
-use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
+use elise_shared_diagnostics::errors_semanalyzer::ArityMismatchKind;
+use elise_shared_diagnostics::errors_semanalyzer::SemanalyzerErr;
+use elise_shared_diagnostics::errors_type_binder::TypeBinderErr;
 use elise_shared_types::Name;
 
 use crate::matchers::{expect_identifier_ast_node, expect_type_annot_ast_node};

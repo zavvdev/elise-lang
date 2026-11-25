@@ -1,5 +1,6 @@
 use crate::out::utils;
 
+// TODO: Move errors into diagnostics
 pub fn print_file_rw_err(msg: &str, path: &str, read: bool) {
     let label = if read {
         Some("File Reader Error")

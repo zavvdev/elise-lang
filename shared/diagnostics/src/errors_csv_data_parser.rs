@@ -1,3 +1,5 @@
+use crate::codes::{DiagnosticCode, DiagnosticCodeType};
+
 // https://docs.rs/csv/1.4.0/csv/enum.ErrorKind.html
 #[derive(Debug, PartialEq)]
 pub enum CsvDataParserErr {
@@ -25,4 +27,16 @@ pub enum CsvDataParserErr {
         col: usize,
     },
     Unknown,
+}
+
+impl CsvDataParserErr {
+    pub fn code(&self) -> DiagnosticCodeType {
+        match self {
+            Self::UneqLen { .. } => DiagnosticCode::CDP301.code(),
+            Self::InvalidUtf8 { .. } => DiagnosticCode::CDP302.code(),
+            Self::Io { .. } => DiagnosticCode::CDP303.code(),
+            Self::MissingHeader { .. } => DiagnosticCode::CDP304.code(),
+            Self::Unknown { .. } => DiagnosticCode::CDP305.code(),
+        }
+    }
 }

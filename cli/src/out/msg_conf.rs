@@ -1,4 +1,4 @@
-use elise::conf::ConfErr;
+use elise_shared_diagnostics::errors_config::ConfErr;
 
 use crate::out::utils;
 
@@ -32,5 +32,5 @@ pub fn print_err(err: &ConfErr) {
         ConfErr::ArgRequired(arg) => format!("Argument required: '{}'.", arg),
     };
 
-    utils::print_err(&msg, Some("Configuration Error"));
+    utils::print_err("TODO", err.code(), &msg, None);
 }

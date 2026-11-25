@@ -4,7 +4,7 @@ use elise_ir_ast::ast_type_annot::{
     AstNodeTypeAnnot, AstNodeTypeAnnotGeneric, AstNodeTypeAnnotGenericRecord,
     AstNodeTypeAnnotGenericSingle, AstNodeTypeAnnotRecordKey,
 };
-use elise_shared_errors::errors_parser::{ParserErr, ParserErrInfo};
+use elise_shared_diagnostics::errors_parser::{ParserErr, ParserErrInfo};
 use elise_shared_types::Span;
 
 mod common;

@@ -1,5 +1,5 @@
 use csv::{ErrorKind, ReaderBuilder};
-use elise_shared_errors::errors_csv_data_parser::CsvDataParserErr;
+use elise_shared_diagnostics::errors_csv_data_parser::CsvDataParserErr;
 use elise_shared_types::{Literal, TablePos};
 
 #[derive(PartialEq, Debug, Clone)]

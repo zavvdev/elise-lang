@@ -1,6 +1,6 @@
 use crate::out::utils::{self, print_err_source_code_slice};
 use crate::out::utils::{get_source_code_slice, print_err_source_code_pos};
-use elise_shared_errors::errors_parser::ParserErr;
+use elise_shared_diagnostics::errors_parser::ParserErr;
 
 pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
     use ParserErr::*;
@@ -39,10 +39,10 @@ pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
         UntermDelim(err_info) => ("Unclosed delimiter", err_info),
     };
 
-    utils::print_err(info.0, Some("Parser Error"));
+    utils::print_err("TODO", parser_err.code(), &info);
 
     if let Some(code) = &get_source_code_slice(source_code, info.1.pos) {
-        print_err_source_code_pos(code.pos.row, code.pos.col);
+        print_err_source_code_pos(code.pos, "TODO");
         print_err_source_code_slice(&code.slice, code.pos.col);
     };
 }

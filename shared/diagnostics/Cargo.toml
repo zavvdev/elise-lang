@@ -1,5 +1,5 @@
 [package]
-name = "elise-shared-errors"
+name = "elise-shared-diagnostics"
 version = "0.1.0"
 edition = "2024"
 

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use elise_ir_aast::{AAstNode, aast_node_slot::AAstNodeSlot};
-use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
+use elise_shared_diagnostics::errors_semanalyzer::SemanalyzerErr;
 use elise_shared_types::Span;
 use elise_test_utils::test_utils::semanalyze;
 

@@ -1,6 +1,6 @@
 use elise_ir_ast::ast_type_annot::AstNodeTypeAnnot;
 use elise_ir_ast::{AstNode, AstNodeExpr, AstNodeExprPrim};
-use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
+use elise_shared_diagnostics::errors_semanalyzer::SemanalyzerErr;
 use elise_shared_types::Name;
 
 pub fn expect_type_annot_ast_node(ast_node: &AstNode) -> Result<&AstNodeTypeAnnot, SemanalyzerErr> {

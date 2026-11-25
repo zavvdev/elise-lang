@@ -1,9 +1,10 @@
 use std::str::from_utf8;
 
 use colored::Colorize;
+use elise_shared_diagnostics::codes::DiagnosticCodeType;
 use elise_shared_types::TablePos;
 
-pub struct SourceCodeSlice {
+struct SourceCodeSlice {
     pub slice: String,
     pub pos: TablePos,
 }
@@ -78,36 +79,36 @@ pub fn get_source_code_slice(source_code: &[u8], byte_pos: usize) -> Option<Sour
     })
 }
 
-pub fn print_err(message: &str, label: Option<&str>) {
-    let label: &str = label.unwrap_or("Error");
-    let error = format!("{}\n{}", label.red().bold(), message);
-    eprintln!("{}", error.red());
+pub fn print_err_source_code_pos(table_pos: TablePos, file_name: &str) {
+    let location = format!(
+        "@ {}:{}:{}\n",
+        file_name,
+        table_pos.row + 1,
+        table_pos.col + 1
+    );
+    eprintln!("{}", location.red());
 }
 
-pub fn print_err_source_code_pos(row: usize, col: usize) {
-    let location = format!("At {}:{}\n", row + 1, col + 1);
-    eprintln!("{}", location.bold());
-}
-
-pub fn print_err_type_mismatch(expected: &'static str, got: &'static str) {
-    let msg = format!("Expected: {expected}, got: {got}\n");
-    eprintln!("{}", msg.bold());
-}
-
-pub fn print_err_source_code_slice(source_code_slice: &str, col: usize) {
+pub fn print_source_code_slice(source_code_slice: &str, col: usize) {
     if !source_code_slice.is_empty() {
         eprintln!("{}", source_code_slice);
         let arrow = "-".repeat(col) + "^";
-        eprintln!("{}\n", arrow.red().bold());
+        eprintln!("{}\n", arrow.red());
     }
 }
 
 pub fn panic_hook(info: &std::panic::PanicHookInfo) {
-    let info = info.payload_as_str().unwrap_or("Unexpected error");
-    let message = format!("{}: {}", "Fatal error", info);
-    eprintln!("{}", message.red().bold());
+    let info = info.payload_as_str().unwrap_or("Unexpected");
+    let message = format!("{}: {}", "Fatal Error", info);
+    eprintln!("{}", message.red());
 }
 
 pub fn print_bytecode(bytecode: &str) {
     println!("--- Bytecode start ---\n{}\n--- Bytecode end ---", bytecode);
+}
+
+pub fn print_err(category: &str, diag_code: DiagnosticCodeType, message: &str) {
+    // ex: Syntax Error E101: Something went wrong
+    let error = format!("{} E{}: {}", category, diag_code, message);
+    eprintln!("{}", error.red());
 }

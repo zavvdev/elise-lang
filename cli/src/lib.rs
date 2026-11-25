@@ -19,7 +19,7 @@ use elise_ir_bindings::type_bindings::AliasedTypeBindings;
 //};
 use elise_frontend_parser::Prelude;
 use elise_frontend_semanalyzer::Harmony;
-use elise_shared_errors::LangErr;
+use elise_shared_diagnostics::LangErr;
 use elise_shared_types::Name;
 use std::{collections::HashMap, time::Instant};
 

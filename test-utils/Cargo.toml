@@ -13,5 +13,5 @@ elise-ir-bindings = { path = "../ir/bindings" }
 elise-frontend-data = { path = "../frontend/data" }
 elise-frontend-parser = { path = "../frontend/parser" }
 elise-frontend-semanalyzer = { path = "../frontend/semanalyzer" }
-elise-shared-errors = { path = "../shared/errors" }
+elise-shared-diagnostics = { path = "../shared/diagnostics" }
 elise-shared-types = { path = "../shared/types" }

@@ -9,7 +9,7 @@ use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDesc},
 };
-use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
+use elise_shared_diagnostics::errors_semanalyzer::SemanalyzerErr;
 use elise_shared_types::{Name, Span};
 use elise_test_utils::test_utils::semanalyze;
 

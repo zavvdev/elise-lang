@@ -16,7 +16,7 @@ use elise_ir_bindings::{
         DataBinding, DataBindingDesc, DataBindingDescDict, DataBindingDescList, DataBindingDescPrim,
     },
 };
-use elise_shared_errors::errors_data_binder::DataBinderErr;
+use elise_shared_diagnostics::errors_data_binder::DataBinderErr;
 
 pub struct DataBinder<'a> {
     aast_data_node: &'a AAstNodeLiteral,

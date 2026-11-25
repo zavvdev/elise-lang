@@ -7,7 +7,7 @@ edition = "2024"
 path = "src/lib.rs"
 
 [dependencies]
-elise-shared-errors = { path = "../../shared/errors" }
+elise-shared-diagnostics = { path = "../../shared/diagnostics" }
 elise-shared-types = { path = "../../shared/types" }
 elise-ir-aast = { path = "../../ir/aast" }
 elise-ir-ast = { path = "../../ir/ast" }

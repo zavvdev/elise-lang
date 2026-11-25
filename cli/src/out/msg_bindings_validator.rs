@@ -1,4 +1,4 @@
-use elise_shared_errors::errors_bindings_validator::BindingsValidatorErr;
+use elise_shared_diagnostics::errors_bindings_validator::BindingsValidatorErr;
 
 use crate::out::utils;
 
@@ -24,5 +24,5 @@ pub fn print_err(err: &BindingsValidatorErr) {
         ),
     };
 
-    utils::print_err(&info, Some("Bindings Validator Error"));
+    utils::print_err("TODO", err.code(), &info, None);
 }

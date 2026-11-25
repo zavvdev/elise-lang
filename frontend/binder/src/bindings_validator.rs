@@ -1,7 +1,7 @@
 use elise_ir_bindings::binding_path::BindingPath;
 use elise_ir_bindings::data_bindings::{DataBinding, DataBindingDesc};
 use elise_ir_bindings::type_bindings::{TypeBinding, TypeBindingDataType};
-use elise_shared_errors::errors_bindings_validator::BindingsValidatorErr;
+use elise_shared_diagnostics::errors_bindings_validator::BindingsValidatorErr;
 
 fn match_type(
     binding_path: &BindingPath,

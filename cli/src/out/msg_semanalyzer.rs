@@ -1,4 +1,4 @@
-use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
+use elise_shared_diagnostics::errors_semanalyzer::SemanalyzerErr;
 
 use crate::out::utils::{
     self, get_source_code_slice, print_err_source_code_pos, print_err_source_code_slice,
@@ -151,10 +151,10 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
         ),
     };
 
-    utils::print_err(&info, Some("Semantic Error"));
+    utils::print_err("TODO", sema_err.code(), &info);
 
     if let Some(code) = get_source_code_slice(source_code, span.start) {
-        print_err_source_code_pos(code.pos.row, code.pos.col);
+        print_err_source_code_pos(code.pos, "TODO");
         print_err_source_code_slice(&code.slice, code.pos.col);
     }
 }

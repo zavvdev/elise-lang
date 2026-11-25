@@ -16,14 +16,8 @@ use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };
+use elise_shared_diagnostics::errors_type_binder::TypeBinderErr;
 use elise_shared_types::Span;
-
-#[derive(Debug, PartialEq)]
-pub enum TypeBinderErr {
-    UnresolvablePath { path: String, span: Span },
-    UnresolvableType { span: Span, name: String },
-    UnableToCoalesce { span: Span, name: String },
-}
 
 pub struct TypeBinder<'a> {
     aast_type_annot: &'a AAstNodeTypeAnnot,

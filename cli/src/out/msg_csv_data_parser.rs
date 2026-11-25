@@ -1,4 +1,4 @@
-use elise_shared_errors::errors_csv_data_parser::CsvDataParserErr;
+use elise_shared_diagnostics::errors_csv_data_parser::CsvDataParserErr;
 
 use crate::out::utils;
 
@@ -37,5 +37,5 @@ pub fn print_err(csv_parser_err: &CsvDataParserErr) {
         Unknown => "Unknown error.".to_string(),
     };
 
-    utils::print_err(&info, Some("Csv Parser Error"));
+    utils::print_err("TODO", csv_parser_err.code(), &info);
 }

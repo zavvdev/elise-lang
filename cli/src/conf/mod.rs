@@ -9,22 +9,9 @@ pub mod config;
 use std::collections::HashMap;
 
 use config::{ArgName, ArgValue, BUILD_ARGS, EXEC_ARGS, RUN_ARGS, VALIDATE_ARGS};
+use elise_shared_diagnostics::errors_config::{ConfErr, InvalidArg};
 
 use crate::conf::config::{ArgType, get_modes_list};
-
-#[derive(Debug, PartialEq)]
-pub struct InvalidArg {
-    pub arg_name: String,
-    pub provided: String,
-    pub expected: Vec<String>,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum ConfErr {
-    ExtInvalid(String),
-    ArgInvalid(InvalidArg),
-    ArgRequired(String),
-}
 
 #[derive(Debug, PartialEq)]
 pub struct ModeRunConf {
@@ -265,9 +252,11 @@ impl Conf {
 
 #[cfg(test)]
 mod tests {
-    use crate::conf::config::{ArgName, get_modes_list};
+    use elise_shared_diagnostics::errors_config::{ConfErr, InvalidArg};
+
+use crate::conf::config::{ArgName, get_modes_list};
     use crate::conf::{
-        Conf, ConfErr, InvalidArg, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf,
+        Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf,
     };
 
     #[test]

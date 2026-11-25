@@ -2,7 +2,7 @@ use elise_frontend_parser::Prelude;
 use elise_ir_ast::{
     AstNode, AstNodeExpr, AstNodeExprDict, AstNodeExprDictKey, AstNodeExprList, AstNodeExprPrim,
 };
-use elise_shared_errors::errors_parser::{ParserErr, ParserErrInfo};
+use elise_shared_diagnostics::errors_parser::{ParserErr, ParserErrInfo};
 use elise_shared_types::Span;
 
 mod common;

@@ -9,7 +9,7 @@ pub mod test_utils {
         binding_path::{BindingPath, BindingPathSegment},
         type_bindings::{AliasedTypeBindings, TypeBinding, TypeBindingDataType, TypeBindingDesc},
     };
-    use elise_shared_errors::errors_semanalyzer::SemanalyzerErr;
+    use elise_shared_diagnostics::errors_semanalyzer::SemanalyzerErr;
     use elise_shared_types::Span;
 
     // ==================================================================

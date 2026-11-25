@@ -1,8 +1,11 @@
+pub mod codes;
 pub mod errors_bindings_validator;
+pub mod errors_config;
 pub mod errors_csv_data_parser;
 pub mod errors_data_binder;
 pub mod errors_parser;
 pub mod errors_semanalyzer;
+pub mod errors_type_binder;
 
 use errors_bindings_validator::BindingsValidatorErr;
 use errors_csv_data_parser::CsvDataParserErr;

@@ -1,3 +1,4 @@
+use crate::codes::{DiagnosticCode, DiagnosticCodeType};
 use elise_shared_types::Span;
 
 #[derive(Debug, PartialEq)]
@@ -118,4 +119,27 @@ pub enum SemanalyzerErr {
     UndefinedDataAccess {
         span: Span,
     },
+}
+
+impl SemanalyzerErr {
+    pub fn code(&self) -> DiagnosticCodeType {
+        match self {
+            Self::UnknFnCall { .. } => DiagnosticCode::H201.code(),
+            Self::UnknSlot { .. } => DiagnosticCode::H202.code(),
+            Self::UnknType  { .. } => DiagnosticCode::H203.code(),
+            Self::UnexpNode { .. } => DiagnosticCode::H204.code(),
+            Self::UnexpExpr { .. } => DiagnosticCode::H205.code(),
+            Self::UnexpType { .. } => DiagnosticCode::H206.code(),
+            Self::MissingGeneric { .. } => DiagnosticCode::H207.code(),
+            Self::MissingTypeDefinition { .. } => DiagnosticCode::H208.code(),
+            Self::ArityMismatch { .. } => DiagnosticCode::H209.code(),
+            Self::InvalGeneric { .. } => DiagnosticCode::H210.code(),
+            Self::UnresolvableTypePath { .. } => DiagnosticCode::H211.code(),
+            Self::UnableToCoalesceType { .. } => DiagnosticCode::H212.code(),
+            Self::TypedefContextViolation { .. } => DiagnosticCode::H213.code(),
+            Self::InconsistentListItems { .. } => DiagnosticCode::H214.code(),
+            Self::CannotInferType { .. } => DiagnosticCode::H215.code(),
+            Self::UndefinedDataAccess { .. } => DiagnosticCode::H216.code(),
+        }
+    }
 }
