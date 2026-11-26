@@ -568,7 +568,9 @@ impl<'a> Harmony<'a> {
         // and we need only access path here which is the rest of the
         // arguments after the first one.
         let access_args = call.body.iter().skip(1).map(|n| &**n).collect();
+
         let type_access_path = Self::call_get__build_binding_path(&access_args, true)?;
+        let data_access_path = Self::call_get__build_binding_path(&access_args, false)?;
 
         if !inferred_type_binding_from_data
             .map
@@ -576,10 +578,9 @@ impl<'a> Harmony<'a> {
         {
             return Err(SemanalyzerErr::UndefinedDataAccess {
                 span: data_as_first_arg.span(),
+                path: data_access_path.as_string(),
             });
         };
-
-        let data_access_path = Self::call_get__build_binding_path(&access_args, false)?;
 
         let return_type_binding =
             inferred_type_binding_from_data.strip_binding_paths_by_prefix(&type_access_path);

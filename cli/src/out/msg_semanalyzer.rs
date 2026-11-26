@@ -194,9 +194,9 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             span,
         ),
 
-        UndefinedDataAccess { span } => (
+        UndefinedDataAccess { span, path } => (
             ErrCategory::REFERENCE,
-            "Nothing exists by following this data access path",
+            &format!("Nothing exists by following this data access path {}", path),
             span,
         ),
     };

@@ -118,6 +118,7 @@ pub enum SemanalyzerErr {
 
     UndefinedDataAccess {
         span: Span,
+        path: String,
     },
 }
 
