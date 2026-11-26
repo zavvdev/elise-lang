@@ -254,10 +254,8 @@ impl Conf {
 mod tests {
     use elise_shared_diagnostics::errors_config::{ConfErr, InvalidArg};
 
-use crate::conf::config::{ArgName, get_modes_list};
-    use crate::conf::{
-        Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf,
-    };
+    use crate::conf::config::{ArgName, get_modes_list};
+    use crate::conf::{Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 
     #[test]
     fn should_require_mode_flag() {

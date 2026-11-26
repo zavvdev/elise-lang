@@ -4,7 +4,7 @@ use colored::Colorize;
 use elise_shared_diagnostics::codes::DiagnosticCodeType;
 use elise_shared_types::TablePos;
 
-struct SourceCodeSlice {
+pub struct SourceCodeSlice {
     pub slice: String,
     pub pos: TablePos,
 }

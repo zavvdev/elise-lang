@@ -1,3 +1,4 @@
+pub mod config;
 pub mod msg_bindings_validator;
 pub mod msg_conf;
 pub mod msg_csv_data_parser;

@@ -5,9 +5,9 @@ use crate::out::utils::{self};
 pub fn print_err(err: &DataBinderErr) {
     use DataBinderErr::*;
 
-    let info = match err {
-        UnresolvablePath { path } => &format!("Unresolvable path: {}", path),
+    let (category, message) = match err {
+        UnresolvablePath { path } => ("TODO", &format!("Unresolvable path: {}", path)),
     };
 
-    utils::print_err("TODO", err.code(), info);
+    utils::print_err(category, err.code(), message);
 }

@@ -1,20 +1,22 @@
 use elise_shared_diagnostics::errors_semanalyzer::SemanalyzerErr;
+use elise_shared_types::Span;
 
 use crate::out::utils::{
-    self, get_source_code_slice, print_err_source_code_pos, print_err_source_code_slice,
+    self, get_source_code_slice, print_err_source_code_pos, print_source_code_slice,
 };
 
 pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
     use SemanalyzerErr::*;
 
-    let (info, span) = match sema_err {
+    let (category, message, span): (&str, &str, &Span) = match sema_err {
         ArityMismatch {
             fn_name,
             found,
             span,
             kind,
         } => (
-            format!(
+            "TODO",
+            &format!(
                 "Invalid number of arguments for \"{}\" function. Expected: {}, found: {}",
                 fn_name,
                 kind.as_string(),
@@ -23,12 +25,21 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             span,
         ),
 
-        UnknFnCall { span, name } => (format!(r##"Cannot find function named "{}""##, name), span),
+        UnknFnCall { span, name } => (
+            "TODO",
+            &format!(r##"Cannot find function named "{}""##, name),
+            span,
+        ),
 
-        UnknSlot { span, name } => (format!(r##"Cannot find slot named "{}""##, name), span),
+        UnknSlot { span, name } => (
+            "TODO",
+            &format!(r##"Cannot find slot named "{}""##, name),
+            span,
+        ),
 
         UnknType { span, name } => (
-            format!(r##"Cannot find type definition named "{}""##, name),
+            "TODO",
+            &format!(r##"Cannot find type definition named "{}""##, name),
             span,
         ),
 
@@ -38,10 +49,11 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             found,
         } => {
             if expected.is_empty() {
-                (format!("Unexpected {}", found), span)
+                ("TODO", &format!("Unexpected {}", found), span)
             } else if expected.len() == 1 {
                 (
-                    format!(
+                    "TODO",
+                    &format!(
                         "Unexpected node. Expected {}, found {}",
                         expected.first().unwrap(),
                         found
@@ -50,7 +62,8 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
                 )
             } else {
                 (
-                    format!(
+                    "TODO",
+                    &format!(
                         "Unexpected node. Expected one of [{}], found {}",
                         expected.join(", "),
                         found
@@ -66,10 +79,11 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             expected,
         } => {
             if expected.is_empty() {
-                (format!("Unexpected {}", found), span)
+                ("TODO", &format!("Unexpected {}", found), span)
             } else if expected.len() == 1 {
                 (
-                    format!(
+                    "TODO",
+                    &format!(
                         "Unexpected expression. Expected {}, found {}",
                         expected.first().unwrap(),
                         found
@@ -78,7 +92,8 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
                 )
             } else {
                 (
-                    format!(
+                    "TODO",
+                    &format!(
                         "Unexpected expression. Expected one of [{}], found {}",
                         expected.join(", "),
                         found
@@ -94,10 +109,11 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             found,
         } => {
             if expected.is_empty() {
-                (format!("Unexpected type {}", found), span)
+                ("TODO", &format!("Unexpected type {}", found), span)
             } else if expected.len() == 1 {
                 (
-                    format!(
+                    "TODO",
+                    &format!(
                         "Unexpected type. Expected {}, found {}",
                         expected.first().unwrap(),
                         found
@@ -106,7 +122,8 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
                 )
             } else {
                 (
-                    format!(
+                    "TODO",
+                    &format!(
                         "Unexpected type. Expected one of [{}], found {}",
                         expected.join(", "),
                         found
@@ -116,45 +133,59 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             }
         }
 
-        MissingGeneric { span, type_annot } => {
-            (format!("Missing generic for {} type", type_annot), span)
-        }
-
-        MissingTypeDefinition { span, for_name } => {
-            (format!("Missing type definition for {}", for_name), span)
-        }
-
-        InvalGeneric { span, type_annot } => (format!("Invalid generic for {}", type_annot), span),
-
-        UnresolvableTypePath { path, span } => (
-            format!("Unable to resolve type definition following {}", path),
+        MissingGeneric { span, type_annot } => (
+            "TODO",
+            &format!("Missing generic for {} type", type_annot),
             span,
         ),
 
-        UnableToCoalesceType { name, span } => (format!("Unable to coalesce {} type", name), span),
+        MissingTypeDefinition { span, for_name } => (
+            "TODO",
+            &format!("Missing type definition for {}", for_name),
+            span,
+        ),
+
+        InvalGeneric { span, type_annot } => {
+            ("TODO", &format!("Invalid generic for {}", type_annot), span)
+        }
+
+        UnresolvableTypePath { path, span } => (
+            "TODO",
+            &format!("Unable to resolve type definition following {}", path),
+            span,
+        ),
+
+        UnableToCoalesceType { name, span } => {
+            ("TODO", &format!("Unable to coalesce {} type", name), span)
+        }
 
         TypedefContextViolation { span } => (
-            "Only type definitions are supported in this context".to_string(),
+            "TODO",
+            "Only type definitions are supported in this context",
             span,
         ),
 
         InconsistentListItems { span } => (
-            "List can contain only elements of the same type".to_string(),
+            "TODO",
+            "List can contain only elements of the same type",
             span,
         ),
 
-        CannotInferType { span, name } => (format!("Unable to infer type from {}", name), span),
+        CannotInferType { span, name } => {
+            ("TODO", &format!("Unable to infer type from {}", name), span)
+        }
 
         UndefinedDataAccess { span } => (
-            "Nothing exists by following this data access path".to_string(),
+            "TODO",
+            "Nothing exists by following this data access path",
             span,
         ),
     };
 
-    utils::print_err("TODO", sema_err.code(), &info);
+    utils::print_err(category, sema_err.code(), message);
 
     if let Some(code) = get_source_code_slice(source_code, span.start) {
         print_err_source_code_pos(code.pos, "TODO");
-        print_err_source_code_slice(&code.slice, code.pos.col);
+        print_source_code_slice(&code.slice, code.pos.col);
     }
 }

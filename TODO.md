@@ -30,12 +30,13 @@
 
     - [x] DataBinder
 
-    - [ ] Remove Parser Error and Semantic Error titles from the error reports and use meaningful
-          titles like "Syntax error: ...". Improve messages as well.
+    - [x] Add error codes like E201, E202
+    
+    - [ ] Add categories to error messages
 
-    - [ ] Add error codes like E201, E202
+    - [ ] Address TODOs in code
 
-    - [ ] Add error codes to the lang exec result?
+    - [ ] Provide LangErr to the lang exec result?
 
 - [ ] Compiler
 

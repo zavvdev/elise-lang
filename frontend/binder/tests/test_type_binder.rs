@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use elise_frontend_binder::type_binder::{TypeBinder, TypeBinderErr};
+use elise_frontend_binder::type_binder::TypeBinder;
 use elise_ir_aast::aast_type_annot::{
     AAstNodeTypeAnnot, AAstNodeTypeAnnotCustom, AAstNodeTypeAnnotList, AAstNodeTypeAnnotPrim,
     AAstNodeTypeAnnotRecord,
@@ -9,6 +9,7 @@ use elise_ir_bindings::{
     binding_path::{BindingPath, BindingPathSegment},
     type_bindings::{TypeBinding, TypeBindingDataType, TypeBindingDesc},
 };
+use elise_shared_diagnostics::errors_type_binder::TypeBinderErr;
 use elise_test_utils::test_utils;
 
 mod common;

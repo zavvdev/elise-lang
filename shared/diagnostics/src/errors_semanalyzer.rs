@@ -126,7 +126,7 @@ impl SemanalyzerErr {
         match self {
             Self::UnknFnCall { .. } => DiagnosticCode::H201.code(),
             Self::UnknSlot { .. } => DiagnosticCode::H202.code(),
-            Self::UnknType  { .. } => DiagnosticCode::H203.code(),
+            Self::UnknType { .. } => DiagnosticCode::H203.code(),
             Self::UnexpNode { .. } => DiagnosticCode::H204.code(),
             Self::UnexpExpr { .. } => DiagnosticCode::H205.code(),
             Self::UnexpType { .. } => DiagnosticCode::H206.code(),
