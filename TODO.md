@@ -34,9 +34,17 @@
     
     - [ ] Add categories to error messages
 
+        - [ ] msg_csv_data_parser
+
+        - [ ] msg_conf
+
+        - [ ] msg_bindings_validator
+
     - [ ] Address TODOs in code
 
     - [ ] Provide LangErr to the lang exec result?
+
+    - [ ] Review main.rs and lib.rs
 
 - [ ] Compiler
 

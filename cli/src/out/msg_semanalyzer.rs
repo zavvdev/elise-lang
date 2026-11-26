@@ -1,8 +1,9 @@
 use elise_shared_diagnostics::errors_semanalyzer::SemanalyzerErr;
 use elise_shared_types::Span;
 
-use crate::out::utils::{
-    self, get_source_code_slice, print_err_source_code_pos, print_source_code_slice,
+use crate::out::{
+    config::ErrCategory,
+    utils::{self, get_source_code_slice, print_err_source_code_pos, print_source_code_slice},
 };
 
 pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
@@ -15,7 +16,7 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             span,
             kind,
         } => (
-            "TODO",
+            ErrCategory::SEMANTIC,
             &format!(
                 "Invalid number of arguments for \"{}\" function. Expected: {}, found: {}",
                 fn_name,
@@ -26,19 +27,19 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
         ),
 
         UnknFnCall { span, name } => (
-            "TODO",
+            ErrCategory::REFERENCE,
             &format!(r##"Cannot find function named "{}""##, name),
             span,
         ),
 
         UnknSlot { span, name } => (
-            "TODO",
+            ErrCategory::REFERENCE,
             &format!(r##"Cannot find slot named "{}""##, name),
             span,
         ),
 
         UnknType { span, name } => (
-            "TODO",
+            ErrCategory::REFERENCE,
             &format!(r##"Cannot find type definition named "{}""##, name),
             span,
         ),
@@ -49,10 +50,14 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             found,
         } => {
             if expected.is_empty() {
-                ("TODO", &format!("Unexpected {}", found), span)
+                (
+                    ErrCategory::SEMANTIC,
+                    &format!("Unexpected {}", found),
+                    span,
+                )
             } else if expected.len() == 1 {
                 (
-                    "TODO",
+                    ErrCategory::SEMANTIC,
                     &format!(
                         "Unexpected node. Expected {}, found {}",
                         expected.first().unwrap(),
@@ -62,7 +67,7 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
                 )
             } else {
                 (
-                    "TODO",
+                    ErrCategory::SEMANTIC,
                     &format!(
                         "Unexpected node. Expected one of [{}], found {}",
                         expected.join(", "),
@@ -79,10 +84,14 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             expected,
         } => {
             if expected.is_empty() {
-                ("TODO", &format!("Unexpected {}", found), span)
+                (
+                    ErrCategory::SEMANTIC,
+                    &format!("Unexpected {}", found),
+                    span,
+                )
             } else if expected.len() == 1 {
                 (
-                    "TODO",
+                    ErrCategory::SEMANTIC,
                     &format!(
                         "Unexpected expression. Expected {}, found {}",
                         expected.first().unwrap(),
@@ -92,7 +101,7 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
                 )
             } else {
                 (
-                    "TODO",
+                    ErrCategory::SEMANTIC,
                     &format!(
                         "Unexpected expression. Expected one of [{}], found {}",
                         expected.join(", "),
@@ -109,10 +118,14 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
             found,
         } => {
             if expected.is_empty() {
-                ("TODO", &format!("Unexpected type {}", found), span)
+                (
+                    ErrCategory::TYPE,
+                    &format!("Unexpected type {}", found),
+                    span,
+                )
             } else if expected.len() == 1 {
                 (
-                    "TODO",
+                    ErrCategory::TYPE,
                     &format!(
                         "Unexpected type. Expected {}, found {}",
                         expected.first().unwrap(),
@@ -122,7 +135,7 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
                 )
             } else {
                 (
-                    "TODO",
+                    ErrCategory::TYPE,
                     &format!(
                         "Unexpected type. Expected one of [{}], found {}",
                         expected.join(", "),
@@ -134,49 +147,55 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
         }
 
         MissingGeneric { span, type_annot } => (
-            "TODO",
+            ErrCategory::TYPE,
             &format!("Missing generic for {} type", type_annot),
             span,
         ),
 
         MissingTypeDefinition { span, for_name } => (
-            "TODO",
+            ErrCategory::TYPE,
             &format!("Missing type definition for {}", for_name),
             span,
         ),
 
-        InvalGeneric { span, type_annot } => {
-            ("TODO", &format!("Invalid generic for {}", type_annot), span)
-        }
+        InvalGeneric { span, type_annot } => (
+            ErrCategory::TYPE,
+            &format!("Invalid generic for {}", type_annot),
+            span,
+        ),
 
         UnresolvableTypePath { path, span } => (
-            "TODO",
+            ErrCategory::REFERENCE,
             &format!("Unable to resolve type definition following {}", path),
             span,
         ),
 
-        UnableToCoalesceType { name, span } => {
-            ("TODO", &format!("Unable to coalesce {} type", name), span)
-        }
+        UnableToCoalesceType { name, span } => (
+            ErrCategory::TYPE,
+            &format!("Unable to coalesce {} type", name),
+            span,
+        ),
 
         TypedefContextViolation { span } => (
-            "TODO",
+            ErrCategory::SEMANTIC,
             "Only type definitions are supported in this context",
             span,
         ),
 
         InconsistentListItems { span } => (
-            "TODO",
+            ErrCategory::TYPE,
             "List can contain only elements of the same type",
             span,
         ),
 
-        CannotInferType { span, name } => {
-            ("TODO", &format!("Unable to infer type from {}", name), span)
-        }
+        CannotInferType { span, name } => (
+            ErrCategory::TYPE,
+            &format!("Unable to infer type from {}", name),
+            span,
+        ),
 
         UndefinedDataAccess { span } => (
-            "TODO",
+            ErrCategory::REFERENCE,
             "Nothing exists by following this data access path",
             span,
         ),
