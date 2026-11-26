@@ -112,3 +112,7 @@ pub fn print_err(category: &str, diag_code: DiagnosticCodeType, message: &str) {
     let error = format!("{} E{}: {}", category, diag_code, message);
     eprintln!("{}", error.red());
 }
+
+pub fn print_saved_to(path: &str) {
+    println!("Saved to: {}", path);
+}

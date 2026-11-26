@@ -3,6 +3,7 @@ pub mod errors_bindings_validator;
 pub mod errors_config;
 pub mod errors_csv_data_parser;
 pub mod errors_data_binder;
+pub mod errors_fsys;
 pub mod errors_parser;
 pub mod errors_semanalyzer;
 pub mod errors_type_binder;

@@ -1,15 +1,15 @@
+use elise_shared_diagnostics::errors_fsys::FSysErr;
+
 use crate::out::utils;
 
-// TODO: Move errors into diagnostics
-pub fn print_file_rw_err(msg: &str, path: &str, read: bool) {
-    let label = if read {
-        Some("File Reader Error")
-    } else {
-        Some("File Writer Error")
+pub fn print_err(err: FSysErr) {
+    let message = match &err {
+        FSysErr::R { msg, path } => &format!("Unable to read '{}' ({})", path, msg),
+        FSysErr::W { msg, path } => &format!("Unable to write '{}' ({})", path, msg),
     };
-    utils::print_err(&format!("{} ({})", msg, path), label);
-}
-
-pub fn print_saved_to(path: &str) {
-    println!("Saved to: {}", path);
+    utils::print_err(
+        "File System Error",
+        err.code(),
+        message,
+    );
 }

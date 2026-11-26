@@ -35,6 +35,8 @@
 
     - [ ] Add error codes like E201, E202
 
+    - [ ] Add error codes to the lang exec result?
+
 - [ ] Compiler
 
 - [ ] VM

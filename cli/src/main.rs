@@ -18,6 +18,7 @@ pub mod out;
 use elise::conf::{Conf, ModeBuildConf, ModeExecConf, ModeRunConf, ModeValidateConf};
 use elise::fsys::{read_file_bytes, read_file_string, write_file};
 use elise_shared_diagnostics::LangErr;
+use elise_shared_diagnostics::errors_fsys::FSysErr;
 
 use std::env;
 
@@ -28,11 +29,7 @@ use crate::out::utils::{panic_hook, print_bytecode};
 use crate::out::{msg_bindings_validator, msg_conf, msg_data_binder};
 use crate::out::{msg_csv_data_parser, msg_semanalyzer};
 
-fn handle_lang_err(
-    lang_err: &LangErr,
-    source_code: &[u8],
-    schema_source_code: &[u8],
-) -> ! {
+fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &[u8]) -> ! {
     use LangErr::*;
 
     match lang_err {
@@ -49,13 +46,15 @@ fn handle_lang_err(
 }
 
 fn cli_run(conf: &ModeRunConf) {
-    println!("conf: {:#?}", conf);
     // We need to keep source code globally available in order to
     // be able to pass it to the function that handles errors.
     let source_code = match read_file_bytes(&conf.source_code_path) {
         Ok(desc) => desc.contents,
         Err(e) => {
-            return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
+            return msg_fsys::print_err(FSysErr::R {
+                msg: e.message,
+                path: e.path,
+            });
         }
     };
 
@@ -64,16 +63,17 @@ fn cli_run(conf: &ModeRunConf) {
     let schema_source_code = match read_file_bytes(&conf.data_schema_path) {
         Ok(desc) => desc.contents,
         Err(e) => {
-            return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
+            return msg_fsys::print_err(FSysErr::R {
+                msg: e.message,
+                path: e.path,
+            });
         }
     };
 
     match read_file_string(&conf.data_path) {
         Ok(data_desc) => {
             let run_res = elise::run(&source_code, &data_desc.contents, &schema_source_code, conf)
-                .unwrap_or_else(|e| {
-                    handle_lang_err(&e, &source_code, &schema_source_code)
-                });
+                .unwrap_or_else(|e| handle_lang_err(&e, &source_code, &schema_source_code));
 
             msg_modes::print_run_result(&run_res.output, run_res.ms);
 
@@ -83,14 +83,18 @@ fn cli_run(conf: &ModeRunConf) {
 
             if let Some(path) = run_res.config.output_path.as_ref() {
                 match write_file(path, &run_res.output) {
-                    Ok(_) => msg_fsys::print_saved_to(path),
-                    Err(err) => msg_fsys::print_file_rw_err(&err.message, &err.path, false),
+                    Ok(_) => out::utils::print_saved_to(path),
+                    Err(err) => msg_fsys::print_err(FSysErr::W {
+                        msg: err.message,
+                        path: err.path,
+                    }),
                 }
             }
         }
-        Err(data_read_err) => {
-            msg_fsys::print_file_rw_err(&data_read_err.message, &data_read_err.path, true)
-        }
+        Err(data_read_err) => msg_fsys::print_err(FSysErr::R {
+            msg: data_read_err.message,
+            path: data_read_err.path,
+        }),
     }
 }
 
@@ -98,14 +102,20 @@ fn cli_build(conf: &ModeBuildConf) {
     let source_code = match read_file_bytes(&conf.source_code_path) {
         Ok(desc) => desc.contents,
         Err(e) => {
-            return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
+            return msg_fsys::print_err(FSysErr::R {
+                msg: e.message,
+                path: e.path,
+            });
         }
     };
 
     let schema_source_code = match read_file_bytes(&conf.data_schema_path) {
         Ok(desc) => desc.contents,
         Err(e) => {
-            return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
+            return msg_fsys::print_err(FSysErr::R {
+                msg: e.message,
+                path: e.path,
+            });
         }
     };
 
@@ -116,7 +126,10 @@ fn cli_build(conf: &ModeBuildConf) {
 
     match write_file(out_path, &build_res.executable_output) {
         Ok(_) => msg_modes::print_build_result(out_path, build_res.ms),
-        Err(err) => msg_fsys::print_file_rw_err(&err.message, &err.path, false),
+        Err(err) => msg_fsys::print_err(FSysErr::W {
+            msg: err.message,
+            path: err.path,
+        }),
     }
 }
 
@@ -131,14 +144,14 @@ fn cli_exec(conf: &ModeExecConf) {
 
             msg_modes::print_run_result(&exec_res.output, exec_res.ms);
         }
-        (Err(executable_read_err), _) => msg_fsys::print_file_rw_err(
-            &executable_read_err.message,
-            &executable_read_err.path,
-            true,
-        ),
-        (_, Err(data_read_err)) => {
-            msg_fsys::print_file_rw_err(&data_read_err.message, &data_read_err.path, true)
-        }
+        (Err(executable_read_err), _) => msg_fsys::print_err(FSysErr::R {
+            msg: executable_read_err.message,
+            path: executable_read_err.path,
+        }),
+        (_, Err(data_read_err)) => msg_fsys::print_err(FSysErr::R {
+            msg: data_read_err.message,
+            path: data_read_err.path,
+        }),
     };
 }
 
@@ -146,22 +159,24 @@ fn cli_validate(conf: &ModeValidateConf) {
     let schema_source_code = match read_file_bytes(&conf.data_schema_path) {
         Ok(desc) => desc.contents,
         Err(e) => {
-            return msg_fsys::print_file_rw_err(&e.message, &e.path, true);
+            return msg_fsys::print_err(FSysErr::R {
+                msg: e.message,
+                path: e.path,
+            });
         }
     };
 
     match read_file_string(&conf.data_path) {
         Ok(data_desc) => {
             let validate_res = elise::validate(&data_desc.contents, &schema_source_code, conf)
-                .unwrap_or_else(|e| {
-                    handle_lang_err(&e, &[], &schema_source_code)
-                });
+                .unwrap_or_else(|e| handle_lang_err(&e, &[], &schema_source_code));
 
             msg_modes::print_validate_result(validate_res.ms);
         }
-        Err(data_read_err) => {
-            msg_fsys::print_file_rw_err(&data_read_err.message, &data_read_err.path, true)
-        }
+        Err(data_read_err) => msg_fsys::print_err(FSysErr::R {
+            msg: data_read_err.message,
+            path: data_read_err.path,
+        }),
     };
 }
 
