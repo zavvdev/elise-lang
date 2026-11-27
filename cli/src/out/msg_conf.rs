@@ -1,15 +1,18 @@
 use elise_shared_diagnostics::errors_config::ConfErr;
 
-use crate::out::utils;
+use crate::out::{config::ErrCategory, utils};
 
 pub fn print_err(err: &ConfErr) {
     let (category, message) = match err {
-        ConfErr::ExtInvalid(path) => ("TODO", &format!("Invalid extension: '{}'.", path)),
+        ConfErr::ExtInvalid(path) => (
+            ErrCategory::ARGUMENT,
+            &format!("Invalid extension: '{}'.", path),
+        ),
 
         ConfErr::ArgInvalid(arg) => {
             if arg.expected.is_empty() {
                 (
-                    "TODO",
+                    ErrCategory::ARGUMENT,
                     &format!(
                         "Invalid value '{}' for argument '{}'.",
                         arg.provided, arg.arg_name
@@ -17,7 +20,7 @@ pub fn print_err(err: &ConfErr) {
                 )
             } else if arg.expected.len() == 1 {
                 (
-                    "TODO",
+                    ErrCategory::ARGUMENT,
                     &format!(
                         "Invalid value for argument '{}'. Expected '{}', got '{}'.",
                         arg.arg_name,
@@ -27,7 +30,7 @@ pub fn print_err(err: &ConfErr) {
                 )
             } else {
                 (
-                    "TODO",
+                    ErrCategory::ARGUMENT,
                     &format!(
                         "Invalid value for argument '{}'. Expected one of: [{}], got '{}'.",
                         arg.arg_name,
@@ -38,7 +41,10 @@ pub fn print_err(err: &ConfErr) {
             }
         }
 
-        ConfErr::ArgRequired(arg) => ("TODO", &format!("Argument required: '{}'.", arg)),
+        ConfErr::ArgRequired(arg) => (
+            ErrCategory::ARGUMENT,
+            &format!("Argument required: '{}'.", arg),
+        ),
     };
 
     utils::print_err(category, err.code(), message);

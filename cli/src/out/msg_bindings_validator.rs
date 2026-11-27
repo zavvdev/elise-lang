@@ -1,6 +1,6 @@
 use elise_shared_diagnostics::errors_bindings_validator::BindingsValidatorErr;
 
-use crate::out::utils;
+use crate::out::{config::ErrCategory, utils};
 
 pub fn print_err(err: &BindingsValidatorErr) {
     use BindingsValidatorErr::*;
@@ -11,7 +11,7 @@ pub fn print_err(err: &BindingsValidatorErr) {
             expected,
             found,
         } => (
-            "TODO",
+            ErrCategory::TYPE,
             &format!(
                 "Expected to have {} type, got {} on {}",
                 expected, found, data_path_info,
@@ -22,7 +22,7 @@ pub fn print_err(err: &BindingsValidatorErr) {
             data_path_info,
             data_type_info,
         } => (
-            "TODO",
+            ErrCategory::VALIDATION,
             &format!(
                 "Missing type declaration for data defined on {} that has type {}",
                 data_path_info, data_type_info,

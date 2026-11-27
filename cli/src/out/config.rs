@@ -14,4 +14,10 @@ impl ErrCategory {
 
     // Something's well-formed per the grammar, but not allowed in this position or shape.
     pub const SEMANTIC: &'static str = "Semantic Error";
+
+    pub const DATA_FORMAT: &'static str = "Data Format Error";
+
+    pub const ARGUMENT: &'static str = "Argument Error";
+
+    pub const VALIDATION: &'static str = "Validation Error";
 }
