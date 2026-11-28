@@ -29,14 +29,34 @@ use crate::out::utils::{panic_hook, print_bytecode};
 use crate::out::{msg_bindings_validator, msg_conf, msg_data_binder};
 use crate::out::{msg_csv_data_parser, msg_semanalyzer};
 
-fn handle_lang_err(lang_err: &LangErr, source_code: &[u8], schema_source_code: &[u8]) -> ! {
+// NOTE: Not the best solution since some errors need only a subset
+// of these context values, so for now we just pass empty values
+// in case we don't have access to them. For example, EXEC mode
+// doesn't need source code and schema code, therefore we don't
+// have these during running in EXEC mode, so we pass empty
+// vectors and empty strings.
+struct LangErrHandlerContext<'a> {
+    lang_err: &'a LangErr,
+    source_code: &'a [u8],
+    schema_source_code: &'a [u8],
+    source_filename: &'a str,
+    schema_filename: &'a str,
+}
+
+fn handle_lang_err(ctx: LangErrHandlerContext) -> ! {
     use LangErr::*;
 
-    match lang_err {
-        ParserSource(err) => msg_parser::print_err(err, source_code),
-        ParserSchema(err) => msg_parser::print_err(err, schema_source_code),
-        SemanalyzerSource(err) => msg_semanalyzer::print_err(err, source_code),
-        SemanalyzerSchema(err) => msg_semanalyzer::print_err(err, schema_source_code),
+    match ctx.lang_err {
+        ParserSource(err) => msg_parser::print_err(err, ctx.source_code, ctx.source_filename),
+        ParserSchema(err) => {
+            msg_parser::print_err(err, ctx.schema_source_code, ctx.schema_filename)
+        }
+        SemanalyzerSource(err) => {
+            msg_semanalyzer::print_err(err, ctx.source_code, ctx.source_filename)
+        }
+        SemanalyzerSchema(err) => {
+            msg_semanalyzer::print_err(err, ctx.schema_source_code, ctx.schema_filename)
+        }
         CsvDataParser(err) => msg_csv_data_parser::print_err(err),
         BindingsValidator(err) => msg_bindings_validator::print_err(err),
         DataBinder(err) => msg_data_binder::print_err(err),
@@ -73,7 +93,15 @@ fn cli_run(conf: &ModeRunConf) {
     match read_file_string(&conf.data_path) {
         Ok(data_desc) => {
             let run_res = elise::run(&source_code, &data_desc.contents, &schema_source_code, conf)
-                .unwrap_or_else(|e| handle_lang_err(&e, &source_code, &schema_source_code));
+                .unwrap_or_else(|e| {
+                    handle_lang_err(LangErrHandlerContext {
+                        lang_err: &e,
+                        source_code: &source_code,
+                        schema_source_code: &schema_source_code,
+                        source_filename: &conf.source_code_path,
+                        schema_filename: &conf.data_schema_path,
+                    })
+                });
 
             msg_modes::print_run_result(&run_res.output, run_res.ms);
 
@@ -119,8 +147,15 @@ fn cli_build(conf: &ModeBuildConf) {
         }
     };
 
-    let build_res = elise::build(&source_code, &schema_source_code, conf)
-        .unwrap_or_else(|e| handle_lang_err(&e, &source_code, &schema_source_code));
+    let build_res = elise::build(&source_code, &schema_source_code, conf).unwrap_or_else(|e| {
+        handle_lang_err(LangErrHandlerContext {
+            lang_err: &e,
+            source_code: &source_code,
+            schema_source_code: &schema_source_code,
+            source_filename: &conf.source_code_path,
+            schema_filename: &conf.data_schema_path,
+        })
+    });
 
     let out_path = &build_res.config.executable_output_path;
 
@@ -140,7 +175,15 @@ fn cli_exec(conf: &ModeExecConf) {
     ) {
         (Ok(executable_desc), Ok(data_desc)) => {
             let exec_res = elise::exec(&executable_desc.contents, &data_desc.contents, conf)
-                .unwrap_or_else(|e| handle_lang_err(&e, &[], &[]));
+                .unwrap_or_else(|e| {
+                    handle_lang_err(LangErrHandlerContext {
+                        lang_err: &e,
+                        source_code: &[],
+                        schema_source_code: &[],
+                        source_filename: "",
+                        schema_filename: "",
+                    })
+                });
 
             msg_modes::print_run_result(&exec_res.output, exec_res.ms);
         }
@@ -169,7 +212,15 @@ fn cli_validate(conf: &ModeValidateConf) {
     match read_file_string(&conf.data_path) {
         Ok(data_desc) => {
             let validate_res = elise::validate(&data_desc.contents, &schema_source_code, conf)
-                .unwrap_or_else(|e| handle_lang_err(&e, &[], &schema_source_code));
+                .unwrap_or_else(|e| {
+                    handle_lang_err(LangErrHandlerContext {
+                        lang_err: &e,
+                        source_code: &[],
+                        schema_source_code: &schema_source_code,
+                        source_filename: "",
+                        schema_filename: &conf.data_schema_path,
+                    })
+                });
 
             msg_modes::print_validate_result(validate_res.ms);
         }

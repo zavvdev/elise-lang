@@ -6,7 +6,7 @@ use crate::out::{
     utils::{self, get_source_code_slice, print_err_source_code_pos, print_source_code_slice},
 };
 
-pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
+pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8], filename: &str) {
     use SemanalyzerErr::*;
 
     let (category, message, span): (&str, &str, &Span) = match sema_err {
@@ -204,7 +204,7 @@ pub fn print_err(sema_err: &SemanalyzerErr, source_code: &[u8]) {
     utils::print_err(category, sema_err.code(), message);
 
     if let Some(code) = get_source_code_slice(source_code, span.start) {
-        print_err_source_code_pos(code.pos, "TODO");
+        print_err_source_code_pos(code.pos, filename);
         print_source_code_slice(&code.slice, code.pos.col);
     }
 }

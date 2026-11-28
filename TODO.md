@@ -32,10 +32,6 @@
 
     - [x] Add error codes like E201, E202
     
-    - [ ] Address TODOs in code
-
-    - [ ] Provide LangErr to the lang exec result?
-
     - [ ] Review main.rs and lib.rs
 
 - [ ] Compiler

@@ -3,7 +3,7 @@ use crate::out::utils::{self, print_source_code_slice};
 use crate::out::utils::{get_source_code_slice, print_err_source_code_pos};
 use elise_shared_diagnostics::errors_parser::ParserErr;
 
-pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
+pub fn print_err(parser_err: &ParserErr, source_code: &[u8], filename: &str) {
     use ParserErr::*;
 
     let (message, info) = match parser_err {
@@ -43,7 +43,7 @@ pub fn print_err(parser_err: &ParserErr, source_code: &[u8]) {
     utils::print_err(ErrCategory::SYNTAX, parser_err.code(), message);
 
     if let Some(code) = &get_source_code_slice(source_code, info.pos) {
-        print_err_source_code_pos(code.pos, "TODO");
+        print_err_source_code_pos(code.pos, filename);
         print_source_code_slice(&code.slice, code.pos.col);
     };
 }
