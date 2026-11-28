@@ -14,26 +14,6 @@
 
 - [x] Data validation
 
-- [ ] Improve error reporting. Add more informative error messages.
-
-    - [x] ConfErr
-
-    - [x] cli_run, cli_build, cli_exec, cli_validate in main.rs
-
-    - [x] Prelude
-
-    - [x] Harmony
-
-    - [x] CsvDataParser
-
-    - [x] BindingsValidator
-
-    - [x] DataBinder
-
-    - [x] Add error codes like E201, E202
-    
-    - [ ] Review main.rs and lib.rs
-
 - [ ] Compiler
 
 - [ ] VM

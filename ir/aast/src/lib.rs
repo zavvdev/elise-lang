@@ -45,7 +45,6 @@ pub enum AAstNode {
 
     // Represents a dedicated @data slot that references
     // data being manipulated.
-    // TODO: Just Slot?
     SlotData(AAstNodeSlot),
 }
 impl AAstNode {
